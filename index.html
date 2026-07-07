@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+
+<!-- ╔═══ KLADDE · SoMi-Erfassungs-PWA · v0.1.0 (Phase-1.5-Gate-Hülle) ═══════╗
+     Werk: klausurkorrektur · Baustein 2 · Plan: ~/.claude/plans/kladde-somi-tool.md
+     Boilerplate-Basis: mw_builder/templates/modern_2026_html_v1.html
+     PWA-Muster: D:/Claude/Project_Zero_PWA (feldgetestet S70-S99)
+     DSGVO-Header kommen als ECHTE HTTP-Header vom server.py — Metas hier sind Fallback.
+╚══════════════════════════════════════════════════════════════════════════╝ -->
+
+<title>Kladde</title>
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=()">
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#14161c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kladde">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+
+<style>
+@layer reset, base, components;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.55; }
+  :root {
+    color-scheme: dark;
+    --grund: #14161c;
+    --karte: #1d2027;
+    --kante: #2c303a;
+    --text: #e8e4da;
+    --text-leise: #9a958a;
+    --band: #c49a5a;
+    --gut: #7fb069;
+    --warn: #d9a441;
+    --fehl: #c96f6f;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer base {
+  html { overscroll-behavior: none; }
+  body {
+    background: var(--grund);
+    color: var(--text);
+    min-height: 100dvh;
+    padding: calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);
+    max-width: 760px;
+    margin: 0 auto;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  button { touch-action: manipulation; }
+}
+
+@layer components {
+  header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 20px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: 0.02em; font-weight: 650; }
+  .version { color: var(--text-leise); font-size: 13px; }
+  .band { display: inline-block; width: 8px; height: 26px; background: var(--band); border-radius: 2px; transform: translateY(4px); }
+
+  .panel {
+    background: var(--karte);
+    border: 1px solid var(--kante);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .panel h2 { font-size: 14px; margin: 0 0 10px; color: var(--text-leise); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .zeile {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 7px 0; border-top: 1px solid var(--kante); font-size: 15px;
+  }
+  .zeile:first-of-type { border-top: none; }
+  .zeile .wert { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-leise); max-width: 60%; overflow-wrap: anywhere; }
+
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: var(--text-leise); }
+  .dot.gut  { background: var(--gut); }
+  .dot.warn { background: var(--warn); }
+  .dot.fehl { background: var(--fehl); }
+
+  button.aktion {
+    background: transparent; color: var(--band);
+    border: 1px solid var(--band); border-radius: 8px;
+    font-size: 15px; padding: 10px 16px; min-height: 44px; min-width: 44px;
+    cursor: pointer;
+  }
+  button.aktion:active { background: rgba(196, 154, 90, 0.15); }
+  .aktionen { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+  footer { color: var(--text-leise); font-size: 13px; margin-top: 22px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="band" aria-hidden="true"></span>
+  <h1>Kladde</h1>
+  <span class="version" id="version"></span>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Umgebung</h2>
+    <div class="zeile"><span><span class="dot" id="d-ctx"></span>Secure Context</span><span class="wert" id="v-ctx">…</span></div>
+    <div class="zeile"><span><span class="dot" id="d-mode"></span>Anzeige-Modus</span><span class="wert" id="v-mode">…</span></div>
+    <div class="zeile"><span><span class="dot" id="d-sw"></span>Service Worker</span><span class="wert" id="v-sw">…</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>Speicher</h2>
+    <div class="zeile"><span><span class="dot" id="d-persist"></span>Dauerhaft (persist)</span><span class="wert" id="v-persist">…</span></div>
+    <div class="zeile"><span><span class="dot" id="d-idb"></span>IndexedDB-Roundtrip</span><span class="wert" id="v-idb">…</span></div>
+    <div class="zeile"><span><span class="dot gut"></span>App-Starts (persistiert)</span><span class="wert" id="v-starts">…</span></div>
+    <div class="zeile"><span><span class="dot" id="d-quota"></span>Belegung / Kontingent</span><span class="wert" id="v-quota">…</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>Heimnetz-Server</h2>
+    <div class="zeile"><span><span class="dot" id="d-srv"></span>Erreichbar</span><span class="wert" id="v-srv">…</span></div>
+    <div class="zeile"><span><span class="dot" id="d-zert"></span>Zertifikat gültig bis</span><span class="wert" id="v-zert">…</span></div>
+    <div class="zeile"><span><span class="dot" id="d-sync"></span>Sync-Roundtrip</span><span class="wert" id="v-sync">noch nicht getestet</span></div>
+    <div class="aktionen">
+      <button class="aktion" id="btn-sync-test" type="button">Sync-Roundtrip testen</button>
+    </div>
+  </section>
+</main>
+
+<footer>Phase-1.5-Gate-Hülle · Daten dieses Panels bleiben auf dem Gerät</footer>
+
+<script>
+'use strict';
+(function () {
+  const APP_VERSION = '0.1.1';
+  const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
+  document.getElementById('version').textContent = 'v' + APP_VERSION + ' · ' + GERAET;
+
+  const $ = (id) => document.getElementById(id);
+  function setzeStatus(key, ok, text, warnung) {
+    const dot = $('d-' + key), wert = $('v-' + key);
+    if (dot) dot.className = 'dot ' + (ok === true ? 'gut' : ok === false ? 'fehl' : 'warn');
+    if (wert) wert.textContent = text;
+    if (warnung) console.warn('[kladde]', key, text);
+  }
+
+  // ── Umgebung ──────────────────────────────────────────────────────────
+  setzeStatus('ctx', window.isSecureContext, (window.isSecureContext ? 'ja' : 'NEIN') + ' · ' + location.protocol + '//' + location.host);
+
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  setzeStatus('mode', standalone ? true : null, standalone ? 'standalone (installiert)' : 'Browser-Tab (nicht installiert)');
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(function (reg) {
+          const st = reg.active ? 'aktiv' : (reg.installing ? 'installiert…' : 'registriert');
+          setzeStatus('sw', true, st + ' · Scope ' + new URL(reg.scope).pathname);
+        })
+        .catch(function (err) {
+          setzeStatus('sw', false, 'Registrierung fehlgeschlagen: ' + err.message, true);
+        });
+    });
+  } else {
+    setzeStatus('sw', false, 'API fehlt');
+  }
+
+  // ── Speicher ──────────────────────────────────────────────────────────
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted().then(function (schon) {
+      if (schon) { setzeStatus('persist', true, 'gewährt'); return; }
+      return navigator.storage.persist().then(function (granted) {
+        setzeStatus('persist', granted ? true : null, granted ? 'gewährt (neu)' : 'nicht gewährt — als App installieren');
+      });
+    });
+  } else {
+    setzeStatus('persist', null, 'API fehlt');
+  }
+
+  if (navigator.storage && navigator.storage.estimate) {
+    navigator.storage.estimate().then(function (e) {
+      const mb = (n) => (n / 1048576).toFixed(1) + ' MB';
+      setzeStatus('quota', true, mb(e.usage || 0) + ' / ' + mb(e.quota || 0));
+    });
+  } else {
+    setzeStatus('quota', null, 'API fehlt');
+  }
+
+  // IndexedDB-Roundtrip + App-Start-Zähler (beweist Persistenz über Kill/Neustart)
+  const DB_NAME = 'kladde_v1';
+  function mitDb(fn) {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function () {
+      req.result.createObjectStore('meta');
+    };
+    req.onsuccess = function () { fn(null, req.result); };
+    req.onerror = function () { fn(req.error); };
+  }
+  mitDb(function (err, db) {
+    if (err) { setzeStatus('idb', false, String(err), true); return; }
+    try {
+      const tx = db.transaction('meta', 'readwrite');
+      const st = tx.objectStore('meta');
+      const lese = st.get('starts');
+      lese.onsuccess = function () {
+        const starts = (lese.result || 0) + 1;
+        st.put(starts, 'starts');
+        st.put(new Date().toISOString(), 'letzterStart');
+        tx.oncomplete = function () {
+          setzeStatus('idb', true, 'Schreiben + Lesen ok');
+          $('v-starts').textContent = String(starts);
+          db.close();
+        };
+      };
+      tx.onerror = function () { setzeStatus('idb', false, String(tx.error), true); db.close(); };
+    } catch (e) {
+      setzeStatus('idb', false, e.message, true);
+    }
+  });
+
+  // ── Heimnetz-Server ───────────────────────────────────────────────────
+  // Auf GitHub Pages (MDM-Weg, Fall 2) gibt es keinen Heimnetz-Server hinter der Origin —
+  // Sync läuft dort über den SMB-Briefkasten (Dateien-App), nicht über fetch.
+  const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
+  if (PAGES_KONTEXT) {
+    setzeStatus('srv', null, 'Pages-Betrieb — Sync über SMB-Briefkasten');
+    setzeStatus('zert', null, 'entfällt (öffentliche HTTPS-Origin)');
+    setzeStatus('sync', null, 'entfällt — Datei-Export/Import');
+    $('btn-sync-test').style.display = 'none';
+  } else {
+    fetch('/api/kladde/status', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (s) {
+        setzeStatus('srv', true, s.server + ' · ' + s.zeit);
+        setzeStatus('zert', true, s.zert_bis);
+      })
+      .catch(function (err) {
+        setzeStatus('srv', false, 'nicht erreichbar (' + err.message + ')');
+        setzeStatus('zert', null, '—');
+      });
+  }
+
+  // Sync-Roundtrip: Dummy-Container (Magic KLD1 + Zeitstempel) push → pull → Vergleich
+  $('btn-sync-test').addEventListener('click', function () {
+    const btn = this;
+    btn.disabled = true;
+    setzeStatus('sync', null, 'läuft…');
+    const nutzlast = new TextEncoder().encode('KLD1' + JSON.stringify({ test: true, geraet: GERAET, ts: Date.now() }));
+    fetch('/api/kladde/push/' + GERAET, { method: 'POST', body: nutzlast })
+      .then(function (r) { if (!r.ok) throw new Error('push HTTP ' + r.status); return r.json(); })
+      .then(function (p) {
+        return fetch('/api/kladde/pull/' + GERAET, { cache: 'no-store' }).then(function (r) {
+          if (!r.ok) throw new Error('pull HTTP ' + r.status);
+          return r.arrayBuffer();
+        }).then(function (buf) {
+          const gleich = buf.byteLength === nutzlast.byteLength;
+          setzeStatus('sync', gleich, gleich ? 'ok · ' + p.generationen + ' Generation(en)' : 'Antwort weicht ab', !gleich);
+        });
+      })
+      .catch(function (err) { setzeStatus('sync', false, err.message, true); })
+      .finally(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>
