@@ -121,8 +121,8 @@
   /* ── Sitzplan (Beamer-Regel: Kacheln zeigen NUR Namen, nie Werte) ── */
   #plan-wrap { overflow: auto; }
   #plan {
-    display: grid; grid-template-columns: repeat(12, minmax(44px, 1fr)); gap: 3px;
-    min-width: 570px;
+    display: grid; grid-template-columns: repeat(12, minmax(44px, 62px)); gap: 3px;
+    min-width: 570px; justify-content: center;
   }
   #plan .kachel {
     aspect-ratio: 1; border-radius: 6px; border: 1px dashed transparent;
@@ -241,7 +241,7 @@
 <script>
 'use strict';
 (function () {
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.2.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 
@@ -536,6 +536,7 @@ function renderAlles(){
 
 /* ═══ HEUTE · Sitzplan 12×12 (Beamer-Regel: keine Werte sichtbar) ═══ */
 let busy=false; // Härtungs-Regel 6: Eingabe-Lock
+let editorAktiv=false; // Sitzplan-Editor-Modus (State-Flag statt Klassen-Sniffing)
 function sichtbareSchueler(k){
   let liste=kursSchueler(k);
   if(aktiveTeilgruppe) liste=liste.filter(s=>(s.gruppe||'')===aktiveTeilgruppe);
@@ -544,9 +545,10 @@ function sichtbareSchueler(k){
 function renderHeute(){
   const k=kurs(); const plan=$('plan');
   $('heute-leer').classList.toggle('hidden',Boolean(k));
-  plan.classList.remove('editor');
+  plan.classList.toggle('editor',editorAktiv);
   if(!k){ plan.innerHTML=''; return; }
   const grid=(vault.stamm.sitzplaene[k.id]||{}).grid||{};
+  plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv); // leeres Grid nicht als schwarze Wand zeigen
   const sichtbar=new Set(sichtbareSchueler(k).map(s=>s.nr));
   const heuteErfasst=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum).map(e=>e.schuelerNr));
   let html='';
@@ -787,8 +789,9 @@ function sitzplanEditor(kursId){
   aktView='heute';
   document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute'));
   ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='heute'));
+  editorAktiv=true;
   renderHeute();
-  const plan=$('plan'); plan.classList.add('editor');
+  const plan=$('plan');
   toast('Editor: leere Kachel antippen → Schüler wählen · Schüler antippen → entfernen',5200);
   const k=kurs();
   const handler=e=>{
@@ -798,7 +801,7 @@ function sitzplanEditor(kursId){
     const r=Math.floor(idx/12), c=idx%12;
     const sp=vault.stamm.sitzplaene[k.id]=vault.stamm.sitzplaene[k.id]||{grid:{}};
     const key=r+','+c;
-    if(sp.grid[key]){ delete sp.grid[key]; stammMutiert(); speichern(); renderHeute(); plan.classList.add('editor'); return; }
+    if(sp.grid[key]){ delete sp.grid[key]; stammMutiert(); speichern(); renderHeute(); return; }
     const vergeben=new Set(Object.values(sp.grid));
     const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
     dlgZeigen('<h3>Platz '+(r+1)+'/'+(c+1)+'</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
@@ -806,7 +809,7 @@ function sitzplanEditor(kursId){
       '<div style="max-height:30vh;overflow:auto;margin-top:8px">'+frei.map(s=>'<button class="btn still" style="display:block;width:100%;margin:4px 0" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
       '<div class="btn-reihe"><button class="btn still" data-schliessen>Abbrechen</button></div>',
       el=>{
-        const setze=nr=>{ sp.grid[key]=nr; stammMutiert(); speichern(); dlgZu(); renderHeute(); plan.classList.add('editor'); };
+        const setze=nr=>{ sp.grid[key]=nr; stammMutiert(); speichern(); dlgZu(); renderHeute(); };
         el.querySelectorAll('[data-setz]').forEach(x=>x.onclick=()=>setze(Number(x.dataset.setz)));
         el.querySelector('#s-such').oninput=ev2=>{
           const m=ev2.target.value.match(/\((\d+)\)/); if(m) setze(Number(m[1]));
@@ -817,7 +820,7 @@ function sitzplanEditor(kursId){
   plan.addEventListener('pointerup',handler);
   const fertigBtn=document.createElement('button');
   fertigBtn.className='btn'; fertigBtn.textContent='Sitzplan fertig'; fertigBtn.style.cssText='position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:40';
-  fertigBtn.onclick=()=>{ plan.classList.remove('editor'); plan.removeEventListener('pointerup',handler); fertigBtn.remove(); renderHeute(); };
+  fertigBtn.onclick=()=>{ editorAktiv=false; plan.removeEventListener('pointerup',handler); fertigBtn.remove(); renderHeute(); };
   document.body.appendChild(fertigBtn);
 }
 function slotsEditor(kursId){

@@ -2,7 +2,7 @@
 // Cache-first fuer die App-Huelle · API IMMER Netz (Sync darf nie aus dem Cache kommen)
 // CACHE_NAME ist VERSIONIERT — bei jedem App-Release hochziehen (IT-Pflicht-Op S-Kladde-Bau)
 
-const CACHE_NAME = 'kladde-v0.2.0';
+const CACHE_NAME = 'kladde-v0.2.1';
 
 const ASSETS = [
   './',
