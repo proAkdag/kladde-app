@@ -4,17 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 
-<!-- ╔═══ KLADDE · SoMi-Erfassungs-PWA · v0.1.0 (Phase-1.5-Gate-Hülle) ═══════╗
-     Werk: klausurkorrektur · Baustein 2 · Plan: ~/.claude/plans/kladde-somi-tool.md
-     Boilerplate-Basis: mw_builder/templates/modern_2026_html_v1.html
-     PWA-Muster: D:/Claude/Project_Zero_PWA (feldgetestet S70-S99)
-     DSGVO-Header kommen als ECHTE HTTP-Header vom server.py — Metas hier sind Fallback.
+<!-- ╔═══ KLADDE v0.2.0 · SoMi-Erfassungs-PWA (Phase 2) ══════════════════════╗
+     Werk: klausurkorrektur · Plan: ~/.claude/plans/kladde-somi-tool.md
+     Logik geinlined aus logic/*.mjs (Node-getestet 31/31 · Cross-Parität zu kladde_lib.py)
+     Härtung: REF_iOS_WEBVIEW_HAERTUNG (busy-Lock R6 · globales pointerup R1 · State-Prinzip R7)
+     Vault = KLD1-Container in IndexedDB (eine Krypto-Wahrheit für Speicher UND Export)
 ╚══════════════════════════════════════════════════════════════════════════╝ -->
 
 <title>Kladde</title>
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=()">
-
-<!-- PWA -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#14161c">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,251 +22,932 @@
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 
 <style>
-@layer reset, base, components;
+@layer reset, base, components, views;
 
 @layer reset {
   *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.55; }
+  body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.45; }
   :root {
     color-scheme: dark;
-    --grund: #14161c;
-    --karte: #1d2027;
-    --kante: #2c303a;
-    --text: #e8e4da;
-    --text-leise: #9a958a;
-    --band: #c49a5a;
-    --gut: #7fb069;
-    --warn: #d9a441;
-    --fehl: #c96f6f;
+    --grund: #14161c; --karte: #1d2027; --karte2: #24272f; --kante: #2c303a;
+    --text: #e8e4da; --leise: #9a958a; --band: #c49a5a;
+    --gut: #7fb069; --warn: #d9a441; --fehl: #c96f6f; --info: #6f9dc9;
   }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  button { font: inherit; color: inherit; }
 }
 
 @layer base {
-  html { overscroll-behavior: none; }
+  html { overscroll-behavior: none; height: 100%; }
   body {
-    background: var(--grund);
-    color: var(--text);
-    min-height: 100dvh;
-    padding: calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);
-    max-width: 760px;
-    margin: 0 auto;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
+    background: var(--grund); color: var(--text);
+    height: 100dvh; display: flex; flex-direction: column;
+    -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+    user-select: none; -webkit-user-select: none;
+    touch-action: manipulation;
   }
-  button { touch-action: manipulation; }
+  input, textarea { user-select: text; -webkit-user-select: text; font: inherit; }
+  main { flex: 1; overflow-y: auto; padding: 10px 12px calc(env(safe-area-inset-bottom) + 74px); }
+  .hidden { display: none !important; }
 }
 
 @layer components {
-  header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 20px; }
-  h1 { font-size: 26px; margin: 0; letter-spacing: 0.02em; font-weight: 650; }
-  .version { color: var(--text-leise); font-size: 13px; }
-  .band { display: inline-block; width: 8px; height: 26px; background: var(--band); border-radius: 2px; transform: translateY(4px); }
-
-  .panel {
-    background: var(--karte);
-    border: 1px solid var(--kante);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
+  header.app {
+    display: flex; align-items: center; gap: 8px;
+    padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
+    border-bottom: 1px solid var(--kante);
   }
-  .panel h2 { font-size: 14px; margin: 0 0 10px; color: var(--text-leise); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-
-  .zeile {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-    padding: 7px 0; border-top: 1px solid var(--kante); font-size: 15px;
+  .band { width: 6px; height: 22px; background: var(--band); border-radius: 2px; }
+  #kurs-chip {
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 8px;
+    padding: 8px 12px; min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-weight: 600; max-width: 60vw; overflow: hidden; white-space: nowrap;
   }
+  #kurs-chip small { color: var(--leise); font-weight: 400; }
+  .spacer { flex: 1; }
+  .icon-btn {
+    background: transparent; border: 1px solid var(--kante); border-radius: 8px;
+    min-width: 44px; min-height: 44px; cursor: pointer; font-size: 17px;
+  }
+  nav.tabs {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; background: var(--karte); border-top: 1px solid var(--kante);
+    padding-bottom: env(safe-area-inset-bottom); z-index: 30;
+  }
+  nav.tabs button {
+    flex: 1; background: none; border: none; padding: 10px 4px 8px; min-height: 52px;
+    color: var(--leise); font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  nav.tabs button .t-ico { font-size: 19px; }
+  nav.tabs button.aktiv { color: var(--band); }
+  .panel { background: var(--karte); border: 1px solid var(--kante); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .panel h2 { font-size: 13px; margin: 0 0 8px; color: var(--leise); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .zeile { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--kante); font-size: 15px; align-items: center; }
   .zeile:first-of-type { border-top: none; }
-  .zeile .wert { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-leise); max-width: 60%; overflow-wrap: anywhere; }
-
-  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: var(--text-leise); }
-  .dot.gut  { background: var(--gut); }
-  .dot.warn { background: var(--warn); }
-  .dot.fehl { background: var(--fehl); }
-
-  button.aktion {
-    background: transparent; color: var(--band);
-    border: 1px solid var(--band); border-radius: 8px;
-    font-size: 15px; padding: 10px 16px; min-height: 44px; min-width: 44px;
-    cursor: pointer;
+  .zeile .wert { color: var(--leise); text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .btn {
+    background: transparent; color: var(--band); border: 1px solid var(--band); border-radius: 8px;
+    padding: 10px 14px; min-height: 44px; min-width: 44px; cursor: pointer; font-size: 15px;
   }
-  button.aktion:active { background: rgba(196, 154, 90, 0.15); }
-  .aktionen { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .btn:active { background: rgba(196,154,90,.15); }
+  .btn.still { color: var(--leise); border-color: var(--kante); }
+  .btn.gefahr { color: var(--fehl); border-color: var(--fehl); }
+  .btn-reihe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--leise); flex-shrink: 0; }
+  .dot.gut { background: var(--gut); } .dot.warn { background: var(--warn); } .dot.fehl { background: var(--fehl); }
+  select, input[type=text], input[type=password], input[type=date], input[type=time], input[type=number] {
+    background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px;
+    padding: 10px; min-height: 44px; font-size: 16px; /* ≥16px gegen iOS-Zoom */
+  }
+  dialog {
+    background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px;
+    padding: 16px; max-width: min(480px, 92vw); margin: auto;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.55); }
+  #toast {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 84px);
+    background: var(--karte2); border: 1px solid var(--kante); border-radius: 10px; padding: 10px 16px;
+    z-index: 60; max-width: 88vw; font-size: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.4);
+  }
+  #undo-chip {
+    position: fixed; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 84px); z-index: 40;
+    background: var(--karte2); border: 1px solid var(--band); color: var(--band);
+    border-radius: 20px; padding: 10px 16px; min-height: 44px; cursor: pointer; font-size: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  }
+}
 
-  footer { color: var(--text-leise); font-size: 13px; margin-top: 22px; text-align: center; }
+@layer views {
+  /* ── Sitzplan (Beamer-Regel: Kacheln zeigen NUR Namen, nie Werte) ── */
+  #plan-wrap { overflow: auto; }
+  #plan {
+    display: grid; grid-template-columns: repeat(12, minmax(44px, 1fr)); gap: 3px;
+    min-width: 570px;
+  }
+  #plan .kachel {
+    aspect-ratio: 1; border-radius: 6px; border: 1px dashed transparent;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px; overflow: hidden; padding: 1px;
+  }
+  #plan .kachel.leer { background: transparent; }
+  #plan .kachel.schueler {
+    background: var(--karte); border: 1px solid var(--kante); cursor: pointer;
+  }
+  #plan .kachel.schueler.gewaehlt { border-color: var(--band); background: var(--karte2); }
+  #plan .kachel.schueler.erfasst { border-bottom: 3px solid var(--info); } /* neutraler "heute berührt"-Marker, kein Wert */
+  #plan .kachel .vn { font-weight: 600; max-width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  #plan .kachel .nn { color: var(--leise); font-size: 9px; max-width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  #plan.editor .kachel.leer { border-color: var(--kante); cursor: pointer; }
+  .aktionsbar {
+    position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 52px);
+    background: var(--karte); border-top: 1px solid var(--kante); padding: 8px 10px; z-index: 35;
+    display: flex; gap: 6px; overflow-x: auto;
+  }
+  .aktionsbar .wer { font-weight: 700; padding: 8px 6px; white-space: nowrap; }
+  .aktionsbar button {
+    background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
+    min-width: 48px; min-height: 48px; font-size: 16px; cursor: pointer; white-space: nowrap; padding: 4px 10px;
+  }
+  .aktionsbar button:active { border-color: var(--band); }
+  .aktionsbar button.plus { color: var(--gut); } .aktionsbar button.minus { color: var(--fehl); }
+  /* ── Deck ── */
+  #deck-karte {
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 16px;
+    max-width: 420px; margin: 12px auto; padding: 26px 18px; text-align: center; min-height: 220px;
+    display: flex; flex-direction: column; justify-content: center; gap: 8px;
+    touch-action: none; position: relative;
+  }
+  #deck-karte .gross { font-size: 30px; font-weight: 700; }
+  #deck-karte .sub { color: var(--leise); }
+  #deck-fortschritt { text-align: center; color: var(--leise); font-variant-numeric: tabular-nums; }
+  .deck-hilfe { display: flex; justify-content: space-between; max-width: 420px; margin: 0 auto; color: var(--leise); font-size: 13px; padding: 0 8px; }
+  .deck-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  /* ── Schüler ── */
+  .s-item { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-top: 1px solid var(--kante); cursor: pointer; min-height: 48px; }
+  .s-item:first-child { border-top: none; }
+  .s-item .pfeil { margin-left: auto; color: var(--leise); }
+  .balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--karte2); }
+  .balken div { height: 100%; }
+  /* ── Lock ── */
+  #lock {
+    position: fixed; inset: 0; background: var(--grund); z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px;
+  }
+  #lock h1 { font-size: 26px; margin: 0; }
+  #lock input { text-align: center; letter-spacing: .3em; font-size: 22px; width: 220px; }
+  #lock .fehler { color: var(--fehl); min-height: 1.4em; font-size: 14px; }
 }
 </style>
 </head>
 <body>
 
-<header>
-  <span class="band" aria-hidden="true"></span>
+<div id="lock">
+  <span class="band" style="height:34px"></span>
   <h1>Kladde</h1>
-  <span class="version" id="version"></span>
+  <div id="lock-text" class="sub" style="color:var(--leise)">PIN eingeben</div>
+  <input id="pin" type="password" inputmode="numeric" autocomplete="off" enterkeyhint="go" aria-label="PIN">
+  <input id="pin2" type="password" inputmode="numeric" autocomplete="off" enterkeyhint="go" aria-label="PIN wiederholen" class="hidden" placeholder="wiederholen">
+  <div class="fehler" id="lock-fehler"></div>
+  <button class="btn" id="lock-btn">Öffnen</button>
+</div>
+
+<header class="app">
+  <span class="band"></span>
+  <div id="kurs-chip"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></div>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="btn-datum" title="Termin-Datum">📅</button>
+  <button class="icon-btn" id="btn-lock" title="Sperren">🔒</button>
 </header>
 
 <main>
-  <section class="panel">
-    <h2>Umgebung</h2>
-    <div class="zeile"><span><span class="dot" id="d-ctx"></span>Secure Context</span><span class="wert" id="v-ctx">…</span></div>
-    <div class="zeile"><span><span class="dot" id="d-mode"></span>Anzeige-Modus</span><span class="wert" id="v-mode">…</span></div>
-    <div class="zeile"><span><span class="dot" id="d-sw"></span>Service Worker</span><span class="wert" id="v-sw">…</span></div>
+  <section id="view-heute">
+    <div id="plan-wrap"><div id="plan"></div></div>
+    <p id="heute-leer" class="hidden" style="color:var(--leise)">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
   </section>
 
-  <section class="panel">
-    <h2>Speicher</h2>
-    <div class="zeile"><span><span class="dot" id="d-persist"></span>Dauerhaft (persist)</span><span class="wert" id="v-persist">…</span></div>
-    <div class="zeile"><span><span class="dot" id="d-idb"></span>IndexedDB-Roundtrip</span><span class="wert" id="v-idb">…</span></div>
-    <div class="zeile"><span><span class="dot gut"></span>App-Starts (persistiert)</span><span class="wert" id="v-starts">…</span></div>
-    <div class="zeile"><span><span class="dot" id="d-quota"></span>Belegung / Kontingent</span><span class="wert" id="v-quota">…</span></div>
-  </section>
-
-  <section class="panel">
-    <h2>Heimnetz-Server</h2>
-    <div class="zeile"><span><span class="dot" id="d-srv"></span>Erreichbar</span><span class="wert" id="v-srv">…</span></div>
-    <div class="zeile"><span><span class="dot" id="d-zert"></span>Zertifikat gültig bis</span><span class="wert" id="v-zert">…</span></div>
-    <div class="zeile"><span><span class="dot" id="d-sync"></span>Sync-Roundtrip</span><span class="wert" id="v-sync">noch nicht getestet</span></div>
-    <div class="aktionen">
-      <button class="aktion" id="btn-sync-test" type="button">Sync-Roundtrip testen</button>
+  <section id="view-deck" class="hidden">
+    <div id="deck-fortschritt"></div>
+    <div id="deck-karte"></div>
+    <div class="deck-hilfe"><span>← −</span><span>↑ Notiz · ↓ weiter</span><span>+ →</span></div>
+    <div class="deck-btns">
+      <button class="btn" data-deck="-" style="color:var(--fehl);border-color:var(--fehl)">−</button>
+      <button class="btn still" data-deck="o">o</button>
+      <button class="btn" data-deck="+" style="color:var(--gut);border-color:var(--gut)">+</button>
+      <button class="btn still" data-deck="skip">weiter ↓</button>
     </div>
   </section>
+
+  <section id="view-schueler" class="hidden"></section>
+
+  <section id="view-kurse" class="hidden"></section>
+
+  <section id="view-mehr" class="hidden"></section>
 </main>
 
-<footer>Phase-1.5-Gate-Hülle · Daten dieses Panels bleiben auf dem Gerät</footer>
+<div class="aktionsbar hidden" id="aktionsbar"></div>
+<button id="undo-chip" class="hidden"></button>
+<div id="toast" class="hidden"></div>
+
+<nav class="tabs">
+  <button data-view="heute" class="aktiv"><span class="t-ico">▦</span>Heute</button>
+  <button data-view="deck"><span class="t-ico">🃏</span>Deck</button>
+  <button data-view="schueler"><span class="t-ico">👤</span>Schüler</button>
+  <button data-view="kurse"><span class="t-ico">📚</span>Kurse</button>
+  <button data-view="mehr"><span class="t-ico">⚙</span>Mehr</button>
+</nav>
+
+<dialog id="dlg"></dialog>
 
 <script>
 'use strict';
 (function () {
-  const APP_VERSION = '0.1.1';
-  const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
-  document.getElementById('version').textContent = 'v' + APP_VERSION + ' · ' + GERAET;
+const APP_VERSION = '0.2.0';
+const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
+const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 
-  const $ = (id) => document.getElementById(id);
-  function setzeStatus(key, ok, text, warnung) {
-    const dot = $('d-' + key), wert = $('v-' + key);
-    if (dot) dot.className = 'dot ' + (ok === true ? 'gut' : ok === false ? 'fehl' : 'warn');
-    if (wert) wert.textContent = text;
-    if (warnung) console.warn('[kladde]', key, text);
+/* ═══ LOGIK (geinlined aus logic/*.mjs · Node-getestet 31/31) ═══ */
+
+// --- skalen ---
+const DRITTELNOTEN_SCHWELLEN = [[0,1,'1+'],[1,1,'1'],[4,3,'1-'],[5,3,'2+'],[2,1,'2'],[7,3,'2-'],[8,3,'3+'],[3,1,'3'],[10,3,'3-'],[11,3,'4+'],[4,1,'4'],[13,3,'4-'],[14,3,'5+'],[5,1,'5'],[16,3,'5-'],[17,3,'6']];
+const DRITTELNOTEN = (() => { const m = {}; for (let n = 1; n <= 5; n++) { m[n+'+']=[3*n-1,3]; m[String(n)]=[n,1]; m[n+'-']=[3*n+1,3]; } m['6']=[6,1]; return m; })();
+const EPS = 1e-7;
+function drittelnoteLabel(wert){ const x=wert-EPS; let label='1+'; for(const [z,n,lab] of DRITTELNOTEN_SCHWELLEN){ if(x>=z/n) label=lab; else break; } return label; }
+function wertZuLabel(wert){ for(const [label,[z,n]] of Object.entries(DRITTELNOTEN)){ if(Math.abs(wert-z/n)<1e-6) return label; } return null; }
+function rundeAufDrittel(wert){ const w=Math.round(wert*3)/3; return Math.min(6,Math.max(1,w)); }
+function klemmePunkte(p){ return Math.min(15,Math.max(0,Math.round(p))); }
+function noteAlsWert(eingabe, profil){
+  if(profil==='sek2'){ const p=Math.round(Number(eingabe)); if(!(Number.isInteger(p)&&p>=0&&p<=15)) throw new Error('Punkte '+eingabe+' außerhalb 0–15'); return p; }
+  if(typeof eingabe==='string'){ const label=eingabe.replace('−','-').trim(); if(!(label in DRITTELNOTEN)) throw new Error('unbekannte Drittelnote '+eingabe); const [z,n]=DRITTELNOTEN[label]; return z/n; }
+  const w=Number(eingabe); if(!(w>=0.6&&w<=6.0)) throw new Error('Wert '+eingabe+' außerhalb 0,67–6,00'); return w;
+}
+
+// --- merge ---
+function mergeEvents(eventsA, eventsB){
+  const nachId=new Map();
+  for(const e of [...eventsA,...eventsB]){ const v=nachId.get(e.id); if(!v||String(e.ts)>String(v.ts)) nachId.set(e.id,e); }
+  return [...nachId.values()].sort((a,b)=> String(a.ts)<String(b.ts)?-1:String(a.ts)>String(b.ts)?1:a.id<b.id?-1:a.id>b.id?1:0);
+}
+function inhaltGleich(a,b){ const {rev:_a,ts:_b,geraet:_c,...ra}=a; const {rev:_d,ts:_e,geraet:_f,...rb}=b; return JSON.stringify(ra)===JSON.stringify(rb); }
+function mergeStammdaten(a,b){
+  if(!a) return {ergebnis:b,konflikt:null,verworfen:null};
+  if(!b) return {ergebnis:a,konflikt:null,verworfen:null};
+  if(a.rev!==b.rev){ const [s,v]=a.rev>b.rev?[a,b]:[b,a]; return {ergebnis:s,konflikt:null,verworfen:v}; }
+  if(inhaltGleich(a,b)) return {ergebnis:a,konflikt:null,verworfen:null};
+  const [s,v]=String(a.ts)>=String(b.ts)?[a,b]:[b,a];
+  return {ergebnis:s,verworfen:v,konflikt:'Stammdaten-Konflikt bei rev '+a.rev+': '+v.geraet+' ('+v.ts+') unterlag '+s.geraet+' ('+s.ts+') — verworfener Stand liegt bei.'};
+}
+function mergeContainerDaten(a,b){
+  const konflikte=[]; const st=mergeStammdaten(a.stamm,b.stamm); if(st.konflikt) konflikte.push(st.konflikt);
+  return {daten:{schema:a.schema||b.schema||'kladde/v1',stamm:st.ergebnis,events:mergeEvents(a.events||[],b.events||[])},verworfen:st.verworfen,konflikte};
+}
+
+// --- verdichtung ---
+const SOMI_TYPEN=new Set(['+','o','-']);
+const TERMIN_TYPEN=new Set(['+','o','-','note','mat','ipad_fehlt','ipad_leer','lernzeit','fehlt_e','fehlt_u','versp','notiz','ha']);
+function wirksameEvents(events){ const st=new Set(events.filter(e=>e.stornoVon).map(e=>e.stornoVon)); return events.filter(e=>!st.has(e.id)); }
+function terminVon(e){ return e.datum||String(e.ts).slice(0,10); }
+function scoreVon(somi){ let p=0,o=0,m=0; for(const e of somi){ if(e.typ==='+')p++; else if(e.typ==='o')o++; else m++; } return {nPlus:p,nNull:o,nMinus:m,score:(p-m)/Math.max(1,p+o+m)}; }
+function verdichte(kursEvents, schuelerNr, opt){
+  const profil=opt?.profil||'sek1', lb=Boolean(opt?.lb), von=opt?.von||'', bis=opt?.bis||'9999-12-31';
+  const wirksam=wirksameEvents(kursEvents).filter(e=>{const t=terminVon(e); return t>=von&&t<=bis;});
+  const kursTermine=new Set(wirksam.filter(e=>TERMIN_TYPEN.has(e.typ)).map(terminVon));
+  const meine=wirksam.filter(e=>e.schuelerNr===schuelerNr);
+  const somi=meine.filter(e=>SOMI_TYPEN.has(e.typ));
+  const direkte=meine.filter(e=>e.typ==='note');
+  const beteiligt=new Set(meine.filter(e=>SOMI_TYPEN.has(e.typ)||e.typ==='note').map(terminVon));
+  const bilanz=scoreVon(somi);
+  const aktivQuote=kursTermine.size?beteiligt.size/kursTermine.size:0;
+  let pfeil='→';
+  const termine=[...new Set(somi.map(terminVon))].sort();
+  if(termine.length>=4){
+    const mitte=Math.ceil(termine.length/2); const fruehe=new Set(termine.slice(0,mitte));
+    const s1=scoreVon(somi.filter(e=>fruehe.has(terminVon(e)))).score;
+    const s2=scoreVon(somi.filter(e=>!fruehe.has(terminVon(e)))).score;
+    const d=s2-s1; pfeil=d>0.15?'↑':d<-0.15?'↓':'→';
   }
-
-  // ── Umgebung ──────────────────────────────────────────────────────────
-  setzeStatus('ctx', window.isSecureContext, (window.isSecureContext ? 'ja' : 'NEIN') + ' · ' + location.protocol + '//' + location.host);
-
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  setzeStatus('mode', standalone ? true : null, standalone ? 'standalone (installiert)' : 'Browser-Tab (nicht installiert)');
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(function (reg) {
-          const st = reg.active ? 'aktiv' : (reg.installing ? 'installiert…' : 'registriert');
-          setzeStatus('sw', true, st + ' · Scope ' + new URL(reg.scope).pathname);
-        })
-        .catch(function (err) {
-          setzeStatus('sw', false, 'Registrierung fehlgeschlagen: ' + err.message, true);
-        });
-    });
-  } else {
-    setzeStatus('sw', false, 'API fehlt');
-  }
-
-  // ── Speicher ──────────────────────────────────────────────────────────
-  if (navigator.storage && navigator.storage.persist) {
-    navigator.storage.persisted().then(function (schon) {
-      if (schon) { setzeStatus('persist', true, 'gewährt'); return; }
-      return navigator.storage.persist().then(function (granted) {
-        setzeStatus('persist', granted ? true : null, granted ? 'gewährt (neu)' : 'nicht gewährt — als App installieren');
-      });
-    });
-  } else {
-    setzeStatus('persist', null, 'API fehlt');
-  }
-
-  if (navigator.storage && navigator.storage.estimate) {
-    navigator.storage.estimate().then(function (e) {
-      const mb = (n) => (n / 1048576).toFixed(1) + ' MB';
-      setzeStatus('quota', true, mb(e.usage || 0) + ' / ' + mb(e.quota || 0));
-    });
-  } else {
-    setzeStatus('quota', null, 'API fehlt');
-  }
-
-  // IndexedDB-Roundtrip + App-Start-Zähler (beweist Persistenz über Kill/Neustart)
-  const DB_NAME = 'kladde_v1';
-  function mitDb(fn) {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = function () {
-      req.result.createObjectStore('meta');
-    };
-    req.onsuccess = function () { fn(null, req.result); };
-    req.onerror = function () { fn(req.error); };
-  }
-  mitDb(function (err, db) {
-    if (err) { setzeStatus('idb', false, String(err), true); return; }
-    try {
-      const tx = db.transaction('meta', 'readwrite');
-      const st = tx.objectStore('meta');
-      const lese = st.get('starts');
-      lese.onsuccess = function () {
-        const starts = (lese.result || 0) + 1;
-        st.put(starts, 'starts');
-        st.put(new Date().toISOString(), 'letzterStart');
-        tx.oncomplete = function () {
-          setzeStatus('idb', true, 'Schreiben + Lesen ok');
-          $('v-starts').textContent = String(starts);
-          db.close();
-        };
-      };
-      tx.onerror = function () { setzeStatus('idb', false, String(tx.error), true); db.close(); };
-    } catch (e) {
-      setzeStatus('idb', false, e.message, true);
+  let vorschlag=null;
+  if(!lb&&(somi.length>0||direkte.length>0)){
+    if(profil==='sek2'){
+      let punkte=somi.length?9+6*bilanz.score:null;
+      if(direkte.length){ const mittel=direkte.reduce((s,e)=>s+noteAlsWert(e.wert,'sek2'),0)/direkte.length; punkte=punkte===null?mittel:(punkte+mittel)/2; }
+      const p=klemmePunkte(punkte); vorschlag={wert:p,label:p+' P'};
+    } else {
+      let note=somi.length?3-2*bilanz.score:null;
+      if(direkte.length){ const mittel=direkte.reduce((s,e)=>s+noteAlsWert(e.wert,'sek1'),0)/direkte.length; note=note===null?mittel:(note+mittel)/2; }
+      const w=rundeAufDrittel(note); vorschlag={wert:w,label:wertZuLabel(w)};
     }
-  });
-
-  // ── Heimnetz-Server ───────────────────────────────────────────────────
-  // Auf GitHub Pages (MDM-Weg, Fall 2) gibt es keinen Heimnetz-Server hinter der Origin —
-  // Sync läuft dort über den SMB-Briefkasten (Dateien-App), nicht über fetch.
-  const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
-  if (PAGES_KONTEXT) {
-    setzeStatus('srv', null, 'Pages-Betrieb — Sync über SMB-Briefkasten');
-    setzeStatus('zert', null, 'entfällt (öffentliche HTTPS-Origin)');
-    setzeStatus('sync', null, 'entfällt — Datei-Export/Import');
-    $('btn-sync-test').style.display = 'none';
-  } else {
-    fetch('/api/kladde/status', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (s) {
-        setzeStatus('srv', true, s.server + ' · ' + s.zeit);
-        setzeStatus('zert', true, s.zert_bis);
-      })
-      .catch(function (err) {
-        setzeStatus('srv', false, 'nicht erreichbar (' + err.message + ')');
-        setzeStatus('zert', null, '—');
-      });
   }
+  return {...bilanz,beteiligtTermine:beteiligt.size,kursTermine:kursTermine.size,aktivQuote,pfeil,vorschlag,regelText:regelText(profil)};
+}
+function regelText(profil){
+  const basis='score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen 50:50';
+  return profil==='sek2'?'Punkte-Vorschlag = 9 + 6·score (0–15) · '+basis:'Noten-Vorschlag = 3 − 2·score (Drittelnoten) · '+basis;
+}
 
-  // Sync-Roundtrip: Dummy-Container (Magic KLD1 + Zeitstempel) push → pull → Vergleich
-  $('btn-sync-test').addEventListener('click', function () {
-    const btn = this;
-    btn.disabled = true;
-    setzeStatus('sync', null, 'läuft…');
-    const nutzlast = new TextEncoder().encode('KLD1' + JSON.stringify({ test: true, geraet: GERAET, ts: Date.now() }));
-    fetch('/api/kladde/push/' + GERAET, { method: 'POST', body: nutzlast })
-      .then(function (r) { if (!r.ok) throw new Error('push HTTP ' + r.status); return r.json(); })
-      .then(function (p) {
-        return fetch('/api/kladde/pull/' + GERAET, { cache: 'no-store' }).then(function (r) {
-          if (!r.ok) throw new Error('pull HTTP ' + r.status);
-          return r.arrayBuffer();
-        }).then(function (buf) {
-          const gleich = buf.byteLength === nutzlast.byteLength;
-          setzeStatus('sync', gleich, gleich ? 'ok · ' + p.generationen + ' Generation(en)' : 'Antwort weicht ab', !gleich);
-        });
-      })
-      .catch(function (err) { setzeStatus('sync', false, err.message, true); })
-      .finally(function () { btn.disabled = false; });
+// --- container (KLD1) ---
+const KLD_MAGIC=new Uint8Array([0x4b,0x4c,0x44,0x31]);
+async function ableiteSchluessel(passwort,salt,iterationen){
+  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(passwort),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt,iterations:iterationen},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function encodeContainer(obj,passwort,iterationen=600000){
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await ableiteSchluessel(passwort,salt,iterationen);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj))));
+  const out=new Uint8Array(38+ct.length);
+  out.set(KLD_MAGIC,0); out[4]=1; out[5]=1;
+  new DataView(out.buffer).setUint32(6,iterationen,true);
+  out.set(salt,10); out.set(iv,26); out.set(ct,38);
+  return out;
+}
+function leseHeader(bytes){
+  if(bytes.length<54) throw new Error('Container zu kurz');
+  for(let i=0;i<4;i++) if(bytes[i]!==KLD_MAGIC[i]) throw new Error('kein Kladde-Container');
+  if(bytes[4]!==1) throw new Error('unbekannte Container-Version');
+  if(bytes[5]!==1) throw new Error('unbekannte KDF-Kennung');
+  return {iterationen:new DataView(bytes.buffer,bytes.byteOffset).getUint32(6,true),salt:bytes.slice(10,26),iv:bytes.slice(26,38),ciphertext:bytes.slice(38)};
+}
+async function decodeContainer(bytes,passwort){
+  const kopf=leseHeader(bytes);
+  const key=await ableiteSchluessel(passwort,kopf.salt,kopf.iterationen);
+  let klartext;
+  try { klartext=await crypto.subtle.decrypt({name:'AES-GCM',iv:kopf.iv},key,kopf.ciphertext); }
+  catch { throw new Error('Falsche PIN oder Container beschädigt'); }
+  return JSON.parse(new TextDecoder().decode(klartext));
+}
+
+/* ═══ STORAGE · Vault = KLD1-Container in IndexedDB ═══ */
+const DB_NAME='kladde_v1';
+let db=null, pinRam=null, vault=null; // vault = entschlüsselter Zustand im RAM
+function mitDb(){ return new Promise((res,rej)=>{ if(db) return res(db);
+  const req=indexedDB.open(DB_NAME,1);
+  req.onupgradeneeded=()=>req.result.createObjectStore('meta');
+  req.onsuccess=()=>{db=req.result;res(db);}; req.onerror=()=>rej(req.error); }); }
+function idbGet(k){ return mitDb().then(d=>new Promise((res,rej)=>{ const r=d.transaction('meta').objectStore('meta').get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); })); }
+function idbPut(k,v){ return mitDb().then(d=>new Promise((res,rej)=>{ const tx=d.transaction('meta','readwrite'); tx.objectStore('meta').put(v,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); })); }
+
+let speicherKette=Promise.resolve(); // Write-through seriell (keine Races)
+function speichern(){
+  if(!vault||!pinRam) return speicherKette;
+  const snapshot=JSON.stringify(vault);
+  speicherKette=speicherKette
+    .then(()=>encodeContainer(JSON.parse(snapshot),pinRam))
+    .then(blob=>idbPut('vault',blob))
+    .catch(err=>{ console.error('[kladde] speichern',err); toast('⚠ Speichern fehlgeschlagen: '+err.message); });
+  return speicherKette;
+}
+function leererVault(){
+  return {schema:'kladde/v1',
+    stamm:{rev:1,ts:new Date().toISOString(),geraet:GERAET,kurse:[],schueler:{},sitzplaene:{},kursprofile:{},stundenplanSlots:[],einstellungen:{slot:'m1'}},
+    events:[]};
+}
+function stammMutiert(){ vault.stamm.rev++; vault.stamm.ts=new Date().toISOString(); vault.stamm.geraet=GERAET; }
+
+/* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
+const $=id=>document.getElementById(id);
+let lockTimer=null, zuletztAktiv=Date.now();
+function toast(text,ms=2600){ const t=$('toast'); t.textContent=text; t.classList.remove('hidden'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add('hidden'),ms); }
+
+async function lockInit(){
+  const blob=await idbGet('vault');
+  const neu=!blob;
+  $('lock-text').textContent=neu?'Neue PIN festlegen (mind. 6 Stellen)':'PIN eingeben';
+  $('pin2').classList.toggle('hidden',!neu);
+  $('lock-btn').textContent=neu?'Kladde anlegen':'Öffnen';
+  $('pin').value=''; $('pin2').value=''; $('lock-fehler').textContent='';
+  $('lock').classList.remove('hidden');
+  setTimeout(()=>$('pin').focus(),50);
+  $('lock-btn').onclick=async()=>{
+    const pin=$('pin').value;
+    if(neu){
+      if(pin.length<6){ $('lock-fehler').textContent='Mindestens 6 Stellen.'; return; }
+      if(pin!==$('pin2').value){ $('lock-fehler').textContent='PINs stimmen nicht überein.'; return; }
+      pinRam=pin; vault=leererVault();
+      await speichern(); entsperrt();
+    } else {
+      $('lock-btn').disabled=true; $('lock-fehler').textContent='prüfe… (PBKDF2)';
+      const t0=performance.now();
+      try {
+        vault=await decodeContainer(await idbGet('vault'),pin);
+        pinRam=pin;
+        console.log('[kladde] Unlock in',Math.round(performance.now()-t0),'ms');
+        entsperrt();
+      } catch(e){ $('lock-fehler').textContent=e.message; }
+      $('lock-btn').disabled=false;
+    }
+  };
+  const enter=e=>{ if(e.key==='Enter') $('lock-btn').click(); };
+  $('pin').onkeydown=enter; $('pin2').onkeydown=enter;
+}
+function sperren(){ vault=null; pinRam=null; aktiverSchueler=null; $('aktionsbar').classList.add('hidden'); lockInit(); }
+function entsperrt(){
+  $('lock').classList.add('hidden');
+  zuletztAktiv=Date.now();
+  clearInterval(lockTimer);
+  lockTimer=setInterval(()=>{ if(Date.now()-zuletztAktiv>15*60*1000) sperren(); },30*1000);
+  kursAutowahl(); renderAlles();
+}
+['pointerdown','keydown'].forEach(evName=>document.addEventListener(evName,()=>{zuletztAktiv=Date.now();},{capture:true,passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&vault) speichern(); });
+window.addEventListener('pagehide',()=>{ if(vault) speichern(); });
+$('btn-lock').addEventListener('click',()=>{ speichern().then(sperren); });
+
+/* ═══ ZUSTAND-HELPERS ═══ */
+let aktiverKursId=null, terminDatum=heuteIso(), aktiverSchueler=null, undoStack=[];
+function heuteIso(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function kurs(){ return vault?.stamm.kurse.find(k=>k.id===aktiverKursId)||null; }
+function kursSchueler(k){ return (vault.stamm.schueler[k.id]||[]); }
+function profilTypen(k){
+  const p=vault.stamm.kursprofile[k.id]||{};
+  const basis=['+','o','-','mat','ipad_fehlt','ipad_leer','lernzeit'];
+  if(p.ha) basis.push('ha');
+  return basis;
+}
+function addEvent(typ,schuelerNr,extra={}){
+  const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
+  vault.events.push(e);
+  undoStack.push(e); if(undoStack.length>50) undoStack.shift();
+  speichern();
+  zeigeUndo(e);
+  return e;
+}
+function stornoVon(e){
+  const s={id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id};
+  vault.events.push(s); speichern();
+}
+const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note'};
+function zeigeUndo(e){
+  const chip=$('undo-chip');
+  const s=schuelerVonNr(e.schuelerNr);
+  chip.textContent='↶ '+(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ);
+  chip.classList.remove('hidden');
+  clearTimeout(chip._t); chip._t=setTimeout(()=>chip.classList.add('hidden'),6000);
+  chip.onclick=()=>{ stornoVon(e); chip.classList.add('hidden'); toast('Rückgängig: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); };
+}
+function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.nr===nr):null; }
+
+/* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
+function kursAutowahl(){
+  if(!vault) return;
+  const jetzt=new Date();
+  const wtag=((jetzt.getDay()+6)%7)+1; // Mo=1
+  const hhmm=String(jetzt.getHours()).padStart(2,'0')+':'+String(jetzt.getMinutes()).padStart(2,'0');
+  const slot=vault.stamm.stundenplanSlots.find(s=>s.wochentag===wtag&&s.von<=hhmm&&hhmm<=s.bis);
+  if(slot){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
+  else if(!aktiverKursId&&vault.stamm.kurse.length) aktiverKursId=vault.stamm.kurse[0].id;
+  aktualisiereKursChip();
+}
+let aktiveTeilgruppe=null;
+function aktualisiereKursChip(){
+  const k=kurs();
+  $('kurs-name').textContent=k?k.name+' · '+k.fach:'Kein Kurs';
+  if(!kurs()) $('kurs-slot').textContent='';
+}
+$('kurs-chip').addEventListener('click',()=>{
+  if(!vault) return;
+  const k=kurs();
+  dlgZeigen('<h3>Kurs wählen</h3>'+
+    vault.stamm.kurse.map(x=>'<button class="btn'+(k&&x.id===k.id?'':' still')+'" style="display:block;width:100%;margin:6px 0" data-kurs="'+x.id+'">'+esc(x.name)+' · '+esc(x.fach)+'</button>').join('')+
+    '<div class="zeile"><span>Teilgruppe</span><span><select id="tg-sel"><option value="">alle</option><option value="A">A</option><option value="B">B</option></select></span></div>'+
+    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
+    el=>{
+      el.querySelector('#tg-sel').value=aktiveTeilgruppe||'';
+      el.querySelectorAll('[data-kurs]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.kurs; aktiveTeilgruppe=el.querySelector('#tg-sel').value||null; $('kurs-slot').textContent=aktiveTeilgruppe?' · Gr. '+aktiveTeilgruppe:''; dlgZu(); aktualisiereKursChip(); renderAlles(); });
+      el.querySelector('#tg-sel').onchange=e=>{ aktiveTeilgruppe=e.target.value||null; renderHeute(); };
+    });
+});
+$('btn-datum').addEventListener('click',()=>{
+  dlgZeigen('<h3>Termin-Datum</h3><p style="color:var(--leise);font-size:14px">Für Nacharbeit — Ereignisse werden diesem Termin zugeordnet.</p>'+
+    '<input type="date" id="datum-in" value="'+terminDatum+'"><div class="btn-reihe"><button class="btn" data-ok>Übernehmen</button><button class="btn still" data-heute>Heute</button></div>',
+    el=>{
+      el.querySelector('[data-ok]').onclick=()=>{ terminDatum=el.querySelector('#datum-in').value||heuteIso(); dlgZu(); toast('Termin: '+terminDatum); };
+      el.querySelector('[data-heute]').onclick=()=>{ terminDatum=heuteIso(); dlgZu(); toast('Termin: heute'); };
+    });
+});
+
+/* ═══ DIALOG-HELFER ═══ */
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function dlgZeigen(html,setup){
+  const d=$('dlg'); d.innerHTML=html;
+  d.querySelectorAll('[data-schliessen]').forEach(b=>b.onclick=()=>d.close());
+  if(setup) setup(d);
+  d.showModal();
+}
+function dlgZu(){ $('dlg').close(); }
+
+/* ═══ VIEWS / TABS (replaceState-only — Edge-Swipe-Doktrin) ═══ */
+let aktView='heute';
+document.querySelector('nav.tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-view]'); if(!b) return;
+  aktView=b.dataset.view;
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x===b));
+  ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==aktView));
+  $('aktionsbar').classList.add('hidden'); aktiverSchueler=null;
+  renderAlles();
+});
+function renderAlles(){
+  if(!vault) return;
+  if(aktView==='heute') renderHeute();
+  else if(aktView==='deck') renderDeck();
+  else if(aktView==='schueler') renderSchueler();
+  else if(aktView==='kurse') renderKurse();
+  else renderMehr();
+}
+
+/* ═══ HEUTE · Sitzplan 12×12 (Beamer-Regel: keine Werte sichtbar) ═══ */
+let busy=false; // Härtungs-Regel 6: Eingabe-Lock
+function sichtbareSchueler(k){
+  let liste=kursSchueler(k);
+  if(aktiveTeilgruppe) liste=liste.filter(s=>(s.gruppe||'')===aktiveTeilgruppe);
+  return liste;
+}
+function renderHeute(){
+  const k=kurs(); const plan=$('plan');
+  $('heute-leer').classList.toggle('hidden',Boolean(k));
+  plan.classList.remove('editor');
+  if(!k){ plan.innerHTML=''; return; }
+  const grid=(vault.stamm.sitzplaene[k.id]||{}).grid||{};
+  const sichtbar=new Set(sichtbareSchueler(k).map(s=>s.nr));
+  const heuteErfasst=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum).map(e=>e.schuelerNr));
+  let html='';
+  for(let r=0;r<12;r++) for(let c=0;c<12;c++){
+    const nr=grid[r+','+c];
+    const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
+    if(s&&sichtbar.has(s.nr)){
+      html+='<div class="kachel schueler'+(aktiverSchueler===s.nr?' gewaehlt':'')+(heuteErfasst.has(s.nr)?' erfasst':'')+'" data-nr="'+s.nr+'"><span class="vn">'+esc(s.vorname)+'</span><span class="nn">'+esc(s.name)+'</span></div>';
+    } else html+='<div class="kachel leer"></div>';
+  }
+  plan.innerHTML=html;
+  const ohnePlatz=sichtbareSchueler(k).filter(s=>!Object.values(grid).includes(s.nr));
+  if(ohnePlatz.length){
+    plan.insertAdjacentHTML('afterend','');
+    let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
+    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still" style="margin:3px" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('');
+    liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>waehleSchueler(Number(b.dataset.nr)));
+  } else { const l=$('ohne-platz'); if(l) l.remove(); }
+}
+$('plan').addEventListener('pointerup',e=>{
+  const kachel=e.target.closest('.kachel.schueler'); if(!kachel||busy) return;
+  if($('plan').classList.contains('editor')) return;
+  waehleSchueler(Number(kachel.dataset.nr));
+});
+function waehleSchueler(nr){
+  aktiverSchueler=nr;
+  renderHeute(); renderAktionsbar();
+}
+function renderAktionsbar(){
+  const k=kurs(); const bar=$('aktionsbar');
+  if(!k||aktiverSchueler===null){ bar.classList.add('hidden'); return; }
+  const s=schuelerVonNr(aktiverSchueler); if(!s){ bar.classList.add('hidden'); return; }
+  const typen=profilTypen(k);
+  let html='<span class="wer">'+esc(s.vorname)+'</span>';
+  for(const t of typen){
+    const cls=t==='+'?' class="plus"':t==='-'?' class="minus"':'';
+    html+='<button'+cls+' data-typ="'+t+'">'+({'+':'＋','o':'o','-':'−',mat:'📘',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA'}[t]||t)+'</button>';
+  }
+  html+='<button data-mehr>…</button><button data-zu>✕</button>';
+  bar.innerHTML=html; bar.classList.remove('hidden');
+  bar.querySelectorAll('[data-typ]').forEach(b=>b.onclick=()=>{
+    if(busy) return; busy=true;
+    addEvent(b.dataset.typ,aktiverSchueler);
+    b.style.borderColor='var(--band)';
+    setTimeout(()=>{ b.style.borderColor=''; busy=false; },220);
+    renderHeute();
   });
+  bar.querySelector('[data-zu]').onclick=()=>{ aktiverSchueler=null; bar.classList.add('hidden'); renderHeute(); };
+  bar.querySelector('[data-mehr]').onclick=()=>zeigeMehrAktionen(s);
+}
+function zeigeMehrAktionen(s){
+  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3><div class="btn-reihe">'+
+    '<button class="btn still" data-t="fehlt_e">fehlt (e)</button>'+
+    '<button class="btn still" data-t="fehlt_u">fehlt (u)</button>'+
+    '<button class="btn still" data-t="versp">zu spät…</button>'+
+    '<button class="btn still" data-t="note">Note…</button>'+
+    '<button class="btn still" data-t="notiz">Notiz…</button></div>'+
+    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
+    el=>{
+      el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+        const t=b.dataset.t; dlgZu();
+        if(t==='versp'){
+          dlgZeigen('<h3>Verspätung</h3><input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="67"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+            d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); } dlgZu(); }; });
+        } else if(t==='note'){
+          const k=kurs(); const sek2=k.profil==='sek2';
+          const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
+          dlgZeigen('<h3>Direkte Note</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+            d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); dlgZu(); }; });
+        } else if(t==='notiz'){
+          dlgZeigen('<h3>Notiz</h3><textarea id="notiz-in" rows="3" style="width:100%;background:var(--karte2);color:var(--text);border:1px solid var(--kante);border-radius:8px;padding:8px"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+            d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); }; });
+        } else { addEvent(t,s.nr); renderHeute(); }
+      });
+    });
+}
+
+/* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Notiz ↓weiter) ═══ */
+let deckListe=[], deckIdx=0;
+function renderDeck(){
+  const k=kurs();
+  if(!k){ $('deck-karte').innerHTML='<span class="sub">Kein Kurs gewählt.</span>'; $('deck-fortschritt').textContent=''; return; }
+  if(!deckListe.length||deckListe._kurs!==k.id||deckListe._datum!==terminDatum){
+    deckListe=[...sichtbareSchueler(k)]; deckListe._kurs=k.id; deckListe._datum=terminDatum; deckIdx=0;
+  }
+  zeigeDeckKarte();
+}
+function zeigeDeckKarte(){
+  const karte=$('deck-karte');
+  if(deckIdx>=deckListe.length){
+    karte.innerHTML='<span class="gross">✓</span><span class="sub">'+deckListe.length+' Karten durch — Ritual beendet.</span>';
+    $('deck-fortschritt').textContent=deckListe.length+' / '+deckListe.length;
+    return;
+  }
+  const s=deckListe[deckIdx];
+  $('deck-fortschritt').textContent=(deckIdx+1)+' / '+deckListe.length;
+  karte.innerHTML='<span class="gross">'+esc(s.vorname)+'</span><span class="sub">'+esc(s.name)+(s.lb?' · LB':'')+'</span>';
+}
+function deckAktion(aktion){
+  if(busy||deckIdx>=deckListe.length) return;
+  busy=true;
+  const s=deckListe[deckIdx];
+  if(aktion==='+'||aktion==='o'||aktion==='-') addEvent(aktion,s.nr);
+  if(aktion==='notiz'){ busy=false; zeigeMehrAktionen(s); return; }
+  deckIdx++;
+  zeigeDeckKarte();
+  setTimeout(()=>{busy=false;},180);
+}
+document.querySelectorAll('[data-deck]').forEach(b=>b.addEventListener('click',()=>deckAktion(b.dataset.deck==='skip'?'skip':b.dataset.deck)));
+(function deckSwipe(){
+  const karte=$('deck-karte');
+  let start=null;
+  karte.addEventListener('pointerdown',e=>{ start=[e.clientX,e.clientY]; try{karte.setPointerCapture(e.pointerId);}catch{} });
+  const ende=e=>{
+    if(!start) return;
+    const dx=e.clientX-start[0], dy=e.clientY-start[1]; start=null;
+    const ax=Math.abs(dx), ay=Math.abs(dy);
+    if(Math.max(ax,ay)<40) return;
+    if(ax>ay) deckAktion(dx>0?'+':'-');
+    else deckAktion(dy>0?'skip':'notiz');
+  };
+  karte.addEventListener('pointerup',ende);
+  document.addEventListener('pointercancel',()=>{start=null;},{capture:true}); // Härtungs-Regel 1
+})();
+
+/* ═══ SCHÜLER · Verdichtung (Bilanz + Tendenz + Vorschlag, sichtbare Regel) ═══ */
+function renderSchueler(){
+  const k=kurs(); const wrap=$('view-schueler');
+  if(!k){ wrap.innerHTML='<p style="color:var(--leise)">Kein Kurs gewählt.</p>'; return; }
+  const kursEvents=vault.events.filter(e=>e.kursId===k.id);
+  const offeneU=wirksameEvents(kursEvents).filter(e=>e.typ==='fehlt_u');
+  let html='';
+  if(offeneU.length){
+    html+='<div class="panel"><h2>Wiedervorlage · offene u ('+offeneU.length+')</h2>'+
+      offeneU.map(e=>{ const s=kursSchueler(k).find(x=>x.nr===e.schuelerNr);
+        return '<div class="zeile"><span>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+' · '+e.datum+'</span><button class="btn still" data-ue="'+e.id+'">→ e</button></div>'; }).join('')+'</div>';
+  }
+  html+='<div class="panel"><h2>'+esc(k.name)+' · Verdichtung</h2><p style="font-size:12px;color:var(--leise);margin:4px 0 8px">'+esc(regelText(k.profil))+'</p>';
+  for(const s of kursSchueler(k)){
+    const v=verdichte(kursEvents,s.nr,{profil:k.profil,lb:s.lb});
+    const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
+    html+='<div class="s-item" data-nr="'+s.nr+'"><div style="min-width:110px"><b>'+esc(s.vorname)+'</b> <small style="color:var(--leise)">'+esc(s.name)+(s.lb?' · LB':'')+'</small></div>'+
+      '<div style="flex:1"><div class="balken"><div style="background:var(--gut);width:'+(100*v.nPlus/sum)+'%"></div><div style="background:var(--leise);width:'+(100*v.nNull/sum)+'%"></div><div style="background:var(--fehl);width:'+(100*v.nMinus/sum)+'%"></div></div>'+
+      '<small style="color:var(--leise)">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · '+Math.round(100*v.aktivQuote)+'% · '+v.pfeil+'</small></div>'+
+      '<div style="font-weight:700;min-width:44px;text-align:right">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</div><span class="pfeil">›</span></div>';
+  }
+  html+='</div>';
+  wrap.innerHTML=html;
+  wrap.querySelectorAll('[data-ue]').forEach(b=>b.onclick=()=>{
+    const e=vault.events.find(x=>x.id===b.dataset.ue);
+    if(e){ addEvent('fehlt_e',e.schuelerNr,{datum:e.datum,stornoVon:e.id}); toast('Nachgetragen: entschuldigt ('+e.datum+')'); renderSchueler(); }
+  });
+  wrap.querySelectorAll('.s-item').forEach(el=>el.onclick=()=>zeigeSchuelerDetail(Number(el.dataset.nr)));
+}
+function zeigeSchuelerDetail(nr){
+  const k=kurs(); const s=schuelerVonNr(nr); if(!k||!s) return;
+  const kursEvents=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===nr))
+    .sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  const v=verdichte(vault.events.filter(e=>e.kursId===k.id),nr,{profil:k.profil,lb:s.lb});
+  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB (kein Vorschlag/Export)':'')+'</h3>'+
+    '<div class="zeile"><span>Bilanz</span><span class="wert">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · Verlauf '+v.pfeil+'</span></div>'+
+    '<div class="zeile"><span>Beteiligung</span><span class="wert">'+v.beteiligtTermine+' / '+v.kursTermine+' Termine</span></div>'+
+    '<div class="zeile"><span>Vorschlag</span><span class="wert">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</span></div>'+
+    (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal>Als Quartalsnote setzen…</button></div>':'')+
+    '<h3 style="font-size:14px;margin-top:14px">Ereignisse ('+kursEvents.length+')</h3>'+
+    '<div style="max-height:34vh;overflow:auto">'+
+    kursEvents.slice(0,120).map(e=>'<div class="zeile"><span>'+e.datum+' · '+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span><button class="btn still" style="min-height:34px;padding:4px 10px" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>'+
+    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
+    el=>{
+      el.querySelectorAll('[data-storno]').forEach(b=>b.onclick=()=>{ const e=vault.events.find(x=>x.id===b.dataset.storno); if(e){ stornoVon(e); toast('storniert'); dlgZu(); renderSchueler(); } });
+      const q=el.querySelector('[data-quartal]');
+      if(q) q.onclick=()=>{ dlgZu(); setzeQuartalsnote(s,v.vorschlag); };
+    });
+}
+function setzeQuartalsnote(s,vorschlag){
+  const k=kurs(); const sek2=k.profil==='sek2';
+  const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
+  const vorwahl=sek2?String(vorschlag.wert):(wertZuLabel(vorschlag.wert)||'3');
+  dlgZeigen('<h3>Quartalsnote · '+esc(s.vorname)+'</h3><p style="color:var(--leise);font-size:13px">Vorschlag: '+esc(vorschlag.label)+' — du entscheidest.</p>'+
+    '<div class="zeile"><span>HJ</span><select id="q-hj"><option value="1">1. HJ</option><option value="2">2. HJ</option></select></div>'+
+    '<div class="zeile"><span>Quartal</span><select id="q-q"><option value="1">Q1</option><option value="2">Q2</option></select></div>'+
+    '<div class="zeile"><span>Note</span><select id="q-note">'+optionen.map(o=>'<option'+(o===vorwahl?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+    '<div class="btn-reihe"><button class="btn" data-ok>Setzen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{ el.querySelector('[data-ok]').onclick=()=>{
+      addEvent('quartalsnote',s.nr,{hj:Number(el.querySelector('#q-hj').value),quartal:Number(el.querySelector('#q-q').value),wert:el.querySelector('#q-note').value});
+      toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu();
+    }; });
+}
+
+/* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
+function renderKurse(){
+  const wrap=$('view-kurse');
+  let html='<div class="panel"><h2>Kurs importieren</h2>'+
+    '<p style="font-size:13px;color:var(--leise)">Am PC: <code>python import_klassenliste.py "Mappe.xlsx"</code> → .kurs.json hier laden.</p>'+
+    '<div class="btn-reihe"><button class="btn" id="btn-import-kurs">kurs.json laden</button></div><input type="file" id="file-kurs" accept=".json,application/json" class="hidden"></div>';
+  for(const k of vault.stamm.kurse){
+    const anz=kursSchueler(k).length;
+    const p=vault.stamm.kursprofile[k.id]||{};
+    html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(k.fach)+' <small style="text-transform:none">('+k.profil+' · '+anz+' Schüler)</small></h2>'+
+      '<div class="zeile"><span>Kladde-m-Slot (Export)</span><span><select data-slot="'+k.id+'">'+['m1','m2','m3','m4','m5','m6'].map(m=>'<option'+((k.slot||'m1')===m?' selected':'')+'>'+m+'</option>').join('')+'</select></span></div>'+
+      '<div class="zeile"><span>HA-Typ aktiv (SekI-Schule: aus)</span><span><input type="checkbox" data-ha="'+k.id+'"'+(p.ha?' checked':'')+' style="width:22px;height:22px"></span></div>'+
+      '<div class="btn-reihe">'+
+      '<button class="btn still" data-plan-edit="'+k.id+'">Sitzplan bearbeiten</button>'+
+      '<button class="btn still" data-slots="'+k.id+'">Stundenplan-Slots</button>'+
+      '<button class="btn still" data-gruppen="'+k.id+'">Halbgruppen</button>'+
+      '<button class="btn gefahr" data-kurs-weg="'+k.id+'">Entfernen</button></div></div>';
+  }
+  wrap.innerHTML=html;
+  $('btn-import-kurs').onclick=()=>$('file-kurs').click();
+  $('file-kurs').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try {
+      const kursJson=JSON.parse(await f.text());
+      if(kursJson.schema!=='kladde/v1'||!kursJson.kurs) throw new Error('kein kladde/v1-Kurs');
+      const k=kursJson.kurs; k.slot=k.slot||'m1';
+      const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
+      if(idx>=0) vault.stamm.kurse[idx]=k; else vault.stamm.kurse.push(k);
+      vault.stamm.schueler[k.id]=kursJson.schueler;
+      stammMutiert(); speichern();
+      aktiverKursId=k.id; aktualisiereKursChip();
+      toast('Importiert: '+k.name+' ('+kursJson.schueler.length+' Schüler'+(kursJson.warnungen?.length?' · '+kursJson.warnungen.length+' Warnung(en)':'')+')');
+      renderKurse();
+    } catch(err){ toast('⚠ Import: '+err.message,4000); }
+    e.target.value='';
+  };
+  wrap.querySelectorAll('[data-slot]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.slot); k.slot=sel.value; stammMutiert(); speichern(); toast('Export-Slot: '+sel.value); });
+  wrap.querySelectorAll('[data-ha]').forEach(cb=>cb.onchange=()=>{ vault.stamm.kursprofile[cb.dataset.ha]={...(vault.stamm.kursprofile[cb.dataset.ha]||{}),ha:cb.checked}; stammMutiert(); speichern(); });
+  wrap.querySelectorAll('[data-kurs-weg]').forEach(b=>b.onclick=()=>{
+    dlgZeigen('<h3>Kurs entfernen?</h3><p style="color:var(--leise)">Ereignisse bleiben im Log (Storno-Prinzip), aber der Kurs verschwindet aus allen Listen.</p><div class="btn-reihe"><button class="btn gefahr" data-ok>Entfernen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+      el=>{ el.querySelector('[data-ok]').onclick=()=>{ vault.stamm.kurse=vault.stamm.kurse.filter(x=>x.id!==b.dataset.kursWeg); stammMutiert(); speichern(); if(aktiverKursId===b.dataset.kursWeg) aktiverKursId=null; dlgZu(); renderKurse(); aktualisiereKursChip(); }; });
+  });
+  wrap.querySelectorAll('[data-plan-edit]').forEach(b=>b.onclick=()=>sitzplanEditor(b.dataset.planEdit));
+  wrap.querySelectorAll('[data-slots]').forEach(b=>b.onclick=()=>slotsEditor(b.dataset.slots));
+  wrap.querySelectorAll('[data-gruppen]').forEach(b=>b.onclick=()=>gruppenEditor(b.dataset.gruppen));
+}
+function sitzplanEditor(kursId){
+  aktiverKursId=kursId; aktualisiereKursChip();
+  aktView='heute';
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute'));
+  ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='heute'));
+  renderHeute();
+  const plan=$('plan'); plan.classList.add('editor');
+  toast('Editor: leere Kachel antippen → Schüler wählen · Schüler antippen → entfernen',5200);
+  const k=kurs();
+  const handler=e=>{
+    const kachel=e.target.closest('.kachel'); if(!kachel) return;
+    e.stopPropagation();
+    const idx=[...plan.children].indexOf(kachel);
+    const r=Math.floor(idx/12), c=idx%12;
+    const sp=vault.stamm.sitzplaene[k.id]=vault.stamm.sitzplaene[k.id]||{grid:{}};
+    const key=r+','+c;
+    if(sp.grid[key]){ delete sp.grid[key]; stammMutiert(); speichern(); renderHeute(); plan.classList.add('editor'); return; }
+    const vergeben=new Set(Object.values(sp.grid));
+    const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
+    dlgZeigen('<h3>Platz '+(r+1)+'/'+(c+1)+'</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
+      frei.map(s=>'<option value="'+esc(s.vorname+' '+s.name+' ('+s.nr+')')+'">').join('')+'</datalist>'+
+      '<div style="max-height:30vh;overflow:auto;margin-top:8px">'+frei.map(s=>'<button class="btn still" style="display:block;width:100%;margin:4px 0" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
+      '<div class="btn-reihe"><button class="btn still" data-schliessen>Abbrechen</button></div>',
+      el=>{
+        const setze=nr=>{ sp.grid[key]=nr; stammMutiert(); speichern(); dlgZu(); renderHeute(); plan.classList.add('editor'); };
+        el.querySelectorAll('[data-setz]').forEach(x=>x.onclick=()=>setze(Number(x.dataset.setz)));
+        el.querySelector('#s-such').oninput=ev2=>{
+          const m=ev2.target.value.match(/\((\d+)\)/); if(m) setze(Number(m[1]));
+        };
+        setTimeout(()=>el.querySelector('#s-such').focus(),60);
+      });
+  };
+  plan.addEventListener('pointerup',handler);
+  const fertigBtn=document.createElement('button');
+  fertigBtn.className='btn'; fertigBtn.textContent='Sitzplan fertig'; fertigBtn.style.cssText='position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:40';
+  fertigBtn.onclick=()=>{ plan.classList.remove('editor'); plan.removeEventListener('pointerup',handler); fertigBtn.remove(); renderHeute(); };
+  document.body.appendChild(fertigBtn);
+}
+function slotsEditor(kursId){
+  const k=vault.stamm.kurse.find(x=>x.id===kursId);
+  const slots=vault.stamm.stundenplanSlots;
+  const meine=slots.filter(s=>s.kursId===kursId);
+  const wt=['','Mo','Di','Mi','Do','Fr'];
+  dlgZeigen('<h3>Stundenplan · '+esc(k.name)+'</h3><p style="color:var(--leise);font-size:13px">Freie Zeitfenster (67,5-min-Raster deiner Schule) — steuert die Kurs-Autowahl.</p>'+
+    '<div id="slot-liste">'+meine.map((s,i)=>'<div class="zeile"><span>'+wt[s.wochentag]+' '+s.von+'–'+s.bis+(s.teilgruppe?' · Gr. '+s.teilgruppe:'')+'</span><button class="btn still" data-weg="'+slots.indexOf(s)+'">✕</button></div>').join('')+'</div>'+
+    '<div class="zeile"><span>Neu</span><span><select id="sl-tag"><option value="1">Mo</option><option value="2">Di</option><option value="3">Mi</option><option value="4">Do</option><option value="5">Fr</option></select></span></div>'+
+    '<div class="zeile"><span>von / bis</span><span><input type="time" id="sl-von" value="08:00" style="width:108px"> <input type="time" id="sl-bis" value="09:07" style="width:108px"></span></div>'+
+    '<div class="zeile"><span>Teilgruppe</span><span><select id="sl-tg"><option value="">alle</option><option value="A">A</option><option value="B">B</option></select></span></div>'+
+    '<div class="btn-reihe"><button class="btn" data-add>Slot hinzufügen</button><button class="btn still" data-schliessen>Fertig</button></div>',
+    el=>{
+      el.querySelectorAll('[data-weg]').forEach(b=>b.onclick=()=>{ slots.splice(Number(b.dataset.weg),1); stammMutiert(); speichern(); dlgZu(); slotsEditor(kursId); });
+      el.querySelector('[data-add]').onclick=()=>{
+        slots.push({wochentag:Number(el.querySelector('#sl-tag').value),von:el.querySelector('#sl-von').value,bis:el.querySelector('#sl-bis').value,kursId,teilgruppe:el.querySelector('#sl-tg').value||undefined});
+        stammMutiert(); speichern(); dlgZu(); slotsEditor(kursId);
+      };
+    });
+}
+function gruppenEditor(kursId){
+  const k=vault.stamm.kurse.find(x=>x.id===kursId);
+  const liste=vault.stamm.schueler[kursId]||[];
+  dlgZeigen('<h3>Halbgruppen · '+esc(k.name)+'</h3><p style="color:var(--leise);font-size:13px">Antippen wechselt: — → A → B</p>'+
+    '<div style="max-height:50vh;overflow:auto">'+liste.map(s=>'<div class="zeile"><span>'+esc(s.vorname)+' '+esc(s.name)+'</span><button class="btn still" data-g="'+s.nr+'">'+(s.gruppe||'—')+'</button></div>').join('')+'</div>'+
+    '<div class="btn-reihe"><button class="btn still" data-schliessen>Fertig</button></div>',
+    el=>{
+      el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{
+        const s=liste.find(x=>x.nr===Number(b.dataset.g));
+        s.gruppe=s.gruppe==='A'?'B':s.gruppe==='B'?undefined:'A';
+        b.textContent=s.gruppe||'—';
+        stammMutiert(); speichern();
+      });
+    });
+}
+
+/* ═══ MEHR · Sync (Export/Import) + Heimnetz + Diagnose ═══ */
+function renderMehr(){
+  const wrap=$('view-mehr');
+  wrap.innerHTML=
+    '<div class="panel"><h2>Sichern & Übertragen</h2>'+
+    '<p style="font-size:13px;color:var(--leise)">Container ist AES-GCM-verschlüsselt (PIN nötig zum Öffnen). iPad: „In Dateien sichern" → SMB-Ordner des PCs.</p>'+
+    '<div class="btn-reihe"><button class="btn" id="btn-export">Container exportieren</button>'+
+    '<button class="btn still" id="btn-import">Container importieren/mergen</button></div>'+
+    '<input type="file" id="file-cont" accept=".enc,application/octet-stream" class="hidden"></div>'+
+    (PAGES_KONTEXT?'':'<div class="panel"><h2>Heimnetz-Sync (PC-Server)</h2><div class="btn-reihe">'+
+      '<button class="btn" id="btn-push">Push</button><button class="btn" id="btn-pull">Pull + Merge</button>'+
+      '<span id="sync-status" style="color:var(--leise);font-size:13px;align-self:center"></span></div></div>')+
+    '<div class="panel"><h2>Werkstatt</h2>'+
+    '<div class="zeile"><span>Version</span><span class="wert">v'+APP_VERSION+' · '+GERAET+(PAGES_KONTEXT?' · Pages':' · Heimnetz')+'</span></div>'+
+    '<div class="zeile"><span>Modus</span><span class="wert" id="dg-mode">…</span></div>'+
+    '<div class="zeile"><span>persist()</span><span class="wert" id="dg-persist">…</span></div>'+
+    '<div class="zeile"><span>Speicher</span><span class="wert" id="dg-quota">…</span></div>'+
+    '<div class="zeile"><span>Ereignisse im Log</span><span class="wert">'+vault.events.length+'</span></div>'+
+    '<div class="zeile"><span>Letzte Sicherung</span><span class="wert" id="dg-save">Write-through aktiv</span></div>'+
+    '<div class="zeile"><span>Regel</span><span class="wert" style="max-width:55%">'+esc(regelText(kurs()?.profil||'sek1'))+'</span></div></div>';
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  $('dg-mode').textContent=standalone?'standalone (installiert)':'Browser-Tab';
+  if(navigator.storage?.persisted) navigator.storage.persisted().then(p=>$('dg-persist').textContent=p?'gewährt':'nicht gewährt');
+  if(navigator.storage?.estimate) navigator.storage.estimate().then(e=>{ const mb=n=>(n/1048576).toFixed(1)+' MB'; $('dg-quota').textContent=mb(e.usage||0)+' / '+mb(e.quota||0); });
+  $('btn-export').onclick=exportiereContainer;
+  $('btn-import').onclick=()=>$('file-cont').click();
+  $('file-cont').onchange=importiereContainer;
+  if(!PAGES_KONTEXT){
+    $('btn-push').onclick=syncPush;
+    $('btn-pull').onclick=syncPull;
+    fetch('/api/kladde/status',{cache:'no-store'}).then(r=>r.json()).then(s=>{ $('sync-status').textContent='Server ok · Zert bis '+s.zert_bis; }).catch(()=>{ $('sync-status').textContent='Server nicht erreichbar'; });
+  }
+}
+async function aktuellerContainerBlob(){
+  await speichern();
+  return idbGet('vault');
+}
+async function exportiereContainer(){
+  try {
+    const bytes=await aktuellerContainerBlob();
+    const name='kladde-'+GERAET+'-'+heuteIso()+'.enc';
+    const file=new File([bytes],name,{type:'application/octet-stream'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Kladde-Container'});
+      toast('Export übergeben (Share)');
+      return;
+    }
+    const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
+    const a=document.createElement('a'); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click(); a.remove();      // FEHLER:519-Kaskade
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Export gestartet: '+name);
+  } catch(err){ if(err.name!=='AbortError') toast('⚠ Export: '+err.message,4000); }
+}
+async function importiereContainer(e){
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try {
+    const fremd=await decodeContainer(new Uint8Array(await f.arrayBuffer()),pinRam);
+    const {daten,konflikte}=mergeContainerDaten(vault,fremd);
+    vault=daten; stammOhneBump(); await speichern();
+    toast('Gemergt: '+vault.events.length+' Ereignisse'+(konflikte.length?' · ⚠ '+konflikte[0]:''),konflikte.length?6000:2600);
+    kursAutowahl(); renderAlles();
+  } catch(err){ toast('⚠ Import: '+err.message+' (gleiche PIN auf beiden Geräten?)',5000); }
+}
+function stammOhneBump(){ /* Merge-Ergebnis behält die Sieger-rev — bewusst kein rev++ */ }
+async function syncPush(){
+  try {
+    const bytes=await aktuellerContainerBlob();
+    const r=await fetch('/api/kladde/push/'+GERAET,{method:'POST',body:bytes});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    toast('Push ok · Generation '+j.generationen);
+  } catch(err){ toast('⚠ Push: '+err.message,4000); }
+}
+async function syncPull(){
+  try {
+    const von=GERAET==='pc'?'ipad':'pc';
+    const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store'});
+    if(r.status===404){ toast('Noch kein Container von „'+von+'" auf dem Server'); return; }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const fremd=await decodeContainer(new Uint8Array(await r.arrayBuffer()),pinRam);
+    const {daten,konflikte}=mergeContainerDaten(vault,fremd);
+    vault=daten; await speichern();
+    toast('Pull+Merge ok: '+vault.events.length+' Ereignisse'+(konflikte.length?' · ⚠ '+konflikte[0]:''),konflikte.length?6000:2600);
+    kursAutowahl(); renderAlles();
+  } catch(err){ toast('⚠ Pull: '+err.message+' (gleiche PIN?)',4500); }
+}
+
+/* ═══ INIT ═══ */
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+if(navigator.storage?.persist) navigator.storage.persist();
+idbGet('starts').then(n=>idbPut('starts',(n||0)+1));
+lockInit();
 })();
 </script>
 </body>
