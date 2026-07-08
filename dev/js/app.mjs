@@ -8,7 +8,7 @@ import { parseSchuelerListe } from '../logic/parser.mjs';
 import { migriereStamm, schemaBekannt } from '../logic/migration.mjs';
 import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs';
 import { kursZurZeit } from '../logic/autowahl.mjs';
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.10.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -208,7 +208,7 @@ function stornoVon(e){
   const s={id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id};
   vault.events.push(s); speichern();
 }
-const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note'};
+const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote'};
 function zeigeUndo(e){
   const chip=$('undo-chip');
   const s=schuelerVonNr(e.schuelerNr);
@@ -536,12 +536,15 @@ function renderAktionsbar(){
   bar.querySelector('[data-blatt]').onclick=()=>schuelerBlatt(aktiverSchueler);
 }
 function zeigeMehrAktionen(s){
-  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3><div class="btn-reihe">'+
-    '<button class="btn still" data-t="fehlt_e">fehlt (e)</button>'+
-    '<button class="btn still" data-t="fehlt_u">fehlt (u)</button>'+
+  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3>'+
+    '<p class="u-hinweis">Fehlt jetzt: „abwesend" — e/u klärst du später in der Wiedervorlage.</p>'+
+    '<div class="btn-reihe">'+
+    '<button class="btn still" data-t="fehlt_o">abwesend</button>'+
     '<button class="btn still" data-t="versp">zu spät…</button>'+
     '<button class="btn still" data-t="note">Note…</button>'+
     '<button class="btn still" data-t="notiz">Notiz…</button></div>'+
+    '<div class="btn-reihe"><button class="btn still" data-t="fehlt_e">direkt entschuldigt</button>'+
+    '<button class="btn still" data-t="fehlt_u">direkt unentsch.</button></div>'+
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
       el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
@@ -593,7 +596,9 @@ function renderDeck(){
   const k=kurs();
   if(!k){ $('deck-karte').innerHTML='<span class="sub">Kein Kurs gewählt.</span>'; $('deck-fortschritt').textContent=''; return; }
   if(!deckListe.length||deckListe._kurs!==k.id||deckListe._datum!==terminDatum){
-    deckListe=[...sichtbareSchueler(k)]; deckListe._kurs=k.id; deckListe._datum=terminDatum; deckIdx=0;
+    // Deck überspringt am Termin Abwesende (fehlt_o/e/u) — kein Bewerten von Fehlenden
+    const abw=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum&&(e.typ==='fehlt_o'||e.typ==='fehlt_e'||e.typ==='fehlt_u')).map(e=>e.schuelerNr));
+    deckListe=sichtbareSchueler(k).filter(s=>!abw.has(s.nr)); deckListe._kurs=k.id; deckListe._datum=terminDatum; deckIdx=0;
   }
   zeigeDeckKarte();
 }
@@ -653,27 +658,46 @@ document.querySelectorAll('[data-deck]').forEach(b=>b.addEventListener('click',(
 })();
 
 /* ═══ SCHÜLER · Verdichtung + Inline-Detail-Akkordeon (kein Popup) ═══ */
-let offenerSchueler=null;
+let offenerSchueler=null, zeitraumFilter=null;
+function aktivesSchuljahr(){ return (vault.stamm.schuljahre||[]).find(j=>j.id===vault.stamm.aktivesSchuljahrId)||null; }
 function renderSchueler(){
   const k=kurs(); const wrap=$('view-schueler');
   if(!k){ wrap.innerHTML='<p class="u-leise">Kein Kurs gewählt.</p>'; return; }
+  // Beamer/Projektion: sensible Auswertung KOMPLETT sperren (§3.4)
+  if(beamerModus){ wrap.innerHTML='<div class="panel"><h2>👁 Projektionsmodus</h2><p class="u-leise">Die Schüler-Auswertung ist bei aktiver Projektion ausgeblendet. Auge oben antippen zum Beenden.</p></div>'; return; }
   const kursEvents=vault.events.filter(e=>e.kursId===k.id);
-  const offeneU=wirksameEvents(kursEvents).filter(e=>e.typ==='fehlt_u');
+  const sj=aktivesSchuljahr();
+  const zr=zeitraumFilter;
+  const vOpt={profil:bewertProfil(k),von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'};
+  const kurzL=l=>l.replace('. Quartal','. Q').replace('. Halbjahr','. HJ');
+  const heute=heuteIso();
+  const offeneO=wirksameEvents(kursEvents).filter(e=>e.typ==='fehlt_o').sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
   let html='';
-  if(offeneU.length){
-    html+='<div class="panel"><h2>Wiedervorlage · offene u ('+offeneU.length+')</h2>'+
-      offeneU.map(e=>{ const s=kursSchueler(k).find(x=>x.nr===e.schuelerNr);
-        return '<div class="zeile"><span>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+' · '+datumLabel(e.datum)+'</span><button class="btn still" data-ue="'+e.id+'">→ e</button></div>'; }).join('')+'</div>';
+  // Zeitraum-Wähler (Quartalsansicht) — ein Tap statt Datumsgrenzen tippen
+  if(sj&&sj.zeitraeume&&sj.zeitraeume.length){
+    html+='<div class="zr-leiste"><button class="zr-chip'+(!zr?' an':'')+'" data-zr="">Gesamt</button>'+
+      sj.zeitraeume.map(z=>'<button class="zr-chip'+(zr&&zr.id===z.id?' an':'')+'" data-zr="'+z.id+'">'+esc(kurzL(z.label))+'</button>').join('')+'</div>';
   }
-  html+='<div class="panel"><h2>'+esc(k.name)+' · Verdichtung</h2><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p>';
+  // Klärungsliste (P3.5 Phase 2): offene Abwesenheiten e/u/Irrtum klären. >7 Tage hervorgehoben.
+  if(offeneO.length){
+    html+='<div class="panel"><h2>Offene Fehlzeiten ('+offeneO.length+')</h2>'+
+      offeneO.map(e=>{ const s=kursSchueler(k).find(x=>x.nr===e.schuelerNr);
+        const alt=(new Date(heute)-new Date(e.datum))/86400000>7;
+        return '<div class="klaer-zeile'+(alt?' alt':'')+'"><span>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+' · '+datumLabel(e.datum)+(alt?' ⏳':'')+'</span>'+
+          '<span class="klaer-btns"><button class="btn still u-btn-klein" data-klaer="e" data-o="'+e.id+'">E</button>'+
+          '<button class="btn still u-btn-klein" data-klaer="u" data-o="'+e.id+'">U</button>'+
+          '<button class="btn still u-btn-klein" data-klaer="irrtum" data-o="'+e.id+'">Irrtum</button></span></div>'; }).join('')+'</div>';
+  }
+  html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(zr?zr.label:'Verdichtung')+'</h2><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p>';
   for(const s of kursSchueler(k)){
-    const v=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb});
+    const v=verdichte(kursEvents,s.nr,{...vOpt,lb:s.lb});
     const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
     const offen=offenerSchueler===s.nr;
+    const fInfo=(v.nFehltE||v.nFehltU||v.nFehltO)?' · F '+v.nFehltE+'e/'+v.nFehltU+'u'+(v.nFehltO?'/'+v.nFehltO+'o':''):'';
     html+='<div class="s-block'+(offen?' offen':'')+'"><div class="s-item" data-nr="'+s.nr+'">'+
       '<div class="u-minw104"><b>'+esc(s.vorname)+'</b> <small class="u-leise">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div>'+
       '<div class="u-flex1"><div class="balken"><div class="bal-p" data-w="'+(100*v.nPlus/sum)+'"></div><div class="bal-o" data-w="'+(100*v.nNull/sum)+'"></div><div class="bal-m" data-w="'+(100*v.nMinus/sum)+'"></div></div>'+
-      '<small class="u-leise">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · '+Math.round(100*v.aktivQuote)+'% · '+v.pfeil+'</small></div>'+
+      '<small class="u-leise">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · '+Math.round(100*v.aktivQuote)+'% · '+v.pfeil+fInfo+'</small></div>'+
       '<div class="u-wert-rechts">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</div>'+
       '<span class="pfeil">'+(offen?'▾':'›')+'</span></div>'+
       (offen?schuelerDetailHtml(s,k,v):'')+'</div>';
@@ -682,9 +706,14 @@ function renderSchueler(){
   wrap.innerHTML=html;
   // dynamische Balken-Breiten via CSSOM (CSP: Inline-Style-Attribute in HTML-Strings sind verboten)
   wrap.querySelectorAll('.balken [data-w]').forEach(d=>{ d.style.width=d.dataset.w+'%'; });
-  wrap.querySelectorAll('[data-ue]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
-    const e=vault.events.find(x=>x.id===b.dataset.ue);
-    if(e){ addEvent('fehlt_e',e.schuelerNr,{datum:e.datum,stornoVon:e.id}); toast('Nachgetragen: entschuldigt ('+datumLabel(e.datum)+')'); renderSchueler(); }
+  wrap.querySelectorAll('[data-zr]').forEach(b=>b.onclick=()=>{ const id=b.dataset.zr; zeitraumFilter=id&&sj?sj.zeitraeume.find(z=>z.id===id):null; offenerSchueler=null; mitUebergang(renderSchueler); });
+  wrap.querySelectorAll('[data-klaer]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
+    const o=vault.events.find(x=>x.id===b.dataset.o); if(!o) return;
+    const art=b.dataset.klaer;
+    // Klärung = Storno des fehlt_o + neues fehlt_e/fehlt_u am ORIGINALDATUM (Merge-fest, verdichte löst jüngste-ts)
+    if(art==='irrtum'){ stornoVon(o); toast('Irrtum — Abwesenheit entfernt'); }
+    else { addEvent(art==='e'?'fehlt_e':'fehlt_u',o.schuelerNr,{datum:o.datum,stornoVon:o.id}); toast('Geklärt: '+(art==='e'?'entschuldigt':'unentschuldigt')+' ('+datumLabel(o.datum)+')'); }
+    renderSchueler();
   });
   wrap.querySelectorAll('.s-item').forEach(el=>el.onclick=()=>{ const nr=Number(el.dataset.nr); offenerSchueler=(offenerSchueler===nr?null:nr); mitUebergang(renderSchueler); });
   verdrahteDetail(wrap);
@@ -713,21 +742,28 @@ function schuelerDetailHtml(s,k,v){
 }
 function verdrahteDetail(wrap){
   wrap.querySelectorAll('.ev-storno').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const ev=vault.events.find(x=>x.id===b.dataset.storno); if(ev){ stornoVon(ev); toast('storniert'); renderSchueler(); } });
-  wrap.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const s=schuelerVonNr(Number(b.dataset.quartal)); const kk=kurs(); const v=verdichte(vault.events.filter(x=>x.kursId===kk.id),s.nr,{profil:bewertProfil(kk),lb:s.lb}); setzeQuartalsnote(s,v.vorschlag); });
+  wrap.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const s=schuelerVonNr(Number(b.dataset.quartal)); const kk=kurs(); const zr=zeitraumFilter; const v=verdichte(vault.events.filter(x=>x.kursId===kk.id),s.nr,{profil:bewertProfil(kk),lb:s.lb,von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'}); setzeQuartalsnote(s,v.vorschlag,zr); });
 }
-function setzeQuartalsnote(s,vorschlag){
+// quartalsnote-Event trägt Zeitraum-Kontext — bleibt IMMER 'quartalsnote', NIE 'note'
+// (verbotener Pfad 2: eine Übernahme darf nie in verdichte() zurückfließen).
+function setzeQuartalsnote(s,vorschlag,zeitraum){
   const k=kurs(); const sek2=bewertProfil(k)==='sek2';
   const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
   const vorwahl=sek2?String(vorschlag.wert):(wertZuLabel(vorschlag.wert)||'3');
-  dlgZeigen('<h3>Quartalsnote · '+esc(s.vorname)+'</h3><p class="u-hinweis">Vorschlag: '+esc(vorschlag.label)+' — du entscheidest.</p>'+
+  const zrHinweis=zeitraum?' <small class="u-leise">('+esc(zeitraum.label)+')</small>':'';
+  dlgZeigen('<h3>Quartalsnote · '+esc(s.vorname)+zrHinweis+'</h3><p class="u-hinweis">Vorschlag: '+esc(vorschlag.label)+' — du entscheidest.</p>'+
     '<div class="zeile"><span>HJ</span><select id="q-hj"><option value="1">1. HJ</option><option value="2">2. HJ</option></select></div>'+
     '<div class="zeile"><span>Quartal</span><select id="q-q"><option value="1">Q1</option><option value="2">Q2</option></select></div>'+
     '<div class="zeile"><span>Note</span><select id="q-note">'+optionen.map(o=>'<option'+(o===vorwahl?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
     '<div class="btn-reihe"><button class="btn" data-ok>Setzen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    el=>{ el.querySelector('[data-ok]').onclick=()=>{
-      addEvent('quartalsnote',s.nr,{hj:Number(el.querySelector('#q-hj').value),quartal:Number(el.querySelector('#q-q').value),wert:el.querySelector('#q-note').value});
-      toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu(); if(aktView==='schueler') renderSchueler();
-    }; });
+    el=>{
+      // Zeitraum → HJ/Quartal vorbelegen (Excel-Slot-Mapping), bleibt editierbar
+      if(zeitraum){ const q=zeitraum.id; const hj=/q[34]|hj2/.test(q)?'2':'1'; el.querySelector('#q-hj').value=hj; if(/q1|q3/.test(q)) el.querySelector('#q-q').value='1'; else if(/q2|q4/.test(q)) el.querySelector('#q-q').value='2'; }
+      el.querySelector('[data-ok]').onclick=()=>{
+        addEvent('quartalsnote',s.nr,{hj:Number(el.querySelector('#q-hj').value),quartal:Number(el.querySelector('#q-q').value),wert:el.querySelector('#q-note').value,zeitraumId:zeitraum?zeitraum.id:null});
+        toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu(); if(aktView==='schueler') renderSchueler();
+      };
+    });
 }
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
