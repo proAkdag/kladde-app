@@ -377,3 +377,18 @@
   .sp-zelle.belegt { border-color: var(--band); color: var(--band); }
   .sp-ergebnis { margin: 10px 0; font-size: 16px; text-align: center; }
 }
+
+/* ── v0.10.0 · Quartalsansicht Zeitraum-Wähler (P3.4) ── */
+@layer views {
+  .zr-leiste { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; }
+  .zr-chip { flex: 0 0 auto; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 14px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .zr-chip.an { background: var(--band); color: #1a1206; border-color: var(--band); font-weight: 700; }
+}
+
+/* ── v0.10.0 · Klärungsliste (P3.5) ── */
+@layer views {
+  .klaer-zeile { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--kante); font-size: 14px; }
+  .klaer-zeile:first-of-type { border-top: none; }
+  .klaer-zeile.alt { color: var(--warn); }
+  .klaer-btns { display: flex; gap: 4px; flex: 0 0 auto; }
+}
