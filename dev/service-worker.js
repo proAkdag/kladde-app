@@ -2,7 +2,7 @@
 // Cache-first fuer die App-Huelle · API IMMER Netz (Sync darf nie aus dem Cache kommen)
 // CACHE_NAME ist VERSIONIERT — bei jedem App-Release hochziehen (IT-Pflicht-Op S-Kladde-Bau)
 
-const CACHE_NAME = 'kladde-v0.4.0';
+const CACHE_NAME = 'kladde-dev-v0.4.0';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
