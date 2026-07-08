@@ -241,7 +241,7 @@
 <script>
 'use strict';
 (function () {
-const APP_VERSION = '0.2.2';
+const APP_VERSION = '0.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 
@@ -739,11 +739,81 @@ function setzeQuartalsnote(s,vorschlag){
 }
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
+/* Kurs direkt in der App anlegen: Excel-Spalten kopieren → einfügen (Tab/Semikolon-tolerant) */
+function slugId(text){ return String(text).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'kurs'; }
+function parseSchuelerListe(text){
+  const schueler=[]; const warnungen=[]; const nrGesehen=new Set();
+  let ohneNr=false;
+  const zeilen=String(text).split(/\r?\n/).map(z=>z.trim()).filter(Boolean);
+  for(const zeile of zeilen){
+    let felder=zeile.split(/\t|;/).map(f=>f.trim()).filter(f=>f!=='');
+    if(felder.length===1&&felder[0].includes(',')) felder=felder[0].split(',').map(f=>f.trim());
+    if(!felder.length) continue;
+    if(/^(nr\.?|name|nachname)$/i.test(felder[0])){ continue; }              // Kopfzeile
+    let nr=null;
+    if(/^\d{1,2}$/.test(felder[0])){ nr=parseInt(felder[0],10); felder=felder.slice(1); }
+    const lb=felder.some(f=>/^lb$/i.test(f));
+    const inhalt=felder.filter(f=>!/^lb$/i.test(f));
+    if(!inhalt.length){ warnungen.push('Zeile ohne Namen übersprungen: „'+zeile.slice(0,30)+'"'); continue; }
+    if(nr===null){ ohneNr=true; nr=schueler.length+1; }
+    if(nr<1||nr>32){ warnungen.push('Nr '+nr+' außerhalb 1–32 — übersprungen (Mappen-Grenze)'); continue; }
+    if(nrGesehen.has(nr)){ warnungen.push('Nr '+nr+' doppelt — zweite Zeile übersprungen'); continue; }
+    nrGesehen.add(nr);
+    schueler.push({nr,name:inhalt[0]||'',vorname:inhalt[1]||'',lb});
+    if(inhalt.length===1) warnungen.push('Nr '+nr+': nur ein Namensfeld — als Nachname übernommen');
+  }
+  if(ohneNr&&schueler.length) warnungen.push('Keine Nr-Spalte erkannt — laufend nummeriert. Für den Excel-Export muss die Reihenfolge der Mappe entsprechen (Zeile 1 = Nr 1)!');
+  schueler.sort((a,b)=>a.nr-b.nr);
+  return {schueler,warnungen};
+}
+function kursAnlegenDialog(){
+  dlgZeigen('<h3>Kurs anlegen</h3>'+
+    '<div class="zeile"><span>Klasse/Kurs</span><span><input type="text" id="kn-name" placeholder="z. B. 7b" style="width:130px"></span></div>'+
+    '<div class="zeile"><span>Fach</span><span><input type="text" id="kn-fach" placeholder="z. B. Mathematik" style="width:160px"></span></div>'+
+    '<div class="zeile"><span>Schuljahr</span><span><input type="text" id="kn-jahr" placeholder="2026/27" style="width:110px"></span></div>'+
+    '<div class="zeile"><span>Stufe</span><span><select id="kn-profil"><option value="sek1">Sek I (Drittelnoten)</option><option value="sek2">Oberstufe (Punkte)</option></select></span></div>'+
+    '<p style="font-size:13px;color:var(--leise);margin:10px 0 4px">Schülerliste — aus Excel kopieren (Nr · Name · Vorname · ggf. LB) und hier einfügen, oder tippen (eine Zeile pro Kind, „Name; Vorname"):</p>'+
+    '<textarea id="kn-liste" rows="8" style="width:100%;background:var(--karte2);color:var(--text);border:1px solid var(--kante);border-radius:8px;padding:8px;font-size:16px" placeholder="1\tMustermann\tMax\n2\tBeispiel\tBerna\tLB"></textarea>'+
+    '<div id="kn-vorschau" style="font-size:13px;color:var(--leise);min-height:2.6em;margin-top:6px">Noch keine Zeilen.</div>'+
+    '<div class="btn-reihe"><button class="btn" id="kn-ok" disabled>Kurs anlegen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{
+      const liste=el.querySelector('#kn-liste'), vorschau=el.querySelector('#kn-vorschau'), ok=el.querySelector('#kn-ok');
+      let geparst={schueler:[],warnungen:[]};
+      liste.addEventListener('input',()=>{
+        geparst=parseSchuelerListe(liste.value);
+        const lbAnz=geparst.schueler.filter(s=>s.lb).length;
+        vorschau.innerHTML=geparst.schueler.length
+          ? '<b style="color:var(--gut)">'+geparst.schueler.length+' Schüler erkannt</b>'+(lbAnz?' · '+lbAnz+'× LB':'')+
+            ' — '+esc(geparst.schueler.slice(0,3).map(s=>s.nr+' '+s.vorname+' '+s.name).join(' · '))+(geparst.schueler.length>3?' …':'')+
+            (geparst.warnungen.length?'<br>⚠ '+esc(geparst.warnungen[0])+(geparst.warnungen.length>1?' (+'+(geparst.warnungen.length-1)+')':''):'')
+          : 'Noch keine Zeilen erkannt.';
+        ok.disabled=!geparst.schueler.length;
+      });
+      ok.onclick=()=>{
+        const name=el.querySelector('#kn-name').value.trim()||'Kurs';
+        const fach=el.querySelector('#kn-fach').value.trim()||'';
+        const jahr=el.querySelector('#kn-jahr').value.trim()||'';
+        const profil=el.querySelector('#kn-profil').value;
+        const k={id:slugId(name+'-'+fach+'-'+jahr),name,fach,schuljahr:jahr,lehrkraft:'',profil,slot:'m1'};
+        const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
+        if(idx>=0) vault.stamm.kurse[idx]=k; else vault.stamm.kurse.push(k);
+        vault.stamm.schueler[k.id]=geparst.schueler;
+        stammMutiert(); speichern();
+        aktiverKursId=k.id; aktualisiereKursChip();
+        dlgZu();
+        toast('Angelegt: '+name+' ('+geparst.schueler.length+' Schüler)'+(geparst.warnungen.length?' · '+geparst.warnungen.length+' Hinweis(e)':''));
+        renderKurse();
+      };
+    });
+}
+
 function renderKurse(){
   const wrap=$('view-kurse');
-  let html='<div class="panel"><h2>Kurs importieren</h2>'+
-    '<p style="font-size:13px;color:var(--leise)">Am PC: <code>python import_klassenliste.py "Mappe.xlsx"</code> → .kurs.json hier laden.</p>'+
-    '<div class="btn-reihe"><button class="btn" id="btn-import-kurs">kurs.json laden</button></div><input type="file" id="file-kurs" accept=".json,application/json" class="hidden"></div>';
+  let html='<div class="panel"><h2>Neuer Kurs</h2>'+
+    '<p style="font-size:13px;color:var(--leise)">Am schnellsten: in Excel die Klassenlisten-Spalten markieren (Nr · Name · Vorname · ggf. LB), kopieren, hier einfügen. Alternativ die kurs.json vom PC-Werkzeug laden.</p>'+
+    '<div class="btn-reihe"><button class="btn" id="btn-kurs-neu">Kurs anlegen (Einfügen)</button>'+
+    '<button class="btn still" id="btn-import-kurs">kurs.json laden</button></div>'+
+    '<input type="file" id="file-kurs" accept=".json,application/json" class="hidden"></div>';
   for(const k of vault.stamm.kurse){
     const anz=kursSchueler(k).length;
     const p=vault.stamm.kursprofile[k.id]||{};
@@ -757,6 +827,7 @@ function renderKurse(){
       '<button class="btn gefahr" data-kurs-weg="'+k.id+'">Entfernen</button></div></div>';
   }
   wrap.innerHTML=html;
+  $('btn-kurs-neu').onclick=kursAnlegenDialog;
   $('btn-import-kurs').onclick=()=>$('file-kurs').click();
   $('file-kurs').onchange=async e=>{
     const f=e.target.files[0]; if(!f) return;
