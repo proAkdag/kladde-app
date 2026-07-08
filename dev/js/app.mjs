@@ -3,7 +3,7 @@
 import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs';
 import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs';
 import { mergeContainerDaten } from '../logic/merge.mjs';
-import { encodeContainer, decodeContainer } from '../logic/container.mjs';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs';
 import { parseSchuelerListe } from '../logic/parser.mjs';
 const APP_VERSION = '0.8.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
@@ -21,7 +21,9 @@ if (IST_DEV) {
 
 /* ═══ STORAGE · Vault = KLD1-Container in IndexedDB ═══ */
 const DB_NAME=IST_DEV?'kladde_dev':'kladde_v1'; // getrennte Vaults für Dev- und Produktiv-Instanz
-let db=null, pinRam=null, vault=null; // vault = entschlüsselter Zustand im RAM
+let db=null, pinRam=null, vault=null;      // vault = entschlüsselter Zustand im RAM · pinRam für Import/Pull/Wechsel
+let dekKey=null, containerKopf=null;        // KLD1 v2: DEK (non-extractable CryptoKey) + wiederverwendbarer Wrap-Kopf
+let migrationsHinweis=false;                // einmaliger Banner nach v1→v2-Migration
 function mitDb(){ return new Promise((res,rej)=>{ if(db) return res(db);
   const req=indexedDB.open(DB_NAME,1);
   req.onupgradeneeded=()=>req.result.createObjectStore('meta');
@@ -31,10 +33,11 @@ function idbPut(k,v){ return mitDb().then(d=>new Promise((res,rej)=>{ const tx=d
 
 let speicherKette=Promise.resolve(); // Write-through seriell (keine Races)
 function speichern(){
-  if(!vault||!pinRam) return speicherKette;
+  if(!vault||!dekKey||!containerKopf) return speicherKette;
   const snapshot=JSON.stringify(vault);
+  // v2-Save: reines AES-GCM mit dem DEK — KEIN KDF (gemessen 0,79 ms/Save statt ~1 KDF/Tap)
   speicherKette=speicherKette
-    .then(()=>encodeContainer(JSON.parse(snapshot),pinRam))
+    .then(()=>encodeContainerV2(JSON.parse(snapshot),dekKey,containerKopf))
     .then(blob=>idbPut('vault',blob))
     .catch(err=>{ console.error('[kladde] speichern',err); toast('⚠ Speichern fehlgeschlagen: '+err.message); });
   return speicherKette;
@@ -51,29 +54,71 @@ const $=id=>document.getElementById(id);
 let lockTimer=null, zuletztAktiv=Date.now();
 function toast(text,ms=2600){ const t=$('toast'); t.textContent=text; t.classList.add('hidden'); void t.offsetWidth; t.classList.remove('hidden'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add('hidden'),ms); }
 
+// Passphrase-Stärke (rein lokal, keine Lib): Länge + Zeichenklassen (§1/§34)
+function passStaerke(p){
+  if(!p) return null;
+  const klassen=(/[a-zäöüß]/i.test(p)?1:0)+(/\d/.test(p)?1:0)+(/[^a-z0-9äöüß]/i.test(p)?1:0);
+  if(p.length>=12&&klassen>=2) return 'gut';
+  if(p.length>=10) return 'okay';
+  return 'schwach';
+}
 async function lockInit(){
   const blob=await idbGet('vault');
   const neu=!blob;
-  $('lock-text').textContent=neu?'Neue PIN festlegen (mind. 6 Stellen)':'PIN eingeben';
+  $('lock-text').innerHTML=neu
+    ?'Passphrase festlegen<br><small>Für echte Schülerdaten empfohlen: mindestens 12 Zeichen oder ein kurzer Satz.<br><b>Wichtig:</b> Ohne Passphrase können die Daten nicht wiederhergestellt werden.</small>'
+    :'Passphrase eingeben';
   $('pin2').classList.toggle('hidden',!neu);
   $('lock-btn').textContent=neu?'Kladde anlegen':'Öffnen';
   $('pin').value=''; $('pin2').value=''; $('lock-fehler').textContent='';
+  $('pin-staerke').textContent='';
   $('lock').classList.remove('hidden');
   setTimeout(()=>$('pin').focus(),50);
+  $('pin').oninput=()=>{ // Live-Stärke nur bei Neuanlage sinnvoll
+    if(!neu){ $('pin-staerke').textContent=''; return; }
+    const s=passStaerke($('pin').value);
+    $('pin-staerke').textContent=s?('Stärke: '+s):'';
+    $('pin-staerke').className='pass-staerke '+(s||'');
+  };
+  $('pin-auge').onclick=()=>{
+    const p=$('pin'), p2=$('pin2');
+    const zeigt=p.type==='text';
+    p.type=zeigt?'password':'text'; p2.type=p.type;
+    $('pin-auge').textContent=zeigt?'👁':'🙈';
+  };
   $('lock-btn').onclick=async()=>{
     const pin=$('pin').value;
     if(neu){
-      if(pin.length<6){ $('lock-fehler').textContent='Mindestens 6 Stellen.'; return; }
-      if(pin!==$('pin2').value){ $('lock-fehler').textContent='PINs stimmen nicht überein.'; return; }
+      if(pin.length<10){ $('lock-fehler').textContent='Mindestens 10 Zeichen — besser 12+ oder ein kurzer Satz.'; return; }
+      if(pin!==$('pin2').value){ $('lock-fehler').textContent='Passphrasen stimmen nicht überein.'; return; }
+      const id=await neueV2Identitaet(pin);
+      dekKey=id.dek; containerKopf=id.kopf;
       pinRam=pin; vault=leererVault();
       await speichern(); entsperrt();
     } else {
       $('lock-btn').disabled=true; $('lock-fehler').textContent='prüfe… (PBKDF2)';
       const t0=performance.now();
       try {
-        vault=await decodeContainer(await idbGet('vault'),pin);
-        pinRam=pin;
-        console.log('[kladde] Unlock in',Math.round(performance.now()-t0),'ms');
+        const roh=await idbGet('vault');
+        const r=await decodeContainerAuto(roh,pin);
+        if(r.version===1){
+          // ── Stille Migration v1→v2 · Auflage 1: v1-Backup mit READ-BACK, sonst KEIN v2-Write ──
+          await idbPut('vault_v1_backup',roh);
+          const rb=await idbGet('vault_v1_backup');
+          let identisch=Boolean(rb)&&rb.length===roh.length;
+          if(identisch){ for(let i=0;i<roh.length;i++){ if(rb[i]!==roh[i]){ identisch=false; break; } } }
+          if(!identisch) throw new Error('v1-Sicherung fehlgeschlagen — Migration abgebrochen, Daten unverändert.');
+          const id=await neueV2Identitaet(pin);
+          dekKey=id.dek; containerKopf=id.kopf;
+          vault=r.daten; pinRam=pin;
+          await speichern(); // erste v2-Schreibung — erst NACH verifiziertem Backup
+          migrationsHinweis=true;
+          console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
+        } else {
+          dekKey=r.dek; containerKopf=r.kopf;
+          vault=r.daten; pinRam=pin;
+          console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
+        }
         entsperrt();
       } catch(e){ $('lock-fehler').textContent=e.message; }
       $('lock-btn').disabled=false;
@@ -82,16 +127,38 @@ async function lockInit(){
   const enter=e=>{ if(e.key==='Enter') $('lock-btn').click(); };
   $('pin').onkeydown=enter; $('pin2').onkeydown=enter;
 }
-function sperren(){ vault=null; pinRam=null; aktiverSchueler=null; $('aktionsbar').classList.add('hidden'); lockInit(); }
+function sperren(){
+  // Hard-Lock: RAM-Wipe + UI-Hygiene (§5) — nach dem Sperren darf kein Name mehr im DOM stehen
+  vault=null; pinRam=null; dekKey=null; containerKopf=null;
+  aktiverSchueler=null; offenerSchueler=null; deckListe=[]; undoStack.length=0;
+  try{ dlgZu(); }catch{}
+  $('dlg').innerHTML='';
+  $('aktionsbar').classList.add('hidden');
+  $('undo-chip').classList.add('hidden');
+  $('soft-lock').classList.add('hidden');
+  lockInit();
+}
+function lockMinuten(){ const m=Number(localStorage.getItem('kladde_lock_min')); return [5,10,15,30].includes(m)?m:15; }
 function entsperrt(){
   $('lock').classList.add('hidden');
   zuletztAktiv=Date.now();
   clearInterval(lockTimer);
-  lockTimer=setInterval(()=>{ if(Date.now()-zuletztAktiv>15*60*1000) sperren(); },30*1000);
+  lockTimer=setInterval(()=>{ if(Date.now()-zuletztAktiv>lockMinuten()*60*1000) sperren(); },30*1000);
   kursAutowahl(); renderAlles();
+  zeigeStartHinweise();
 }
 ['pointerdown','keydown'].forEach(evName=>document.addEventListener(evName,()=>{zuletztAktiv=Date.now();},{capture:true,passive:true}));
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&vault) speichern(); });
+// Soft-Lock (P1.4): iOS erzeugt beim App-Umschalten einen SCREENSHOT — das Overlay muss
+// SOFORT und OHNE Animation stehen, sonst landen Schülernamen im App-Switcher.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&vault){
+    $('soft-lock').classList.remove('hidden'); // synchron, animationsfrei
+    speichern();
+    if(localStorage.getItem('kladde_lock_sofort')==='1') speicherKette.then(sperren);
+  } else if(document.visibilityState==='visible'&&vault){
+    $('soft-lock').classList.add('hidden');
+  }
+});
 window.addEventListener('pagehide',()=>{ if(vault) speichern(); });
 $('btn-lock').addEventListener('click',()=>{ speichern().then(sperren); });
 
@@ -237,7 +304,12 @@ document.querySelector('nav.tabs').addEventListener('click',e=>{
 // Übergangs-Helfer: View Transition wo verfügbar (PC-Chrome seit 111 / iPad ab Safari 18), sonst sofort. reduced-motion → sofort.
 function mitUebergang(fn){
   if(!document.startViewTransition||matchMedia('(prefers-reduced-motion: reduce)').matches){ fn(); return; }
-  try { document.startViewTransition(fn); } catch { fn(); }
+  try {
+    const t=document.startViewTransition(fn);
+    // Schneller Folgewechsel bricht die laufende Transition ab (InvalidStateError) —
+    // erwartetes Verhalten, keine unhandled rejection in die Konsole kippen.
+    t.finished.catch(()=>{});
+  } catch { fn(); }
 }
 function renderAlles(){
   if(!vault) return;
@@ -745,8 +817,12 @@ function gruppenEditor(kursId){
 function renderMehr(){
   const wrap=$('view-mehr');
   wrap.innerHTML=
+    '<div class="panel"><h2>Sicherheit</h2>'+
+    '<div class="zeile"><span>Automatisch sperren nach</span><span><select id="sec-lockmin">'+[5,10,15,30].map(m=>'<option value="'+m+'"'+(lockMinuten()===m?' selected':'')+'>'+m+' min</option>').join('')+'</select></span></div>'+
+    '<div class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' style="width:22px;height:22px"></span></div>'+
+    '<div class="btn-reihe"><button class="btn still" id="sec-pass">Passphrase ändern…</button></div></div>'+
     '<div class="panel"><h2>Sichern & Übertragen</h2>'+
-    '<p style="font-size:13px;color:var(--leise)">Container ist AES-GCM-verschlüsselt (PIN nötig zum Öffnen). iPad: „In Dateien sichern" → SMB-Ordner des PCs.</p>'+
+    '<p style="font-size:13px;color:var(--leise)">Container ist AES-GCM-verschlüsselt (Passphrase nötig zum Öffnen). iPad: „In Dateien sichern" → SMB-Ordner des PCs.</p>'+
     '<div class="btn-reihe"><button class="btn" id="btn-export">Container exportieren</button>'+
     '<button class="btn still" id="btn-import">Container importieren/mergen</button></div>'+
     '<input type="file" id="file-cont" accept=".enc,application/octet-stream" class="hidden"></div>'+
@@ -768,6 +844,9 @@ function renderMehr(){
   $('btn-export').onclick=exportiereContainer;
   $('btn-import').onclick=()=>$('file-cont').click();
   $('file-cont').onchange=importiereContainer;
+  $('sec-lockmin').onchange=e=>{ localStorage.setItem('kladde_lock_min',e.target.value); toast('Auto-Lock: '+e.target.value+' min'); };
+  $('sec-sofort').onchange=e=>localStorage.setItem('kladde_lock_sofort',e.target.checked?'1':'0');
+  $('sec-pass').onclick=passphraseWechselDialog;
   if(!PAGES_KONTEXT){
     $('btn-push').onclick=syncPush;
     $('btn-pull').onclick=syncPull;
@@ -778,7 +857,16 @@ async function aktuellerContainerBlob(){
   await speichern();
   return idbGet('vault');
 }
-async function exportiereContainer(){
+function exportiereContainer(){
+  // Export-Warnung (Konzept §2) — sensibilisieren, dann die bewährte Kaskade
+  dlgZeigen('<h3>Container exportieren</h3>'+
+    '<p>Diese Datei enthält deine Kladde verschlüsselt. Sie kann nur mit deiner Passphrase geöffnet werden.</p>'+
+    '<p style="color:var(--leise);font-size:13px">Die Sicherheit hängt von der Stärke deiner Passphrase ab. Bewahre die Datei geschützt auf.</p>'+
+    '<div class="btn-reihe"><button class="btn" data-ok>Exportieren</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); exportiereContainerJetzt(); }; });
+}
+function merkeExport(){ if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}); }
+async function exportiereContainerJetzt(){
   let bytes, name;
   try {
     bytes=await aktuellerContainerBlob();
@@ -789,6 +877,7 @@ async function exportiereContainer(){
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     try {
       await navigator.share({files:[file],title:'Kladde-Container'});
+      merkeExport();
       toast('Export übergeben (Share)');
       return;
     } catch(err){
@@ -800,25 +889,71 @@ async function exportiereContainer(){
   const a=document.createElement('a'); a.href=url; a.download=name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+  merkeExport();
   toast('Export gestartet: '+name);
 }
 async function importiereContainer(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  let fremd;
   try {
-    const fremd=await decodeContainer(new Uint8Array(await f.arrayBuffer()),pinRam);
-    const {daten,konflikte}=mergeContainerDaten(vault,fremd);
-    vault=daten; stammOhneBump(); await speichern();
-    toast('Gemergt: '+vault.events.length+' Ereignisse'+(konflikte.length?' · ⚠ '+konflikte[0]:''),konflikte.length?6000:2600);
-    kursAutowahl(); renderAlles();
-  } catch(err){ toast('⚠ Import: '+err.message+' (gleiche PIN auf beiden Geräten?)',5000); }
+    fremd=(await decodeContainerAuto(new Uint8Array(await f.arrayBuffer()),pinRam)).daten;
+  } catch(err){ toast('⚠ Import: '+err.message+' (gleiche Passphrase auf beiden Geräten?)',5000); return; }
+  // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
+  const eigeneIds=new Set(vault.events.map(x=>x.id));
+  const neue=(fremd.events||[]).filter(x=>!eigeneIds.has(x.id)).length;
+  const dry=mergeContainerDaten(vault,fremd);
+  dlgZeigen('<h3>Container erkannt</h3>'+
+    '<div class="zeile"><span>Quelle</span><span class="wert">'+esc(fremd.stamm?.geraet||'?')+'</span></div>'+
+    '<div class="zeile"><span>Letzter Stand</span><span class="wert">'+esc(String(fremd.stamm?.ts||'?').slice(0,16).replace('T',' '))+'</span></div>'+
+    '<div class="zeile"><span>Kurse</span><span class="wert">'+(fremd.stamm?.kurse?.length||0)+'</span></div>'+
+    '<div class="zeile"><span>Ereignisse</span><span class="wert">'+(fremd.events?.length||0)+' · davon '+neue+' neu</span></div>'+
+    (dry.konflikte.length
+      ?'<p style="color:var(--warn);font-size:13px">⚠ '+esc(dry.konflikte[0])+'</p>'
+      :'<p style="color:var(--leise);font-size:13px">Keine Stammdaten-Konflikte.</p>')+
+    '<div class="btn-reihe"><button class="btn" data-ok>Importieren und mergen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{ el.querySelector('[data-ok]').onclick=async()=>{
+      dlgZu();
+      // Verworfener Stand liegt bei (max 3, FIFO) — gerätelokal informativ, überlebt eigene Saves
+      if(dry.verworfen){
+        (dry.daten.verworfeneStaende=vault.verworfeneStaende||[]).push(dry.verworfen);
+        while(dry.daten.verworfeneStaende.length>3) dry.daten.verworfeneStaende.shift();
+      } else if(vault.verworfeneStaende){ dry.daten.verworfeneStaende=vault.verworfeneStaende; }
+      vault=dry.daten; stammOhneBump(); await speichern();
+      toast('Gemergt: '+vault.events.length+' Ereignisse'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
+      kursAutowahl(); renderAlles();
+    }; });
 }
 function stammOhneBump(){ /* Merge-Ergebnis behält die Sieger-rev — bewusst kein rev++ */ }
+function passphraseWechselDialog(){
+  dlgZeigen('<h3>Passphrase ändern</h3>'+
+    '<p style="color:var(--warn);font-size:13px">Wichtig: auf BEIDEN Geräten ändern — sonst können Import und Heimnetz-Sync den fremden Container nicht mehr öffnen. Bereits exportierte Sicherungen behalten die alte Passphrase.</p>'+
+    '<div class="zeile"><span>Aktuelle</span><span><input type="password" id="pw-alt" autocomplete="off" style="width:170px"></span></div>'+
+    '<div class="zeile"><span>Neue (min. 10)</span><span><input type="password" id="pw-neu" autocomplete="off" style="width:170px"></span></div>'+
+    '<div class="zeile"><span>Wiederholen</span><span><input type="password" id="pw-neu2" autocomplete="off" style="width:170px"></span></div>'+
+    '<div id="pw-fehler" style="color:var(--fehl);min-height:1.3em;font-size:13px"></div>'+
+    '<div class="btn-reihe"><button class="btn" data-ok>Ändern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{ el.querySelector('[data-ok]').onclick=async()=>{
+      const alt=el.querySelector('#pw-alt').value, neu=el.querySelector('#pw-neu').value;
+      const feh=el.querySelector('#pw-fehler');
+      if(neu.length<10){ feh.textContent='Mindestens 10 Zeichen — besser 12+ oder ein kurzer Satz.'; return; }
+      if(neu!==el.querySelector('#pw-neu2').value){ feh.textContent='Passphrasen stimmen nicht überein.'; return; }
+      try{
+        await speichern();
+        const blob=await idbGet('vault');
+        const g=await wechslePassphrase(blob,alt,neu);   // Millisekunden: nur DEK-Rewrap
+        await idbPut('vault',g.bytes);
+        dekKey=g.dek; containerKopf=g.kopf; pinRam=neu;
+        dlgZu(); toast('Passphrase geändert — denke an das zweite Gerät.',5000);
+      }catch(err){ feh.textContent=err.message; }
+    }; });
+}
 async function syncPush(){
   try {
     const bytes=await aktuellerContainerBlob();
     const r=await fetch('/api/kladde/push/'+GERAET,{method:'POST',body:bytes});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json();
+    merkeExport(); // Container liegt jetzt auf dem PC — zählt als Sicherung (Backup-Banner)
     toast('Push ok · Generation '+j.generationen);
   } catch(err){ toast('⚠ Push: '+err.message,4000); }
 }
@@ -828,16 +963,69 @@ async function syncPull(){
     const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store'});
     if(r.status===404){ toast('Noch kein Container von „'+von+'" auf dem Server'); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const fremd=await decodeContainer(new Uint8Array(await r.arrayBuffer()),pinRam);
-    const {daten,konflikte}=mergeContainerDaten(vault,fremd);
-    vault=daten; await speichern();
-    toast('Pull+Merge ok: '+vault.events.length+' Ereignisse'+(konflikte.length?' · ⚠ '+konflikte[0]:''),konflikte.length?6000:2600);
-    kursAutowahl(); renderAlles();
-  } catch(err){ toast('⚠ Pull: '+err.message+' (gleiche PIN?)',4500); }
+    const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pinRam)).daten;
+    const dry=mergeContainerDaten(vault,fremd);
+    const anwenden=async()=>{
+      if(vault.verworfeneStaende&&!dry.daten.verworfeneStaende) dry.daten.verworfeneStaende=vault.verworfeneStaende;
+      vault=dry.daten; await speichern();
+      toast('Pull+Merge ok: '+vault.events.length+' Ereignisse'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
+      kursAutowahl(); renderAlles();
+    };
+    // Ein Handgriff bleibt ein Handgriff — Bestätigung NUR bei Stammdaten-Konflikt (P1.6)
+    if(dry.konflikte.length){
+      dlgZeigen('<h3>Stammdaten-Konflikt</h3><p style="font-size:14px">'+esc(dry.konflikte[0])+'</p>'+
+        '<div class="btn-reihe"><button class="btn" data-ok>Übernehmen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+        el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); anwenden(); }; });
+    } else await anwenden();
+  } catch(err){ toast('⚠ Pull: '+err.message+' (gleiche Passphrase?)',4500); }
+}
+
+/* ═══ HINWEIS-BANNER (Migration · Passphrase-Empfehlung · Backup · Update) ═══ */
+function zeigeBanner(html,setup){
+  const b=$('banner');
+  b.innerHTML=html+'<button class="banner-zu" data-zu title="Ausblenden">×</button>';
+  b.classList.remove('hidden');
+  b.querySelector('[data-zu]').onclick=()=>b.classList.add('hidden');
+  if(setup) setup(b);
+}
+async function zeigeStartHinweise(){
+  if(migrationsHinweis){
+    migrationsHinweis=false;
+    zeigeBanner('<span>Kladde nutzt jetzt das schnellere Container-Format v2. Empfohlen: einmal exportieren (deine bisherige Sicherung bleibt mit alter Passphrase lesbar).</span><button class="btn" data-exp>Jetzt exportieren</button>',
+      b=>{ b.querySelector('[data-exp]').onclick=()=>{ b.classList.add('hidden'); exportiereContainer(); }; });
+    return;
+  }
+  // Einmaliger, nicht blockierender Hinweis für Bestands-Kurz-PINs (§1.3 — kein Zwang, Zwang erzeugt Post-its)
+  if(pinRam&&passStaerke(pinRam)==='schwach'&&!localStorage.getItem('kladde_pass_hinweis')){
+    localStorage.setItem('kladde_pass_hinweis','1');
+    zeigeBanner('<span>Deine PIN ist kurz — für echte Schülerdaten ist eine Passphrase (12+ Zeichen) empfohlen: Mehr → Sicherheit → Passphrase ändern.</span>');
+    return;
+  }
+  // Backup-Erinnerung (P1.5): das realste Verlustszenario ist Gerätedefekt/Speicherbereinigung, nicht der Angreifer
+  try{
+    const le=await idbGet('letzterExport');
+    const tage=le?Math.floor((Date.now()-le.ts)/86400000):Infinity;
+    if(tage>7&&vault&&vault.events.length>(le?.events??0)){
+      zeigeBanner('<span>Letzte Sicherung '+(le?'vor '+tage+' Tagen':'noch nie')+' — jetzt exportieren?</span><button class="btn" data-exp>Jetzt exportieren</button>',
+        b=>{ b.querySelector('[data-exp]').onclick=()=>{ b.classList.add('hidden'); exportiereContainer(); }; });
+    }
+  }catch{}
 }
 
 /* ═══ INIT ═══ */
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+if('serviceWorker' in navigator) window.addEventListener('load',()=>{
+  navigator.serviceWorker.register('./service-worker.js').then(reg=>{
+    // Update-Banner (P1.7, vorgezogen aus P4): kein stilles Doppel-Reload-Rätsel mehr
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      if(nw) nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller)
+          zeigeBanner('<span>Neue Version geladen.</span><button class="btn" data-reload>Neu laden</button>',
+            b=>{ b.querySelector('[data-reload]').onclick=()=>location.reload(); });
+      });
+    });
+  }).catch(()=>{});
+});
 if(navigator.storage?.persist) navigator.storage.persist();
 idbGet('starts').then(n=>idbPut('starts',(n||0)+1));
 document.body.classList.toggle('beamer',beamerModus); $('btn-beamer').classList.toggle('aktiv',beamerModus);

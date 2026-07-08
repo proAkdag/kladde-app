@@ -286,3 +286,34 @@
     ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   }
 }
+/* ── v0.8.0 · Sicherheits-UI (P1.3–P1.7) ── */
+@layer views {
+  .pin-zeile { display: flex; gap: 6px; align-items: center; }
+  #pin-staerke, .pass-staerke { min-height: 1.2em; font-size: 13px; color: var(--leise); }
+  .pass-staerke.schwach { color: var(--fehl); }
+  .pass-staerke.okay { color: var(--warn); }
+  .pass-staerke.gut { color: var(--gut); }
+  #lock-text small { color: var(--leise); font-size: 12.5px; line-height: 1.4; display: inline-block; max-width: 340px; }
+
+  /* Soft-Lock: SOFORT deckend, BEWUSST ohne jede Transition/Animation —
+     jeder Frame Verzögerung landet im iOS-App-Switcher-Screenshot. */
+  #soft-lock {
+    position: fixed; inset: 0; background: var(--grund); z-index: 98;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    transition: none !important; animation: none !important;
+  }
+  #soft-lock.hidden { display: none !important; }
+
+  /* Hinweis-Banner (Migration · Passphrase · Backup · Update) — Erinnerung, kein Alarm */
+  #banner {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--karte); border-bottom: 1px solid var(--band);
+    padding: 9px 12px; font-size: 14px;
+  }
+  #banner.hidden { display: none; }
+  #banner .btn { min-height: 38px; padding: 6px 12px; }
+  #banner .banner-zu {
+    margin-left: auto; background: transparent; border: 1px solid var(--kante);
+    border-radius: 7px; min-width: 34px; min-height: 34px; cursor: pointer; color: var(--leise);
+  }
+}

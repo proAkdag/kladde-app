@@ -27,11 +27,22 @@
 <div id="lock">
   <span class="band" style="height:34px"></span>
   <h1>Kladde</h1>
-  <div id="lock-text" class="sub" style="color:var(--leise)">PIN eingeben</div>
-  <input id="pin" type="password" inputmode="numeric" autocomplete="off" enterkeyhint="go" aria-label="PIN">
-  <input id="pin2" type="password" inputmode="numeric" autocomplete="off" enterkeyhint="go" aria-label="PIN wiederholen" class="hidden" placeholder="wiederholen">
+  <div id="lock-text" class="sub" style="color:var(--leise)">Passphrase eingeben</div>
+  <div class="pin-zeile">
+    <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase">
+    <button id="pin-auge" class="icon-btn" type="button" title="Anzeigen">👁</button>
+  </div>
+  <input id="pin2" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase wiederholen" class="hidden" placeholder="wiederholen">
+  <div id="pin-staerke" class="pass-staerke"></div>
   <div class="fehler" id="lock-fehler"></div>
   <button class="btn" id="lock-btn">Öffnen</button>
+</div>
+
+<!-- Soft-Lock (P1.4): deckt die App SOFORT ab, wenn sie in den Hintergrund geht —
+     iOS schießt fürs App-Umschalter-Karussell einen Screenshot. KEINE Animation hier. -->
+<div id="soft-lock" class="hidden">
+  <span class="band" style="height:34px"></span>
+  <h1>Kladde</h1>
 </div>
 
 <header class="app">
@@ -41,6 +52,8 @@
   <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken">👁</button>
   <button class="icon-btn" id="btn-lock" title="Sperren">🔒</button>
 </header>
+
+<div id="banner" class="hidden"></div>
 
 <main>
   <section id="view-heute">
