@@ -1,8 +1,11 @@
-// Kladde · Service Worker
+// Kladde · Service Worker (Multi-File, v0.8.0)
 // Cache-first fuer die App-Huelle · API IMMER Netz (Sync darf nie aus dem Cache kommen)
-// CACHE_NAME ist VERSIONIERT — bei jedem App-Release hochziehen (IT-Pflicht-Op S-Kladde-Bau)
+// CACHE_NAME ist VERSIONIERT — Konsistenz index.html-Queries ↔ ASSETS ↔ Version
+// erzwingt test/sw_assets.test.mjs (Maschine statt Merkzettel).
+// Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
+// schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-v0.7.0';
+const CACHE_NAME = 'kladde-v0.8.0';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -12,7 +15,14 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './css/kladde.css?v=0.8.0',
+  './js/app.mjs?v=0.8.0',
+  './logic/skalen.mjs',
+  './logic/verdichtung.mjs',
+  './logic/merge.mjs',
+  './logic/container.mjs',
+  './logic/parser.mjs'
 ];
 
 self.addEventListener('install', (event) => {

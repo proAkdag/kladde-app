@@ -1,0 +1,361 @@
+@layer reset, base, components, views, anim;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.45; }
+  :root {
+    color-scheme: dark;
+    --grund: #14161c; --karte: #1d2027; --karte2: #24272f; --kante: #2c303a;
+    --text: #e8e4da; --leise: #9a958a; --band: #c49a5a;
+    --gut: #7fb069; --warn: #d9a441; --fehl: #c96f6f; --info: #6f9dc9;
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  button { font: inherit; color: inherit; }
+}
+
+@layer base {
+  html { overscroll-behavior: none; height: 100%; }
+  body {
+    background: var(--grund); color: var(--text);
+    height: 100dvh; display: flex; flex-direction: column;
+    -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+    user-select: none; -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  input, textarea { user-select: text; -webkit-user-select: text; font: inherit; }
+  main { flex: 1; overflow-y: auto; padding: 10px 12px calc(env(safe-area-inset-bottom) + 74px); }
+  .hidden { display: none !important; }
+}
+
+@layer components {
+  header.app {
+    display: flex; align-items: center; gap: 8px;
+    padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
+    border-bottom: 1px solid var(--kante);
+  }
+  .band { width: 6px; height: 22px; background: var(--band); border-radius: 2px; }
+  #kurs-chip {
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 8px;
+    padding: 8px 12px; min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-weight: 600; max-width: 60vw; overflow: hidden; white-space: nowrap;
+  }
+  #kurs-chip small { color: var(--leise); font-weight: 400; }
+  .spacer { flex: 1; }
+  .icon-btn {
+    background: transparent; border: 1px solid var(--kante); border-radius: 8px;
+    min-width: 44px; min-height: 44px; cursor: pointer; font-size: 17px;
+  }
+  .icon-btn.aktiv { border-color: var(--band); color: var(--band); }
+  nav.tabs {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; background: var(--karte); border-top: 1px solid var(--kante);
+    padding-bottom: env(safe-area-inset-bottom); z-index: 30;
+  }
+  nav.tabs button {
+    flex: 1; background: none; border: none; padding: 10px 4px 8px; min-height: 52px;
+    color: var(--leise); font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  nav.tabs button .t-ico { font-size: 19px; }
+  nav.tabs button.aktiv { color: var(--band); }
+  .panel { background: var(--karte); border: 1px solid var(--kante); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .panel h2 { font-size: 13px; margin: 0 0 8px; color: var(--leise); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .zeile { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--kante); font-size: 15px; align-items: center; }
+  .zeile:first-of-type { border-top: none; }
+  .zeile .wert { color: var(--leise); text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .btn {
+    background: transparent; color: var(--band); border: 1px solid var(--band); border-radius: 8px;
+    padding: 10px 14px; min-height: 44px; min-width: 44px; cursor: pointer; font-size: 15px;
+  }
+  .btn:active { background: rgba(196,154,90,.15); }
+  .btn.still { color: var(--leise); border-color: var(--kante); }
+  .btn.gefahr { color: var(--fehl); border-color: var(--fehl); }
+  .btn-reihe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--leise); flex-shrink: 0; }
+  .dot.gut { background: var(--gut); } .dot.warn { background: var(--warn); } .dot.fehl { background: var(--fehl); }
+  select, input[type=text], input[type=password], input[type=date], input[type=time], input[type=number] {
+    background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px;
+    padding: 10px; min-height: 44px; font-size: 16px; /* ≥16px gegen iOS-Zoom */
+  }
+  dialog {
+    background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px;
+    padding: 16px; max-width: min(480px, 92vw); margin: auto;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.55); }
+  #toast {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 84px);
+    background: var(--karte2); border: 1px solid var(--kante); border-radius: 10px; padding: 10px 16px;
+    z-index: 60; max-width: 88vw; font-size: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.4);
+  }
+  #undo-chip {
+    position: fixed; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 84px); z-index: 40;
+    background: var(--karte2); border: 1px solid var(--band); color: var(--band);
+    border-radius: 20px; padding: 10px 16px; min-height: 44px; cursor: pointer; font-size: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  }
+}
+
+@layer views {
+  /* ── Datums-Streifen (Heute-Ansicht) ── */
+  .datum-streifen {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 10px; padding: 8px 12px;
+  }
+  .datum-streifen .heute-tag { font-weight: 700; font-size: 15px; }
+  .datum-streifen.nachtrag { border-color: var(--warn); }
+  .datum-streifen .nachtrag-hinweis { color: var(--warn); font-size: 13px; }
+  .datum-streifen .rechts { margin-left: auto; display: flex; gap: 6px; }
+  .datum-streifen button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 14px; }
+  .datum-streifen button.aktiv { border-color: var(--band); color: var(--band); }
+  .datum-streifen .erf-zaehler { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 3px 11px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--leise); }
+  .legende { display: flex; flex-direction: column; gap: 9px; font-size: 14px; margin: 4px 0 10px; }
+  .legende .chip { border-radius: 3px; padding: 0 7px; font-weight: 700; display: inline-block; }
+
+  /* ── Sitzplan: Name + Tages-Stand als Symbole/Farben · Beamer-Toggle versteckt Werte ── */
+  #plan-wrap { overflow: auto; }
+  #plan {
+    display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px;
+    min-width: 600px; justify-content: center;
+  }
+  #plan .kachel {
+    aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+    font-size: 11px; overflow: hidden; position: relative;
+  }
+  #plan .kachel.leer { background: transparent; }
+  #plan .kachel.schueler { background: var(--karte); border-color: var(--kante); cursor: pointer; }
+  #plan .kachel.schueler.gewaehlt { outline: 2px solid var(--band); outline-offset: -2px; }
+  #plan .kachel.netto-plus  { background: #1c2a1a; }   /* mehrheitlich + */
+  #plan .kachel.netto-minus { background: #2c1a1a; }   /* mehrheitlich − */
+  #plan .kachel.netto-fehlt { background: #202226; opacity: .55; }
+  #plan .kachel .kopf { display: flex; align-items: center; gap: 3px; padding: 3px 4px 0; }
+  #plan .kachel .vn { font-weight: 600; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  #plan .kachel .lb-badge { background: var(--info); color: #06121e; font-size: 8px; font-weight: 800; border-radius: 3px; padding: 0 3px; letter-spacing: .03em; }
+  #plan .kachel .nn { color: var(--leise); font-size: 9px; padding: 0 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  #plan .kachel .marken { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 3px 3px; min-height: 15px; }
+  #plan .kachel .mk { border-radius: 3px; padding: 0 3px; font-size: 10px; font-weight: 700; line-height: 1.3; }
+  #plan .kachel .mk.p { background: var(--gut); color: #08160a; }
+  #plan .kachel .mk.m { background: var(--fehl); color: #1c0606; }
+  #plan .kachel .mk.o { background: var(--kante); color: var(--text); }
+  #plan .kachel .mk.u { background: var(--fehl); color: #fff; }
+  #plan .kachel .mk.sym { background: transparent; padding: 0 1px; }
+  body.beamer #plan .kachel .marken { display: none; }
+  body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
+  body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
+  #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
+  #plan.editor .kachel .marken { display: none; }
+  .aktionsbar {
+    position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 52px);
+    background: var(--karte); border-top: 1px solid var(--kante); padding: 8px 10px; z-index: 35;
+    display: flex; gap: 6px; overflow-x: auto;
+  }
+  .aktionsbar .wer { font-weight: 700; padding: 8px 6px; white-space: nowrap; }
+  .aktionsbar button {
+    background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
+    min-width: 48px; min-height: 48px; font-size: 16px; cursor: pointer; white-space: nowrap; padding: 4px 10px;
+  }
+  .aktionsbar button:active { border-color: var(--band); }
+  .aktionsbar button.plus { color: var(--gut); } .aktionsbar button.minus { color: var(--fehl); }
+  /* ── Deck ── */
+  #deck-karte {
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 16px;
+    max-width: 420px; margin: 12px auto; padding: 26px 18px; text-align: center; min-height: 220px;
+    display: flex; flex-direction: column; justify-content: center; gap: 8px;
+    touch-action: none; position: relative;
+  }
+  #deck-karte .gross { font-size: 30px; font-weight: 700; }
+  #deck-karte .sub { color: var(--leise); }
+  #deck-fortschritt { text-align: center; color: var(--leise); font-variant-numeric: tabular-nums; }
+  .deck-bar { height: 6px; background: var(--karte); border: 1px solid var(--kante); border-radius: 4px; overflow: hidden; max-width: 420px; margin: 6px auto 0; }
+  .deck-bar > div { height: 100%; background: var(--gut); transition: width .2s; }
+  .deck-hilfe { display: flex; justify-content: space-between; max-width: 420px; margin: 0 auto; color: var(--leise); font-size: 13px; padding: 0 8px; }
+  .deck-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  /* ── Schüler-Liste + Inline-Detail-Akkordeon ── */
+  .s-block { border-top: 1px solid var(--kante); }
+  .s-block:first-child { border-top: none; }
+  .s-block.offen { background: var(--karte2); border-radius: 8px; margin: 4px -6px; }
+  .s-item { display: flex; align-items: center; gap: 10px; padding: 10px 6px; cursor: pointer; min-height: 48px; }
+  .s-item .pfeil { color: var(--leise); font-size: 15px; }
+  .balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--karte); }
+  .balken div { height: 100%; }
+  .s-detail { padding: 4px 10px 12px; }
+  .s-detail .tag-gruppe { margin-top: 8px; }
+  .s-detail .tag-kopf { color: var(--band); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .s-detail .ev-zeile { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--kante); font-size: 14px; }
+  .balken { min-width: 60px; }
+  /* ── Gruppen-Editor: Direktbuttons ── */
+  .gr-zeile { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--kante); }
+  .gr-zeile:first-child { border-top: none; }
+  .gr-name { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gr-btns { display: flex; gap: 4px; }
+  .gr-b { background: var(--karte2); border: 1px solid var(--kante); border-radius: 7px; min-width: 38px; min-height: 40px; cursor: pointer; font-weight: 700; color: inherit; }
+  .gr-b.an { background: var(--band); color: #1a1206; border-color: var(--band); }
+  /* ── Lock ── */
+  #lock {
+    position: fixed; inset: 0; background: var(--grund); z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px;
+  }
+  #lock h1 { font-size: 26px; margin: 0; }
+  #lock input { text-align: center; letter-spacing: .3em; font-size: 22px; width: 220px; }
+  #lock .fehler { color: var(--fehl); min-height: 1.4em; font-size: 14px; }
+}
+
+/* ╔═══ ANIMATIONEN v0.7.0 · plattform-adaptiv, GPU-first ═══════════════════╗
+   Fundament: transform/opacity/@keyframes (Baseline überall, iPad 8 sicher).
+   Enhancement: @starting-style/allow-discrete (Safari 17.4+), View Transitions
+   (PC-Chrome seit 111 · iPad ab Safari 18 · sonst folgenloser no-op).
+   Werft-Muster geerbt: Reflow-Re-Trigger · reduced-motion-Guard · Doktrin werks_stille.
+╚══════════════════════════════════════════════════════════════════════════╝ */
+@layer anim {
+  /* ── Press-Feedback (universell, Touch + Zeiger) ── */
+  .btn, .icon-btn, .aktionsbar button, nav.tabs button, .gr-b, .datum-streifen button,
+  #kurs-chip, #plan .kachel.schueler, .s-item, .zeile, .deck-btns .btn {
+    transition: transform .09s ease-out, background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, outline-color .12s ease;
+  }
+  .btn:active, .icon-btn:active, .aktionsbar button:active, nav.tabs button:active,
+  .gr-b:active, .deck-btns .btn:active, .datum-streifen button:active, #kurs-chip:active,
+  #plan .kachel.schueler:active { transform: scale(.96); }
+  #plan .kachel { transition: background-color .2s ease, outline-color .12s ease, transform .09s ease-out; }
+
+  /* ── Bewerten-Puls (Reflow-Re-Trigger via JS) ── */
+  @keyframes kladde-puls { 0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)} }
+  #plan .kachel.puls { animation: kladde-puls .18s cubic-bezier(.2,0,0,1); }
+
+  /* ── Toast · Undo-Chip · Aktionsbar: Eintritt ── */
+  @keyframes kladde-toast-rein { from{opacity:0; transform:translateX(-50%) translateY(8px)} to{opacity:1; transform:translateX(-50%) translateY(0)} }
+  #toast:not(.hidden) { animation: kladde-toast-rein .22s cubic-bezier(.05,.7,.1,1); }
+  @keyframes kladde-chip-rein { from{opacity:0; transform:translateY(10px) scale(.96)} to{opacity:1; transform:none} }
+  #undo-chip:not(.hidden) { animation: kladde-chip-rein .2s cubic-bezier(.05,.7,.1,1); }
+  @keyframes kladde-bar-hoch { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .aktionsbar:not(.hidden) { animation: kladde-bar-hoch .2s cubic-bezier(.05,.7,.1,1); }
+
+  /* ── Dialog/Sheet: @starting-style Eintritt + allow-discrete Austritt ── */
+  #dlg {
+    opacity: 0; transform: translateY(10px) scale(.97);
+    transition-property: opacity, transform, display, overlay;
+    transition-duration: .24s;
+    transition-timing-function: cubic-bezier(.05,.7,.1,1);
+    transition-behavior: allow-discrete;
+  }
+  #dlg[open] { opacity: 1; transform: none; }
+  @starting-style { #dlg[open] { opacity: 0; transform: translateY(10px) scale(.97); } }
+  #dlg::backdrop {
+    background-color: rgba(0,0,0,0);
+    transition-property: background-color, display, overlay;
+    transition-duration: .24s; transition-behavior: allow-discrete;
+  }
+  #dlg[open]::backdrop { background-color: rgba(0,0,0,.55); }
+  @starting-style { #dlg[open]::backdrop { background-color: rgba(0,0,0,0); } }
+
+  /* ── Deck-Karte: Weg-Flug (Richtung = Bewertung) + neue Karte rein ── */
+  @keyframes kladde-karte-plus  { to { transform: translateX(62%) rotate(6deg);  opacity:0 } }
+  @keyframes kladde-karte-minus { to { transform: translateX(-62%) rotate(-6deg); opacity:0 } }
+  @keyframes kladde-karte-weiter{ to { transform: translateY(42%); opacity:0 } }
+  @keyframes kladde-karte-rein  { from { opacity:0; transform: translateY(12px) scale(.98) } to { opacity:1; transform:none } }
+  #deck-karte.weg-plus  { animation: kladde-karte-plus  .24s cubic-bezier(.3,0,1,1) forwards; }
+  #deck-karte.weg-minus { animation: kladde-karte-minus .24s cubic-bezier(.3,0,1,1) forwards; }
+  #deck-karte.weg-weiter{ animation: kladde-karte-weiter .2s cubic-bezier(.3,0,1,1) forwards; }
+  #deck-karte.rein { animation: kladde-karte-rein .22s cubic-bezier(.05,.7,.1,1); }
+
+  /* ── View Transitions (Tab-/Ansichtswechsel) · Kopf+Leiste bleiben statisch ── */
+  header.app { view-transition-name: vt-kopf; }
+  nav.tabs   { view-transition-name: vt-nav; }
+  ::view-transition-old(root), ::view-transition-new(root) {
+    animation-duration: .14s; animation-timing-function: cubic-bezier(.2,0,0,1);
+  }
+
+  /* ── PC/Mac: Zeiger-Hover (greift NICHT auf Touch, hover:none) ── */
+  @media (hover: hover) and (pointer: fine) {
+    #plan .kachel.schueler:hover { transform: translateY(-1px); box-shadow: 0 3px 11px rgba(0,0,0,.38); }
+    .s-item:hover { background: var(--karte2); }
+    .zeile:hover { background: color-mix(in srgb, var(--karte2) 45%, transparent); }
+    .btn:hover { background: rgba(196,154,90,.12); }
+    .icon-btn:hover, .datum-streifen button:hover, .gr-b:hover, .aktionsbar button:hover, #kurs-chip:hover { border-color: var(--band); }
+    nav.tabs button:hover:not(.aktiv) { color: var(--text); }
+  }
+
+  /* ── Tastatur-Fokus (PC) ── */
+  :focus-visible { outline: 2px solid var(--band); outline-offset: 2px; }
+
+  /* ── Reduced-Motion: alles aus (Apple HIG · DSGVO-A11y) ── */
+  @media (prefers-reduced-motion: reduce) {
+    #dlg, #dlg::backdrop, .aktionsbar, #toast, #undo-chip, #deck-karte, #plan .kachel,
+    .btn, .icon-btn, nav.tabs button, .s-item, .zeile, #kurs-chip {
+      animation: none !important; transition-duration: .01ms !important;
+    }
+    #dlg { transform: none; }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  }
+}
+/* ── v0.8.0 · Sicherheits-UI (P1.3–P1.7) ── */
+@layer views {
+  .pin-zeile { display: flex; gap: 6px; align-items: center; }
+  #pin-staerke, .pass-staerke { min-height: 1.2em; font-size: 13px; color: var(--leise); }
+  .pass-staerke.schwach { color: var(--fehl); }
+  .pass-staerke.okay { color: var(--warn); }
+  .pass-staerke.gut { color: var(--gut); }
+  #lock-text small { color: var(--leise); font-size: 12.5px; line-height: 1.4; display: inline-block; max-width: 340px; }
+
+  /* Soft-Lock: SOFORT deckend, BEWUSST ohne jede Transition/Animation —
+     jeder Frame Verzögerung landet im iOS-App-Switcher-Screenshot. */
+  #soft-lock {
+    position: fixed; inset: 0; background: var(--grund); z-index: 98;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    transition: none !important; animation: none !important;
+  }
+  #soft-lock.hidden { display: none !important; }
+
+  /* Hinweis-Banner (Migration · Passphrase · Backup · Update) — Erinnerung, kein Alarm */
+  #banner {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--karte); border-bottom: 1px solid var(--band);
+    padding: 9px 12px; font-size: 14px;
+  }
+  #banner.hidden { display: none; }
+  #banner .btn { min-height: 38px; padding: 6px 12px; }
+  #banner .banner-zu {
+    margin-left: auto; background: transparent; border: 1px solid var(--kante);
+    border-radius: 7px; min-width: 34px; min-height: 34px; cursor: pointer; color: var(--leise);
+  }
+}
+
+/* ── v0.8.0 · Utility-Klassen (CSP: ersetzen die style=""-Attribute der HTML-String-Renderer) ── */
+@layer components {
+  .u-leise { color: var(--leise); }
+  .u-gut { color: var(--gut); }
+  .u-fehl { color: var(--fehl); }
+  .u-hinweis { font-size: 13px; color: var(--leise); }
+  .u-warn13 { font-size: 13px; color: var(--warn); }
+  .u-regelzeile { font-size: 12px; color: var(--leise); margin: 4px 0 8px; }
+  .u-vorschau { font-size: 13px; color: var(--leise); min-height: 2.6em; margin-top: 6px; }
+  .u-fehlerfeld { color: var(--fehl); min-height: 1.3em; font-size: 13px; }
+  .u-kopf-leise { margin-top: 12px; color: var(--leise); }
+  .u-wert-rechts { font-weight: 700; min-width: 40px; text-align: right; }
+  .u-fs14 { font-size: 14px; }
+  .u-fs16 { font-size: 16px; }
+  .u-mt4 { margin-top: 4px; }
+  .u-mt10 { margin: 10px 0 4px; }
+  .u-m3 { margin: 3px; }
+  .u-flex1 { flex: 1; }
+  .u-minw104 { min-width: 104px; }
+  .u-maxw55 { max-width: 55%; }
+  .u-selfcenter { align-self: center; }
+  .u-notransform { text-transform: none; }
+  .u-w108 { width: 108px; } .u-w110 { width: 110px; } .u-w130 { width: 130px; }
+  .u-w160 { width: 160px; } .u-w170 { width: 170px; }
+  .u-check { width: 22px; height: 22px; }
+  .u-scroll58 { max-height: 58vh; overflow: auto; }
+  .u-scroll30 { max-height: 30vh; overflow: auto; margin-top: 8px; }
+  .u-btn-block { display: block; width: 100%; margin: 6px 0; }
+  .u-btn-block.u-eng { margin: 4px 0; }
+  .u-btn-klein { min-height: 32px; padding: 2px 10px; }
+  .u-textarea { width: 100%; background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px; padding: 8px; }
+  .dev-badge { background: var(--fehl); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+  .band-hoch { height: 34px; }
+  .bal-p { background: var(--gut); } .bal-o { background: var(--leise); } .bal-m { background: var(--fehl); }
+  .chip-gut { background: var(--gut); color: #08160a; }
+  .chip-fehl { background: var(--fehl); color: #1c0606; }
+  .chip-kante { background: var(--kante); color: var(--text); }
+  .chip-info { background: var(--info); color: #06121e; }
+  .deck-minus { color: var(--fehl); border-color: var(--fehl); }
+  .deck-plus { color: var(--gut); border-color: var(--gut); }
+}
