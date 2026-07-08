@@ -317,3 +317,45 @@
     border-radius: 7px; min-width: 34px; min-height: 34px; cursor: pointer; color: var(--leise);
   }
 }
+
+/* ── v0.8.0 · Utility-Klassen (CSP: ersetzen die style=""-Attribute der HTML-String-Renderer) ── */
+@layer components {
+  .u-leise { color: var(--leise); }
+  .u-gut { color: var(--gut); }
+  .u-fehl { color: var(--fehl); }
+  .u-hinweis { font-size: 13px; color: var(--leise); }
+  .u-warn13 { font-size: 13px; color: var(--warn); }
+  .u-regelzeile { font-size: 12px; color: var(--leise); margin: 4px 0 8px; }
+  .u-vorschau { font-size: 13px; color: var(--leise); min-height: 2.6em; margin-top: 6px; }
+  .u-fehlerfeld { color: var(--fehl); min-height: 1.3em; font-size: 13px; }
+  .u-kopf-leise { margin-top: 12px; color: var(--leise); }
+  .u-wert-rechts { font-weight: 700; min-width: 40px; text-align: right; }
+  .u-fs14 { font-size: 14px; }
+  .u-fs16 { font-size: 16px; }
+  .u-mt4 { margin-top: 4px; }
+  .u-mt10 { margin: 10px 0 4px; }
+  .u-m3 { margin: 3px; }
+  .u-flex1 { flex: 1; }
+  .u-minw104 { min-width: 104px; }
+  .u-maxw55 { max-width: 55%; }
+  .u-selfcenter { align-self: center; }
+  .u-notransform { text-transform: none; }
+  .u-w108 { width: 108px; } .u-w110 { width: 110px; } .u-w130 { width: 130px; }
+  .u-w160 { width: 160px; } .u-w170 { width: 170px; }
+  .u-check { width: 22px; height: 22px; }
+  .u-scroll58 { max-height: 58vh; overflow: auto; }
+  .u-scroll30 { max-height: 30vh; overflow: auto; margin-top: 8px; }
+  .u-btn-block { display: block; width: 100%; margin: 6px 0; }
+  .u-btn-block.u-eng { margin: 4px 0; }
+  .u-btn-klein { min-height: 32px; padding: 2px 10px; }
+  .u-textarea { width: 100%; background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px; padding: 8px; }
+  .dev-badge { background: var(--fehl); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+  .band-hoch { height: 34px; }
+  .bal-p { background: var(--gut); } .bal-o { background: var(--leise); } .bal-m { background: var(--fehl); }
+  .chip-gut { background: var(--gut); color: #08160a; }
+  .chip-fehl { background: var(--fehl); color: #1c0606; }
+  .chip-kante { background: var(--kante); color: var(--text); }
+  .chip-info { background: var(--info); color: #06121e; }
+  .deck-minus { color: var(--fehl); border-color: var(--fehl); }
+  .deck-plus { color: var(--gut); border-color: var(--gut); }
+}

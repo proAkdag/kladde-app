@@ -12,6 +12,7 @@
 ╚══════════════════════════════════════════════════════════════════════════╝ -->
 
 <title>Kladde</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=()">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#14161c">
@@ -25,9 +26,9 @@
 <body>
 
 <div id="lock">
-  <span class="band" style="height:34px"></span>
+  <span class="band band-hoch"></span>
   <h1>Kladde</h1>
-  <div id="lock-text" class="sub" style="color:var(--leise)">Passphrase eingeben</div>
+  <div id="lock-text" class="sub u-leise">Passphrase eingeben</div>
   <div class="pin-zeile">
     <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase">
     <button id="pin-auge" class="icon-btn" type="button" title="Anzeigen">👁</button>
@@ -41,7 +42,7 @@
 <!-- Soft-Lock (P1.4): deckt die App SOFORT ab, wenn sie in den Hintergrund geht —
      iOS schießt fürs App-Umschalter-Karussell einen Screenshot. KEINE Animation hier. -->
 <div id="soft-lock" class="hidden">
-  <span class="band" style="height:34px"></span>
+  <span class="band band-hoch"></span>
   <h1>Kladde</h1>
 </div>
 
@@ -59,7 +60,7 @@
   <section id="view-heute">
     <div id="datum-streifen"></div>
     <div id="plan-wrap"><div id="plan"></div></div>
-    <p id="heute-leer" class="hidden" style="color:var(--leise)">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
+    <p id="heute-leer" class="hidden u-leise">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
   </section>
 
   <section id="view-deck" class="hidden">
@@ -67,9 +68,9 @@
     <div id="deck-karte"></div>
     <div class="deck-hilfe"><span>← −</span><span>↑ Notiz · ↓ weiter</span><span>+ →</span></div>
     <div class="deck-btns">
-      <button class="btn" data-deck="-" style="color:var(--fehl);border-color:var(--fehl)">−</button>
+      <button class="btn deck-minus" data-deck="-">−</button>
       <button class="btn still" data-deck="o">o</button>
-      <button class="btn" data-deck="+" style="color:var(--gut);border-color:var(--gut)">+</button>
+      <button class="btn deck-plus" data-deck="+">+</button>
       <button class="btn still" data-deck="skip">weiter ↓</button>
     </div>
   </section>
