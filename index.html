@@ -241,7 +241,7 @@
 <script>
 'use strict';
 (function () {
-const APP_VERSION = '0.2.1';
+const APP_VERSION = '0.2.2';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 
@@ -896,21 +896,28 @@ async function aktuellerContainerBlob(){
   return idbGet('vault');
 }
 async function exportiereContainer(){
+  let bytes, name;
   try {
-    const bytes=await aktuellerContainerBlob();
-    const name='kladde-'+GERAET+'-'+heuteIso()+'.enc';
-    const file=new File([bytes],name,{type:'application/octet-stream'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
+    bytes=await aktuellerContainerBlob();
+    name='kladde-'+GERAET+'-'+heuteIso()+'.enc';
+  } catch(err){ toast('⚠ Export: '+err.message,4000); return; }
+  // FEHLER:519-Kaskade: share primär (iOS), bei Nicht-Abbruch-Fehler → Download-Fallback
+  const file=new File([bytes],name,{type:'application/octet-stream'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try {
       await navigator.share({files:[file],title:'Kladde-Container'});
       toast('Export übergeben (Share)');
       return;
+    } catch(err){
+      if(err.name==='AbortError') return;            // bewusst abgebrochen
+      console.warn('[kladde] share→download-Fallback:',err.message);
     }
-    const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
-    const a=document.createElement('a'); a.href=url; a.download=name;
-    document.body.appendChild(a); a.click(); a.remove();      // FEHLER:519-Kaskade
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    toast('Export gestartet: '+name);
-  } catch(err){ if(err.name!=='AbortError') toast('⚠ Export: '+err.message,4000); }
+  }
+  const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
+  const a=document.createElement('a'); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Export gestartet: '+name);
 }
 async function importiereContainer(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
