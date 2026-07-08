@@ -1,13 +1,13 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.1.1783547015';
-import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.1.1783547015';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.1.1783547015';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.1.1783547015';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.1.1783547015';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=0.10.1.1783547015';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.1.1783547015';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.1.1783547015';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.1.1783547115';
+import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.1.1783547115';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.1.1783547115';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.1.1783547115';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.1.1783547115';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=0.10.1.1783547115';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.1.1783547115';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.1.1783547115';
 const APP_VERSION = '0.10.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -905,7 +905,7 @@ function schuljahrAssistent(){
     dlgZeigenEl(kopf('Sicherung'),
       el('p',{},'Bevor du das neue Schuljahr startest, sichere die aktuelle Kladde. „Weiter" wird erst nach einem Export frei.'),
       el('div',{class:'btn-reihe'},
-        el('button',{class:'btn',onclick:()=>exportiereContainer()},'Container exportieren'),
+        el('button',{class:'btn',onclick:async()=>{ await exportiereContainerJetzt(); s1(); }},exportInSitzung?'✓ exportiert — nochmal':'Container exportieren'),
         el('button',{class:'btn'+(exportInSitzung?'':' still'),onclick:()=>{ if(!exportInSitzung){ toast('Bitte zuerst exportieren'); return; } schritt=2; s2(); }},'Weiter'),
         el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   }
