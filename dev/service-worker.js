@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-dev-v0.8.0-1783543091';
+const CACHE_NAME = 'kladde-dev-v0.8.0-1783543287';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -16,8 +16,8 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './css/kladde.css?v=0.8.0',
-  './js/app.mjs?v=0.8.0',
+  './css/kladde.css?v=0.8.0.1783543287',
+  './js/app.mjs?v=0.8.0.1783543287',
   './logic/skalen.mjs',
   './logic/verdichtung.mjs',
   './logic/merge.mjs',
