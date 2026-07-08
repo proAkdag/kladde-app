@@ -1,14 +1,14 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.0.1783546496';
-import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.0.1783546496';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.0.1783546496';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.0.1783546496';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.0.1783546496';
-import { migriereStamm, schemaBekannt } from '../logic/migration.mjs?v=0.10.0.1783546496';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.0.1783546496';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.0.1783546496';
-const APP_VERSION = '0.10.0';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.1.1783547015';
+import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.1.1783547015';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.1.1783547015';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.1.1783547015';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.1.1783547015';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=0.10.1.1783547015';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.1.1783547015';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.1.1783547015';
+const APP_VERSION = '0.10.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -197,6 +197,8 @@ function profilTypen(k){
 // auf die getestete 2-Wege-Logik ab — Sek-II-Drittel rechnet wie Sek I (Drittelnoten 1–6).
 function bewertProfil(k){ return (k&&k.profil==='sek2'&&(k.notenmodus||'punkte')!=='drittel')?'sek2':'sek1'; }
 function addEvent(typ,schuelerNr,extra={}){
+  const k=kurs();
+  if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return null; } // P3.3
   const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
   vault.events.push(e);
   undoStack.push(e); if(undoStack.length>50) undoStack.shift();
@@ -821,7 +823,16 @@ function renderKurse(){
     '<p class="u-hinweis">Zeitraster + Wochenplan deiner Schule — die Kladde öffnet dann automatisch den richtigen Kurs.'+
     ((vault.stamm.zeitmodelle||[]).length?' <b class="u-gut">eingerichtet</b>':' <b class="u-warn13">noch nicht eingerichtet</b>')+'</p>'+
     '<div class="btn-reihe"><button class="btn" id="btn-stundenplan">Stundenplan einrichten</button></div></div>';
-  for(const k of vault.stamm.kurse){
+  // Schuljahr-Panel (P3.2)
+  const sj=aktivesSchuljahr();
+  html+='<div class="panel"><h2>Schuljahr</h2>'+
+    '<div class="zeile"><span>Aktiv</span><span class="wert">'+esc(sj?sj.label:'—')+'</span></div>'+
+    '<div class="btn-reihe"><button class="btn still" id="btn-schuljahr">Neues Schuljahr starten…</button></div></div>';
+  // Kurse des AKTIVEN Schuljahres, nicht archiviert
+  const aktiveId=vault.stamm.aktivesSchuljahrId;
+  const sichtbar=vault.stamm.kurse.filter(k=>(k.schuljahrId||aktiveId)===aktiveId&&k.status!=='archiviert');
+  const archiviert=vault.stamm.kurse.filter(k=>k.status==='archiviert');
+  for(const k of sichtbar){
     const anz=kursSchueler(k).length;
     const p=vault.stamm.kursprofile[k.id]||{};
     html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(k.fach)+' <small class="u-notransform">('+k.profil+' · '+anz+' Schüler)</small></h2>'+
@@ -832,11 +843,21 @@ function renderKurse(){
       '<button class="btn still" data-plan-edit="'+k.id+'">Sitzplan bearbeiten</button>'+
       '<button class="btn still" data-slots="'+k.id+'">Stundenplan-Slots</button>'+
       '<button class="btn still" data-gruppen="'+k.id+'">Halbgruppen</button>'+
-      '<button class="btn gefahr" data-kurs-weg="'+k.id+'">Entfernen</button></div></div>';
+      '<button class="btn still" data-archiv="'+k.id+'">Archivieren</button></div></div>';
+  }
+  // Archiv (P3.3) — schreibgeschützt, eingeklappt
+  if(archiviert.length){
+    html+='<details class="panel"><summary><b>Archiv ('+archiviert.length+')</b></summary>'+
+      archiviert.map(k=>'<div class="zeile"><span>'+esc(k.name)+' · '+esc(k.fach)+' <small class="u-leise">'+esc((vault.stamm.schuljahre||[]).find(j=>j.id===k.schuljahrId)?.label||'')+'</small></span>'+
+        '<span><button class="btn still u-btn-klein" data-oeffnen="'+k.id+'">öffnen</button> <button class="btn gefahr u-btn-klein" data-loeschen="'+k.id+'">löschen</button></span></div>').join('')+'</details>';
   }
   wrap.innerHTML=html;
   $('btn-kurs-neu').onclick=kursAnlegenDialog;
   $('btn-stundenplan').onclick=stundenplanAssistent;
+  $('btn-schuljahr').onclick=schuljahrAssistent;
+  wrap.querySelectorAll('[data-archiv]').forEach(b=>b.onclick=()=>archiviereKurs(b.dataset.archiv));
+  wrap.querySelectorAll('[data-oeffnen]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.oeffnen; aktualisiereKursChip(); aktView='schueler'; document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='schueler')); ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='schueler')); renderSchueler(); toast('Archiv-Kurs (schreibgeschützt)'); });
+  wrap.querySelectorAll('[data-loeschen]').forEach(b=>b.onclick=()=>loescheKursEndgueltig(b.dataset.loeschen));
   $('btn-import-kurs').onclick=()=>$('file-kurs').click();
   $('file-kurs').onchange=async e=>{
     const f=e.target.files[0]; if(!f) return;
@@ -857,13 +878,126 @@ function renderKurse(){
   wrap.querySelectorAll('[data-slot]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.slot); k.slot=sel.value; stammMutiert(); speichern(); toast('Export-Slot: '+sel.value); });
   wrap.querySelectorAll('[data-notenmodus]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.notenmodus); k.notenmodus=sel.value; stammMutiert(); speichern(); toast('Sek II: '+(sel.value==='drittel'?'Drittelnoten':'Punkte 0–15')); });
   wrap.querySelectorAll('[data-ha]').forEach(cb=>cb.onchange=()=>{ vault.stamm.kursprofile[cb.dataset.ha]={...(vault.stamm.kursprofile[cb.dataset.ha]||{}),ha:cb.checked}; stammMutiert(); speichern(); });
-  wrap.querySelectorAll('[data-kurs-weg]').forEach(b=>b.onclick=()=>{
-    dlgZeigen('<h3>Kurs entfernen?</h3><p class="u-leise">Ereignisse bleiben im Log (Storno-Prinzip), aber der Kurs verschwindet aus allen Listen.</p><div class="btn-reihe"><button class="btn gefahr" data-ok>Entfernen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-      el=>{ el.querySelector('[data-ok]').onclick=()=>{ vault.stamm.kurse=vault.stamm.kurse.filter(x=>x.id!==b.dataset.kursWeg); stammMutiert(); speichern(); if(aktiverKursId===b.dataset.kursWeg) aktiverKursId=null; dlgZu(); renderKurse(); aktualisiereKursChip(); }; });
-  });
   wrap.querySelectorAll('[data-plan-edit]').forEach(b=>b.onclick=()=>sitzplanEditor(b.dataset.planEdit));
   wrap.querySelectorAll('[data-slots]').forEach(b=>b.onclick=()=>slotsEditor(b.dataset.slots));
   wrap.querySelectorAll('[data-gruppen]').forEach(b=>b.onclick=()=>gruppenEditor(b.dataset.gruppen));
+}
+// Auto-Inkrement des Kursnamens fürs neue Jahr (7b→8b · 10a→11a · EF→Q1 · Q1→Q2), immer editierbar
+function naechsterName(name){
+  const s=String(name).trim();
+  if(/^EF\b/i.test(s)) return s.replace(/^EF/i,'Q1');
+  const q=s.match(/^Q([1-3])\b/i); if(q) return s.replace(/^Q[1-3]/i,'Q'+(Number(q[1])+1));
+  const m=s.match(/^(\d+)(.*)$/); if(m){ const n=Number(m[1]); if(n>=1&&n<=12) return (n+1)+m[2]; }
+  return s;
+}
+function naechstesSchuljahr(label){ const j=parseInt(label,10); return isNaN(j)?label:(j+1)+'/'+String((j+2)%100).padStart(2,'0'); }
+
+// P3.2 · Schuljahres-Assistent (5 Schritte, el(); Events werden NIE übernommen — verbotener Pfad 8)
+function schuljahrAssistent(){
+  const alt=aktivesSchuljahr(); if(!alt){ toast('Kein aktives Schuljahr'); return; }
+  const neuLabel=naechstesSchuljahr(alt.label);
+  const aktiveKurse=vault.stamm.kurse.filter(k=>(k.schuljahrId||vault.stamm.aktivesSchuljahrId)===alt.id&&k.status!=='archiviert');
+  const wahl=new Map(aktiveKurse.map(k=>[k.id,{nehmen:true,name:naechsterName(k.name),liste:true,plan:true}]));
+  let schritt=1;
+  const kopf=t=>el('div',{class:'sp-kopf'},el('h3',{},t),el('div',{class:'sp-steps'},...[1,2,3,4].map(n=>el('span',{class:'sp-step'+(n===schritt?' an':'')},String(n)))));
+
+  function s1(){ // Sicherung erzwingen
+    dlgZeigenEl(kopf('Sicherung'),
+      el('p',{},'Bevor du das neue Schuljahr startest, sichere die aktuelle Kladde. „Weiter" wird erst nach einem Export frei.'),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn',onclick:()=>exportiereContainer()},'Container exportieren'),
+        el('button',{class:'btn'+(exportInSitzung?'':' still'),onclick:()=>{ if(!exportInSitzung){ toast('Bitte zuerst exportieren'); return; } schritt=2; s2(); }},'Weiter'),
+        el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+  }
+  function s2(){ // Altes Jahr
+    dlgZeigenEl(kopf('Altes Jahr'),
+      el('p',{},esc(alt.label)+' wird archiviert (schreibgeschützt erhalten). Du findest es unter „Archiv".'),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn still',onclick:()=>{ schritt=1; s1(); }},'← Zurück'),
+        el('button',{class:'btn',onclick:()=>{ schritt=3; s3(); }},'Weiter: Kurse')));
+  }
+  function s3(){ // Kursübernahme
+    const zeilen=aktiveKurse.map(k=>{
+      const w=wahl.get(k.id);
+      const nameIn=el('input',{type:'text',value:w.name,class:'u-w130',oninput:e=>w.name=e.target.value});
+      const nehmen=el('input',{type:'checkbox',class:'u-check',...(w.nehmen?{checked:'checked'}:{}),onchange:e=>w.nehmen=e.target.checked});
+      const liste=el('input',{type:'checkbox',class:'u-check',...(w.liste?{checked:'checked'}:{}),onchange:e=>w.liste=e.target.checked});
+      const plan=el('input',{type:'checkbox',class:'u-check',...(w.plan?{checked:'checked'}:{}),onchange:e=>w.plan=e.target.checked});
+      return el('div',{class:'panel'},
+        el('div',{class:'zeile'},el('span',{},nehmen,' ',esc(k.name)+' · '+esc(k.fach)),el('span',{},'→ ',nameIn)),
+        el('div',{class:'zeile'},el('span',{class:'u-hinweis'},'Schülerliste'),el('span',{},liste)),
+        el('div',{class:'zeile'},el('span',{class:'u-hinweis'},'Sitzplan + Wochenplan'),el('span',{},plan)));
+    });
+    dlgZeigenEl(kopf('Kurse übernehmen'),
+      el('p',{class:'u-hinweis'},'Bewertungen, Notizen und Fehlzeiten werden NIE ins neue Jahr übernommen — nur Struktur.'),
+      ...zeilen,
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn still',onclick:()=>{ schritt=2; s2(); }},'← Zurück'),
+        el('button',{class:'btn',onclick:()=>{ schritt=4; s4(); }},'Weiter')));
+  }
+  function s4(){ // Ausführen + Übersicht
+    const uebernommen=aktiveKurse.filter(k=>wahl.get(k.id).nehmen);
+    dlgZeigenEl(kopf('Fertig'),
+      el('p',{},'Neues Schuljahr '+neuLabel+' anlegen, '+uebernommen.length+' Kurs(e) übernehmen, '+alt.label+' archivieren?'),
+      el('p',{class:'u-hinweis'},'Neue Kurse legst du danach mit „Kurs anlegen" an.'),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn still',onclick:()=>{ schritt=3; s3(); }},'← Zurück'),
+        el('button',{class:'btn',onclick:ausfuehren},'Schuljahr starten')));
+  }
+  function ausfuehren(){
+    const neuId=slugId(neuLabel);
+    // neues Schuljahr
+    if(!vault.stamm.schuljahre.some(j=>j.id===neuId))
+      vault.stamm.schuljahre.push({id:neuId,label:neuLabel,status:'aktiv',angelegtAm:new Date().toISOString(),abgeschlossenAm:null,zeitraeume:standardZeitraeume(neuLabel)});
+    // altes archivieren
+    alt.status='abgeschlossen'; alt.abgeschlossenAm=new Date().toISOString();
+    for(const k of aktiveKurse) k.status='archiviert';
+    // übernehmen
+    for(const k of aktiveKurse){
+      const w=wahl.get(k.id); if(!w.nehmen) continue;
+      const neuKursId=slugId(w.name+'-'+k.fach+'-'+neuLabel);
+      const nk={...k,id:neuKursId,name:w.name,schuljahr:neuLabel,schuljahrId:neuId,status:'aktiv'};
+      vault.stamm.kurse.push(nk);
+      if(w.liste) vault.stamm.schueler[neuKursId]=JSON.parse(JSON.stringify(vault.stamm.schueler[k.id]||[]));
+      if(w.plan){
+        if(vault.stamm.sitzplaene[k.id]) vault.stamm.sitzplaene[neuKursId]=JSON.parse(JSON.stringify(vault.stamm.sitzplaene[k.id]));
+        // Wochenplan-Blöcke des alten Kurses auf den neuen umhängen (Lücken-Fix #5)
+        for(const wp of (vault.stamm.wochenplan||[])) if(wp.kursId===k.id) vault.stamm.wochenplan.push({...wp,id:wp.id+'-'+neuId,kursId:neuKursId});
+      }
+      // Events: bewusst NICHT übernehmen (verbotener Pfad 8)
+    }
+    vault.stamm.aktivesSchuljahrId=neuId;
+    aktiverKursId=null; zeitraumFilter=null;
+    stammMutiert(); speichern(); dlgZu(); kursAutowahl(); renderKurse();
+    toast('Schuljahr '+neuLabel+' gestartet');
+  }
+  s1();
+}
+
+// P3.3 · Archivieren (Standard) — Kurs bleibt vollständig erhalten, nur schreibgeschützt + ausgeblendet
+function archiviereKurs(id){
+  const k=vault.stamm.kurse.find(x=>x.id===id); if(!k) return;
+  dlgZeigen('<h3>Kurs archivieren?</h3><p class="u-leise">'+esc(k.name)+' verschwindet aus der aktiven Liste. Alle Einträge bleiben verschlüsselt erhalten und im Archiv einsehbar (schreibgeschützt).</p><div class="btn-reihe"><button class="btn" data-ok>Archivieren</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{ el.querySelector('[data-ok]').onclick=()=>{ k.status='archiviert'; stammMutiert(); speichern(); if(aktiverKursId===id){ aktiverKursId=null; kursAutowahl(); } dlgZu(); renderKurse(); toast('Archiviert: '+k.name); }; });
+}
+// Endgültiges Löschen — NUR im Archiv, doppelt bestätigt (Kursname abtippen), Zwangs-Export vorher
+function loescheKursEndgueltig(id){
+  const k=vault.stamm.kurse.find(x=>x.id===id); if(!k) return;
+  dlgZeigen('<h3>Endgültig löschen</h3><p class="u-warn13">Unwiderruflich: Kurs, Schülerliste, Sitzplan und ALLE Ereignisse werden entfernt.</p>'+
+    '<p class="u-hinweis">Sichere vorher (falls noch nicht geschehen). Zum Bestätigen den Kursnamen „'+esc(k.name)+'" eintippen:</p>'+
+    '<input type="text" id="del-confirm" autocomplete="off" class="u-w170">'+
+    '<div class="btn-reihe"><button class="btn still" id="del-export">Erst exportieren</button><button class="btn gefahr" id="del-ok" disabled>Löschen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    el=>{
+      el.querySelector('#del-confirm').oninput=e=>{ el.querySelector('#del-ok').disabled=e.target.value.trim()!==k.name; };
+      el.querySelector('#del-export').onclick=()=>{ dlgZu(); exportiereContainer(); };
+      el.querySelector('#del-ok').onclick=()=>{
+        vault.stamm.kurse=vault.stamm.kurse.filter(x=>x.id!==id);
+        delete vault.stamm.schueler[id]; delete vault.stamm.sitzplaene[id]; delete vault.stamm.kursprofile[id];
+        vault.stamm.wochenplan=(vault.stamm.wochenplan||[]).filter(w=>w.kursId!==id);
+        vault.events=vault.events.filter(e=>e.kursId!==id);
+        stammMutiert(); speichern(); dlgZu(); renderKurse(); toast('Endgültig gelöscht: '+k.name);
+      };
+    });
 }
 function sitzplanEditor(kursId){
   aktiverKursId=kursId; aktualisiereKursChip();
@@ -1152,7 +1286,8 @@ function exportiereContainer(){
     '<div class="btn-reihe"><button class="btn" data-ok>Exportieren</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); exportiereContainerJetzt(); }; });
 }
-function merkeExport(){ if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}); }
+let exportInSitzung=false; // für Schuljahr-Assistent: „Weiter" erst nach echtem Export
+function merkeExport(){ exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}); }
 async function exportiereContainerJetzt(){
   let bytes, name;
   try {
