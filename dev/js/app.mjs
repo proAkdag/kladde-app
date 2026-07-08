@@ -376,14 +376,16 @@ document.querySelector('nav.tabs').addEventListener('click',e=>{
   });
 });
 // Übergangs-Helfer: View Transition wo verfügbar (PC-Chrome seit 111 / iPad ab Safari 18), sonst sofort. reduced-motion → sofort.
+let uebergangLaeuft=false;
 function mitUebergang(fn){
-  if(!document.startViewTransition||matchMedia('(prefers-reduced-motion: reduce)').matches){ fn(); return; }
+  // Läuft schon ein Übergang, wird KEIN zweiter gestartet (sonst InvalidStateError durch Abbruch)
+  // — die Folgeänderung wird sofort angewandt. Kein Konsolen-Lärm, kein Flackern.
+  if(!document.startViewTransition||uebergangLaeuft||matchMedia('(prefers-reduced-motion: reduce)').matches){ fn(); return; }
+  uebergangLaeuft=true;
   try {
     const t=document.startViewTransition(fn);
-    // Schneller Folgewechsel bricht die laufende Transition ab (InvalidStateError) —
-    // erwartetes Verhalten, keine unhandled rejection in die Konsole kippen.
-    t.finished.catch(()=>{});
-  } catch { fn(); }
+    t.finished.catch(()=>{}).finally(()=>{ uebergangLaeuft=false; });
+  } catch { uebergangLaeuft=false; fn(); }
 }
 function renderAlles(){
   if(!vault) return;
@@ -894,7 +896,7 @@ function stundenplanAssistent(){
     vault.stamm.zeitmodelle=[zm];
     vault.stamm.wochenplan=plan;
     stammMutiert(); speichern(); dlgZu();
-    kursAutowahl(); if(aktView==='heute') renderHeute();
+    kursAutowahl(); renderAlles(); // aktive Ansicht (auch Kurse) auffrischen
     toast('Stundenplan gespeichert');
   };
 
@@ -906,11 +908,10 @@ function stundenplanAssistent(){
 
   // ── Schritt 1: Zeitraster + Live-Vorschau (= resolveBloecke, kann nicht driften) ──
   function renderS1(){
-    const min=s=>Math.round(s/60);
     const setNum=(feld,wert)=>{ zm[feld]=wert; renderVorschau(); };
     const startInput=el('input',{type:'time',value:formatZeit(zm.startSekunden),class:'u-w130',
       oninput:e=>{ const [h,m]=e.target.value.split(':').map(Number); if(!isNaN(h)){ zm.startSekunden=h*3600+m*60; renderVorschau(); } }});
-    const dauerInput=el('input',{type:'number',value:String(min(zm.dauerSekunden)),min:'20',max:'120',step:'0.5',class:'u-w110',
+    const dauerInput=el('input',{type:'number',value:String(zm.dauerSekunden/60),min:'20',max:'120',step:'0.5',class:'u-w110',
       oninput:e=>{ const v=parseFloat(e.target.value.replace(',','.')); if(v>0) setNum('dauerSekunden',Math.round(v*60)); }});
     const blockInput=el('input',{type:'number',value:String(zm.bloeckeProTag),min:'1',max:'12',class:'u-w110',
       oninput:e=>{ const v=parseInt(e.target.value,10); if(v>=1&&v<=12) setNum('bloeckeProTag',v); }});
