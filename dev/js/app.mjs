@@ -384,6 +384,10 @@ function mitUebergang(fn){
   uebergangLaeuft=true;
   try {
     const t=document.startViewTransition(fn);
+    // ALLE drei Promises abfangen — .ready rejektet, wenn der Snapshot mitten in der
+    // Animation ungültig wird (aborted); das ist erwartbar, kein Konsolen-Fehler.
+    t.ready&&t.ready.catch(()=>{});
+    t.updateCallbackDone&&t.updateCallbackDone.catch(()=>{});
     t.finished.catch(()=>{}).finally(()=>{ uebergangLaeuft=false; });
   } catch { uebergangLaeuft=false; fn(); }
 }
