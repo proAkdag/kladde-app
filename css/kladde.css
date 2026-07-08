@@ -138,6 +138,8 @@
   #plan .kachel .mk.o { background: var(--kante); color: var(--text); }
   #plan .kachel .mk.u { background: var(--fehl); color: #fff; }
   #plan .kachel .mk.verw { background: var(--fehl); color: #fff; font-weight: 800; }
+  #plan .kachel .mk.abw { background: var(--leise); color: var(--grund); font-weight: 800; }
+  #plan .kachel .mk.e { background: var(--info); color: #06121e; }
   #plan .kachel .mk.sym { background: transparent; padding: 0 1px; }
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
@@ -466,4 +468,12 @@
   body.sp-edit #plan.editor .kachel.schueler { touch-action: none; cursor: grab; }
   #plan .kachel.ziel { outline: 2px solid var(--band); outline-offset: -2px; }
   body.sp-dragging, body.sp-dragging * { cursor: grabbing !important; }
+}
+
+/* ── v1.1.1 · Entfernen direkt (Aktionsbar-Chips + ↩-Stempel) ── */
+@layer views {
+  .aktionsbar .ab-sep { flex: 0 0 auto; width: 1px; align-self: stretch; background: var(--kante); margin: 4px 4px; }
+  .aktionsbar .ab-entf { display: inline-flex; align-items: center; gap: 4px; }
+  .aktionsbar .ab-entf .x { color: var(--fehl); font-size: 12px; font-weight: 700; }
+  #stempel-bar .st-btn.entf.an { background: var(--fehl); border-color: var(--fehl); color: #fff; }
 }

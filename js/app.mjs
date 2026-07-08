@@ -1,16 +1,16 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.0';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.0';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.0';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.0';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.0';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.0';
-const APP_VERSION = '1.1.0';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.1';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.1';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.1';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.1';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.1';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.1';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.1';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.1';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.1';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.1';
+const APP_VERSION = '1.1.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -218,6 +218,11 @@ function stornoVon(e){
   vault.events.push(s); speichern();
 }
 const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
+// Kompaktes Symbol eines Eintrags (für die entfernbaren Heute-Chips in der Aktionsbar)
+function markSymbol(e){
+  return ({'+':'＋','o':'o','-':'−',mat:'📕',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA',notiz:'✎',
+    versp:'⏰'+(e.minuten||'')+'′',note:'📊'+(e.wert!=null?e.wert:''),fehlt_o:'abw',fehlt_e:'e',fehlt_u:'u',verweigert:'⊘',quartalsnote:'Q'})[e.typ]||e.typ;
+}
 function zeigeUndo(e){
   const chip=$('undo-chip');
   const s=schuelerVonNr(e.schuelerNr);
@@ -244,6 +249,7 @@ function reduziereStand(evs){
     else if(e.typ==='note') st.note=e.wert;
     else if(e.typ==='fehlt_e') st.fehlt='e';
     else if(e.typ==='fehlt_u') st.fehlt='u';
+    else if(e.typ==='fehlt_o'&&st.fehlt!=='e'&&st.fehlt!=='u') st.fehlt='o'; // abwesend (offen, ungeklärt) — e/u gewinnen
     else if(e.typ==='versp') st.versp+=e.minuten||0;
     else if(e.typ==='verweigert') st.verweigert++;
   }
@@ -510,7 +516,7 @@ function kachelHtml(s,st){
   if(st.notiz) marken+='<span class="mk sym">✎</span>';
   if(st.versp) marken+='<span class="mk sym">⏰</span>';
   if(st.verweigert) marken+='<span class="mk verw">⊘</span>';
-  if(st.fehlt) marken+='<span class="mk '+(st.fehlt==='u'?'u':'o')+'">'+st.fehlt+'</span>';
+  if(st.fehlt) marken+='<span class="mk '+(st.fehlt==='u'?'u':st.fehlt==='e'?'e':'abw')+'">'+(st.fehlt==='o'?'abw':st.fehlt)+'</span>';
   return '<div class="'+cls+'" data-nr="'+s.nr+'">'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
     '<span class="nn">'+esc(anzeigeNachname(s))+'</span>'+
@@ -557,9 +563,17 @@ function stempleKachel(nr){
   if(stempelCooldown.has(nr)) return;
   stempelCooldown.add(nr); setTimeout(()=>stempelCooldown.delete(nr),80);
   if(stempelTyp==='verweigert'){ verweigerungDialog(schuelerVonNr(nr)); return; } // 6 mit gekoppelter Kurznotiz
+  if(stempelTyp==='entfernen'){ entferneLetzten(nr); pulseKachel(nr); return; } // schnelle Korrektur im Stempelfluss
   addEvent(stempelTyp,nr);        // landet wie jeder Eintrag im Undo-Stapel (LIFO)
   renderHeute();                  // Zähler + Kachel-Symbole aktualisieren
   pulseKachel(nr);
+}
+// Letzten heutigen Eintrag eines Schülers entfernen (Storno) — für ↩-Stempel + Aktionsbar
+function entferneLetzten(nr){
+  const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
+  if(!evs.length){ toast('nichts zu entfernen'); return; }
+  const letzte=evs.reduce((a,e)=>String(e.ts)>String(a.ts)?e:a);
+  stornoVon(letzte); toast('entfernt: '+(TYP_LABEL[letzte.typ]||letzte.typ)); renderHeute();
 }
 // v1.1.0 · Verweigerung: anwesend, aber keine/verweigerte Leistung → zählt als 6 (Sek II 0 P),
 // termingewichtet (logic/verdichtung). Kurznotiz gekoppelt — dokumentiert den Grund (bei einer 6 ratsam).
@@ -588,14 +602,14 @@ function setStempel(typ){
   stempelTyp=(stempelTyp===typ)?null:typ; // gleichen Stempel nochmal antippen → aus
   document.body.classList.toggle('stempeln',stempelTyp!==null);
   document.body.classList.toggle('st-plus',stempelTyp==='+');
-  document.body.classList.toggle('st-minus',stempelTyp==='-');
+  document.body.classList.toggle('st-minus',stempelTyp==='-'||stempelTyp==='entfernen');
   if(stempelTyp!==null){ aktiverSchueler=null; $('aktionsbar').classList.add('hidden'); }
   renderStempelBar();
 }
 function renderStempelBar(){
   const bar=$('stempel-bar');
   if(!stempelBarOffen){ bar.replaceChildren(); return; }
-  const stamps=[['+','＋','plus'],['o','o','neutral'],['-','−','minus'],['fehlt_o','abwesend','fehlt'],['verweigert','⊘','verw']];
+  const stamps=[['+','＋','plus'],['o','o','neutral'],['-','−','minus'],['fehlt_o','abwesend','fehlt'],['verweigert','⊘','verw'],['entfernen','↩','entf']];
   const label=el('span',{class:'st-label'}, stempelTyp?'→ Kachel antippen':'Stempel wählen:');
   const btns=stamps.map(([typ,txt,cls])=>el('button',{class:'st-btn '+cls+(stempelTyp===typ?' an':''),onclick:()=>setStempel(typ)},txt));
   bar.replaceChildren(label,...btns,el('button',{class:'st-btn st-zu',onclick:toggleStempelBar},'fertig'));
@@ -618,20 +632,25 @@ function renderAktionsbar(){
     const cls=t==='+'?' class="plus"':t==='-'?' class="minus"':'';
     html+='<button'+cls+' data-typ="'+t+'">'+({'+':'＋','o':'o','-':'−',mat:'📕',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA'}[t]||t)+'</button>';
   }
+  // Heutige Einträge dieses Schülers als entfernbare Chips (direkter Weg statt Detail-Blatt)
+  const heuteEvs=wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote').sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+  if(heuteEvs.length){ html+='<span class="ab-sep"></span>';
+    for(const e of heuteEvs) html+='<button class="ab-entf" data-entf="'+e.id+'" title="tippen zum Entfernen">'+esc(markSymbol(e))+'<span class="x">✕</span></button>'; }
   html+='<button data-blatt title="Verlauf ansehen">📖</button><button data-mehr>…</button><button data-zu>✕</button>';
   bar.innerHTML=html; bar.classList.remove('hidden');
   bar.querySelectorAll('[data-typ]').forEach(b=>b.onclick=()=>{
     if(busy) return; busy=true;
     const nr=aktiverSchueler;
     addEvent(b.dataset.typ,nr);
-    b.style.borderColor='var(--band)';
-    setTimeout(()=>{ b.style.borderColor=''; busy=false; },220);
+    setTimeout(()=>{ busy=false; },220);
     renderHeute();
+    renderAktionsbar(); // Entfernen-Chip des neuen Eintrags sofort anzeigen (direkte Korrektur)
     pulseKachel(nr);
   });
   bar.querySelector('[data-zu]').onclick=()=>{ aktiverSchueler=null; bar.classList.add('hidden'); renderHeute(); };
   bar.querySelector('[data-mehr]').onclick=()=>zeigeMehrAktionen(s);
   bar.querySelector('[data-blatt]').onclick=()=>schuelerBlatt(aktiverSchueler);
+  bar.querySelectorAll('[data-entf]').forEach(b=>b.onclick=()=>{ const e=vault.events.find(x=>x.id===b.dataset.entf); if(e){ stornoVon(e); toast('entfernt: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); renderAktionsbar(); pulseKachel(s.nr); } });
 }
 function zeigeMehrAktionen(s){
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3>'+
@@ -875,7 +894,7 @@ async function kopiereVorschlaege(){
   }
 }
 function schuelerDetailHtml(s,k,v){
-  const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr));
+  const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr)).filter(e=>e.typ!=='storno'); // Storno-Buchungen nicht im Verlauf zeigen
   const verspSum=evs.filter(e=>e.typ==='versp').reduce((a,e)=>a+(e.minuten||0),0);
   const fehltU=evs.filter(e=>e.typ==='fehlt_u').length, fehltE=evs.filter(e=>e.typ==='fehlt_e').length;
   const proTag={};
