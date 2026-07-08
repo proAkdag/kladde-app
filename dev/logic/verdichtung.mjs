@@ -140,4 +140,15 @@ function regelText(profil, nU = 0) {
   return kopf + basis + uHinweis;
 }
 
-export { verdichte, wirksameEvents, regelText };
+// „Vorschläge kopieren" (P4.5): Zeilen fürs Einfügen in die Excel-Klassenmappe.
+// TAB-getrennt (Excel-Paste = eine Spalte je TAB), eine Zeile je Schüler. Reihenfolge = wie übergeben.
+// KEIN Datei-Export, kein Schreiben in die Mappe — nur Zwischenablage, der Mensch fügt ein (User-Entscheid „Beides").
+function vorschlagsZeilen(rows) {
+  return rows.map(r => {
+    const felder = [r.nr, r.vorschlag ?? ''];
+    if (r.fSummen != null && r.fSummen !== '') felder.push(r.fSummen);
+    return felder.join('\t');
+  }).join('\n');
+}
+
+export { verdichte, wirksameEvents, regelText, vorschlagsZeilen };

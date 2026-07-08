@@ -339,6 +339,7 @@
   .u-minw104 { min-width: 104px; }
   .u-maxw55 { max-width: 55%; }
   .u-selfcenter { align-self: center; }
+  .u-center { justify-content: center; }
   .u-notransform { text-transform: none; }
   .u-w108 { width: 108px; } .u-w110 { width: 110px; } .u-w130 { width: 130px; }
   .u-w160 { width: 160px; } .u-w170 { width: 170px; }
@@ -391,4 +392,55 @@
   .klaer-zeile:first-of-type { border-top: none; }
   .klaer-zeile.alt { color: var(--warn); }
   .klaer-btns { display: flex; gap: 4px; flex: 0 0 auto; }
+}
+
+/* ── v1.0.0 · Politur (P4) ── */
+@layer views {
+  /* Stempelmodus (P4.5): Kachel antippen = Stempel setzen, ohne Einzeldialog („24 in 2 min") */
+  #stempel-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
+    background: var(--karte); border: 1px solid var(--band); border-radius: 10px; padding: 8px 10px; }
+  #stempel-bar.hidden { display: none; }
+  #stempel-bar .st-label { font-size: 13px; color: var(--leise); margin-right: 2px; }
+  #stempel-bar .st-btn { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
+    min-width: 48px; min-height: 44px; font-size: 16px; font-weight: 700; cursor: pointer; color: inherit; padding: 4px 12px; }
+  #stempel-bar .st-btn.an { border-color: var(--band); background: var(--band); color: #1a1206; }
+  #stempel-bar .st-btn.plus.an { background: var(--gut); border-color: var(--gut); color: #08160a; }
+  #stempel-bar .st-btn.minus.an { background: var(--fehl); border-color: var(--fehl); color: #1c0606; }
+  #stempel-bar .st-zu { margin-left: auto; }
+  /* Puls-Rahmen um den Sitzplan, solange ein Stempel scharf ist (Modus sichtbar, nicht nur gefühlt) */
+  body.stempeln #plan-wrap { outline: 2px solid var(--band); outline-offset: 4px; border-radius: 10px; }
+  body.stempeln.st-plus #plan-wrap { outline-color: var(--gut); }
+  body.stempeln.st-minus #plan-wrap { outline-color: var(--fehl); }
+
+  /* Projektions-Hinweis (P4.3 · §6) */
+  #beamer-hinweis { display: flex; align-items: center; gap: 10px; background: var(--karte2);
+    border-bottom: 1px solid var(--band); color: var(--band); padding: 7px 12px; font-size: 13px; font-weight: 600; }
+  #beamer-hinweis.hidden { display: none; }
+  #beamer-hinweis .btn { margin-left: auto; }
+  /* „Nur Sitzplan": Datums-Extras ausblenden — reine Namenskarte an die Wand */
+  body.beamer.nurplan .datum-streifen .rechts,
+  body.beamer.nurplan .datum-streifen .erf-zaehler,
+  body.beamer.nurplan .datum-streifen .nachtrag-hinweis { display: none; }
+
+  /* Deck-Start-Optionen (P4.4) */
+  .deck-optionen { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px auto 0; max-width: 420px; }
+  .deck-optionen:empty { display: none; }
+  .deck-optionen button { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise);
+    border-radius: 14px; padding: 6px 13px; min-height: 40px; font-size: 13px; cursor: pointer; }
+  .deck-optionen button.an { border-color: var(--band); color: var(--band); }
+
+  /* Kurskarten-Badge (P4.2 · „Klasse auf einen Blick") */
+  .kurs-badge { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 9px; margin-left: 6px;
+    text-transform: none; letter-spacing: 0; vertical-align: middle; border: 1px solid var(--kante); color: var(--leise); white-space: nowrap; }
+  .kurs-badge.jetzt { background: var(--band); color: #1a1206; border-color: var(--band); }
+  .kurs-badge.warn { background: transparent; color: var(--warn); border-color: var(--warn); }
+}
+@layer anim {
+  /* Konflikt-Shake (§31: „Block bereits belegt" / Fehlbedienung) */
+  @keyframes kladde-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .schuett { animation: kladde-shake .22s ease-in-out; }
+  /* Stempel-scharf: sanft atmender Rahmen (Bedeutung: Modus aktiv, wischt nicht weg) */
+  @keyframes kladde-ring { 0%,100%{outline-offset:4px} 50%{outline-offset:7px} }
+  @media (prefers-reduced-motion: no-preference) { body.stempeln #plan-wrap { animation: kladde-ring 1.6s ease-in-out infinite; } }
+  @media (prefers-reduced-motion: reduce) { .schuett { animation: none !important; } body.stempeln #plan-wrap { animation: none !important; } }
 }
