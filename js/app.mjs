@@ -5,7 +5,10 @@ import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs';
 import { mergeContainerDaten } from '../logic/merge.mjs';
 import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs';
 import { parseSchuelerListe } from '../logic/parser.mjs';
-const APP_VERSION = '0.8.0';
+import { migriereStamm, schemaBekannt } from '../logic/migration.mjs';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs';
+import { kursZurZeit } from '../logic/autowahl.mjs';
+const APP_VERSION = '0.9.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -43,8 +46,8 @@ function speichern(){
   return speicherKette;
 }
 function leererVault(){
-  return {schema:'kladde/v1',
-    stamm:{rev:1,ts:new Date().toISOString(),geraet:GERAET,kurse:[],schueler:{},sitzplaene:{},kursprofile:{},stundenplanSlots:[],einstellungen:{slot:'m1'}},
+  return {schema:'kladde/v2',
+    stamm:{rev:1,ts:new Date().toISOString(),geraet:GERAET,kurse:[],schueler:{},sitzplaene:{},kursprofile:{},stundenplanSlots:[],zeitmodelle:[],wochenplan:[],ausnahmeSlots:[],einstellungen:{slot:'m1'}},
     events:[]};
 }
 function stammMutiert(){ vault.stamm.rev++; vault.stamm.ts=new Date().toISOString(); vault.stamm.geraet=GERAET; }
@@ -111,12 +114,14 @@ async function lockInit(){
           const id=await neueV2Identitaet(pin);
           dekKey=id.dek; containerKopf=id.kopf;
           vault=r.daten; pinRam=pin;
+          migriereStamm(vault); // Schema kladde/v2 (P2.1) — idempotent
           await speichern(); // erste v2-Schreibung — erst NACH verifiziertem Backup
           migrationsHinweis=true;
           console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
         } else {
           dekKey=r.dek; containerKopf=r.kopf;
           vault=r.daten; pinRam=pin;
+          if(migriereStamm(vault)) speichern(); // Schema-Nachzug (v0.8-Bestand → kladde/v2)
           console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
         }
         entsperrt();
@@ -139,12 +144,25 @@ function sperren(){
   lockInit();
 }
 function lockMinuten(){ const m=Number(localStorage.getItem('kladde_lock_min')); return [5,10,15,30].includes(m)?m:15; }
+// P2.6 · Unterrichtsbewusster Hard-Lock: während eines laufenden Blocks (+10 min Nachlauf)
+// nicht aussperren — sonst erzwingt die 67,5-min-Stunde die Passphrase vor der Klasse.
+function unterrichtAktiv(){
+  const zm=(vault?.stamm.zeitmodelle||[])[0]; if(!zm) return false;
+  const j=new Date(); const wtag=((j.getDay()+6)%7)+1; if(wtag>5) return false;
+  const sek=j.getHours()*3600+j.getMinutes()*60+j.getSeconds();
+  return resolveBloecke(zm,wtag).some(b=>b.startSek<=sek&&sek<=b.endeSek+600);
+}
 function entsperrt(){
   $('lock').classList.add('hidden');
   zuletztAktiv=Date.now();
   clearInterval(lockTimer);
-  lockTimer=setInterval(()=>{ if(Date.now()-zuletztAktiv>lockMinuten()*60*1000) sperren(); },30*1000);
+  lockTimer=setInterval(()=>{
+    if(Date.now()-zuletztAktiv<=lockMinuten()*60*1000) return;
+    if(unterrichtAktiv()&&localStorage.getItem('kladde_lock_unterricht')!=='0') return; // pausiert; Soft-Lock deckt Verlassen
+    sperren();
+  },30*1000);
   kursAutowahl(); renderAlles();
+  starteAutowahlTick();
   zeigeStartHinweise();
 }
 ['pointerdown','keydown'].forEach(evName=>document.addEventListener(evName,()=>{zuletztAktiv=Date.now();},{capture:true,passive:true}));
@@ -157,6 +175,8 @@ document.addEventListener('visibilitychange',()=>{
     if(localStorage.getItem('kladde_lock_sofort')==='1') speicherKette.then(sperren);
   } else if(document.visibilityState==='visible'&&vault){
     $('soft-lock').classList.add('hidden');
+    kursAutowahl(true); // Rückkehr in die App: Block könnte gewechselt haben (sanft)
+    if(aktView==='heute') renderHeute();
   }
 });
 window.addEventListener('pagehide',()=>{ if(vault) speichern(); });
@@ -240,15 +260,46 @@ let beamerModus=localStorage.getItem('kladde_beamer')==='1';
 function setzeBeamer(an){ beamerModus=an; localStorage.setItem('kladde_beamer',an?'1':'0'); document.body.classList.toggle('beamer',an); $('btn-beamer').classList.toggle('aktiv',an); if(aktView==='heute') renderHeute(); }
 
 /* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
-function kursAutowahl(){
+let autowahlInfo=null;   // {kursId, blockNr, startSek, endeSek, quelle} — für Heute-Kopf (§28)
+let manuelleWahl=false;  // Kurs-Chip-Wahl übersteht sanfte Ticks; neuer laufender Block hebt sie auf
+function kursAutowahl(sanft=false){
   if(!vault) return;
   const jetzt=new Date();
-  const wtag=((jetzt.getDay()+6)%7)+1; // Mo=1
+  const zm=(vault.stamm.zeitmodelle||[])[0];
+  const vorherBlock=autowahlInfo?.blockNr;
+  autowahlInfo=null;
+  if(zm){
+    const t=kursZurZeit(jetzt,{zeitmodell:zm,wochenplan:vault.stamm.wochenplan||[],ausnahmen:vault.stamm.ausnahmeSlots||[]});
+    if(t){
+      const wtag=((jetzt.getDay()+6)%7)+1;
+      const block=resolveBloecke(zm,wtag).find(b=>b.blockNr===t.blockNr);
+      autowahlInfo={...t,startSek:block.startSek,endeSek:block.endeSek};
+      if(t.quelle!=='kommend'&&t.blockNr!==vorherBlock) manuelleWahl=false; // Blockwechsel hebt manuelle Wahl auf
+      if(!sanft||!manuelleWahl){
+        aktiverKursId=t.kursId; aktiveTeilgruppe=t.teilgruppe||null;
+        $('kurs-slot').textContent=' · Block '+t.blockNr+' · '+formatZeit(block.startSek)+'–'+formatZeit(block.endeSek)+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'');
+      }
+      aktualisiereKursChip(); return;
+    }
+  }
+  // Fallback: Alt-Slots (Expertenmodus, freie Zeitfenster) — bleibt, solange kein Wochenplan existiert
+  const wtag=((jetzt.getDay()+6)%7)+1;
   const hhmm=String(jetzt.getHours()).padStart(2,'0')+':'+String(jetzt.getMinutes()).padStart(2,'0');
   const slot=vault.stamm.stundenplanSlots.find(s=>s.wochentag===wtag&&s.von<=hhmm&&hhmm<=s.bis);
-  if(slot){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
+  if(slot&&(!sanft||!manuelleWahl)){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
   else if(!aktiverKursId&&vault.stamm.kurse.length) aktiverKursId=vault.stamm.kurse[0].id;
   aktualisiereKursChip();
+}
+// 60-s-Tick (P2.5): nur bei sichtbarer Heute-Ansicht, nie über offene Dialoge hinweg
+let autowahlTick=null;
+function starteAutowahlTick(){
+  clearInterval(autowahlTick);
+  autowahlTick=setInterval(()=>{
+    if(!vault||document.visibilityState!=='visible'||aktView!=='heute'||$('dlg').open) return;
+    const vorher=aktiverKursId;
+    kursAutowahl(true);
+    if(aktiverKursId!==vorher){ mitUebergang(renderHeute); const k=kurs(); toast('→ '+(k?k.name+' · '+k.fach:'')); }
+  },60000);
 }
 let aktiveTeilgruppe=null;
 function aktualisiereKursChip(){
@@ -260,12 +311,12 @@ $('kurs-chip').addEventListener('click',()=>{
   if(!vault) return;
   const k=kurs();
   dlgZeigen('<h3>Kurs wählen</h3>'+
-    vault.stamm.kurse.map(x=>'<button class="btn'+(k&&x.id===k.id?'':' still')+'" class="u-btn-block" data-kurs="'+x.id+'">'+esc(x.name)+' · '+esc(x.fach)+'</button>').join('')+
+    vault.stamm.kurse.map(x=>'<button class="btn'+(k&&x.id===k.id?'':' still')+' u-btn-block" data-kurs="'+x.id+'">'+esc(x.name)+' · '+esc(x.fach)+'</button>').join('')+
     '<div class="zeile"><span>Teilgruppe</span><span><select id="tg-sel"><option value="">alle</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></span></div>'+
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
       el.querySelector('#tg-sel').value=aktiveTeilgruppe||'';
-      el.querySelectorAll('[data-kurs]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.kurs; aktiveTeilgruppe=el.querySelector('#tg-sel').value||null; $('kurs-slot').textContent=aktiveTeilgruppe?' · Gr. '+aktiveTeilgruppe:''; dlgZu(); aktualisiereKursChip(); mitUebergang(renderAlles); });
+      el.querySelectorAll('[data-kurs]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.kurs; aktiveTeilgruppe=el.querySelector('#tg-sel').value||null; manuelleWahl=true; $('kurs-slot').textContent=aktiveTeilgruppe?' · Gr. '+aktiveTeilgruppe:''; dlgZu(); aktualisiereKursChip(); mitUebergang(renderAlles); });
       el.querySelector('#tg-sel').onchange=e=>{ aktiveTeilgruppe=e.target.value||null; renderHeute(); };
     });
 });
@@ -306,6 +357,11 @@ function dlgZeigen(html,setup){
   d.showModal();
 }
 function dlgZu(){ $('dlg').close(); }
+// el()-Variante: Dialog aus DOM-Knoten (CSP-sicher, kein innerHTML) — für neue Views (P2.4+)
+function dlgZeigenEl(...knoten){
+  const d=$('dlg'); d.replaceChildren(...knoten);
+  if(!d.open) d.showModal();
+}
 
 /* ═══ VIEWS / TABS (replaceState-only — Edge-Swipe-Doktrin) ═══ */
 let aktView='heute';
@@ -320,14 +376,20 @@ document.querySelector('nav.tabs').addEventListener('click',e=>{
   });
 });
 // Übergangs-Helfer: View Transition wo verfügbar (PC-Chrome seit 111 / iPad ab Safari 18), sonst sofort. reduced-motion → sofort.
+let uebergangLaeuft=false;
 function mitUebergang(fn){
-  if(!document.startViewTransition||matchMedia('(prefers-reduced-motion: reduce)').matches){ fn(); return; }
+  // Läuft schon ein Übergang, wird KEIN zweiter gestartet (sonst InvalidStateError durch Abbruch)
+  // — die Folgeänderung wird sofort angewandt. Kein Konsolen-Lärm, kein Flackern.
+  if(!document.startViewTransition||uebergangLaeuft||matchMedia('(prefers-reduced-motion: reduce)').matches){ fn(); return; }
+  uebergangLaeuft=true;
   try {
     const t=document.startViewTransition(fn);
-    // Schneller Folgewechsel bricht die laufende Transition ab (InvalidStateError) —
-    // erwartetes Verhalten, keine unhandled rejection in die Konsole kippen.
-    t.finished.catch(()=>{});
-  } catch { fn(); }
+    // ALLE drei Promises abfangen — .ready rejektet, wenn der Snapshot mitten in der
+    // Animation ungültig wird (aborted); das ist erwartbar, kein Konsolen-Fehler.
+    t.ready&&t.ready.catch(()=>{});
+    t.updateCallbackDone&&t.updateCallbackDone.catch(()=>{});
+    t.finished.catch(()=>{}).finally(()=>{ uebergangLaeuft=false; });
+  } catch { uebergangLaeuft=false; fn(); }
 }
 function renderAlles(){
   if(!vault) return;
@@ -351,7 +413,10 @@ function datumStreifen(erfasst,total){
   const heute=heuteIso(), istHeute=terminDatum===heute;
   el.className='datum-streifen'+(istHeute?'':' nachtrag');
   const zaehler=total?'<span class="erf-zaehler" title="heute mit +/o/− erfasst">'+erfasst+'/'+total+'</span>':'';
-  el.innerHTML='<span class="heute-tag">'+(istHeute?'Heute':'Nachtrag')+' · '+datumLabel(terminDatum)+'</span>'+
+  const jetztText=(istHeute&&autowahlInfo)
+    ?'Jetzt · '+datumLabel(terminDatum)+' · '+formatZeit(autowahlInfo.startSek)+'–'+formatZeit(autowahlInfo.endeSek)+(autowahlInfo.quelle==='kommend'?' (gleich)':'')
+    :(istHeute?'Heute':'Nachtrag')+' · '+datumLabel(terminDatum);
+  el.innerHTML='<span class="heute-tag">'+jetztText+'</span>'+
     (istHeute?zaehler:'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+
     '<span class="rechts">'+
     (istHeute?'':'<button data-heute>↩ Heute</button>')+
@@ -428,7 +493,7 @@ function renderHeute(){
   const ohnePlatz=sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr));
   if(ohnePlatz.length){
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
-    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still" class="u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</button>').join('');
+    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</button>').join('');
     liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>waehleSchueler(Number(b.dataset.nr)));
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
@@ -636,7 +701,7 @@ function schuelerDetailHtml(s,k,v){
     liste+='<div class="tag-gruppe"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
       proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(e=>
         '<div class="ev-zeile"><span>'+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
-        '<button class="btn still ev-storno" class="u-btn-klein" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>';
+        '<button class="btn still ev-storno u-btn-klein" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>';
   }
   if(!tage.length) liste='<p class="u-hinweis">Noch keine Einträge.</p>';
   return '<div class="s-detail">'+
@@ -644,7 +709,7 @@ function schuelerDetailHtml(s,k,v){
     (fehltE||fehltU||verspSum?'<div class="zeile"><span>Fehl / Verspätung</span><span class="wert">'+(fehltE?fehltE+'× e ':'')+(fehltU?fehltU+'× u ':'')+(verspSum?'· '+verspSum+' min':'')+'</span></div>':'')+
     '<div class="zeile"><span>Vorschlag</span><span class="wert">'+(v.vorschlag?esc(v.vorschlag.label):(s.lb?'— (LB)':'—'))+'</span></div>'+
     (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal="'+s.nr+'">Als Quartalsnote setzen…</button></div>':'')+
-    '<div class="tag-kopf" class="u-kopf-leise">Verlauf ('+evs.length+')</div>'+liste+'</div>';
+    '<div class="tag-kopf u-kopf-leise">Verlauf ('+evs.length+')</div>'+liste+'</div>';
 }
 function verdrahteDetail(wrap){
   wrap.querySelectorAll('.ev-storno').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const ev=vault.events.find(x=>x.id===b.dataset.storno); if(ev){ stornoVon(ev); toast('storniert'); renderSchueler(); } });
@@ -715,7 +780,11 @@ function renderKurse(){
     '<p class="u-hinweis">Am schnellsten: in Excel die Klassenlisten-Spalten markieren (Nr · Name · Vorname · ggf. LB), kopieren, hier einfügen. Alternativ die kurs.json vom PC-Werkzeug laden.</p>'+
     '<div class="btn-reihe"><button class="btn" id="btn-kurs-neu">Kurs anlegen (Einfügen)</button>'+
     '<button class="btn still" id="btn-import-kurs">kurs.json laden</button></div>'+
-    '<input type="file" id="file-kurs" accept=".json,application/json" class="hidden"></div>';
+    '<input type="file" id="file-kurs" accept=".json,application/json" class="hidden"></div>'+
+    '<div class="panel"><h2>Stundenplan</h2>'+
+    '<p class="u-hinweis">Zeitraster + Wochenplan deiner Schule — die Kladde öffnet dann automatisch den richtigen Kurs.'+
+    ((vault.stamm.zeitmodelle||[]).length?' <b class="u-gut">eingerichtet</b>':' <b class="u-warn13">noch nicht eingerichtet</b>')+'</p>'+
+    '<div class="btn-reihe"><button class="btn" id="btn-stundenplan">Stundenplan einrichten</button></div></div>';
   for(const k of vault.stamm.kurse){
     const anz=kursSchueler(k).length;
     const p=vault.stamm.kursprofile[k.id]||{};
@@ -731,6 +800,7 @@ function renderKurse(){
   }
   wrap.innerHTML=html;
   $('btn-kurs-neu').onclick=kursAnlegenDialog;
+  $('btn-stundenplan').onclick=stundenplanAssistent;
   $('btn-import-kurs').onclick=()=>$('file-kurs').click();
   $('file-kurs').onchange=async e=>{
     const f=e.target.files[0]; if(!f) return;
@@ -781,7 +851,7 @@ function sitzplanEditor(kursId){
     const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
     dlgZeigen('<h3>Platz '+(r+1)+'/'+(c+1)+'</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
       frei.map(s=>'<option value="'+esc(s.vorname+' '+s.name+' ('+s.nr+')')+'">').join('')+'</datalist>'+
-      '<div class="u-scroll30">'+frei.map(s=>'<button class="btn still" class="u-btn-block u-eng" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
+      '<div class="u-scroll30">'+frei.map(s=>'<button class="btn still u-btn-block u-eng" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
       '<div class="btn-reihe"><button class="btn still" data-schliessen>Abbrechen</button></div>',
       el=>{
         const setze=nr=>{ sp.grid[key]=nr; stammMutiert(); speichern(); dlgZu(); renderHeute(); };
@@ -817,6 +887,162 @@ function slotsEditor(kursId){
       };
     });
 }
+/* ═══ STUNDENPLAN-ASSISTENT (P2.4 · 3 Schritte, mit el() gebaut — Migrationsregel) ═══ */
+const WT_KURZ=['','Mo','Di','Mi','Do','Fr'];
+function stundenplanAssistent(){
+  // Arbeitskopie (erst bei „Fertig" in den Vault) — bestehendes Zeitmodell weiterbearbeiten
+  const zm0=(vault.stamm.zeitmodelle||[])[0];
+  const zm=zm0?JSON.parse(JSON.stringify(zm0)):{id:'std',name:'Regelraster',startSekunden:27900,dauerSekunden:4050,bloeckeProTag:6,pausenNachBlock:{},tagesAusnahmen:{},abWochenAnker:null,anzeigeRunden:true};
+  const plan=JSON.parse(JSON.stringify(vault.stamm.wochenplan||[]));
+  let schritt=1;
+  const dlg=$('dlg');
+  const speichereUndZu=()=>{
+    vault.stamm.zeitmodelle=[zm];
+    vault.stamm.wochenplan=plan;
+    stammMutiert(); speichern(); dlgZu();
+    kursAutowahl(); renderAlles(); // aktive Ansicht (auch Kurse) auffrischen
+    toast('Stundenplan gespeichert');
+  };
+
+  function kopf(titel){
+    return el('div',{class:'sp-kopf'},
+      el('h3',{},titel),
+      el('div',{class:'sp-steps'}, ...[1,2,3].map(n=>el('span',{class:'sp-step'+(n===schritt?' an':'')},String(n)))));
+  }
+
+  // ── Schritt 1: Zeitraster + Live-Vorschau (= resolveBloecke, kann nicht driften) ──
+  function renderS1(){
+    const setNum=(feld,wert)=>{ zm[feld]=wert; renderVorschau(); };
+    const startInput=el('input',{type:'time',value:formatZeit(zm.startSekunden),class:'u-w130',
+      oninput:e=>{ const [h,m]=e.target.value.split(':').map(Number); if(!isNaN(h)){ zm.startSekunden=h*3600+m*60; renderVorschau(); } }});
+    const dauerInput=el('input',{type:'number',value:String(zm.dauerSekunden/60),min:'20',max:'120',step:'0.5',class:'u-w110',
+      oninput:e=>{ const v=parseFloat(e.target.value.replace(',','.')); if(v>0) setNum('dauerSekunden',Math.round(v*60)); }});
+    const blockInput=el('input',{type:'number',value:String(zm.bloeckeProTag),min:'1',max:'12',class:'u-w110',
+      oninput:e=>{ const v=parseInt(e.target.value,10); if(v>=1&&v<=12) setNum('bloeckeProTag',v); }});
+    const pausenBox=el('div',{class:'sp-pausen'});
+    const renderPausen=()=>{
+      pausenBox.replaceChildren();
+      for(let n=1;n<zm.bloeckeProTag;n++){
+        const pin=el('input',{type:'number',min:'0',max:'120',value:String(Math.round((zm.pausenNachBlock[n]||0)/60)),class:'u-w110',
+          oninput:e=>{ zm.pausenNachBlock[n]=(parseInt(e.target.value,10)||0)*60; renderVorschau(); }});
+        pausenBox.append(el('div',{class:'zeile'},el('span',{},'Pause nach Block '+n),el('span',{},pin,' min')));
+      }
+    };
+    const vorschau=el('div',{class:'sp-vorschau'});
+    const renderVorschau=()=>{
+      renderPausen();
+      vorschau.replaceChildren(el('div',{class:'tag-kopf'},'So sieht der Tag aus (Mo–Do):'));
+      for(const b of resolveBloecke(zm,1))
+        vorschau.append(el('div',{class:'zeile'},el('span',{},'Block '+b.blockNr),el('span',{class:'wert'},formatZeit(b.startSek)+'–'+formatZeit(b.endeSek)+(zm.dauerSekunden%60?' ('+formatZeit(b.endeSek,false)+')':''))));
+    };
+    const frTag=zm.tagesAusnahmen&&zm.tagesAusnahmen[5];
+    const frCheck=el('input',{type:'checkbox',class:'u-check',...(frTag?{checked:'checked'}:{}),
+      onchange:e=>{ zm.tagesAusnahmen=zm.tagesAusnahmen||{}; if(e.target.checked) zm.tagesAusnahmen[5]={bloeckeProTag:Math.max(1,zm.bloeckeProTag-2)}; else delete zm.tagesAusnahmen[5]; }});
+    renderVorschau();
+    dlgZeigenEl(kopf('Zeitraster'),
+      el('div',{class:'zeile'},el('span',{},'Unterrichtsbeginn'),el('span',{},startInput)),
+      el('div',{class:'zeile'},el('span',{},'Blocklänge (min, 67,5 = 67.5)'),el('span',{},dauerInput)),
+      el('div',{class:'zeile'},el('span',{},'Blöcke pro Tag'),el('span',{},blockInput)),
+      el('div',{class:'zeile'},el('span',{},'Freitag kürzer'),el('span',{},frCheck)),
+      pausenBox, vorschau,
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn',onclick:()=>{ schritt=2; renderS2(); }},'Weiter: Wochenplan'),
+        el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+  }
+
+  // ── Schritt 2: Wochenplan (Mo–Fr × Blöcke, Block antippen → Kurs/Teilgruppe/Rhythmus) ──
+  function renderS2(){
+    const tage=[1,2,3,4,5];
+    const grid=el('div',{class:'sp-woche'});
+    const zelleText=(wt,nr)=>{ const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr); if(!s) return '—'; const k=vault.stamm.kurse.find(x=>x.id===s.kursId); return (k?k.name:'?')+(s.teilgruppe?'·'+s.teilgruppe:'')+(s.rhythmus&&s.rhythmus!=='jede'?' ('+s.rhythmus+')':''); };
+    const renderGrid=()=>{
+      grid.replaceChildren();
+      grid.append(el('div',{class:'sp-ecke'},''));
+      for(const wt of tage) grid.append(el('div',{class:'sp-th'},WT_KURZ[wt]));
+      for(let nr=1;nr<=zm.bloeckeProTag;nr++){
+        grid.append(el('div',{class:'sp-th'},String(nr)));
+        for(const wt of tage){
+          const belegt=plan.some(p=>p.wochentag===wt&&p.blockNr===nr);
+          grid.append(el('button',{class:'sp-zelle'+(belegt?' belegt':''),onclick:()=>blockDialog(wt,nr,renderGrid)},zelleText(wt,nr)));
+        }
+      }
+    };
+    renderGrid();
+    const ab=zm.abWochenAnker;
+    dlgZeigenEl(kopf('Wochenplan'),
+      el('p',{class:'u-hinweis'},'Block antippen → Kurs zuweisen. A/B nur nötig, wenn dein Plan im Zwei-Wochen-Rhythmus läuft.'),
+      el('div',{class:'sp-woche-wrap'},grid),
+      (ab?el('div',{class:'zeile'},el('span',{},'A/B-Anker'),el('span',{class:'wert'},ab.datum+' = '+ab.typ)):el('span',{})),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn still',onclick:()=>{ schritt=1; renderS1(); }},'← Zeitraster'),
+        el('button',{class:'btn',onclick:()=>{ schritt=3; renderS3(); }},'Weiter: Prüfen')));
+  }
+
+  function blockDialog(wt,nr,zurueck){
+    const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr)||{};
+    const kursSel=el('select',{},
+      el('option',{value:''},'— frei —'),
+      ...vault.stamm.kurse.map(k=>el('option',{value:k.id,...(s.kursId===k.id?{selected:'selected'}:{})},k.name+' · '+k.fach)));
+    const tgSel=el('select',{}, ...['','A','B','C','D'].map(g=>el('option',{value:g,...(s.teilgruppe===g?{selected:'selected'}:{})},g||'alle')));
+    const rhSel=el('select',{}, ...[['jede','jede Woche'],['A','A-Woche'],['B','B-Woche']].map(([v,t])=>el('option',{value:v,...((s.rhythmus||'jede')===v?{selected:'selected'}:{})},t)));
+    dlgZeigenEl(el('h3',{},WT_KURZ[wt]+' · Block '+nr),
+      el('div',{class:'zeile'},el('span',{},'Kurs'),el('span',{},kursSel)),
+      el('div',{class:'zeile'},el('span',{},'Teilgruppe'),el('span',{},tgSel)),
+      el('div',{class:'zeile'},el('span',{},'Rhythmus'),el('span',{},rhSel)),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn',onclick:()=>{
+          const i=plan.findIndex(p=>p.wochentag===wt&&p.blockNr===nr);
+          if(i>=0) plan.splice(i,1);
+          const kursId=kursSel.value;
+          if(kursId){
+            const rhythmus=rhSel.value;
+            plan.push({id:'wp-'+wt+'-'+nr,wochentag:wt,blockNr:nr,kursId,teilgruppe:tgSel.value||null,rhythmus});
+            // A/B-Anker abfragen, sobald erster A/B-Slot entsteht und noch keiner gesetzt ist (Lücken-Fix #6)
+            if((rhythmus==='A'||rhythmus==='B')&&!zm.abWochenAnker){ dlgZu(); ankerDialog(()=>{ schritt=2; renderS2(); }); return; }
+          }
+          dlgZu(); schritt=2; renderS2();
+        }},'Übernehmen'),
+        el('button',{class:'btn still',onclick:()=>{ dlgZu(); schritt=2; renderS2(); }},'Abbrechen')));
+  }
+
+  function ankerDialog(weiter){
+    const d=el('input',{type:'date'});
+    const t=el('select',{},el('option',{value:'A'},'A-Woche'),el('option',{value:'B'},'B-Woche'));
+    dlgZeigenEl(el('h3',{},'A/B-Woche festlegen'),
+      el('p',{class:'u-hinweis'},'An welchem Datum beginnt welche Woche? Ein Montag genügt — die Kladde rechnet den Rhythmus daraus.'),
+      el('div',{class:'zeile'},el('span',{},'Woche ab'),el('span',{},d)),
+      el('div',{class:'zeile'},el('span',{},'ist'),el('span',{},t)),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn',onclick:()=>{ if(d.value){ zm.abWochenAnker={datum:d.value,typ:t.value}; } dlgZu(); weiter(); }},'Setzen'),
+        el('button',{class:'btn still',onclick:()=>{ dlgZu(); weiter(); }},'Später')));
+  }
+
+  // ── Schritt 3: Autowahl prüfen (Testzeit-Widget) + Speichern ──
+  function renderS3(){
+    const tagSel=el('select',{}, ...[1,2,3,4,5].map(wt=>el('option',{value:String(wt)},WT_KURZ[wt])));
+    const zeitInput=el('input',{type:'time',value:'08:10',class:'u-w130'});
+    const ergebnis=el('div',{class:'sp-ergebnis'});
+    const pruef=()=>{
+      const wt=Number(tagSel.value); const [h,m]=zeitInput.value.split(':').map(Number);
+      // Referenz-Montag der Anker-A-Woche, dann auf gewählten Wochentag schieben (Testzeit ist wochenneutral)
+      const basis=new Date(2026,7,24+(wt-1),h||0,m||0,0);
+      const t=kursZurZeit(basis,{zeitmodell:zm,wochenplan:plan,ausnahmen:[]});
+      const k=t&&vault.stamm.kurse.find(x=>x.id===t.kursId);
+      ergebnis.replaceChildren(el('b',{class:t?'u-gut':'u-leise'}, t?('→ '+(k?k.name+' · '+k.fach:t.kursId)+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'')):'→ frei / kein Kurs'));
+    };
+    pruef();
+    dlgZeigenEl(kopf('Autowahl prüfen'),
+      el('p',{class:'u-hinweis'},'Stelle eine Zeit ein — so entscheidet die Kladde im Unterricht.'),
+      el('div',{class:'zeile'},el('span',{},'Testzeit'),el('span',{},tagSel,' ',zeitInput,' ',el('button',{class:'btn still u-btn-klein',onclick:pruef},'prüfen'))),
+      ergebnis,
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn still',onclick:()=>{ schritt=2; renderS2(); }},'← Wochenplan'),
+        el('button',{class:'btn',onclick:speichereUndZu},'Fertig & speichern')));
+  }
+
+  renderS1();
+}
+
 const GRUPPEN_LABELS=['A','B','C','D'];
 function gruppenEditor(kursId){
   const k=vault.stamm.kurse.find(x=>x.id===kursId);
@@ -843,6 +1069,7 @@ function renderMehr(){
     '<div class="panel"><h2>Sicherheit</h2>'+
     '<div class="zeile"><span>Automatisch sperren nach</span><span><select id="sec-lockmin">'+[5,10,15,30].map(m=>'<option value="'+m+'"'+(lockMinuten()===m?' selected':'')+'>'+m+' min</option>').join('')+'</select></span></div>'+
     '<div class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' class="u-check"></span></div>'+
+    '<div class="zeile"><span>Während des Unterrichts nicht sperren</span><span><input type="checkbox" id="sec-unterricht"'+(localStorage.getItem('kladde_lock_unterricht')!=='0'?' checked':'')+' class="u-check"></span></div>'+
     '<div class="btn-reihe"><button class="btn still" id="sec-pass">Passphrase ändern…</button></div></div>'+
     '<div class="panel"><h2>Sichern & Übertragen</h2>'+
     '<p class="u-hinweis">Container ist AES-GCM-verschlüsselt (Passphrase nötig zum Öffnen). iPad: „In Dateien sichern" → SMB-Ordner des PCs.</p>'+
@@ -859,7 +1086,7 @@ function renderMehr(){
     '<div class="zeile"><span>Speicher</span><span class="wert" id="dg-quota">…</span></div>'+
     '<div class="zeile"><span>Ereignisse im Log</span><span class="wert">'+vault.events.length+'</span></div>'+
     '<div class="zeile"><span>Letzte Sicherung</span><span class="wert" id="dg-save">Write-through aktiv</span></div>'+
-    '<div class="zeile"><span>Regel</span><span class="wert" class="u-maxw55">'+esc(regelText(bewertProfil(kurs())))+'</span></div></div>';
+    '<div class="zeile"><span>Regel</span><span class="wert u-maxw55">'+esc(regelText(bewertProfil(kurs())))+'</span></div></div>';
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
   $('dg-mode').textContent=standalone?'standalone (installiert)':'Browser-Tab';
   if(navigator.storage?.persisted) navigator.storage.persisted().then(p=>$('dg-persist').textContent=p?'gewährt':'nicht gewährt');
@@ -869,6 +1096,7 @@ function renderMehr(){
   $('file-cont').onchange=importiereContainer;
   $('sec-lockmin').onchange=e=>{ localStorage.setItem('kladde_lock_min',e.target.value); toast('Auto-Lock: '+e.target.value+' min'); };
   $('sec-sofort').onchange=e=>localStorage.setItem('kladde_lock_sofort',e.target.checked?'1':'0');
+  $('sec-unterricht').onchange=e=>localStorage.setItem('kladde_lock_unterricht',e.target.checked?'1':'0');
   $('sec-pass').onclick=passphraseWechselDialog;
   if(!PAGES_KONTEXT){
     $('btn-push').onclick=syncPush;
@@ -921,6 +1149,7 @@ async function importiereContainer(e){
   try {
     fremd=(await decodeContainerAuto(new Uint8Array(await f.arrayBuffer()),pinRam)).daten;
   } catch(err){ toast('⚠ Import: '+err.message+' (gleiche Passphrase auf beiden Geräten?)',5000); return; }
+  if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren (neu laden).',6000); return; }
   // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
   const eigeneIds=new Set(vault.events.map(x=>x.id));
   const neue=(fremd.events||[]).filter(x=>!eigeneIds.has(x.id)).length;
@@ -987,6 +1216,7 @@ async function syncPull(){
     if(r.status===404){ toast('Noch kein Container von „'+von+'" auf dem Server'); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pinRam)).daten;
+    if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren.',6000); return; }
     const dry=mergeContainerDaten(vault,fremd);
     const anwenden=async()=>{
       if(vault.verworfeneStaende&&!dry.daten.verworfeneStaende) dry.daten.verworfeneStaende=vault.verworfeneStaende;

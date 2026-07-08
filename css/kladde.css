@@ -359,3 +359,21 @@
   .deck-minus { color: var(--fehl); border-color: var(--fehl); }
   .deck-plus { color: var(--gut); border-color: var(--gut); }
 }
+
+/* ── v0.9.0 · Stundenplan-Assistent (P2.4) ── */
+@layer views {
+  .sp-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .sp-kopf h3 { margin: 0; }
+  .sp-steps { display: flex; gap: 5px; }
+  .sp-step { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); }
+  .sp-step.an { background: var(--band); color: #1a1206; border-color: var(--band); font-weight: 700; }
+  .sp-pausen .zeile { padding: 3px 0; }
+  .sp-vorschau { margin-top: 10px; background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; padding: 6px 10px; }
+  .sp-vorschau .zeile { padding: 3px 0; }
+  .sp-woche-wrap { overflow-x: auto; }
+  .sp-woche { display: grid; grid-template-columns: 26px repeat(5, 1fr); gap: 3px; min-width: 300px; margin: 6px 0; }
+  .sp-th, .sp-ecke { text-align: center; font-size: 12px; color: var(--leise); padding: 3px 0; }
+  .sp-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 6px; min-height: 40px; font-size: 11px; padding: 2px; cursor: pointer; color: inherit; overflow: hidden; }
+  .sp-zelle.belegt { border-color: var(--band); color: var(--band); }
+  .sp-ergebnis { margin: 10px 0; font-size: 16px; text-align: center; }
+}
