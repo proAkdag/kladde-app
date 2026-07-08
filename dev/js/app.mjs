@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.1.1783552369';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.1.1783552369';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.1.1783552369';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.1.1783552369';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.1.1783552369';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.1.1783552369';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.1.1783552369';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.1.1783552369';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.1.1783552369';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.1.1783552369';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.1.1783552485';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.1.1783552485';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.1.1783552485';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.1.1783552485';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.1.1783552485';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.1.1783552485';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.1.1783552485';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.1.1783552485';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.1.1783552485';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.1.1783552485';
 const APP_VERSION = '1.1.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -642,9 +642,9 @@ function renderAktionsbar(){
     if(busy) return; busy=true;
     const nr=aktiverSchueler;
     addEvent(b.dataset.typ,nr);
-    b.style.borderColor='var(--band)';
-    setTimeout(()=>{ b.style.borderColor=''; busy=false; },220);
+    setTimeout(()=>{ busy=false; },220);
     renderHeute();
+    renderAktionsbar(); // Entfernen-Chip des neuen Eintrags sofort anzeigen (direkte Korrektur)
     pulseKachel(nr);
   });
   bar.querySelector('[data-zu]').onclick=()=>{ aktiverSchueler=null; bar.classList.add('hidden'); renderHeute(); };
