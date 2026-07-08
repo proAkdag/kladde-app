@@ -1,13 +1,13 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs';
-import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs';
-import { mergeContainerDaten } from '../logic/merge.mjs';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs';
-import { parseSchuelerListe } from '../logic/parser.mjs';
-import { migriereStamm, schemaBekannt } from '../logic/migration.mjs';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs';
-import { kursZurZeit } from '../logic/autowahl.mjs';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.0.1783546496';
+import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.0.1783546496';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.0.1783546496';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.0.1783546496';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.0.1783546496';
+import { migriereStamm, schemaBekannt } from '../logic/migration.mjs?v=0.10.0.1783546496';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.0.1783546496';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.0.1783546496';
 const APP_VERSION = '0.10.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
