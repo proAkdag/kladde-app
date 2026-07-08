@@ -14,7 +14,7 @@ const SOMI_TYPEN = new Set(['+', 'o', '-']);
 // fehlt_o (Anwesenheits-Stempel, Phase 3) zählt als Kurstermin — die Erfassung IST Evidenz,
 // dass Unterricht war (Auflage 7). Aktiv-Quote korrigiert das über den e-Nenner.
 const TERMIN_TYPEN = new Set(['+', 'o', '-', 'note', 'mat', 'ipad_fehlt', 'ipad_leer',
-  'lernzeit', 'fehlt_e', 'fehlt_u', 'fehlt_o', 'versp', 'notiz', 'ha']);
+  'lernzeit', 'fehlt_e', 'fehlt_u', 'fehlt_o', 'versp', 'notiz', 'ha', 'verweigert']);
 
 function wirksameEvents(events) {
   const storniert = new Set(events.filter(e => e.stornoVon).map(e => e.stornoVon));
@@ -87,17 +87,22 @@ function verdichte(kursEvents, schuelerNr, opt) {
     pfeil = delta > 0.15 ? '↑' : delta < -0.15 ? '↓' : '→';
   }
 
-  // uWirkt = geklärte unentschuldigte Termine fließen als 6/0 P ein (termingewichtet, nicht als
-  // direkte Note — die hätte 50 % Kollektivgewicht und würde eine Fehlstunde massiv überbewerten).
-  const uWirkt = uAls6 && nFehltU > 0;
+  // Termine, die als 6 / 0 P termingewichtet einfließen (nicht als direkte Note — die hätte 50 %
+  // Kollektivgewicht und würde eine Einzelstunde massiv überbewerten):
+  //  · geklärte unentschuldigte Fehlstunden (nur wenn Kursoption uAls6 an), UND
+  //  · explizite Verweigerungen (anwesend, keine/verweigerte Leistung) — bewusster Lehrer-Akt,
+  //    zählt IMMER (unabhängig von uAls6). NRW §48 SchulG: nicht erbrachte Leistung = 6, keine Strafe.
+  const nVerweigert = new Set(meine.filter(e => e.typ === 'verweigert').map(terminVon)).size;
+  const nSechs = (uAls6 ? nFehltU : 0) + nVerweigert;
+  const sechsWirkt = nSechs > 0;
 
   // Vorschlag (LB: keiner; ohne jede Grundlage: keiner)
   let vorschlag = null;
-  if (!lb && (somi.length > 0 || direkte.length > 0 || uWirkt)) {
+  if (!lb && (somi.length > 0 || direkte.length > 0 || sechsWirkt)) {
     if (profil === 'sek2') {
-      // SomiPunkte termingewichtet mit 0 P je geklärter u-Stunde
+      // SomiPunkte termingewichtet mit 0 P je 6-Stunde (u / verweigert)
       let punkte = somi.length ? 9 + 6 * bilanz.score : null;
-      if (uWirkt) punkte = punkte === null ? 0 : (punkte * nSomi + 0 * nFehltU) / (nSomi + nFehltU);
+      if (sechsWirkt) punkte = punkte === null ? 0 : (punkte * nSomi + 0 * nSechs) / (nSomi + nSechs);
       if (direkte.length) {
         const mittel = direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek2'), 0) / direkte.length;
         punkte = punkte === null ? mittel : (punkte + mittel) / 2;
@@ -106,7 +111,7 @@ function verdichte(kursEvents, schuelerNr, opt) {
       vorschlag = { wert: p, label: String(p) + ' P' };
     } else {
       let note = somi.length ? 3 - 2 * bilanz.score : null;
-      if (uWirkt) note = note === null ? 6 : (note * nSomi + 6 * nFehltU) / (nSomi + nFehltU);
+      if (sechsWirkt) note = note === null ? 6 : (note * nSomi + 6 * nSechs) / (nSomi + nSechs);
       if (direkte.length) {
         const mittel = direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek1'), 0) / direkte.length;
         note = note === null ? mittel : (note + mittel) / 2;
@@ -121,23 +126,23 @@ function verdichte(kursEvents, schuelerNr, opt) {
     beteiligtTermine: beteiligt.size,
     kursTermine: kursTermine.size,
     moeglicheTermine: moeglich,
-    nFehltE, nFehltU, nFehltO,
+    nFehltE, nFehltU, nFehltO, nVerweigert,
     aktivQuote,
     pfeil,
     vorschlag,
-    regelText: regelText(profil, uWirkt ? nFehltU : 0),
+    regelText: regelText(profil, sechsWirkt ? nSechs : 0),
   };
 }
 
-function regelText(profil, nU = 0) {
+function regelText(profil, nSechs = 0) {
   const basis = 'score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen 50:50';
   const kopf = profil === 'sek2'
     ? 'Punkte-Vorschlag = 9 + 6·score (0–15) · '
     : 'Noten-Vorschlag = 3 − 2·score (Drittelnoten) · ';
-  const uHinweis = nU > 0
-    ? ' · ' + nU + ' unentschuldigte Stunde' + (nU > 1 ? 'n' : '') + ' als ' + (profil === 'sek2' ? '0 P' : '6') + ' termingewichtet'
+  const sechsHinweis = nSechs > 0
+    ? ' · ' + nSechs + ' Stunde' + (nSechs > 1 ? 'n' : '') + ' ohne bewertbare Leistung (unentsch./verweigert) als ' + (profil === 'sek2' ? '0 P' : '6') + ' termingewichtet'
     : '';
-  return kopf + basis + uHinweis;
+  return kopf + basis + sechsHinweis;
 }
 
 // „Vorschläge kopieren" (P4.5): Zeilen fürs Einfügen in die Excel-Klassenmappe.

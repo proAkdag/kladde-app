@@ -137,6 +137,7 @@
   #plan .kachel .mk.m { background: var(--fehl); color: #1c0606; }
   #plan .kachel .mk.o { background: var(--kante); color: var(--text); }
   #plan .kachel .mk.u { background: var(--fehl); color: #fff; }
+  #plan .kachel .mk.verw { background: var(--fehl); color: #fff; font-weight: 800; }
   #plan .kachel .mk.sym { background: transparent; padding: 0 1px; }
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
@@ -443,4 +444,26 @@
   @keyframes kladde-ring { 0%,100%{outline-offset:4px} 50%{outline-offset:7px} }
   @media (prefers-reduced-motion: no-preference) { body.stempeln #plan-wrap { animation: kladde-ring 1.6s ease-in-out infinite; } }
   @media (prefers-reduced-motion: reduce) { .schuett { animation: none !important; } body.stempeln #plan-wrap { animation: none !important; } }
+}
+
+/* ── v1.1.0 · Sitzplan Drag & Drop (Namen-Schiene + Mülleimer, Pointer-Events) ── */
+@layer views {
+  .sp-editor-bar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 52px);
+    display: flex; align-items: center; gap: 8px; z-index: 40;
+    background: var(--karte); border-top: 1px solid var(--band); padding: 8px 10px; }
+  .sp-rail-label { font-size: 12px; color: var(--leise); flex: 0 0 auto; white-space: nowrap; }
+  .sp-rail { display: flex; gap: 6px; overflow-x: auto; flex: 1; padding: 2px; min-height: 44px; align-items: center; }
+  .sp-chip { flex: 0 0 auto; background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
+    padding: 8px 12px; min-height: 40px; font-size: 13px; cursor: grab; white-space: nowrap; touch-action: none;
+    user-select: none; -webkit-user-select: none; }
+  .sp-trash { flex: 0 0 auto; width: 54px; min-height: 44px; display: grid; place-items: center; font-size: 22px;
+    border: 1px dashed var(--kante); border-radius: 10px; }
+  .sp-trash.ziel { border-color: var(--fehl); background: rgba(201,111,111,.2); }
+  .sp-ghost { position: fixed; z-index: 90; transform: translate(-50%,-150%); pointer-events: none;
+    background: var(--band); color: #1a1206; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700;
+    box-shadow: 0 8px 22px rgba(0,0,0,.5); white-space: nowrap; }
+  body.sp-edit main { padding-bottom: 168px; }
+  body.sp-edit #plan.editor .kachel.schueler { touch-action: none; cursor: grab; }
+  #plan .kachel.ziel { outline: 2px solid var(--band); outline-offset: -2px; }
+  body.sp-dragging, body.sp-dragging * { cursor: grabbing !important; }
 }
