@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.1.1783552130';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.1.1783552130';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.1.1783552130';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.1.1783552130';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.1.1783552130';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.1.1783552130';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.1.1783552130';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.1.1783552130';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.1.1783552130';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.1.1783552130';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.1.1783552369';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.1.1783552369';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.1.1783552369';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.1.1783552369';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.1.1783552369';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.1.1783552369';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.1.1783552369';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.1.1783552369';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.1.1783552369';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.1.1783552369';
 const APP_VERSION = '1.1.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -570,7 +570,7 @@ function stempleKachel(nr){
 }
 // Letzten heutigen Eintrag eines Schülers entfernen (Storno) — für ↩-Stempel + Aktionsbar
 function entferneLetzten(nr){
-  const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum);
+  const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
   if(!evs.length){ toast('nichts zu entfernen'); return; }
   const letzte=evs.reduce((a,e)=>String(e.ts)>String(a.ts)?e:a);
   stornoVon(letzte); toast('entfernt: '+(TYP_LABEL[letzte.typ]||letzte.typ)); renderHeute();
@@ -633,7 +633,7 @@ function renderAktionsbar(){
     html+='<button'+cls+' data-typ="'+t+'">'+({'+':'＋','o':'o','-':'−',mat:'📕',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA'}[t]||t)+'</button>';
   }
   // Heutige Einträge dieses Schülers als entfernbare Chips (direkter Weg statt Detail-Blatt)
-  const heuteEvs=wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.datum===terminDatum).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+  const heuteEvs=wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote').sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
   if(heuteEvs.length){ html+='<span class="ab-sep"></span>';
     for(const e of heuteEvs) html+='<button class="ab-entf" data-entf="'+e.id+'" title="tippen zum Entfernen">'+esc(markSymbol(e))+'<span class="x">✕</span></button>'; }
   html+='<button data-blatt title="Verlauf ansehen">📖</button><button data-mehr>…</button><button data-zu>✕</button>';
@@ -894,7 +894,7 @@ async function kopiereVorschlaege(){
   }
 }
 function schuelerDetailHtml(s,k,v){
-  const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr));
+  const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr)).filter(e=>e.typ!=='storno'); // Storno-Buchungen nicht im Verlauf zeigen
   const verspSum=evs.filter(e=>e.typ==='versp').reduce((a,e)=>a+(e.minuten||0),0);
   const fehltU=evs.filter(e=>e.typ==='fehlt_u').length, fehltE=evs.filter(e=>e.typ==='fehlt_e').length;
   const proTag={};
