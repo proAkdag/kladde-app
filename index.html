@@ -69,6 +69,7 @@
     background: transparent; border: 1px solid var(--kante); border-radius: 8px;
     min-width: 44px; min-height: 44px; cursor: pointer; font-size: 17px;
   }
+  .icon-btn.aktiv { border-color: var(--band); color: var(--band); }
   nav.tabs {
     position: fixed; bottom: 0; left: 0; right: 0;
     display: flex; background: var(--karte); border-top: 1px solid var(--kante);
@@ -118,26 +119,54 @@
 }
 
 @layer views {
-  /* ── Sitzplan (Beamer-Regel: Kacheln zeigen NUR Namen, nie Werte) ── */
+  /* ── Datums-Streifen (Heute-Ansicht) ── */
+  .datum-streifen {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 10px; padding: 8px 12px;
+  }
+  .datum-streifen .heute-tag { font-weight: 700; font-size: 15px; }
+  .datum-streifen.nachtrag { border-color: var(--warn); }
+  .datum-streifen .nachtrag-hinweis { color: var(--warn); font-size: 13px; }
+  .datum-streifen .rechts { margin-left: auto; display: flex; gap: 6px; }
+  .datum-streifen button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 14px; }
+  .datum-streifen button.aktiv { border-color: var(--band); color: var(--band); }
+  .datum-streifen .erf-zaehler { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 3px 11px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--leise); }
+  .legende { display: flex; flex-direction: column; gap: 9px; font-size: 14px; margin: 4px 0 10px; }
+  .legende .chip { border-radius: 3px; padding: 0 7px; font-weight: 700; display: inline-block; }
+
+  /* ── Sitzplan: Name + Tages-Stand als Symbole/Farben · Beamer-Toggle versteckt Werte ── */
   #plan-wrap { overflow: auto; }
   #plan {
-    display: grid; grid-template-columns: repeat(12, minmax(44px, 62px)); gap: 3px;
-    min-width: 570px; justify-content: center;
+    display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px;
+    min-width: 600px; justify-content: center;
   }
   #plan .kachel {
-    aspect-ratio: 1; border-radius: 6px; border: 1px dashed transparent;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: 11px; overflow: hidden; padding: 1px;
+    aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+    font-size: 11px; overflow: hidden; position: relative;
   }
   #plan .kachel.leer { background: transparent; }
-  #plan .kachel.schueler {
-    background: var(--karte); border: 1px solid var(--kante); cursor: pointer;
-  }
-  #plan .kachel.schueler.gewaehlt { border-color: var(--band); background: var(--karte2); }
-  #plan .kachel.schueler.erfasst { border-bottom: 3px solid var(--info); } /* neutraler "heute berührt"-Marker, kein Wert */
-  #plan .kachel .vn { font-weight: 600; max-width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-  #plan .kachel .nn { color: var(--leise); font-size: 9px; max-width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-  #plan.editor .kachel.leer { border-color: var(--kante); cursor: pointer; }
+  #plan .kachel.schueler { background: var(--karte); border-color: var(--kante); cursor: pointer; }
+  #plan .kachel.schueler.gewaehlt { outline: 2px solid var(--band); outline-offset: -2px; }
+  #plan .kachel.netto-plus  { background: #1c2a1a; }   /* mehrheitlich + */
+  #plan .kachel.netto-minus { background: #2c1a1a; }   /* mehrheitlich − */
+  #plan .kachel.netto-fehlt { background: #202226; opacity: .55; }
+  #plan .kachel .kopf { display: flex; align-items: center; gap: 3px; padding: 3px 4px 0; }
+  #plan .kachel .vn { font-weight: 600; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  #plan .kachel .lb-badge { background: var(--info); color: #06121e; font-size: 8px; font-weight: 800; border-radius: 3px; padding: 0 3px; letter-spacing: .03em; }
+  #plan .kachel .nn { color: var(--leise); font-size: 9px; padding: 0 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  #plan .kachel .marken { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 3px 3px; min-height: 15px; }
+  #plan .kachel .mk { border-radius: 3px; padding: 0 3px; font-size: 10px; font-weight: 700; line-height: 1.3; }
+  #plan .kachel .mk.p { background: var(--gut); color: #08160a; }
+  #plan .kachel .mk.m { background: var(--fehl); color: #1c0606; }
+  #plan .kachel .mk.o { background: var(--kante); color: var(--text); }
+  #plan .kachel .mk.u { background: var(--fehl); color: #fff; }
+  #plan .kachel .mk.sym { background: transparent; padding: 0 1px; }
+  body.beamer #plan .kachel .marken { display: none; }
+  body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
+  body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
+  #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
+  #plan.editor .kachel .marken { display: none; }
   .aktionsbar {
     position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 52px);
     background: var(--karte); border-top: 1px solid var(--kante); padding: 8px 10px; z-index: 35;
@@ -160,14 +189,30 @@
   #deck-karte .gross { font-size: 30px; font-weight: 700; }
   #deck-karte .sub { color: var(--leise); }
   #deck-fortschritt { text-align: center; color: var(--leise); font-variant-numeric: tabular-nums; }
+  .deck-bar { height: 6px; background: var(--karte); border: 1px solid var(--kante); border-radius: 4px; overflow: hidden; max-width: 420px; margin: 6px auto 0; }
+  .deck-bar > div { height: 100%; background: var(--gut); transition: width .2s; }
   .deck-hilfe { display: flex; justify-content: space-between; max-width: 420px; margin: 0 auto; color: var(--leise); font-size: 13px; padding: 0 8px; }
   .deck-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-  /* ── Schüler ── */
-  .s-item { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-top: 1px solid var(--kante); cursor: pointer; min-height: 48px; }
-  .s-item:first-child { border-top: none; }
-  .s-item .pfeil { margin-left: auto; color: var(--leise); }
-  .balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--karte2); }
+  /* ── Schüler-Liste + Inline-Detail-Akkordeon ── */
+  .s-block { border-top: 1px solid var(--kante); }
+  .s-block:first-child { border-top: none; }
+  .s-block.offen { background: var(--karte2); border-radius: 8px; margin: 4px -6px; }
+  .s-item { display: flex; align-items: center; gap: 10px; padding: 10px 6px; cursor: pointer; min-height: 48px; }
+  .s-item .pfeil { color: var(--leise); font-size: 15px; }
+  .balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--karte); }
   .balken div { height: 100%; }
+  .s-detail { padding: 4px 10px 12px; }
+  .s-detail .tag-gruppe { margin-top: 8px; }
+  .s-detail .tag-kopf { color: var(--band); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .s-detail .ev-zeile { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--kante); font-size: 14px; }
+  .balken { min-width: 60px; }
+  /* ── Gruppen-Editor: Direktbuttons ── */
+  .gr-zeile { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--kante); }
+  .gr-zeile:first-child { border-top: none; }
+  .gr-name { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gr-btns { display: flex; gap: 4px; }
+  .gr-b { background: var(--karte2); border: 1px solid var(--kante); border-radius: 7px; min-width: 38px; min-height: 40px; cursor: pointer; font-weight: 700; color: inherit; }
+  .gr-b.an { background: var(--band); color: #1a1206; border-color: var(--band); }
   /* ── Lock ── */
   #lock {
     position: fixed; inset: 0; background: var(--grund); z-index: 100;
@@ -195,12 +240,13 @@
   <span class="band"></span>
   <div id="kurs-chip"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></div>
   <div class="spacer"></div>
-  <button class="icon-btn" id="btn-datum" title="Termin-Datum">📅</button>
+  <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken">👁</button>
   <button class="icon-btn" id="btn-lock" title="Sperren">🔒</button>
 </header>
 
 <main>
   <section id="view-heute">
+    <div id="datum-streifen"></div>
     <div id="plan-wrap"><div id="plan"></div></div>
     <p id="heute-leer" class="hidden" style="color:var(--leise)">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
   </section>
@@ -241,7 +287,7 @@
 <script>
 'use strict';
 (function () {
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.6.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -453,6 +499,9 @@ function profilTypen(k){
   if(p.ha) basis.push('ha');
   return basis;
 }
+// Bewertungs-Modus: bildet die 3 Fälle (Sek I=Drittel · Sek II=Punkte · Sek II=Drittel)
+// auf die getestete 2-Wege-Logik ab — Sek-II-Drittel rechnet wie Sek I (Drittelnoten 1–6).
+function bewertProfil(k){ return (k&&k.profil==='sek2'&&(k.notenmodus||'punkte')!=='drittel')?'sek2':'sek1'; }
 function addEvent(typ,schuelerNr,extra={}){
   const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
   vault.events.push(e);
@@ -476,6 +525,46 @@ function zeigeUndo(e){
 }
 function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.nr===nr):null; }
 
+// Aggregierter Tages-Stand (für Sitzplan-Symbole + Detail). EIN Reduzierer, zwei Zugänge:
+// standAmTermin(nr) für Einzel-Abfrage · tagesStandIndex(datum) für den ganzen Sitzplan in einem Durchlauf.
+function leererStand(){ return {plus:0,neutral:0,minus:0,mat:0,ipad:0,lernzeit:0,notiz:0,note:null,fehlt:null,versp:0,count:0}; }
+function reduziereStand(evs){
+  const st=leererStand(); st.count=evs.length;
+  for(const e of evs){
+    if(e.typ==='+') st.plus++;
+    else if(e.typ==='o') st.neutral++;
+    else if(e.typ==='-') st.minus++;
+    else if(e.typ==='mat'||e.typ==='ha') st.mat++;
+    else if(e.typ==='ipad_fehlt'||e.typ==='ipad_leer') st.ipad++;
+    else if(e.typ==='lernzeit') st.lernzeit++;
+    else if(e.typ==='notiz') st.notiz++;
+    else if(e.typ==='note') st.note=e.wert;
+    else if(e.typ==='fehlt_e') st.fehlt='e';
+    else if(e.typ==='fehlt_u') st.fehlt='u';
+    else if(e.typ==='versp') st.versp+=e.minuten||0;
+  }
+  return st;
+}
+function standAmTermin(nr,datum){
+  return reduziereStand(wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===datum));
+}
+function tagesStandIndex(datum){
+  const byNr=new Map();
+  for(const e of wirksameEvents(vault.events)){
+    if(e.kursId!==aktiverKursId||e.datum!==datum) continue;
+    let a=byNr.get(e.schuelerNr); if(!a){ a=[]; byNr.set(e.schuelerNr,a); }
+    a.push(e);
+  }
+  const idx=new Map();
+  for(const [nr,evs] of byNr) idx.set(nr,reduziereStand(evs));
+  return idx;
+}
+const WOCHENTAG_KURZ=['So','Mo','Di','Mi','Do','Fr','Sa'];
+function datumLabel(iso){ const [y,m,d]=iso.split('-').map(Number); const dt=new Date(y,m-1,d); return WOCHENTAG_KURZ[dt.getDay()]+' '+String(d).padStart(2,'0')+'.'+String(m).padStart(2,'0')+'.'; }
+// Beamer-Modus: UI-Präferenz (localStorage, nicht im verschlüsselten Vault)
+let beamerModus=localStorage.getItem('kladde_beamer')==='1';
+function setzeBeamer(an){ beamerModus=an; localStorage.setItem('kladde_beamer',an?'1':'0'); document.body.classList.toggle('beamer',an); $('btn-beamer').classList.toggle('aktiv',an); if(aktView==='heute') renderHeute(); }
+
 /* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
 function kursAutowahl(){
   if(!vault) return;
@@ -498,7 +587,7 @@ $('kurs-chip').addEventListener('click',()=>{
   const k=kurs();
   dlgZeigen('<h3>Kurs wählen</h3>'+
     vault.stamm.kurse.map(x=>'<button class="btn'+(k&&x.id===k.id?'':' still')+'" style="display:block;width:100%;margin:6px 0" data-kurs="'+x.id+'">'+esc(x.name)+' · '+esc(x.fach)+'</button>').join('')+
-    '<div class="zeile"><span>Teilgruppe</span><span><select id="tg-sel"><option value="">alle</option><option value="A">A</option><option value="B">B</option></select></span></div>'+
+    '<div class="zeile"><span>Teilgruppe</span><span><select id="tg-sel"><option value="">alle</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></span></div>'+
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
       el.querySelector('#tg-sel').value=aktiveTeilgruppe||'';
@@ -506,14 +595,15 @@ $('kurs-chip').addEventListener('click',()=>{
       el.querySelector('#tg-sel').onchange=e=>{ aktiveTeilgruppe=e.target.value||null; renderHeute(); };
     });
 });
-$('btn-datum').addEventListener('click',()=>{
-  dlgZeigen('<h3>Termin-Datum</h3><p style="color:var(--leise);font-size:14px">Für Nacharbeit — Ereignisse werden diesem Termin zugeordnet.</p>'+
+function oeffneDatum(){
+  dlgZeigen('<h3>Termin wählen</h3><p style="color:var(--leise);font-size:14px">Für Nacharbeit — Einträge gehen auf diesen Termin.</p>'+
     '<input type="date" id="datum-in" value="'+terminDatum+'"><div class="btn-reihe"><button class="btn" data-ok>Übernehmen</button><button class="btn still" data-heute>Heute</button></div>',
     el=>{
-      el.querySelector('[data-ok]').onclick=()=>{ terminDatum=el.querySelector('#datum-in').value||heuteIso(); dlgZu(); toast('Termin: '+terminDatum); };
-      el.querySelector('[data-heute]').onclick=()=>{ terminDatum=heuteIso(); dlgZu(); toast('Termin: heute'); };
+      el.querySelector('[data-ok]').onclick=()=>{ terminDatum=el.querySelector('#datum-in').value||heuteIso(); dlgZu(); renderHeute(); };
+      el.querySelector('[data-heute]').onclick=()=>{ terminDatum=heuteIso(); dlgZu(); renderHeute(); };
     });
-});
+}
+$('btn-beamer').addEventListener('click',()=>setzeBeamer(!beamerModus));
 
 /* ═══ DIALOG-HELFER ═══ */
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -552,29 +642,89 @@ function sichtbareSchueler(k){
   if(aktiveTeilgruppe) liste=liste.filter(s=>(s.gruppe||'')===aktiveTeilgruppe);
   return liste;
 }
+function datumStreifen(erfasst,total){
+  const el=$('datum-streifen'); if(!kurs()){ el.innerHTML=''; el.className=''; return; }
+  const heute=heuteIso(), istHeute=terminDatum===heute;
+  el.className='datum-streifen'+(istHeute?'':' nachtrag');
+  const zaehler=total?'<span class="erf-zaehler" title="heute mit +/o/− erfasst">'+erfasst+'/'+total+'</span>':'';
+  el.innerHTML='<span class="heute-tag">'+(istHeute?'Heute':'Nachtrag')+' · '+datumLabel(terminDatum)+'</span>'+
+    (istHeute?zaehler:'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+
+    '<span class="rechts">'+
+    (istHeute?'':'<button data-heute>↩ Heute</button>')+
+    '<button data-zufall title="Zufällig – bevorzugt wer heute noch nicht dran war">🎲</button>'+
+    '<button data-legende title="Symbol-Legende">?</button>'+
+    '<button data-datum title="Anderer Termin (Nachtrag)">📅</button></span>';
+  el.querySelector('[data-datum]').onclick=oeffneDatum;
+  el.querySelector('[data-zufall]').onclick=zufallsSchueler;
+  el.querySelector('[data-legende]').onclick=zeigeLegende;
+  const bh=el.querySelector('[data-heute]'); if(bh) bh.onclick=()=>{ terminDatum=heute; renderHeute(); };
+}
+function zufallsSchueler(){
+  const k=kurs(); if(!k) return;
+  const alle=sichtbareSchueler(k); if(!alle.length) return;
+  // Fair: nur echte SoMi (+/o/−) oder direkte Note zählt als „dran"; Abwesende raus.
+  const info=new Map(alle.map(s=>[s.nr,standAmTermin(s.nr,terminDatum)]));
+  const anwesend=alle.filter(s=>!info.get(s.nr).fehlt);
+  const dran=new Set(anwesend.filter(s=>{const st=info.get(s.nr);return st.plus+st.neutral+st.minus+(st.note!=null?1:0)>0;}).map(s=>s.nr));
+  let pool=anwesend.filter(s=>!dran.has(s.nr));
+  let hinweis='';
+  if(!pool.length){ pool=anwesend.length?anwesend:alle; hinweis=' · alle dran'; }
+  const s=pool[Math.floor(Math.random()*pool.length)];
+  aktiverSchueler=s.nr;
+  renderHeute(); renderAktionsbar();
+  const kachel=$('plan').querySelector('.kachel[data-nr="'+s.nr+'"]');
+  if(kachel) kachel.scrollIntoView({block:'center',behavior:'smooth'});
+  toast('🎲 '+s.vorname+' '+s.name+hinweis);
+}
+function kachelHtml(s,st){
+  let cls='kachel schueler';
+  if(aktiverSchueler===s.nr) cls+=' gewaehlt';
+  if(!beamerModus){
+    if(st.fehlt) cls+=' netto-fehlt';
+    else if(st.plus>st.minus) cls+=' netto-plus';
+    else if(st.minus>st.plus) cls+=' netto-minus';
+  }
+  let marken='';
+  if(st.plus&&!st.minus) marken+='<span class="mk p">＋'+(st.plus>1?st.plus:'')+'</span>';
+  else if(st.minus&&!st.plus) marken+='<span class="mk m">−'+(st.minus>1?st.minus:'')+'</span>';
+  else if(st.plus&&st.minus) marken+='<span class="mk p">'+st.plus+'</span><span class="mk m">'+st.minus+'</span>';
+  else if(st.neutral) marken+='<span class="mk o">o</span>';
+  if(st.note!=null) marken+='<span class="mk sym">📊</span>';
+  if(st.mat) marken+='<span class="mk sym">📕</span>';
+  if(st.ipad) marken+='<span class="mk sym">📱</span>';
+  if(st.lernzeit) marken+='<span class="mk sym">📝</span>';
+  if(st.notiz) marken+='<span class="mk sym">✎</span>';
+  if(st.versp) marken+='<span class="mk sym">⏰</span>';
+  if(st.fehlt) marken+='<span class="mk '+(st.fehlt==='u'?'u':'o')+'">'+st.fehlt+'</span>';
+  return '<div class="'+cls+'" data-nr="'+s.nr+'">'+
+    '<div class="kopf"><span class="vn">'+esc(s.vorname)+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
+    '<span class="nn">'+esc(s.name)+'</span>'+
+    '<div class="marken">'+marken+'</div></div>';
+}
 function renderHeute(){
   const k=kurs(); const plan=$('plan');
-  $('heute-leer').classList.toggle('hidden',Boolean(k));
   plan.classList.toggle('editor',editorAktiv);
-  if(!k){ plan.innerHTML=''; return; }
+  if(!k){ datumStreifen(0,0); $('heute-leer').classList.remove('hidden'); plan.innerHTML=''; return; }
+  $('heute-leer').classList.add('hidden');
+  const idx=tagesStandIndex(terminDatum);
+  const sichtSchueler=sichtbareSchueler(k);
+  const erfasst=sichtSchueler.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length;
+  datumStreifen(erfasst,sichtSchueler.length);
   const grid=(vault.stamm.sitzplaene[k.id]||{}).grid||{};
-  plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv); // leeres Grid nicht als schwarze Wand zeigen
-  const sichtbar=new Set(sichtbareSchueler(k).map(s=>s.nr));
-  const heuteErfasst=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum).map(e=>e.schuelerNr));
+  plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv);
+  const sichtbar=new Set(sichtSchueler.map(s=>s.nr));
   let html='';
   for(let r=0;r<12;r++) for(let c=0;c<12;c++){
     const nr=grid[r+','+c];
     const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
-    if(s&&sichtbar.has(s.nr)){
-      html+='<div class="kachel schueler'+(aktiverSchueler===s.nr?' gewaehlt':'')+(heuteErfasst.has(s.nr)?' erfasst':'')+'" data-nr="'+s.nr+'"><span class="vn">'+esc(s.vorname)+'</span><span class="nn">'+esc(s.name)+'</span></div>';
-    } else html+='<div class="kachel leer"></div>';
+    if(s&&sichtbar.has(s.nr)) html+=kachelHtml(s,idx.get(s.nr)||leererStand());
+    else html+='<div class="kachel leer"></div>';
   }
   plan.innerHTML=html;
-  const ohnePlatz=sichtbareSchueler(k).filter(s=>!Object.values(grid).includes(s.nr));
+  const ohnePlatz=sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr));
   if(ohnePlatz.length){
-    plan.insertAdjacentHTML('afterend','');
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
-    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still" style="margin:3px" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('');
+    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still" style="margin:3px" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</button>').join('');
     liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>waehleSchueler(Number(b.dataset.nr)));
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
@@ -595,9 +745,9 @@ function renderAktionsbar(){
   let html='<span class="wer">'+esc(s.vorname)+'</span>';
   for(const t of typen){
     const cls=t==='+'?' class="plus"':t==='-'?' class="minus"':'';
-    html+='<button'+cls+' data-typ="'+t+'">'+({'+':'＋','o':'o','-':'−',mat:'📘',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA'}[t]||t)+'</button>';
+    html+='<button'+cls+' data-typ="'+t+'">'+({'+':'＋','o':'o','-':'−',mat:'📕',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA'}[t]||t)+'</button>';
   }
-  html+='<button data-mehr>…</button><button data-zu>✕</button>';
+  html+='<button data-blatt title="Verlauf ansehen">📖</button><button data-mehr>…</button><button data-zu>✕</button>';
   bar.innerHTML=html; bar.classList.remove('hidden');
   bar.querySelectorAll('[data-typ]').forEach(b=>b.onclick=()=>{
     if(busy) return; busy=true;
@@ -608,6 +758,7 @@ function renderAktionsbar(){
   });
   bar.querySelector('[data-zu]').onclick=()=>{ aktiverSchueler=null; bar.classList.add('hidden'); renderHeute(); };
   bar.querySelector('[data-mehr]').onclick=()=>zeigeMehrAktionen(s);
+  bar.querySelector('[data-blatt]').onclick=()=>schuelerBlatt(aktiverSchueler);
 }
 function zeigeMehrAktionen(s){
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3><div class="btn-reihe">'+
@@ -624,7 +775,7 @@ function zeigeMehrAktionen(s){
           dlgZeigen('<h3>Verspätung</h3><input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="67"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
             d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); } dlgZu(); }; });
         } else if(t==='note'){
-          const k=kurs(); const sek2=k.profil==='sek2';
+          const k=kurs(); const sek2=bewertProfil(k)==='sek2';
           const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
           dlgZeigen('<h3>Direkte Note</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
             d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); dlgZu(); }; });
@@ -634,6 +785,31 @@ function zeigeMehrAktionen(s){
         } else { addEvent(t,s.nr); renderHeute(); }
       });
     });
+}
+
+// Detail-Blatt vom Sitzplan aus (Master-Detail · „Schüler genauer betrachten" ohne Heute zu verlassen)
+function schuelerBlatt(nr){
+  const k=kurs(); const s=schuelerVonNr(nr); if(!k||!s) return;
+  const v=verdichte(vault.events.filter(e=>e.kursId===k.id),nr,{profil:bewertProfil(k),lb:s.lb});
+  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</h3>'+schuelerDetailHtml(s,k,v)+
+    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
+    el=>{
+      el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e){ stornoVon(e); toast('storniert'); dlgZu(); renderHeute(); schuelerBlatt(nr); } });
+      el.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); dlgZu(); setzeQuartalsnote(s,v.vorschlag); });
+    });
+}
+function zeigeLegende(){
+  const chip=(bg,fg,t)=>'<span class="chip" style="background:'+bg+';color:'+fg+'">'+t+'</span>';
+  dlgZeigen('<h3>Legende</h3><div class="legende">'+
+    '<div>'+chip('var(--gut)','#08160a','＋')+' überwiegend Plus (Kachel grün)</div>'+
+    '<div>'+chip('var(--fehl)','#1c0606','−')+' überwiegend Minus (Kachel rot)</div>'+
+    '<div>'+chip('var(--kante)','var(--text)','o')+' nur neutrale Meldungen</div>'+
+    '<div>📊 direkte Note · 📕 Material vergessen · 📱 iPad fehlt/leer</div>'+
+    '<div>📝 Lernzeit · ✎ Notiz · ⏰ Verspätung (Minuten)</div>'+
+    '<div><b>e</b> entschuldigt gefehlt · <b style="color:var(--fehl)">u</b> unentschuldigt (Wiedervorlage)</div>'+
+    '<div>'+chip('var(--info)','#06121e','LB')+' zieldifferent — kein Notenvorschlag</div>'+
+    '<div style="color:var(--leise);margin-top:4px">👁 Beamer-Modus (oben) versteckt alle Bewertungen für die Projektion.</div>'+
+    '</div><div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>');
 }
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Notiz ↓weiter) ═══ */
@@ -648,13 +824,16 @@ function renderDeck(){
 }
 function zeigeDeckKarte(){
   const karte=$('deck-karte');
-  if(deckIdx>=deckListe.length){
-    karte.innerHTML='<span class="gross">✓</span><span class="sub">'+deckListe.length+' Karten durch — Ritual beendet.</span>';
-    $('deck-fortschritt').textContent=deckListe.length+' / '+deckListe.length;
+  const total=deckListe.length;
+  const erfasst=deckListe.filter(s=>{const st=standAmTermin(s.nr,terminDatum);return st.plus+st.neutral+st.minus>0;}).length;
+  const balken='<div class="deck-bar"><div style="width:'+(total?100*erfasst/total:0)+'%"></div></div>';
+  if(deckIdx>=total){
+    karte.innerHTML='<span class="gross">✓</span><span class="sub">'+total+' Karten durch · '+erfasst+' erfasst.</span>';
+    $('deck-fortschritt').innerHTML='fertig · <b>'+erfasst+'</b> / '+total+' erfasst'+balken;
     return;
   }
   const s=deckListe[deckIdx];
-  $('deck-fortschritt').textContent=(deckIdx+1)+' / '+deckListe.length;
+  $('deck-fortschritt').innerHTML='Karte '+(deckIdx+1)+' / '+total+' · <b>'+erfasst+'</b> erfasst'+balken;
   karte.innerHTML='<span class="gross">'+esc(s.vorname)+'</span><span class="sub">'+esc(s.name)+(s.lb?' · LB':'')+'</span>';
 }
 function deckAktion(aktion){
@@ -684,7 +863,8 @@ document.querySelectorAll('[data-deck]').forEach(b=>b.addEventListener('click',(
   document.addEventListener('pointercancel',()=>{start=null;},{capture:true}); // Härtungs-Regel 1
 })();
 
-/* ═══ SCHÜLER · Verdichtung (Bilanz + Tendenz + Vorschlag, sichtbare Regel) ═══ */
+/* ═══ SCHÜLER · Verdichtung + Inline-Detail-Akkordeon (kein Popup) ═══ */
+let offenerSchueler=null;
 function renderSchueler(){
   const k=kurs(); const wrap=$('view-schueler');
   if(!k){ wrap.innerHTML='<p style="color:var(--leise)">Kein Kurs gewählt.</p>'; return; }
@@ -694,47 +874,58 @@ function renderSchueler(){
   if(offeneU.length){
     html+='<div class="panel"><h2>Wiedervorlage · offene u ('+offeneU.length+')</h2>'+
       offeneU.map(e=>{ const s=kursSchueler(k).find(x=>x.nr===e.schuelerNr);
-        return '<div class="zeile"><span>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+' · '+e.datum+'</span><button class="btn still" data-ue="'+e.id+'">→ e</button></div>'; }).join('')+'</div>';
+        return '<div class="zeile"><span>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+' · '+datumLabel(e.datum)+'</span><button class="btn still" data-ue="'+e.id+'">→ e</button></div>'; }).join('')+'</div>';
   }
-  html+='<div class="panel"><h2>'+esc(k.name)+' · Verdichtung</h2><p style="font-size:12px;color:var(--leise);margin:4px 0 8px">'+esc(regelText(k.profil))+'</p>';
+  html+='<div class="panel"><h2>'+esc(k.name)+' · Verdichtung</h2><p style="font-size:12px;color:var(--leise);margin:4px 0 8px">'+esc(regelText(bewertProfil(k)))+'</p>';
   for(const s of kursSchueler(k)){
-    const v=verdichte(kursEvents,s.nr,{profil:k.profil,lb:s.lb});
+    const v=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb});
     const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
-    html+='<div class="s-item" data-nr="'+s.nr+'"><div style="min-width:110px"><b>'+esc(s.vorname)+'</b> <small style="color:var(--leise)">'+esc(s.name)+(s.lb?' · LB':'')+'</small></div>'+
+    const offen=offenerSchueler===s.nr;
+    html+='<div class="s-block'+(offen?' offen':'')+'"><div class="s-item" data-nr="'+s.nr+'">'+
+      '<div style="min-width:104px"><b>'+esc(s.vorname)+'</b> <small style="color:var(--leise)">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div>'+
       '<div style="flex:1"><div class="balken"><div style="background:var(--gut);width:'+(100*v.nPlus/sum)+'%"></div><div style="background:var(--leise);width:'+(100*v.nNull/sum)+'%"></div><div style="background:var(--fehl);width:'+(100*v.nMinus/sum)+'%"></div></div>'+
       '<small style="color:var(--leise)">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · '+Math.round(100*v.aktivQuote)+'% · '+v.pfeil+'</small></div>'+
-      '<div style="font-weight:700;min-width:44px;text-align:right">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</div><span class="pfeil">›</span></div>';
+      '<div style="font-weight:700;min-width:40px;text-align:right">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</div>'+
+      '<span class="pfeil">'+(offen?'▾':'›')+'</span></div>'+
+      (offen?schuelerDetailHtml(s,k,v):'')+'</div>';
   }
   html+='</div>';
   wrap.innerHTML=html;
-  wrap.querySelectorAll('[data-ue]').forEach(b=>b.onclick=()=>{
+  wrap.querySelectorAll('[data-ue]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
     const e=vault.events.find(x=>x.id===b.dataset.ue);
-    if(e){ addEvent('fehlt_e',e.schuelerNr,{datum:e.datum,stornoVon:e.id}); toast('Nachgetragen: entschuldigt ('+e.datum+')'); renderSchueler(); }
+    if(e){ addEvent('fehlt_e',e.schuelerNr,{datum:e.datum,stornoVon:e.id}); toast('Nachgetragen: entschuldigt ('+datumLabel(e.datum)+')'); renderSchueler(); }
   });
-  wrap.querySelectorAll('.s-item').forEach(el=>el.onclick=()=>zeigeSchuelerDetail(Number(el.dataset.nr)));
+  wrap.querySelectorAll('.s-item').forEach(el=>el.onclick=()=>{ const nr=Number(el.dataset.nr); offenerSchueler=(offenerSchueler===nr?null:nr); renderSchueler(); });
+  verdrahteDetail(wrap);
 }
-function zeigeSchuelerDetail(nr){
-  const k=kurs(); const s=schuelerVonNr(nr); if(!k||!s) return;
-  const kursEvents=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===nr))
-    .sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
-  const v=verdichte(vault.events.filter(e=>e.kursId===k.id),nr,{profil:k.profil,lb:s.lb});
-  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB (kein Vorschlag/Export)':'')+'</h3>'+
-    '<div class="zeile"><span>Bilanz</span><span class="wert">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · Verlauf '+v.pfeil+'</span></div>'+
-    '<div class="zeile"><span>Beteiligung</span><span class="wert">'+v.beteiligtTermine+' / '+v.kursTermine+' Termine</span></div>'+
-    '<div class="zeile"><span>Vorschlag</span><span class="wert">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</span></div>'+
-    (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal>Als Quartalsnote setzen…</button></div>':'')+
-    '<h3 style="font-size:14px;margin-top:14px">Ereignisse ('+kursEvents.length+')</h3>'+
-    '<div style="max-height:34vh;overflow:auto">'+
-    kursEvents.slice(0,120).map(e=>'<div class="zeile"><span>'+e.datum+' · '+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span><button class="btn still" style="min-height:34px;padding:4px 10px" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>'+
-    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
-    el=>{
-      el.querySelectorAll('[data-storno]').forEach(b=>b.onclick=()=>{ const e=vault.events.find(x=>x.id===b.dataset.storno); if(e){ stornoVon(e); toast('storniert'); dlgZu(); renderSchueler(); } });
-      const q=el.querySelector('[data-quartal]');
-      if(q) q.onclick=()=>{ dlgZu(); setzeQuartalsnote(s,v.vorschlag); };
-    });
+function schuelerDetailHtml(s,k,v){
+  const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr));
+  const verspSum=evs.filter(e=>e.typ==='versp').reduce((a,e)=>a+(e.minuten||0),0);
+  const fehltU=evs.filter(e=>e.typ==='fehlt_u').length, fehltE=evs.filter(e=>e.typ==='fehlt_e').length;
+  const proTag={};
+  for(const e of evs) (proTag[e.datum]=proTag[e.datum]||[]).push(e);
+  const tage=Object.keys(proTag).sort().reverse();
+  let liste='';
+  for(const t of tage){
+    liste+='<div class="tag-gruppe"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
+      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(e=>
+        '<div class="ev-zeile"><span>'+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
+        '<button class="btn still ev-storno" style="min-height:32px;padding:2px 10px" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>';
+  }
+  if(!tage.length) liste='<p style="color:var(--leise);font-size:13px">Noch keine Einträge.</p>';
+  return '<div class="s-detail">'+
+    '<div class="zeile"><span>Beteiligung</span><span class="wert">'+v.beteiligtTermine+' / '+v.kursTermine+' Termine · Verlauf '+v.pfeil+'</span></div>'+
+    (fehltE||fehltU||verspSum?'<div class="zeile"><span>Fehl / Verspätung</span><span class="wert">'+(fehltE?fehltE+'× e ':'')+(fehltU?fehltU+'× u ':'')+(verspSum?'· '+verspSum+' min':'')+'</span></div>':'')+
+    '<div class="zeile"><span>Vorschlag</span><span class="wert">'+(v.vorschlag?esc(v.vorschlag.label):(s.lb?'— (LB)':'—'))+'</span></div>'+
+    (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal="'+s.nr+'">Als Quartalsnote setzen…</button></div>':'')+
+    '<div class="tag-kopf" style="margin-top:12px;color:var(--leise)">Verlauf ('+evs.length+')</div>'+liste+'</div>';
+}
+function verdrahteDetail(wrap){
+  wrap.querySelectorAll('.ev-storno').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const ev=vault.events.find(x=>x.id===b.dataset.storno); if(ev){ stornoVon(ev); toast('storniert'); renderSchueler(); } });
+  wrap.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const s=schuelerVonNr(Number(b.dataset.quartal)); const kk=kurs(); const v=verdichte(vault.events.filter(x=>x.kursId===kk.id),s.nr,{profil:bewertProfil(kk),lb:s.lb}); setzeQuartalsnote(s,v.vorschlag); });
 }
 function setzeQuartalsnote(s,vorschlag){
-  const k=kurs(); const sek2=k.profil==='sek2';
+  const k=kurs(); const sek2=bewertProfil(k)==='sek2';
   const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
   const vorwahl=sek2?String(vorschlag.wert):(wertZuLabel(vorschlag.wert)||'3');
   dlgZeigen('<h3>Quartalsnote · '+esc(s.vorname)+'</h3><p style="color:var(--leise);font-size:13px">Vorschlag: '+esc(vorschlag.label)+' — du entscheidest.</p>'+
@@ -744,7 +935,7 @@ function setzeQuartalsnote(s,vorschlag){
     '<div class="btn-reihe"><button class="btn" data-ok>Setzen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=()=>{
       addEvent('quartalsnote',s.nr,{hj:Number(el.querySelector('#q-hj').value),quartal:Number(el.querySelector('#q-q').value),wert:el.querySelector('#q-note').value});
-      toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu();
+      toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu(); if(aktView==='schueler') renderSchueler();
     }; });
 }
 
@@ -829,6 +1020,7 @@ function renderKurse(){
     const p=vault.stamm.kursprofile[k.id]||{};
     html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(k.fach)+' <small style="text-transform:none">('+k.profil+' · '+anz+' Schüler)</small></h2>'+
       '<div class="zeile"><span>Kladde-m-Slot (Export)</span><span><select data-slot="'+k.id+'">'+['m1','m2','m3','m4','m5','m6'].map(m=>'<option'+((k.slot||'m1')===m?' selected':'')+'>'+m+'</option>').join('')+'</select></span></div>'+
+      (k.profil==='sek2'?'<div class="zeile"><span>Sek II · Noten-Eingabe</span><span><select data-notenmodus="'+k.id+'"><option value="punkte"'+((k.notenmodus||'punkte')==='punkte'?' selected':'')+'>Punkte 0–15</option><option value="drittel"'+(k.notenmodus==='drittel'?' selected':'')+'>Drittelnoten</option></select></span></div>':'')+
       '<div class="zeile"><span>HA-Typ aktiv (SekI-Schule: aus)</span><span><input type="checkbox" data-ha="'+k.id+'"'+(p.ha?' checked':'')+' style="width:22px;height:22px"></span></div>'+
       '<div class="btn-reihe">'+
       '<button class="btn still" data-plan-edit="'+k.id+'">Sitzplan bearbeiten</button>'+
@@ -856,6 +1048,7 @@ function renderKurse(){
     e.target.value='';
   };
   wrap.querySelectorAll('[data-slot]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.slot); k.slot=sel.value; stammMutiert(); speichern(); toast('Export-Slot: '+sel.value); });
+  wrap.querySelectorAll('[data-notenmodus]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.notenmodus); k.notenmodus=sel.value; stammMutiert(); speichern(); toast('Sek II: '+(sel.value==='drittel'?'Drittelnoten':'Punkte 0–15')); });
   wrap.querySelectorAll('[data-ha]').forEach(cb=>cb.onchange=()=>{ vault.stamm.kursprofile[cb.dataset.ha]={...(vault.stamm.kursprofile[cb.dataset.ha]||{}),ha:cb.checked}; stammMutiert(); speichern(); });
   wrap.querySelectorAll('[data-kurs-weg]').forEach(b=>b.onclick=()=>{
     dlgZeigen('<h3>Kurs entfernen?</h3><p style="color:var(--leise)">Ereignisse bleiben im Log (Storno-Prinzip), aber der Kurs verschwindet aus allen Listen.</p><div class="btn-reihe"><button class="btn gefahr" data-ok>Entfernen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
@@ -913,7 +1106,7 @@ function slotsEditor(kursId){
     '<div id="slot-liste">'+meine.map((s,i)=>'<div class="zeile"><span>'+wt[s.wochentag]+' '+s.von+'–'+s.bis+(s.teilgruppe?' · Gr. '+s.teilgruppe:'')+'</span><button class="btn still" data-weg="'+slots.indexOf(s)+'">✕</button></div>').join('')+'</div>'+
     '<div class="zeile"><span>Neu</span><span><select id="sl-tag"><option value="1">Mo</option><option value="2">Di</option><option value="3">Mi</option><option value="4">Do</option><option value="5">Fr</option></select></span></div>'+
     '<div class="zeile"><span>von / bis</span><span><input type="time" id="sl-von" value="08:00" style="width:108px"> <input type="time" id="sl-bis" value="09:07" style="width:108px"></span></div>'+
-    '<div class="zeile"><span>Teilgruppe</span><span><select id="sl-tg"><option value="">alle</option><option value="A">A</option><option value="B">B</option></select></span></div>'+
+    '<div class="zeile"><span>Teilgruppe</span><span><select id="sl-tg"><option value="">alle</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></span></div>'+
     '<div class="btn-reihe"><button class="btn" data-add>Slot hinzufügen</button><button class="btn still" data-schliessen>Fertig</button></div>',
     el=>{
       el.querySelectorAll('[data-weg]').forEach(b=>b.onclick=()=>{ slots.splice(Number(b.dataset.weg),1); stammMutiert(); speichern(); dlgZu(); slotsEditor(kursId); });
@@ -923,18 +1116,21 @@ function slotsEditor(kursId){
       };
     });
 }
+const GRUPPEN_LABELS=['A','B','C','D'];
 function gruppenEditor(kursId){
   const k=vault.stamm.kurse.find(x=>x.id===kursId);
   const liste=vault.stamm.schueler[kursId]||[];
-  dlgZeigen('<h3>Halbgruppen · '+esc(k.name)+'</h3><p style="color:var(--leise);font-size:13px">Antippen wechselt: — → A → B</p>'+
-    '<div style="max-height:50vh;overflow:auto">'+liste.map(s=>'<div class="zeile"><span>'+esc(s.vorname)+' '+esc(s.name)+'</span><button class="btn still" data-g="'+s.nr+'">'+(s.gruppe||'—')+'</button></div>').join('')+'</div>'+
+  dlgZeigen('<h3>Halbgruppen · '+esc(k.name)+'</h3><p style="color:var(--leise);font-size:13px">Gruppe direkt antippen.</p>'+
+    '<div style="max-height:58vh;overflow:auto">'+liste.map(s=>'<div class="gr-zeile"><span class="gr-name">'+esc(s.vorname)+' '+esc(s.name)+'</span><span class="gr-btns">'+
+      '<button class="gr-b'+(!s.gruppe?' an':'')+'" data-g="'+s.nr+'" data-w="">—</button>'+
+      GRUPPEN_LABELS.map(g=>'<button class="gr-b'+(s.gruppe===g?' an':'')+'" data-g="'+s.nr+'" data-w="'+g+'">'+g+'</button>').join('')+'</span></div>').join('')+'</div>'+
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Fertig</button></div>',
     el=>{
       el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{
         const s=liste.find(x=>x.nr===Number(b.dataset.g));
-        s.gruppe=s.gruppe==='A'?'B':s.gruppe==='B'?undefined:'A';
-        b.textContent=s.gruppe||'—';
+        s.gruppe=b.dataset.w||undefined;
         stammMutiert(); speichern();
+        el.querySelectorAll('[data-g="'+b.dataset.g+'"]').forEach(x=>x.classList.toggle('an',(x.dataset.w||'')===(s.gruppe||'')));
       });
     });
 }
@@ -958,7 +1154,7 @@ function renderMehr(){
     '<div class="zeile"><span>Speicher</span><span class="wert" id="dg-quota">…</span></div>'+
     '<div class="zeile"><span>Ereignisse im Log</span><span class="wert">'+vault.events.length+'</span></div>'+
     '<div class="zeile"><span>Letzte Sicherung</span><span class="wert" id="dg-save">Write-through aktiv</span></div>'+
-    '<div class="zeile"><span>Regel</span><span class="wert" style="max-width:55%">'+esc(regelText(kurs()?.profil||'sek1'))+'</span></div></div>';
+    '<div class="zeile"><span>Regel</span><span class="wert" style="max-width:55%">'+esc(regelText(bewertProfil(kurs())))+'</span></div></div>';
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
   $('dg-mode').textContent=standalone?'standalone (installiert)':'Browser-Tab';
   if(navigator.storage?.persisted) navigator.storage.persisted().then(p=>$('dg-persist').textContent=p?'gewährt':'nicht gewährt');
@@ -1038,6 +1234,7 @@ async function syncPull(){
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 if(navigator.storage?.persist) navigator.storage.persist();
 idbGet('starts').then(n=>idbPut('starts',(n||0)+1));
+document.body.classList.toggle('beamer',beamerModus); $('btn-beamer').classList.toggle('aktiv',beamerModus);
 lockInit();
 })();
 </script>
