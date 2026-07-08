@@ -1,16 +1,16 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.0.0.1783549259';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.0.0.1783549259';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.0.0.1783549259';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.0.0.1783549259';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.0.0.1783549259';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.0.0.1783549259';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.0.0.1783549259';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.0.0.1783549259';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.0.0.1783549259';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.0.0.1783549259';
-const APP_VERSION = '1.0.0';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.0.1783551289';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.0.1783551289';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.0.1783551289';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.0.1783551289';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.0.1783551289';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.0.1783551289';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.0.1783551289';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.0.1783551289';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.0.1783551289';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.0.1783551289';
+const APP_VERSION = '1.1.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -142,6 +142,7 @@ function sperren(){
   vault=null; pinRam=null; dekKey=null; containerKopf=null;
   aktiverSchueler=null; offenerSchueler=null; deckListe=[]; undoStack.length=0;
   stempelAus(); // RAM-Wipe: kein scharfer Stempel/Modus-Rahmen hinter dem Lock
+  if(editorCleanup){ try{ editorCleanup(); }catch{} } // Sitzplan-Editor-Leiste + Listener räumen
   try{ dlgZu(); }catch{}
   $('dlg').innerHTML='';
   $('aktionsbar').classList.add('hidden');
@@ -216,7 +217,7 @@ function stornoVon(e){
   const s={id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id};
   vault.events.push(s); speichern();
 }
-const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote'};
+const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
 function zeigeUndo(e){
   const chip=$('undo-chip');
   const s=schuelerVonNr(e.schuelerNr);
@@ -229,7 +230,7 @@ function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.n
 
 // Aggregierter Tages-Stand (für Sitzplan-Symbole + Detail). EIN Reduzierer, zwei Zugänge:
 // standAmTermin(nr) für Einzel-Abfrage · tagesStandIndex(datum) für den ganzen Sitzplan in einem Durchlauf.
-function leererStand(){ return {plus:0,neutral:0,minus:0,mat:0,ipad:0,lernzeit:0,notiz:0,note:null,fehlt:null,versp:0,count:0}; }
+function leererStand(){ return {plus:0,neutral:0,minus:0,mat:0,ipad:0,lernzeit:0,notiz:0,note:null,fehlt:null,versp:0,verweigert:0,count:0}; }
 function reduziereStand(evs){
   const st=leererStand(); st.count=evs.length;
   for(const e of evs){
@@ -244,6 +245,7 @@ function reduziereStand(evs){
     else if(e.typ==='fehlt_e') st.fehlt='e';
     else if(e.typ==='fehlt_u') st.fehlt='u';
     else if(e.typ==='versp') st.versp+=e.minuten||0;
+    else if(e.typ==='verweigert') st.verweigert++;
   }
   return st;
 }
@@ -507,6 +509,7 @@ function kachelHtml(s,st){
   if(st.lernzeit) marken+='<span class="mk sym">📝</span>';
   if(st.notiz) marken+='<span class="mk sym">✎</span>';
   if(st.versp) marken+='<span class="mk sym">⏰</span>';
+  if(st.verweigert) marken+='<span class="mk verw">⊘</span>';
   if(st.fehlt) marken+='<span class="mk '+(st.fehlt==='u'?'u':'o')+'">'+st.fehlt+'</span>';
   return '<div class="'+cls+'" data-nr="'+s.nr+'">'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
@@ -553,9 +556,24 @@ $('plan').addEventListener('pointerup',e=>{
 function stempleKachel(nr){
   if(stempelCooldown.has(nr)) return;
   stempelCooldown.add(nr); setTimeout(()=>stempelCooldown.delete(nr),80);
+  if(stempelTyp==='verweigert'){ verweigerungDialog(schuelerVonNr(nr)); return; } // 6 mit gekoppelter Kurznotiz
   addEvent(stempelTyp,nr);        // landet wie jeder Eintrag im Undo-Stapel (LIFO)
   renderHeute();                  // Zähler + Kachel-Symbole aktualisieren
   pulseKachel(nr);
+}
+// v1.1.0 · Verweigerung: anwesend, aber keine/verweigerte Leistung → zählt als 6 (Sek II 0 P),
+// termingewichtet (logic/verdichtung). Kurznotiz gekoppelt — dokumentiert den Grund (bei einer 6 ratsam).
+function verweigerungDialog(s){
+  if(!s) return;
+  const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. Mitarbeit verweigert, Aufgabe nicht bearbeitet'});
+  dlgZeigenEl(
+    el('h3',{},'⊘ Verweigerung · '+esc(s.vorname)),
+    el('p',{class:'u-hinweis'},'Zählt für diese Stunde als 6 (Sek II: 0 P), termingewichtet. Kurznotiz zur Begründung:'),
+    ta,
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn',onclick:()=>{ addEvent('verweigert',s.nr,{notiz:ta.value.trim()}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+esc(s.vorname)); renderHeute(); pulseKachel(s.nr); }},'Eintragen (6)'),
+      el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+  setTimeout(()=>ta.focus(),60);
 }
 let stempelBarOffen=false;
 function toggleStempelBar(){
@@ -577,7 +595,7 @@ function setStempel(typ){
 function renderStempelBar(){
   const bar=$('stempel-bar');
   if(!stempelBarOffen){ bar.replaceChildren(); return; }
-  const stamps=[['+','＋','plus'],['o','o','neutral'],['-','−','minus'],['fehlt_o','abwesend','fehlt']];
+  const stamps=[['+','＋','plus'],['o','o','neutral'],['-','−','minus'],['fehlt_o','abwesend','fehlt'],['verweigert','⊘','verw']];
   const label=el('span',{class:'st-label'}, stempelTyp?'→ Kachel antippen':'Stempel wählen:');
   const btns=stamps.map(([typ,txt,cls])=>el('button',{class:'st-btn '+cls+(stempelTyp===typ?' an':''),onclick:()=>setStempel(typ)},txt));
   bar.replaceChildren(label,...btns,el('button',{class:'st-btn st-zu',onclick:toggleStempelBar},'fertig'));
@@ -620,6 +638,7 @@ function zeigeMehrAktionen(s){
     '<p class="u-hinweis">Fehlt jetzt: „abwesend" — e/u klärst du später in der Wiedervorlage.</p>'+
     '<div class="btn-reihe">'+
     '<button class="btn still" data-t="fehlt_o">abwesend</button>'+
+    '<button class="btn still" data-t="verweigert">⊘ verweigert (6)…</button>'+
     '<button class="btn still" data-t="versp">zu spät…</button>'+
     '<button class="btn still" data-t="note">Note…</button>'+
     '<button class="btn still" data-t="notiz">Notiz…</button></div>'+
@@ -640,7 +659,8 @@ function zeigeMehrAktionen(s){
         } else if(t==='notiz'){
           dlgZeigen('<h3>Notiz</h3><textarea id="notiz-in" rows="3" class="u-textarea"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
             d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); }; });
-        } else { addEvent(t,s.nr); renderHeute(); }
+        } else if(t==='verweigert'){ verweigerungDialog(s); }
+        else { addEvent(t,s.nr); renderHeute(); }
       });
     });
 }
@@ -803,7 +823,7 @@ function renderSchueler(){
     const v=verdichte(kursEvents,s.nr,{...vOpt,lb:s.lb});
     const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
     const offen=offenerSchueler===s.nr;
-    const fInfo=(v.nFehltE||v.nFehltU||v.nFehltO)?' · F '+v.nFehltE+'e/'+v.nFehltU+'u'+(v.nFehltO?'/'+v.nFehltO+'o':''):'';
+    const fInfo=(v.nFehltE||v.nFehltU||v.nFehltO||v.nVerweigert)?' · F '+v.nFehltE+'e/'+v.nFehltU+'u'+(v.nFehltO?'/'+v.nFehltO+'o':'')+(v.nVerweigert?' ⊘'+v.nVerweigert:''):'';
     html+='<div class="s-block'+(offen?' offen':'')+'"><div class="s-item" data-nr="'+s.nr+'">'+
       '<div class="u-minw104"><b>'+esc(s.vorname)+'</b> <small class="u-leise">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div>'+
       '<div class="u-flex1"><div class="balken"><div class="bal-p" data-w="'+(100*v.nPlus/sum)+'"></div><div class="bal-o" data-w="'+(100*v.nNull/sum)+'"></div><div class="bal-m" data-w="'+(100*v.nMinus/sum)+'"></div></div>'+
@@ -837,7 +857,7 @@ async function kopiereVorschlaege(){
   const kursEvents=vault.events.filter(e=>e.kursId===k.id);
   const rows=kursSchueler(k).map(s=>{
     const v=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'});
-    const f=(v.nFehltE||v.nFehltU)?(v.nFehltE+'e/'+v.nFehltU+'u'):'';
+    const f=(v.nFehltE||v.nFehltU||v.nVerweigert)?(v.nFehltE+'e/'+v.nFehltU+'u'+(v.nVerweigert?'/'+v.nVerweigert+'verw':'')):'';
     return {nr:s.nr,vorschlag:v.vorschlag?v.vorschlag.label:'',fSummen:f};
   });
   const text=vorschlagsZeilen(rows);
@@ -1234,44 +1254,126 @@ function loescheKursEndgueltig(id){
       };
     });
 }
+let editorCleanup=null; // Aufräumen des Sitzplan-Editors (auch aus sperren() erreichbar)
 function sitzplanEditor(kursId){
+  if(editorCleanup){ try{ editorCleanup(); }catch{} }
   aktiverKursId=kursId; aktualisiereKursChip();
   aktView='heute';
   document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute'));
   ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='heute'));
   editorAktiv=true;
+  document.body.classList.add('sp-edit');
   renderHeute();
   const plan=$('plan');
-  toast('Editor: leere Kachel antippen → Schüler wählen · Schüler antippen → entfernen',5200);
   const k=kurs();
-  const handler=e=>{
-    const kachel=e.target.closest('.kachel'); if(!kachel) return;
-    e.stopPropagation();
-    const idx=[...plan.children].indexOf(kachel);
-    const r=Math.floor(idx/12), c=idx%12;
-    const sp=vault.stamm.sitzplaene[k.id]=vault.stamm.sitzplaene[k.id]||{grid:{}};
-    const key=r+','+c;
-    if(sp.grid[key]){ delete sp.grid[key]; stammMutiert(); speichern(); renderHeute(); return; }
-    const vergeben=new Set(Object.values(sp.grid));
+  const sp=()=>(vault.stamm.sitzplaene[k.id]=vault.stamm.sitzplaene[k.id]||{grid:{}});
+  const keyOf=kachel=>{ const i=[...plan.children].indexOf(kachel); return Math.floor(i/12)+','+(i%12); };
+  toast('Namen aus der Leiste auf Plätze ziehen · Platz→Platz verschiebt · in den 🗑 = entfernen · leeren Platz antippen wählt klassisch',6500);
+
+  // ── Editor-Leiste: Namen-Schiene (noch nicht platziert) + Mülleimer + Fertig ──
+  const rail=el('div',{class:'sp-rail'});
+  const trash=el('div',{class:'sp-trash',title:'Zum Entfernen hierher ziehen'},'🗑');
+  const bar=el('div',{id:'sp-editor-bar',class:'sp-editor-bar'},
+    el('span',{class:'sp-rail-label'},'Nicht platziert:'), rail, trash,
+    el('button',{class:'btn',onclick:()=>beenden()},'Fertig'));
+  document.body.appendChild(bar);
+  function renderRail(){
+    const vergeben=new Set(Object.values(sp().grid));
+    const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
+    rail.replaceChildren(...(frei.length
+      ? frei.map(s=>el('div',{class:'sp-chip',dataset:{nr:String(s.nr)}},esc(s.vorname)+' '+esc(s.name)))
+      : [el('span',{class:'u-hinweis'},'alle platziert ✓')]));
+  }
+  renderRail();
+
+  // ── Pointer-Drag (Touch + Maus; HTML5-DnD ist auf iPad-Safari tot) ──
+  let drag=null, justDragged=false;
+  function zielReset(){ plan.querySelectorAll('.kachel.ziel').forEach(z=>z.classList.remove('ziel')); trash.classList.remove('ziel'); }
+  function onMove(e){
+    if(!drag) return;
+    if(!drag.moving){
+      if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<8) return;
+      drag.moving=true; document.body.classList.add('sp-dragging');
+      const s=schuelerVonNr(drag.nr);
+      drag.ghost=el('div',{class:'sp-ghost'}, s?s.vorname+' '+s.name:('Nr '+drag.nr));
+      document.body.appendChild(drag.ghost);
+    }
+    e.preventDefault();
+    drag.ghost.style.left=e.clientX+'px'; drag.ghost.style.top=e.clientY+'px';
+    drag.ghost.style.display='none';
+    const t=document.elementFromPoint(e.clientX,e.clientY);
+    drag.ghost.style.display='';
+    zielReset();
+    if(t&&t.closest('.sp-trash')) trash.classList.add('ziel');
+    else { const kach=t&&t.closest('.kachel'); if(kach&&plan.contains(kach)) kach.classList.add('ziel'); }
+  }
+  function onUp(e){
+    if(!drag) return;
+    const d=drag; drag=null;
+    if(!d.moving) return; // reiner Tap → Plan-Tap-Handler entscheidet
+    justDragged=true; setTimeout(()=>{ justDragged=false; },0);
+    document.body.classList.remove('sp-dragging');
+    if(d.ghost) d.ghost.remove();
+    const t=document.elementFromPoint(e.clientX,e.clientY);
+    zielReset();
+    const g=sp().grid;
+    if(t&&t.closest('.sp-trash')){
+      if(d.vonKey){ delete g[d.vonKey]; stammMutiert(); speichern(); renderHeute(); renderRail(); toast('entfernt'); }
+      return;
+    }
+    const kach=t&&t.closest('.kachel');
+    if(kach&&plan.contains(kach)){
+      const zielKey=keyOf(kach), belegt=g[zielKey];
+      if(String(belegt)===String(d.nr)) return; // auf sich selbst
+      if(d.vonKey){ delete g[d.vonKey]; if(belegt!=null) g[d.vonKey]=belegt; } // Platz→Platz: bei belegt tauschen
+      g[zielKey]=d.nr;                                                         // Schiene→Platz: bisheriger wandert in die Schiene
+      stammMutiert(); speichern(); renderHeute(); renderRail();
+    }
+  }
+  const railDown=e=>{ const c=e.target.closest('.sp-chip'); if(!c) return; e.preventDefault(); drag={nr:Number(c.dataset.nr),vonKey:null,moving:false,ghost:null,x0:e.clientX,y0:e.clientY}; };
+  const planDown=e=>{ const kach=e.target.closest('.kachel.schueler'); if(!kach) return; drag={nr:Number(kach.dataset.nr),vonKey:keyOf(kach),moving:false,ghost:null,x0:e.clientX,y0:e.clientY}; };
+  const planTap=e=>{
+    if(justDragged||(drag&&drag.moving)) return;
+    const kach=e.target.closest('.kachel'); if(!kach) return;
+    const key=keyOf(kach); if(sp().grid[key]) return; // gesetzt → nur Drag (kein Lösch-Tap mehr)
+    e.stopPropagation(); picker(key);
+  };
+  const onCancel=()=>{ if(drag&&drag.ghost) drag.ghost.remove(); drag=null; document.body.classList.remove('sp-dragging'); zielReset(); };
+  rail.addEventListener('pointerdown',railDown);
+  plan.addEventListener('pointerdown',planDown);
+  plan.addEventListener('pointerup',planTap);
+  document.addEventListener('pointermove',onMove,{passive:false});
+  document.addEventListener('pointerup',onUp,true);
+  document.addEventListener('pointercancel',onCancel,true);
+
+  function picker(key){
+    const [r,c]=key.split(',').map(Number);
+    const vergeben=new Set(Object.values(sp().grid));
     const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
     dlgZeigen('<h3>Platz '+(r+1)+'/'+(c+1)+'</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
       frei.map(s=>'<option value="'+esc(s.vorname+' '+s.name+' ('+s.nr+')')+'">').join('')+'</datalist>'+
       '<div class="u-scroll30">'+frei.map(s=>'<button class="btn still u-btn-block u-eng" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
       '<div class="btn-reihe"><button class="btn still" data-schliessen>Abbrechen</button></div>',
-      el=>{
-        const setze=nr=>{ sp.grid[key]=nr; stammMutiert(); speichern(); dlgZu(); renderHeute(); };
-        el.querySelectorAll('[data-setz]').forEach(x=>x.onclick=()=>setze(Number(x.dataset.setz)));
-        el.querySelector('#s-such').oninput=ev2=>{
-          const m=ev2.target.value.match(/\((\d+)\)/); if(m) setze(Number(m[1]));
-        };
-        setTimeout(()=>el.querySelector('#s-such').focus(),60);
+      elx=>{
+        const setze=nr=>{ sp().grid[key]=nr; stammMutiert(); speichern(); dlgZu(); renderHeute(); renderRail(); };
+        elx.querySelectorAll('[data-setz]').forEach(x=>x.onclick=()=>setze(Number(x.dataset.setz)));
+        elx.querySelector('#s-such').oninput=ev2=>{ const m=ev2.target.value.match(/\((\d+)\)/); if(m) setze(Number(m[1])); };
+        setTimeout(()=>elx.querySelector('#s-such').focus(),60);
       });
-  };
-  plan.addEventListener('pointerup',handler);
-  const fertigBtn=document.createElement('button');
-  fertigBtn.className='btn'; fertigBtn.textContent='Sitzplan fertig'; fertigBtn.style.cssText='position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:40';
-  fertigBtn.onclick=()=>{ editorAktiv=false; plan.removeEventListener('pointerup',handler); fertigBtn.remove(); renderHeute(); };
-  document.body.appendChild(fertigBtn);
+  }
+  function beenden(){
+    editorAktiv=false; editorCleanup=null;
+    document.body.classList.remove('sp-edit','sp-dragging');
+    rail.removeEventListener('pointerdown',railDown);
+    plan.removeEventListener('pointerdown',planDown);
+    plan.removeEventListener('pointerup',planTap);
+    document.removeEventListener('pointermove',onMove,{passive:false});
+    document.removeEventListener('pointerup',onUp,true);
+    document.removeEventListener('pointercancel',onCancel,true);
+    if(drag&&drag.ghost) drag.ghost.remove();
+    bar.remove(); zielReset(); renderHeute();
+  }
+  editorCleanup=beenden;
 }
 function slotsEditor(kursId){
   const k=vault.stamm.kurse.find(x=>x.id===kursId);
