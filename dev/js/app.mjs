@@ -1,13 +1,13 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.1.1783547115';
-import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.1.1783547115';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.1.1783547115';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.1.1783547115';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.1.1783547115';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=0.10.1.1783547115';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.1.1783547115';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.1.1783547115';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=0.10.1.1783547295';
+import { verdichte, wirksameEvents, regelText } from '../logic/verdichtung.mjs?v=0.10.1.1783547295';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=0.10.1.1783547295';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=0.10.1.1783547295';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=0.10.1.1783547295';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=0.10.1.1783547295';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=0.10.1.1783547295';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=0.10.1.1783547295';
 const APP_VERSION = '0.10.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -289,9 +289,15 @@ function kursAutowahl(sanft=false){
   const hhmm=String(jetzt.getHours()).padStart(2,'0')+':'+String(jetzt.getMinutes()).padStart(2,'0');
   const slot=vault.stamm.stundenplanSlots.find(s=>s.wochentag===wtag&&s.von<=hhmm&&hhmm<=s.bis);
   if(slot&&(!sanft||!manuelleWahl)){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
-  else if(!aktiverKursId&&vault.stamm.kurse.length) aktiverKursId=vault.stamm.kurse[0].id;
+  else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)){
+    // Fallback: erster NICHT-archivierter Kurs des aktiven Schuljahres (nie ein Archiv-Kurs)
+    const aid=vault.stamm.aktivesSchuljahrId;
+    const w=vault.stamm.kurse.find(x=>(x.schuljahrId||aid)===aid&&x.status!=='archiviert')||vault.stamm.kurse.find(x=>x.status!=='archiviert');
+    aktiverKursId=w?w.id:null;
+  }
   aktualisiereKursChip();
 }
+function kursIstArchiviert(id){ const k=vault.stamm.kurse.find(x=>x.id===id); return k&&k.status==='archiviert'; }
 // 60-s-Tick (P2.5): nur bei sichtbarer Heute-Ansicht, nie über offene Dialoge hinweg
 let autowahlTick=null;
 function starteAutowahlTick(){
