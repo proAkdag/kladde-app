@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=0.10.1">
+<link rel="stylesheet" href="./css/kladde.css?v=1.0.0">
 </head>
 <body>
 
@@ -55,16 +55,19 @@
 </header>
 
 <div id="banner" class="hidden"></div>
+<div id="beamer-hinweis" class="hidden"><span>👁 Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
 
 <main>
   <section id="view-heute">
     <div id="datum-streifen"></div>
+    <div id="stempel-bar" class="hidden"></div>
     <div id="plan-wrap"><div id="plan"></div></div>
     <p id="heute-leer" class="hidden u-leise">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
   </section>
 
   <section id="view-deck" class="hidden">
     <div id="deck-fortschritt"></div>
+    <div id="deck-optionen" class="deck-optionen"></div>
     <div id="deck-karte"></div>
     <div class="deck-hilfe"><span>← −</span><span>↑ Notiz · ↓ weiter</span><span>+ →</span></div>
     <div class="deck-btns">
@@ -96,6 +99,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=0.10.1"></script>
+<script type="module" src="./js/app.mjs?v=1.0.0"></script>
 </body>
 </html>
