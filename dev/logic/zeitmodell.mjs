@@ -3,17 +3,21 @@
 
 // resolveBloecke(zeitmodell, wochentag) → [{blockNr, startSek, endeSek}]
 // Pausen kumulieren; tagesAusnahmen (z. B. Freitag kürzer) überschreiben bloeckeProTag.
+// blockDauern je Tag: {blockNr: sek} — einzelner Block länger/kürzer (Konferenztag 45 min,
+// Oberstufe 90 min); Folgeblöcke verschieben sich kumulativ.
 function resolveBloecke(zm, wochentag) {
   const ausnahme = (zm.tagesAusnahmen || {})[wochentag] || {};
   const anzahl = ausnahme.bloeckeProTag ?? zm.bloeckeProTag;
   const dauer = ausnahme.dauerSekunden ?? zm.dauerSekunden;
   const start0 = ausnahme.startSekunden ?? zm.startSekunden;
   const pausen = ausnahme.pausenNachBlock ?? zm.pausenNachBlock ?? {};
+  const blockDauern = ausnahme.blockDauern || {};
   const bloecke = [];
   let t = start0;
   for (let nr = 1; nr <= anzahl; nr++) {
-    bloecke.push({ blockNr: nr, startSek: t, endeSek: t + dauer });
-    t += dauer + (pausen[nr] ?? pausen[String(nr)] ?? 0);
+    const d = blockDauern[nr] ?? blockDauern[String(nr)] ?? dauer;
+    bloecke.push({ blockNr: nr, startSek: t, endeSek: t + d });
+    t += d + (pausen[nr] ?? pausen[String(nr)] ?? 0);
   }
   return bloecke;
 }

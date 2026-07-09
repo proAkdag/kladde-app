@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783628526';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783628526';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783628526';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783628526';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783628526';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783628526';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783628526';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783628526';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783628526';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783628526';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783629872';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783629872';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783629872';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783629872';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783629872';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783629872';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783629872';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783629872';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783629872';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783629872';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -793,9 +793,11 @@ function zeigeDeckKarte(){
     // End-Karte: „Fehlende durchgehen" — noch nicht erfasste Anwesende in ein Nur-Ohne-Deck (P4.4)
     const idx=tagesStandIndex(terminDatum);
     const fehlend=deckListe.filter(s=>{const st=idx.get(s.nr);return !st||(st.plus+st.neutral+st.minus)===0;}).length;
-    karte.innerHTML='<span class="gross">✓</span><span class="sub">'+total+' Karten durch · '+erfasst+' erfasst.</span>'+
+    // Grenzfall leeres Deck freundlich erklären statt „0 Karten durch" (Tag-Simulation B1)
+    const leerText=deckNurOhne?'Alle Anwesenden sind heute schon erfasst.':'Keine Schüler im Deck — heute alle abwesend.';
+    karte.innerHTML='<span class="gross">✓</span><span class="sub">'+(total===0?leerText:total+' Karten durch · '+erfasst+' erfasst.')+'</span>'+
       (fehlend&&!deckNurOhne?'<div class="btn-reihe u-center"><button class="btn" data-fehlende>Fehlende durchgehen ('+fehlend+')</button></div>':'');
-    $('deck-fortschritt').innerHTML='fertig · <b>'+erfasst+'</b> / '+total+' erfasst'+balken;
+    $('deck-fortschritt').innerHTML=total===0?'':'fertig · <b>'+erfasst+'</b> / '+total+' erfasst'+balken;
     setzeBalken();
     const bf=karte.querySelector('[data-fehlende]'); if(bf) bf.onclick=()=>{ deckNurOhne=true; neuesDeck(false); mitUebergang(renderDeck); };
     return;
@@ -1602,15 +1604,43 @@ function stundenplanAssistent(){
       }
     };
     const vorschau=el('div',{class:'sp-vorschau'});
-    // nurVorschau rührt die Pausen-Inputs NICHT an — sonst verliert der getippte Input je Ziffer den Fokus,
-    // die iPad-Tastatur klappt zu (FEHLER 2026-07-09). Exakte HH:MM:SS in Klammern, wenn eine Grenze auf :30 fällt.
-    const nurVorschau=()=>{
-      vorschau.replaceChildren(el('div',{class:'tag-kopf'},'So sieht der Tag aus (Mo–Do):'));
-      for(const b of resolveBloecke(zm,1)){
+    // Tages-genaue Vorschau (Mo–Fr-Chips) mit Minuten-Feld je Block: abweichende Dauern (Konferenztag 45,
+    // Oberstufe 90) landen in tagesAusnahmen[tag].blockDauern — Folgeblöcke rücken live (Zero 2026-07-09).
+    // Fokus-Lehre: beim Tippen werden NUR die Zeit-Spans beschrieben, nie die Inputs neu gebaut (FEHLER 2026-07-09).
+    let vorschauTag=1;
+    const zeitSpans=[];
+    const zeitenRefresh=()=>{
+      resolveBloecke(zm,vorschauTag).forEach((b,i)=>{
         const sek=(b.startSek%60)||(b.endeSek%60);
-        vorschau.append(el('div',{class:'zeile'},el('span',{},'Block '+b.blockNr),
-          el('span',{class:'wert'},formatZeit(b.startSek)+'–'+formatZeit(b.endeSek)+(sek?' ('+formatZeit(b.startSek,false)+'–'+formatZeit(b.endeSek,false)+')':''))));
+        if(zeitSpans[i]) zeitSpans[i].textContent=formatZeit(b.startSek)+'–'+formatZeit(b.endeSek)+(sek?' ('+formatZeit(b.startSek,false)+'–'+formatZeit(b.endeSek,false)+')':'');
+      });
+    };
+    const nurVorschau=()=>{
+      zeitSpans.length=0;
+      vorschau.replaceChildren(
+        el('div',{class:'tag-kopf'},'So sieht der Tag aus:'),
+        el('div',{class:'sp-tagchips'}, ...[1,2,3,4,5].map(wt=>el('button',{class:'tg-chip'+(vorschauTag===wt?' an':''),onclick:()=>{ vorschauTag=wt; nurVorschau(); }},WT_KURZ[wt]))));
+      const ausn=(zm.tagesAusnahmen||{})[vorschauTag]||{};
+      const regelDauer=ausn.dauerSekunden??zm.dauerSekunden;
+      for(const b of resolveBloecke(zm,vorschauTag)){
+        const zs=el('span',{class:'wert'});
+        zeitSpans.push(zs);
+        const abw=(ausn.blockDauern||{})[b.blockNr]!=null;
+        const din=el('input',{type:'number',min:'20',max:'180',step:'0.5',value:String((b.endeSek-b.startSek)/60),class:'u-w72 sp-dmin'+(abw?' abweich':''),
+          oninput:e=>{ const v=parseFloat(e.target.value.replace(',','.')); if(!(v>0)) return;
+            const sekNeu=Math.round(v*60);
+            zm.tagesAusnahmen=zm.tagesAusnahmen||{};
+            const a=zm.tagesAusnahmen[vorschauTag]=zm.tagesAusnahmen[vorschauTag]||{};
+            a.blockDauern=a.blockDauern||{};
+            if(sekNeu===regelDauer){ delete a.blockDauern[b.blockNr]; e.target.classList.remove('abweich');
+              if(!Object.keys(a.blockDauern).length) delete a.blockDauern;
+              if(!Object.keys(a).length) delete zm.tagesAusnahmen[vorschauTag]; }
+            else { a.blockDauern[b.blockNr]=sekNeu; e.target.classList.add('abweich'); }
+            zeitenRefresh();
+          }});
+        vorschau.append(el('div',{class:'zeile'},el('span',{},'Block '+b.blockNr+' ',din,' min'),zs));
       }
+      zeitenRefresh();
     };
     const renderVorschau=()=>{ renderPausen(); nurVorschau(); };
     const frTag=zm.tagesAusnahmen&&zm.tagesAusnahmen[5];
@@ -1636,13 +1666,19 @@ function stundenplanAssistent(){
     const renderGrid=()=>{
       grid.replaceChildren();
       grid.append(el('div',{class:'sp-ecke'},''));
-      for(const wt of tage) grid.append(el('div',{class:'sp-th'},WT_KURZ[wt]));
+      // Tage mit Abweichung (blockDauern/Blockzahl) tragen ein * — Details in Schritt 1 (Tages-Chips)
+      for(const wt of tage){ const abw=!!(zm.tagesAusnahmen||{})[wt];
+        grid.append(el('div',{class:'sp-th',...(abw?{title:'abweichende Zeiten — siehe Zeitraster'}:{})},WT_KURZ[wt]+(abw?' *':''))); }
+      const regel=resolveBloecke(zm,1);
       for(let nr=1;nr<=zm.bloeckeProTag;nr++){
-        grid.append(el('div',{class:'sp-th'},String(nr)));
+        const rb=regel[nr-1];
+        grid.append(el('div',{class:'sp-th sp-blockkopf'},String(nr),el('small',{class:'sp-zeit'},rb?formatZeit(rb.startSek)+'–'+formatZeit(rb.endeSek):'')));
         for(const wt of tage){
           const belegt=plan.some(p=>p.wochentag===wt&&p.blockNr===nr);
           grid.append(el('button',{class:'sp-zelle'+(belegt?' belegt':''),onclick:()=>blockDialog(wt,nr,renderGrid)},zelleText(wt,nr)));
         }
+        const p=zm.pausenNachBlock[nr]??zm.pausenNachBlock[String(nr)]??0;
+        if(p&&nr<zm.bloeckeProTag) grid.append(el('div',{class:'sp-pausenzeile'},'Pause · '+(p/60)+' min'));
       }
     };
     renderGrid();
@@ -1697,8 +1733,10 @@ function stundenplanAssistent(){
 
   // ── Schritt 3: Autowahl prüfen (Testzeit-Widget) + Speichern ──
   function renderS3(){
-    const tagSel=el('select',{}, ...[1,2,3,4,5].map(wt=>el('option',{value:String(wt)},WT_KURZ[wt])));
-    const zeitInput=el('input',{type:'time',value:'08:10',class:'u-w130'});
+    // Default = jetzt (Wochentag geclampt Mo–Fr) — man prüft fast immer die aktuelle Situation (Tag-Simulation B2)
+    const jetzt=new Date(), wtJetzt=Math.min(5,Math.max(1,jetzt.getDay()||1));
+    const tagSel=el('select',{}, ...[1,2,3,4,5].map(wt=>el('option',{value:String(wt),...(wt===wtJetzt?{selected:'selected'}:{})},WT_KURZ[wt])));
+    const zeitInput=el('input',{type:'time',value:String(jetzt.getHours()).padStart(2,'0')+':'+String(jetzt.getMinutes()).padStart(2,'0'),class:'u-w130'});
     const ergebnis=el('div',{class:'sp-ergebnis'});
     const pruef=()=>{
       const wt=Number(tagSel.value); const [h,m]=zeitInput.value.split(':').map(Number);

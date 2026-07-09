@@ -347,6 +347,7 @@
   .u-maxw55 { max-width: 55%; }
   .u-selfcenter { align-self: center; }
   .u-center { justify-content: center; }
+  .u-w72 { width: 72px; }
   .u-w108 { width: 108px; } .u-w110 { width: 110px; } .u-w130 { width: 130px; }
   .u-w160 { width: 160px; } .u-w170 { width: 170px; }
   .u-check { width: 22px; height: 22px; }
@@ -378,8 +379,13 @@
   .sp-vorschau { margin-top: 10px; background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; padding: 6px 10px; }
   .sp-vorschau .zeile { padding: 3px 0; }
   .sp-woche-wrap { overflow-x: auto; }
-  .sp-woche { display: grid; grid-template-columns: 26px repeat(5, 1fr); gap: 3px; min-width: 300px; margin: 6px 0; }
+  .sp-woche { display: grid; grid-template-columns: 74px repeat(5, 1fr); gap: 3px; min-width: 340px; margin: 6px 0; }
   .sp-th, .sp-ecke { text-align: center; font-size: 12px; color: var(--leise); padding: 3px 0; }
+  .sp-blockkopf { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.15; }
+  .sp-zeit { font-size: 10px; font-variant-numeric: tabular-nums; }
+  .sp-pausenzeile { grid-column: 1 / -1; text-align: center; font-size: 10.5px; color: var(--leise); padding: 1px 0 2px; border-bottom: 1px dashed var(--kante); margin: 1px 0 2px; }
+  .sp-tagchips { display: flex; gap: 4px; margin: 2px 0 8px; }
+  .sp-dmin.abweich { border-color: var(--band); color: var(--band); font-weight: 700; }
   .sp-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 6px; min-height: 40px; font-size: 11px; padding: 2px; cursor: pointer; color: inherit; overflow: hidden; }
   .sp-zelle.belegt { border-color: var(--band); color: var(--band); }
   .sp-ergebnis { margin: 10px 0; font-size: 16px; text-align: center; }
@@ -593,8 +599,8 @@
   .seg button { flex: 1; min-height: 40px; padding: 8px 6px; }
   /* Halbgruppen-Chips in der Datums-Zeile (A–D-Filter im Unterricht) */
   .datum-streifen .tg-chips { display: flex; gap: 4px; margin-left: 8px; }
-  .datum-streifen .tg-chip { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 12px; min-height: 40px; padding: 3px 12px; cursor: pointer; font-size: 13px; }
-  .datum-streifen .tg-chip.an { border-color: var(--band); color: var(--band); font-weight: 600; }
+  .datum-streifen .tg-chip, .sp-tagchips .tg-chip { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 12px; min-height: 40px; padding: 3px 12px; cursor: pointer; font-size: 13px; }
+  .datum-streifen .tg-chip.an, .sp-tagchips .tg-chip.an { border-color: var(--band); color: var(--band); font-weight: 600; }
   /* Schüler-Suchfeld (Studio) */
   .s-suche { margin-bottom: 12px; }
   .s-suche input { width: 100%; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; min-height: 44px; font-size: 16px; }
