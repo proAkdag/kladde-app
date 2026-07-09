@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783632895';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783632895';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783632895';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783632895';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783632895';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783632895';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783632895';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783632895';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783632895';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783632895';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783633576';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783633576';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783633576';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783633576';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783633576';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783633576';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783633576';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783633576';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783633576';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783633576';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -518,14 +518,8 @@ function zufallsSchueler(){
   if(kachel) kachel.scrollIntoView({block:'center',behavior:'smooth'});
   toast('🎲 '+anzeigeVorname(s)+' '+anzeigeNachname(s));
 }
-function kachelHtml(s,st,r,c){
-  let cls='kachel schueler';
-  if(aktiverSchueler===s.nr) cls+=' gewaehlt';
-  if(!beamerModus){
-    if(st.fehlt) cls+=' netto-fehlt';
-    else if(st.plus>st.minus) cls+=' netto-plus';
-    else if(st.minus>st.plus) cls+=' netto-minus';
-  }
+// Marken eines Tagesstands als mk-Chips — EINE Quelle für Kachel, Zeitstrahl und Legende
+function markenHtml(st){
   let marken='';
   if(st.plus&&!st.minus) marken+='<span class="mk p">＋'+(st.plus>1?st.plus:'')+'</span>';
   else if(st.minus&&!st.plus) marken+='<span class="mk m">−'+(st.minus>1?st.minus:'')+'</span>';
@@ -539,6 +533,17 @@ function kachelHtml(s,st,r,c){
   if(st.versp) marken+='<span class="mk sym">⏰</span>';
   if(st.verweigert) marken+='<span class="mk verw">⊘</span>';
   if(st.fehlt) marken+='<span class="mk '+(st.fehlt==='u'?'u':st.fehlt==='e'?'e':'abw')+'">'+(st.fehlt==='o'?'abw':st.fehlt)+'</span>';
+  return marken;
+}
+function kachelHtml(s,st,r,c){
+  let cls='kachel schueler';
+  if(aktiverSchueler===s.nr) cls+=' gewaehlt';
+  if(!beamerModus){
+    if(st.fehlt) cls+=' netto-fehlt';
+    else if(st.plus>st.minus) cls+=' netto-plus';
+    else if(st.minus>st.plus) cls+=' netto-minus';
+  }
+  const marken=markenHtml(st);
   return '<div class="'+cls+'" data-nr="'+s.nr+'" data-r="'+r+'" data-c="'+c+'">'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
     '<span class="nn">'+esc(anzeigeNachname(s))+'</span>'+
@@ -1042,23 +1047,46 @@ function schuelerDetailHtml(s,k,v){
   const fehltU=evs.filter(e=>e.typ==='fehlt_u').length, fehltE=evs.filter(e=>e.typ==='fehlt_e').length;
   const proTag={};
   for(const e of evs) (proTag[e.datum]=proTag[e.datum]||[]).push(e);
-  const tage=Object.keys(proTag).sort().reverse();
-  let liste='';
+  const tage=Object.keys(proTag).sort();  // chronologisch: links alt → rechts neu (Zero 2026-07-09)
+  // Horizontaler Zeitstrahl: je Tag eine kompakte Karte mit den mk-Marken (gleiche Sprache wie die Sitzplan-Kachel);
+  // Tap expandiert die Einträge des Tages darunter (mit ↶-Storno). Kein Runterscrollen mehr.
+  const evZeile=e=>'<div class="ev-zeile"><span>'+(e.best?'⭐ ':'')+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
+    '<button class="btn still ev-storno u-btn-klein" data-storno="'+e.id+'">↶</button></div>';
+  let strahl='', details='';
   for(const t of tage){
-    liste+='<div class="tag-gruppe"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
-      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(e=>
-        '<div class="ev-zeile"><span>'+(e.best?'⭐ ':'')+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
-        '<button class="btn still ev-storno u-btn-klein" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>';
+    const st=reduziereStand(proTag[t]);
+    strahl+='<button class="zs-tag" data-tag="'+t+'"><span class="zs-datum">'+datumLabel(t)+'</span><span class="zs-marken">'+markenHtml(st)+'</span></button>';
+    details+='<div class="tag-detail-inhalt" data-tag="'+t+'"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
+      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(evZeile).join('')+'</div>';
   }
-  if(!tage.length) liste='<p class="u-hinweis">Noch keine Einträge.</p>';
+  const verlauf=tage.length
+    ? '<div class="zeitstrahl">'+strahl+'</div><p class="zs-hinweis u-hinweis">Tag antippen für Einzel-Einträge.</p>'+details
+    : '<p class="u-hinweis">Noch keine Einträge.</p>';
+  // Notizen-Sammlung: alle Texte (Notizen + Begründungen aus ⊘/⭐) auf einen Blick, neueste zuerst
+  const notizen=evs.filter(e=>e.notiz&&String(e.notiz).trim()).sort((a,b)=>String(b.datum).localeCompare(String(a.datum))||String(b.ts).localeCompare(String(a.ts)));
+  const notizListe=notizen.length
+    ? notizen.map(e=>'<div class="notiz-zeile"><span class="notiz-datum">'+datumLabel(e.datum)+'</span><span>'+(e.typ==='verweigert'?'<span class="mk verw">⊘</span> ':'')+esc(e.notiz)+'</span></div>').join('')
+    : '';
   return '<div class="s-detail">'+
     '<div class="zeile"><span>Beteiligung</span><span class="wert">'+v.beteiligtTermine+' / '+v.kursTermine+' Termine · Verlauf '+v.pfeil+'</span></div>'+
     (fehltE||fehltU||verspSum?'<div class="zeile"><span>Fehl / Verspätung</span><span class="wert">'+(fehltE?fehltE+'× e ':'')+(fehltU?fehltU+'× u ':'')+(verspSum?'· '+verspSum+' min':'')+'</span></div>':'')+
     '<div class="zeile"><span>Vorschlag</span><span class="wert">'+(v.vorschlag?esc(v.vorschlag.label):(s.lb?'— (LB)':'—'))+'</span></div>'+
     (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal="'+s.nr+'">Als Quartalsnote setzen…</button></div>':'')+
-    '<div class="tag-kopf u-kopf-leise">Verlauf ('+evs.length+')</div>'+liste+'</div>';
+    '<div class="tag-kopf u-kopf-leise">Verlauf ('+evs.length+')</div>'+verlauf+
+    (notizListe?'<div class="tag-kopf u-kopf-leise">Notizen ('+notizen.length+')</div><div class="notiz-liste">'+notizListe+'</div>':'')+
+    '</div>';
 }
 function verdrahteDetail(wrap){
+  // Zeitstrahl: Tag antippen → Einträge des Tages darunter (nur einer offen); initial ans neueste Ende scrollen
+  wrap.querySelectorAll('.zs-tag').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.tag, war=b.classList.contains('an');
+    wrap.querySelectorAll('.zs-tag.an').forEach(x=>x.classList.remove('an'));
+    wrap.querySelectorAll('.tag-detail-inhalt.an').forEach(x=>x.classList.remove('an'));
+    if(!war){ b.classList.add('an'); const d=wrap.querySelector('.tag-detail-inhalt[data-tag="'+t+'"]'); if(d) d.classList.add('an'); }
+  });
+  // ans neueste Ende scrollen — synchron (scrollWidth-Read erzwingt Layout); rAF/smooth scheitern in Hintergrund-Tabs
+  const zs=wrap.querySelector('.zeitstrahl'); if(zs) zs.scrollLeft=zs.scrollWidth;
+  const zsT=wrap.querySelector('.zeitstrahl'); if(zsT) setTimeout(()=>{ zsT.scrollLeft=zsT.scrollWidth; },0);  // Zweitversuch nach Task-Flush (View-Transition-Fälle)
   wrap.querySelectorAll('.ev-storno').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const ev=vault.events.find(x=>x.id===b.dataset.storno); if(ev){ stornoVon(ev); toast('storniert'); renderSchueler(); } });
   wrap.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const s=schuelerVonNr(Number(b.dataset.quartal)); const kk=kurs(); const zr=zeitraumFilter; const v=verdichte(vault.events.filter(x=>x.kursId===kk.id),s.nr,{profil:bewertProfil(kk),lb:s.lb,von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'}); setzeQuartalsnote(s,v.vorschlag,zr); });
 }
