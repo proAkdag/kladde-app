@@ -532,6 +532,12 @@
   .rail-bar > div { height: 100%; background: var(--gut); border-radius: 4px; }
   .rail-karte.komplett { border-color: var(--gut); }  /* alle erfasst → grünes Stunde-komplett-Signal */
   .rail-karte.komplett .rail-erfasst-zahl { color: var(--gut); }
+  /* Erfasst-Karte auf Datums-Zeilen-Höhe (58px) — Titel + Zahl in eine Zeile, Balken darunter, vertikal zentriert */
+  .erfasst-karte { min-height: 58px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+  .erfasst-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .erfasst-karte .rail-titel { margin: 0; }
+  .erfasst-karte .rail-erfasst-zahl { font-size: 18px; line-height: 1; }
+  .erfasst-karte .rail-bar { margin-top: 0; }
 
   /* <1200 px: Sidebar auf Icon-Rail (Budget iPad 8 quer 1080) */
   @media (max-width: 1199px) {

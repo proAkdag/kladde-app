@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783623756';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783623756';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783623756';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783623756';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783623756';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783623756';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783623756';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783623756';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783623756';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783623756';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783624318';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783624318';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783624318';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783624318';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783624318';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783624318';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783624318';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783624318';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783624318';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783624318';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -669,9 +669,10 @@ function renderRail(){
     erfasst=sicht.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length; }
   const fill=el('div',{}); fill.style.width=(total?Math.round(erfasst/total*100):0)+'%';
   const komplett=total>0&&erfasst===total;  // alle erfasst → grünes „Stunde komplett"-Signal
-  const erfasstKarte=el('div',{class:'rail-karte'+(komplett?' komplett':'')},
-    el('div',{class:'rail-titel'},'Erfasst'),
-    el('div',{class:'rail-erfasst-zahl'}, String(erfasst), el('small',{},' / '+total)),
+  const erfasstKarte=el('div',{class:'rail-karte erfasst-karte'+(komplett?' komplett':'')},
+    el('div',{class:'erfasst-kopf'},
+      el('span',{class:'rail-titel'},'Erfasst'),
+      el('span',{class:'rail-erfasst-zahl'}, String(erfasst), el('small',{},'/'+total))),
     el('div',{class:'rail-bar'}, fill));
   rail.replaceChildren(erfasstKarte, stempelKarte);  // Erfasst oben (auf Höhe der Datums-Leiste), Stempel darunter
 }
