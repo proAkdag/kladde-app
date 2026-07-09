@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783622606';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783622606';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783622606';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783622606';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783622606';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783622606';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783622606';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783622606';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783622606';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783622606';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783623756';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783623756';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783623756';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783623756';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783623756';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783623756';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783623756';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783623756';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783623756';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783623756';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -518,7 +518,7 @@ function zufallsSchueler(){
   if(kachel) kachel.scrollIntoView({block:'center',behavior:'smooth'});
   toast('🎲 '+anzeigeVorname(s)+' '+anzeigeNachname(s));
 }
-function kachelHtml(s,st){
+function kachelHtml(s,st,r,c){
   let cls='kachel schueler';
   if(aktiverSchueler===s.nr) cls+=' gewaehlt';
   if(!beamerModus){
@@ -539,7 +539,7 @@ function kachelHtml(s,st){
   if(st.versp) marken+='<span class="mk sym">⏰</span>';
   if(st.verweigert) marken+='<span class="mk verw">⊘</span>';
   if(st.fehlt) marken+='<span class="mk '+(st.fehlt==='u'?'u':st.fehlt==='e'?'e':'abw')+'">'+(st.fehlt==='o'?'abw':st.fehlt)+'</span>';
-  return '<div class="'+cls+'" data-nr="'+s.nr+'">'+
+  return '<div class="'+cls+'" data-nr="'+s.nr+'" data-r="'+r+'" data-c="'+c+'">'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
     '<span class="nn">'+esc(anzeigeNachname(s))+'</span>'+
     '<div class="marken">'+marken+'</div></div>';
@@ -555,12 +555,28 @@ function renderHeute(){
   const grid=(vault.stamm.sitzplaene[k.id]||{}).grid||{};
   plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv);
   const sichtbar=new Set(sichtSchueler.map(s=>s.nr));
+  const SPALTEN=12;
+  const belegteReihen=[...new Set(Object.keys(grid).map(key=>Number(key.split(',')[0])))].sort((a,b)=>a-b);
+  // Editor: alle Reihen bis zur letzten belegten + 1 leere „Ghost"-Reihe am Ende (wächst beim Befüllen).
+  // Unterricht: nur die belegten Reihen (kompakt — kein leerer Raum, TAFEL direkt unter der letzten).
+  let reihen;
+  if(editorAktiv){
+    const maxR=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
+    reihen=[]; for(let r=0;r<=maxR+1;r++) reihen.push(r);
+  } else reihen=belegteReihen;
   let html='';
-  for(let r=0;r<12;r++) for(let c=0;c<12;c++){
-    const nr=grid[r+','+c];
-    const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
-    if(s&&sichtbar.has(s.nr)) html+=kachelHtml(s,idx.get(s.nr)||leererStand());
-    else html+='<div class="kachel leer"></div>';
+  const maxBelegt=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
+  for(const r of reihen){
+    // Ghost-„＋": leere Reihe hier einfügen — vor belegten Reihen (oben + zwischen); „unten" deckt die wachsende Ghost-Reihe ab
+    if(editorAktiv && r<=maxBelegt) html+='<button class="reihe-plus" data-vor="'+r+'" title="Leere Reihe hier einfügen">＋</button>';
+    html+='<div class="plan-reihe" data-r="'+r+'">';
+    for(let c=0;c<SPALTEN;c++){
+      const nr=grid[r+','+c];
+      const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
+      if(s&&sichtbar.has(s.nr)) html+=kachelHtml(s,idx.get(s.nr)||leererStand(),r,c);
+      else html+='<div class="kachel leer" data-r="'+r+'" data-c="'+c+'"></div>';
+    }
+    html+='</div>';
   }
   plan.innerHTML=html;
   const ohnePlatz=sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr));
@@ -1385,7 +1401,7 @@ function sitzplanEditor(kursId){
   const plan=$('plan');
   const k=kurs();
   const sp=()=>(vault.stamm.sitzplaene[k.id]=vault.stamm.sitzplaene[k.id]||{grid:{}});
-  const keyOf=kachel=>{ const i=[...plan.children].indexOf(kachel); return Math.floor(i/12)+','+(i%12); };
+  const keyOf=kachel=>kachel.dataset.r+','+kachel.dataset.c;  // explizite Reihe,Platz — Ghost-Zeilen-Layout (nicht mehr DOM-Index)
   toast('Namen aus der Leiste auf Plätze ziehen · Platz→Platz verschiebt · in den 🗑 = entfernen · leeren Platz antippen wählt klassisch',6500);
 
   // ── Editor-Leiste: Namen-Schiene (noch nicht platziert) + Mülleimer + Fertig ──
@@ -1457,7 +1473,9 @@ function sitzplanEditor(kursId){
     e.stopPropagation(); picker(key);
   };
   const onCancel=()=>{ if(drag&&drag.ghost) drag.ghost.remove(); drag=null; document.body.classList.remove('sp-dragging'); zielReset(); };
+  const plusClick=e=>{ const p=e.target.closest('.reihe-plus'); if(p){ e.stopPropagation(); reiheEinfuegen(Number(p.dataset.vor)); } };
   rail.addEventListener('pointerdown',railDown);
+  plan.addEventListener('click',plusClick);
   plan.addEventListener('pointerdown',planDown);
   plan.addEventListener('pointerup',planTap);
   document.addEventListener('pointermove',onMove,{passive:false});
@@ -1479,10 +1497,24 @@ function sitzplanEditor(kursId){
         setTimeout(()=>elx.querySelector('#s-such').focus(),60);
       });
   }
+  function reiheEinfuegen(vorR){  // Ghost-＋: alle Reihen ab vorR um +1 schieben → leere Reihe entsteht bei vorR (Nr bleibt, nur Position)
+    const g=sp().grid, neu={};
+    for(const key in g){ const [r,c]=key.split(',').map(Number); neu[(r>=vorR?r+1:r)+','+c]=g[key]; }
+    vault.stamm.sitzplaene[k.id].grid=neu; stammMutiert(); speichern(); renderHeute();
+  }
+  function kompaktiere(){  // leere Reihen raus, r-Werte neu durchnummerieren (0,1,2…) — Nr bleibt der Anker, nur die Position ändert sich
+    const g=sp().grid;
+    const belegte=[...new Set(Object.keys(g).map(key=>Number(key.split(',')[0])))].sort((a,b)=>a-b);
+    const neu={};
+    belegte.forEach((altR,neuR)=>{ for(let c=0;c<12;c++){ const nr=g[altR+','+c]; if(nr!=null) neu[neuR+','+c]=nr; } });
+    vault.stamm.sitzplaene[k.id].grid=neu; stammMutiert(); speichern();
+  }
   function beenden(){
+    kompaktiere();
     editorAktiv=false; editorCleanup=null;
     document.body.classList.remove('sp-edit','sp-dragging');
     rail.removeEventListener('pointerdown',railDown);
+    plan.removeEventListener('click',plusClick);
     plan.removeEventListener('pointerdown',planDown);
     plan.removeEventListener('pointerup',planTap);
     document.removeEventListener('pointermove',onMove,{passive:false});

@@ -119,10 +119,10 @@
 
   /* ── Sitzplan: Name + Tages-Stand als Symbole/Farben · Beamer-Toggle versteckt Werte ── */
   #plan-wrap { overflow: auto; }
-  #plan {
-    display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px;
-    min-width: 600px; justify-content: center;
-  }
+  #plan { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 600px; }
+  .plan-reihe { display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px; }
+  .reihe-plus { width: 100%; min-height: 20px; padding: 2px; border: 1px dashed transparent; background: transparent; color: var(--leise); cursor: pointer; font-size: 15px; line-height: 1; opacity: .4; border-radius: 6px; }
+  .reihe-plus:hover { opacity: 1; background: var(--karte2); border-color: var(--kante); }
   #plan .kachel {
     aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
     display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
