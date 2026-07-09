@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.3.0.1783634671">
+<link rel="stylesheet" href="./css/kladde.css?v=1.3.0.1783641099">
 </head>
 <body>
 
@@ -82,7 +82,7 @@
   <div class="hauptspalte">
     <header class="app">
       <div class="kopf-titel">
-        <div id="view-titel" class="v-titel">Heute</div>
+        <div id="view-titel" class="v-titel" role="heading" aria-level="1" tabindex="-1">Heute</div>
         <div id="view-sub" class="v-sub">Sitzplan · live erfassen</div>
       </div>
       <div class="spacer"></div>
@@ -130,10 +130,10 @@
 </div>
 
 <button id="undo-chip" class="hidden"></button>
-<div id="toast" class="hidden"></div>
+<div id="toast" class="hidden" role="status" aria-live="polite"></div>
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.3.0.1783634671"></script>
+<script type="module" src="./js/app.mjs?v=1.3.0.1783641099"></script>
 </body>
 </html>

@@ -195,10 +195,13 @@
   .s-block { border-top: 1px solid var(--kante); }
   .s-block:first-child { border-top: none; }
   .s-block.offen { background: var(--karte2); border-radius: 8px; margin: 4px -6px; }
-  .s-item { display: flex; align-items: center; gap: 10px; padding: 10px 6px; cursor: pointer; min-height: 48px; }
+  .s-item { display: flex; align-items: center; gap: 10px; padding: 10px 6px; cursor: pointer; min-height: 48px;
+    background: none; border: none; font: inherit; color: inherit; width: 100%; text-align: left; }  /* echter Button (C5: Tastatur + Screenreader) */
+  .s-item:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; border-radius: 8px; }
   .s-item .pfeil { color: var(--leise); font-size: 15px; }
+  .v-titel:focus { outline: none; }  /* programmatischer Ansichts-Fokus ohne visuellen Ring */
   .balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--karte); }
-  .balken div { height: 100%; }
+  .balken div, .balken span { height: 100%; display: block; }
   .s-detail { padding: 4px 10px 12px; }
   .s-detail .tag-gruppe { margin-top: 8px; }
   .s-detail .tag-kopf { color: var(--band); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
@@ -538,7 +541,14 @@
   .rail-titel { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); margin: 0 2px 9px; }
   .rail-gruppe { display: flex; gap: 6px; }
   .rail-gruppe.raster2 { display: grid; grid-template-columns: repeat(2, 1fr); }  /* Anwesenheits-4er als 2×2 → ≥44 px Touch (Zero-Entscheid 2026-07-09) */
-  .rail-trenner { height: 1px; background: var(--kante); margin: 9px 0; }
+  /* Semantische Rail-Sektionen (C2): Mini-Überschrift statt Titel+Trennlinien — fast platzneutral */
+  .rail-sektion + .rail-sektion { margin-top: 9px; }
+  .rail-mini { font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--leise); margin: 0 2px 4px; }
+  /* Aktiver Stempel in Klartext zwischen Erfasst und Stempeln (C2) — kompakt, iPad-810-Budget */
+  .rail-status { border: 1px solid var(--band); border-radius: 10px; padding: 4px 8px; margin: 6px 0;
+    display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .rail-status b { font-size: 11px; color: var(--band); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rail-status span { font-size: 9px; color: var(--leise); }
   .rail-btn {
     flex: 1; min-width: 0; min-height: 44px; border-radius: 10px; cursor: pointer; padding: 4px;
     border: 1.5px solid var(--kante); background: var(--karte2); color: var(--text);
@@ -626,6 +636,18 @@
   .qn-zelle .qn-note { font-family: var(--font-serif); font-size: 24px; font-weight: 500; line-height: 1.05; }
   .qn-zelle .qn-sub { font-size: 10.5px; color: var(--leise); text-align: center; }
   .qn-fest { color: var(--band); font-weight: 700; }
+  /* Listenzeile = Entscheidung + höchstens ein Anlass (C3) — Detailwerte leben auf der Vollseite */
+  .qn-fest small, .s-vorschlag small { font-weight: 400; font-size: 10.5px; color: var(--leise); }
+  .s-vorschlag { font-weight: 700; }
+  .s-anlass { color: var(--leise); font-size: 12.5px; }
+  .s-anlass.warn { color: var(--warn); }
+  .s-filter { padding-top: 0; }
+  /* Gegenwartszeile über dem Zeitstrahl (C3) */
+  .zs-gegenwart { font-size: 13px; color: var(--leise); margin: 6px 0 4px; }
+  .zs-gegenwart b { color: var(--text); }
+  /* Bilanz-Balken (aus der Liste hierher gezogen) braucht Breite im zeile-Layout */
+  .s-detail .zeile .balken { flex: 1 1 60px; max-width: 180px; align-self: center; }
+  .s-detail .zeile .wert.u-flex1 { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
   /* Verlauf als horizontaler Zeitstrahl (Zero: Tage links→rechts, kompakt; Tap expandiert) */
   .zeitstrahl { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 8px; }  /* KEIN scroll-behavior:smooth — blockiert programmatisches scrollLeft in Hintergrund-Tabs */
   .zs-tag { flex: 0 0 auto; min-width: 66px; max-width: 110px; display: flex; flex-direction: column; gap: 5px; align-items: center;
@@ -658,5 +680,16 @@
   .kurs-karte .k-meta { color: var(--leise); font-size: 12.5px; }
   .kurs-karte .k-badge .kurs-badge { margin-left: 0; }
   .kurs-karte.neu { border-style: dashed; color: var(--leise); align-items: center; justify-content: center; font-size: 15px; font-weight: 600; }
+  /* Karte = benutzen · ⋯ = verwalten (C4): Wrapper trägt den Verwalten-Knopf über der Karte */
+  .kk-wrap { position: relative; display: flex; }
+  .kk-wrap .kurs-karte { padding-right: 44px; }
+  .kk-mehr { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 10px;
+    background: transparent; border: 1px solid var(--kante); color: var(--leise); font-size: 17px; line-height: 1; cursor: pointer; }
+  .kk-mehr:hover, .kk-mehr:focus-visible { border-color: var(--band); color: var(--text); outline: none; }
+  .k-badge { display: flex; gap: 6px; flex-wrap: wrap; }
+  /* Archiv nach Schuljahr gruppiert + Jahresabschluss-Fußbereich (C4) */
+  .archiv-jahr { margin: 10px 0 4px; }
+  .archiv-jahr-kopf { color: var(--leise); font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+  .kurse-fuss { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--kante); }
   @media (max-width: 720px) { .kurs-grid { grid-template-columns: 1fr; } }
 }
