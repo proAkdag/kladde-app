@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783631152';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783631152';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783631152';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783631152';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783631152';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783631152';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783631152';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783631152';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783631152';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783631152';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783631448';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783631448';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783631448';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783631448';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783631448';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783631448';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783631448';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783631448';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783631448';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783631448';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -224,7 +224,7 @@ function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.n
 
 // Aggregierter Tages-Stand (für Sitzplan-Symbole + Detail). EIN Reduzierer, zwei Zugänge:
 // standAmTermin(nr) für Einzel-Abfrage · tagesStandIndex(datum) für den ganzen Sitzplan in einem Durchlauf.
-function leererStand(){ return {plus:0,neutral:0,minus:0,mat:0,ipad:0,lernzeit:0,notiz:0,note:null,fehlt:null,versp:0,verweigert:0,count:0}; }
+function leererStand(){ return {plus:0,neutral:0,minus:0,mat:0,ipad:0,lernzeit:0,notiz:0,note:null,best:false,fehlt:null,versp:0,verweigert:0,count:0}; }
 function reduziereStand(evs){
   const st=leererStand(); st.count=evs.length;
   for(const e of evs){
@@ -235,7 +235,7 @@ function reduziereStand(evs){
     else if(e.typ==='ipad_fehlt'||e.typ==='ipad_leer') st.ipad++;
     else if(e.typ==='lernzeit') st.lernzeit++;
     else if(e.typ==='notiz') st.notiz++;
-    else if(e.typ==='note') st.note=e.wert;
+    else if(e.typ==='note'){ st.note=e.wert; st.best=!!e.best; }  // best = via ⭐-Stempel (Kachel zeigt ⭐ statt 📊)
     else if(e.typ==='fehlt_e') st.fehlt='e';
     else if(e.typ==='fehlt_u') st.fehlt='u';
     else if(e.typ==='fehlt_o'&&st.fehlt!=='e'&&st.fehlt!=='u') st.fehlt='o'; // abwesend (offen, ungeklärt) — e/u gewinnen
@@ -531,7 +531,7 @@ function kachelHtml(s,st,r,c){
   else if(st.minus&&!st.plus) marken+='<span class="mk m">−'+(st.minus>1?st.minus:'')+'</span>';
   else if(st.plus&&st.minus) marken+='<span class="mk p">'+st.plus+'</span><span class="mk m">'+st.minus+'</span>';
   else if(st.neutral) marken+='<span class="mk o">o</span>';
-  if(st.note!=null) marken+='<span class="mk sym">📊</span>';
+  if(st.note!=null) marken+='<span class="mk sym">'+(st.best?'⭐':'📊')+'</span>';
   if(st.mat) marken+='<span class="mk sym">📕</span>';
   if(st.ipad) marken+='<span class="mk sym">📱</span>';
   if(st.lernzeit) marken+='<span class="mk sym">📝</span>';
@@ -644,7 +644,7 @@ function bestleistungDialog(s){
     el('p',{class:'u-hinweis'},'Trägt '+label+' als direkte Note ein. Kurznotiz zur Begründung (empfohlen):'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ addEvent('note',s.nr,{wert}); const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); toast('⭐ '+label+' · '+esc(s.vorname)); renderHeute(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
+      el('button',{class:'btn',onclick:()=>{ addEvent('note',s.nr,{wert,best:true}); const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); toast('⭐ '+label+' · '+esc(s.vorname)); renderHeute(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
@@ -782,6 +782,7 @@ function zeigeLegende(){
     zeile(mk('p','＋2')+' '+mk('m','−'),'Plus / Minus — Zahl = wie oft heute')+
     zeile(mk('o','o'),'neutrale Meldung')+
     zeile(mk('sym','📊'),'direkte Note')+
+    zeile(mk('sym','⭐'),'besondere Leistung — Bestnote mit Begründung')+
     zeile(mk('verw','⊘'),'Verweigerung — zählt als 6 (Sek II: 0 P)')+
     kopf('Organisatorisches')+
     zeile(mk('sym','📕'),'Material vergessen')+
@@ -998,7 +999,7 @@ function schuelerDetailHtml(s,k,v){
   for(const t of tage){
     liste+='<div class="tag-gruppe"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
       proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(e=>
-        '<div class="ev-zeile"><span>'+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
+        '<div class="ev-zeile"><span>'+(e.best?'⭐ ':'')+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
         '<button class="btn still ev-storno u-btn-klein" data-storno="'+e.id+'">↶</button></div>').join('')+'</div>';
   }
   if(!tage.length) liste='<p class="u-hinweis">Noch keine Einträge.</p>';
