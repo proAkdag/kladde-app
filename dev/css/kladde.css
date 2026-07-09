@@ -121,10 +121,12 @@
   #plan-wrap { overflow: auto; }
   #plan { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 600px; }
   .plan-reihe { display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px; }
-  .reihe-plus { width: 100%; min-height: 22px; padding: 2px; border: 1px dashed transparent; background: transparent; color: var(--leise); cursor: pointer; font-size: 15px; line-height: 1; opacity: .4; border-radius: 6px; }
-  .reihe-plus:hover { opacity: 1; background: var(--karte2); border-color: var(--kante); }
-  body.sp-dragging .reihe-plus { opacity: .8; border-color: var(--kante); }  /* Drop-Zonen beim Ziehen sichtbar */
-  .reihe-plus.ziel { opacity: 1; border-color: var(--band); color: var(--band); background: var(--karte2); }
+  /* Ghost-＋ zwischen den Reihen: leise (16px, nur ein kleines ＋), der Streifen IST der Reihenabstand im Editor */
+  #plan.editor { gap: 0; }
+  .reihe-plus { width: 100%; min-height: 16px; padding: 0; border: 0; background: transparent; color: var(--leise); cursor: pointer; font-size: 11px; line-height: 1; opacity: .25; border-radius: 6px; display: grid; place-items: center; }
+  .reihe-plus:hover { opacity: 1; color: var(--band); background: var(--karte2); }
+  body.sp-dragging .reihe-plus { opacity: .7; background: var(--karte2); }  /* Drop-Zonen beim Ziehen sichtbar — Höhe konstant (kein Ziel-Wandern) */
+  .reihe-plus.ziel { opacity: 1; color: var(--band); background: var(--karte2); box-shadow: inset 0 0 0 1px var(--band); }
   #plan .kachel {
     aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
     display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
@@ -439,6 +441,8 @@
 
 /* ── v1.1.0 · Sitzplan Drag & Drop (Namen-Schiene + Mülleimer, Pointer-Events) ── */
 @layer views {
+  /* Editor: die fixe Bar (~64px) darf die untersten Reihen nicht verdecken — main bekommt Scroll-Puffer (S216-Befund) */
+  body.sp-edit main { padding-bottom: calc(env(safe-area-inset-bottom) + 100px); }
   .sp-editor-bar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 10px);
     display: flex; align-items: center; gap: 8px; z-index: 40;
     background: var(--karte); border-top: 1px solid var(--band); padding: 8px 10px; }
