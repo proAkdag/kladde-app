@@ -1,6 +1,6 @@
 {
-  "name": "Kladde DEV",
-  "short_name": "KladdeDEV",
+  "name": "Kladde · Sonstige Mitarbeit",
+  "short_name": "Kladde",
   "description": "Persönliches SoMi-Erfassungs-Instrument — Ereignisse im Unterricht, Verdichtung am Quartalsende. Daten bleiben lokal und verschlüsselt.",
   "start_url": "./index.html",
   "scope": "./",

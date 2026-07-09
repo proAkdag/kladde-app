@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783576092';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783576092';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783576092';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783576092';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783576092';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783576092';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783576092';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783576092';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783576092';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783576092';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783599604';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783599604';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783599604';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783599604';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783599604';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783599604';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783599604';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783599604';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783599604';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783599604';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -1104,6 +1104,7 @@ function renderKurse(){
       (k.profil==='sek2'?'<div class="zeile"><span>Sek II · Noten-Eingabe</span><span><select data-notenmodus="'+k.id+'"><option value="punkte"'+((k.notenmodus||'punkte')==='punkte'?' selected':'')+'>Punkte 0–15</option><option value="drittel"'+(k.notenmodus==='drittel'?' selected':'')+'>Drittelnoten</option></select></span></div>':'')+
       '<div class="zeile"><span>HA-Typ aktiv (SekI-Schule: aus)</span><span><input type="checkbox" data-ha="'+k.id+'"'+(p.ha?' checked':'')+' class="u-check"></span></div>'+
       '<div class="btn-reihe">'+
+      '<button class="btn still" data-teilnehmer="'+k.id+'">Teilnehmer</button>'+
       '<button class="btn still" data-plan-edit="'+k.id+'">Sitzplan bearbeiten</button>'+
       '<button class="btn still" data-slots="'+k.id+'">Stundenplan-Slots</button>'+
       '<button class="btn still" data-gruppen="'+k.id+'">Halbgruppen</button>'+
@@ -1146,6 +1147,58 @@ function renderKurse(){
   wrap.querySelectorAll('[data-plan-edit]').forEach(b=>b.onclick=()=>sitzplanEditor(b.dataset.planEdit));
   wrap.querySelectorAll('[data-slots]').forEach(b=>b.onclick=()=>slotsEditor(b.dataset.slots));
   wrap.querySelectorAll('[data-gruppen]').forEach(b=>b.onclick=()=>gruppenEditor(b.dataset.gruppen));
+  wrap.querySelectorAll('[data-teilnehmer]').forEach(b=>b.onclick=()=>schuelerPflegeDialog(b.dataset.teilnehmer));
+}
+// Teilnehmer nachträglich pflegen — hinzufügen/entfernen (Zero-Wunsch 2026-07-09).
+// Fokus-sicher: neu gerendert wird NUR bei Submit/Entfernen, nie beim Tippen (Stundenplan-Lehre).
+function schuelerPflegeDialog(kursId){
+  const k=vault.stamm.kurse.find(x=>x.id===kursId); if(!k) return;
+  if(k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return; }
+  const freieNr=()=>{ const arr=vault.stamm.schueler[k.id]||[]; for(let n=1;n<=32;n++) if(!arr.some(s=>s.nr===n)) return n; return 32; };
+  const entferne=(s)=>{
+    const hatEv=vault.events.some(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.typ!=='storno');
+    dlgZeigenEl(
+      el('h3',{},'Entfernen?'),
+      el('p',{class:'u-hinweis'},esc(s.vorname)+' '+esc(s.name)+' (Nr '+s.nr+') aus der Teilnehmerliste nehmen?'+(hatEv?' Es gibt schon Einträge — die bleiben im Log (bei erneutem Hinzufügen derselben Nr erscheinen sie wieder).':'')),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn gefahr',onclick:()=>{
+          vault.stamm.schueler[k.id]=(vault.stamm.schueler[k.id]||[]).filter(x=>x.nr!==s.nr);
+          const grid=(vault.stamm.sitzplaene[k.id]||{}).grid; if(grid) for(const key in grid) if(grid[key]===s.nr) delete grid[key];
+          stammMutiert(); speichern(); toast('Entfernt: '+(s.vorname||s.name)); zeige();
+        }},'Entfernen'),
+        el('button',{class:'btn still',onclick:zeige},'Abbrechen')));
+  };
+  const zeige=()=>{
+    const arr=(vault.stamm.schueler[k.id]||[]).slice().sort((a,b)=>a.nr-b.nr);
+    const zeilen=arr.length?arr.map(s=>el('div',{class:'zeile'},
+      el('span',{},s.nr+' · '+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')),
+      el('button',{class:'btn gefahr u-btn-klein',title:'Entfernen',onclick:()=>entferne(s)},'🗑'))):[el('p',{class:'u-leise'},'Noch keine Schüler.')];
+    const nrIn=el('input',{type:'number',min:'1',max:'32',value:String(freieNr()),class:'u-w110'});
+    const vnIn=el('input',{type:'text',placeholder:'Vorname',class:'u-w130'});
+    const nnIn=el('input',{type:'text',placeholder:'Nachname',class:'u-w130'});
+    const lbIn=el('input',{type:'checkbox',class:'u-check'});
+    const hinzu=()=>{
+      const nr=parseInt(nrIn.value,10), vorname=vnIn.value.trim(), name=nnIn.value.trim();
+      if(!(nr>=1&&nr<=32)){ toast('Nr muss 1–32 sein'); return; }
+      if(!vorname&&!name){ toast('Name fehlt'); return; }
+      const list=vault.stamm.schueler[k.id]=vault.stamm.schueler[k.id]||[];
+      if(list.some(s=>s.nr===nr)){ toast('Nr '+nr+' ist schon vergeben'); return; }
+      list.push({nr,name,vorname,lb:lbIn.checked}); list.sort((a,b)=>a.nr-b.nr);
+      stammMutiert(); speichern(); toast('Hinzugefügt: '+(vorname||name)); zeige();
+    };
+    dlgZeigenEl(
+      el('h3',{},'Teilnehmer · '+esc(k.name)),
+      el('p',{class:'u-hinweis'},arr.length+' Schüler · Nr 1–32 (Mappen-Grenze). Reihenfolge = Excel-Mappe.'),
+      el('div',{class:'u-scroll30'},...zeilen),
+      el('div',{class:'tag-gruppe'},
+        el('div',{class:'tag-kopf'},'Hinzufügen'),
+        el('div',{class:'zeile'},el('span',{},'Nr'),nrIn),
+        el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
+        el('div',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
+        el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:hinzu},'＋ Hinzufügen'))),
+      el('div',{class:'btn-reihe'},el('button',{class:'btn still',onclick:()=>{ dlgZu(); renderKurse(); }},'Fertig')));
+  };
+  zeige();
 }
 // Auto-Inkrement des Kursnamens fürs neue Jahr (7b→8b · 10a→11a · EF→Q1 · Q1→Q2), immer editierbar
 function naechsterName(name){
