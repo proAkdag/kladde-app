@@ -572,4 +572,12 @@
   /* Segment-Umschalter (Darstellung: Tag/Nacht/System) */
   .seg { display: flex; gap: 6px; }
   .seg button { flex: 1; min-height: 40px; padding: 8px 6px; }
+  /* Halbgruppen-Chips in der Datums-Zeile (A–D-Filter im Unterricht) */
+  .datum-streifen .tg-chips { display: flex; gap: 4px; margin-left: 8px; }
+  .datum-streifen .tg-chip { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 12px; min-height: 40px; padding: 3px 12px; cursor: pointer; font-size: 13px; }
+  .datum-streifen .tg-chip.an { border-color: var(--band); color: var(--band); font-weight: 600; }
+  /* Schüler-Suchfeld (Studio) */
+  .s-suche { margin-bottom: 12px; }
+  .s-suche input { width: 100%; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; min-height: 44px; font-size: 16px; }
+  .s-suche input:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
 }

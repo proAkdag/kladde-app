@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783599604';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783599604';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783599604';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783599604';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783599604';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783599604';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783599604';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783599604';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783599604';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783599604';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783600713';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783600713';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783600713';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783600713';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783600713';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783600713';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783600713';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783600713';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783600713';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783600713';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -439,7 +439,7 @@ function mitUebergang(fn){
     // ALLE drei Promises abfangen — .ready rejektet, wenn der Snapshot mitten in der
     // Animation ungültig wird (aborted); das ist erwartbar, kein Konsolen-Fehler.
     t.ready&&t.ready.catch(()=>{});
-    t.updateCallbackDone&&t.updateCallbackDone.catch(()=>{});
+    t.updateCallbackDone&&t.updateCallbackDone.catch(e=>console.error('[kladde] Render-Fehler im View-Übergang:',e)); // NICHT still schlucken — sonst sind Render-Bugs unsichtbar (FEHLER 2026-07-09 k-undefined)
     t.finished.catch(()=>{}).finally(()=>{ uebergangLaeuft=false; });
   } catch { uebergangLaeuft=false; fn(); }
 }
@@ -462,19 +462,27 @@ function beamerKurz(){ return beamerModus && localStorage.getItem('kladde_beamer
 function anzeigeVorname(s){ return beamerKurz()?(s.vorname?s.vorname[0]+'.':''):s.vorname; }
 function anzeigeNachname(s){ return beamerKurz()?(s.name?s.name[0]+'.':''):s.name; }
 function sichtbareSchueler(k){
-  let liste=kursSchueler(k);
-  if(aktiveTeilgruppe) liste=liste.filter(s=>(s.gruppe||'')===aktiveTeilgruppe);
+  const liste=kursSchueler(k);
+  if(aktiveTeilgruppe){
+    const g=liste.filter(s=>(s.gruppe||'')===aktiveTeilgruppe);
+    if(g.length) return g;   // Gruppe existiert → filtern
+    aktiveTeilgruppe=null;    // Gruppe im Kurs nicht vorhanden → Filter fällt weg (kein leerer Plan)
+  }
   return liste;
 }
 function datumStreifen(){
-  const el=$('datum-streifen'); if(!kurs()){ el.innerHTML=''; el.className=''; return; }
+  const el=$('datum-streifen'); const k=kurs(); if(!k){ el.innerHTML=''; el.className=''; return; }
   const heute=heuteIso(), istHeute=terminDatum===heute;
   el.className='datum-streifen'+(istHeute?'':' nachtrag');
   const jetztText=(istHeute&&autowahlInfo)
     ?'Jetzt · '+datumLabel(terminDatum)+' · '+formatZeit(autowahlInfo.startSek)+'–'+formatZeit(autowahlInfo.endeSek)+(autowahlInfo.quelle==='kommend'?' (gleich)':'')
     :(istHeute?'Heute':'Nachtrag')+' · '+datumLabel(terminDatum);
+  // Halbgruppen-Chips: nur wenn der Kurs Gruppen hat — A–D direkt filtern (Zero-Wunsch)
+  const gruppen=[...new Set(kursSchueler(k).map(s=>s.gruppe).filter(Boolean))].sort();
+  const chips=gruppen.length?('<span class="tg-chips"><button data-tg="" class="tg-chip'+(!aktiveTeilgruppe?' an':'')+'">Alle</button>'+
+    gruppen.map(g=>'<button data-tg="'+g+'" class="tg-chip'+(aktiveTeilgruppe===g?' an':'')+'">'+g+'</button>').join('')+'</span>'):'';
   el.innerHTML='<span class="heute-tag">'+jetztText+'</span>'+
-    (istHeute?'':'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+
+    (istHeute?'':'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+chips+
     '<span class="rechts">'+
     (istHeute?'':'<button data-heute>↩ Heute</button>')+
     '<button data-zufall title="Zufällig – bevorzugt wer noch selten dran war">🎲</button>'+
@@ -483,6 +491,7 @@ function datumStreifen(){
   el.querySelector('[data-datum]').onclick=oeffneDatum;
   el.querySelector('[data-zufall]').onclick=zufallsSchueler;
   el.querySelector('[data-legende]').onclick=zeigeLegende;
+  el.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{ aktiveTeilgruppe=b.dataset.tg||null; mitUebergang(renderHeute); });
   const bh=el.querySelector('[data-heute]'); if(bh) bh.onclick=()=>{ terminDatum=heute; mitUebergang(renderHeute); };
 }
 function zufallsSchueler(){
@@ -797,7 +806,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ═══ SCHÜLER · Verdichtung + Inline-Detail-Akkordeon (kein Popup) ═══ */
-let offenerSchueler=null, zeitraumFilter=null;
+let offenerSchueler=null, zeitraumFilter=null, schuelerSuche='';
 function aktivesSchuljahr(){ return (vault.stamm.schuljahre||[]).find(j=>j.id===vault.stamm.aktivesSchuljahrId)||null; }
 function renderSchueler(){
   const k=kurs(); const wrap=$('view-schueler');
@@ -811,7 +820,7 @@ function renderSchueler(){
   const kurzL=l=>l.replace('. Quartal','. Q').replace('. Halbjahr','. HJ');
   const heute=heuteIso();
   const offeneO=wirksameEvents(kursEvents).filter(e=>e.typ==='fehlt_o').sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
-  let html='';
+  let html='<div class="s-suche"><input id="s-suche" type="text" placeholder="Schüler suchen …" autocomplete="off" enterkeyhint="search" value="'+esc(schuelerSuche)+'"></div>';
   // Zeitraum-Wähler (Quartalsansicht) — ein Tap statt Datumsgrenzen tippen
   if(sj&&sj.zeitraeume&&sj.zeitraeume.length){
     html+='<div class="zr-leiste"><button class="zr-chip'+(!zr?' an':'')+'" data-zr="">Gesamt</button>'+
@@ -834,7 +843,7 @@ function renderSchueler(){
     const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
     const offen=offenerSchueler===s.nr;
     const fInfo=(v.nFehltE||v.nFehltU||v.nFehltO||v.nVerweigert)?' · F '+v.nFehltE+'e/'+v.nFehltU+'u'+(v.nFehltO?'/'+v.nFehltO+'o':'')+(v.nVerweigert?' ⊘'+v.nVerweigert:''):'';
-    html+='<div class="s-block'+(offen?' offen':'')+'"><div class="s-item" data-nr="'+s.nr+'">'+
+    html+='<div class="s-block'+(offen?' offen':'')+'" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'"><div class="s-item" data-nr="'+s.nr+'">'+
       '<div class="u-minw104"><b>'+esc(s.vorname)+'</b> <small class="u-leise">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div>'+
       '<div class="u-flex1"><div class="balken"><div class="bal-p" data-w="'+(100*v.nPlus/sum)+'"></div><div class="bal-o" data-w="'+(100*v.nNull/sum)+'"></div><div class="bal-m" data-w="'+(100*v.nMinus/sum)+'"></div></div>'+
       '<small class="u-leise">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · '+Math.round(100*v.aktivQuote)+'% · '+v.pfeil+fInfo+'</small></div>'+
@@ -844,6 +853,9 @@ function renderSchueler(){
   }
   html+='</div>';
   wrap.innerHTML=html;
+  // Schüler-Suche: Live-Filter per hidden-Klasse (kein Re-Render → Fokus bleibt, iPad-Tastatur zu-fest)
+  const filterS=()=>{ const q=schuelerSuche.trim().toLowerCase(); wrap.querySelectorAll('.s-block').forEach(b=>b.classList.toggle('hidden', q && !(b.dataset.name||'').includes(q))); };
+  const suche=$('s-suche'); if(suche){ suche.oninput=e=>{ schuelerSuche=e.target.value; filterS(); }; filterS(); }
   // dynamische Balken-Breiten via CSSOM (CSP: Inline-Style-Attribute in HTML-Strings sind verboten)
   wrap.querySelectorAll('.balken [data-w]').forEach(d=>{ d.style.width=d.dataset.w+'%'; });
   wrap.querySelectorAll('[data-zr]').forEach(b=>b.onclick=()=>{ const id=b.dataset.zr; zeitraumFilter=id&&sj?sj.zeitraeume.find(z=>z.id===id):null; offenerSchueler=null; mitUebergang(renderSchueler); });
