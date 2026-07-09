@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783624318';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783624318';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783624318';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783624318';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783624318';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783624318';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783624318';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783624318';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783624318';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783624318';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783628172';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783628172';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783628172';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783628172';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783628172';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783628172';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783628172';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783628172';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783628172';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783628172';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -580,10 +580,10 @@ function renderHeute(){
   }
   plan.innerHTML=html;
   const ohnePlatz=sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr));
-  if(ohnePlatz.length){
+  if(ohnePlatz.length&&!editorAktiv){  // im Editor zeigt die Namen-Schiene dieselben Schüler — Panel wäre doppelt (Tag-Simulation L5)
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
     liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</button>').join('');
-    liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>schuelerBlatt(Number(b.dataset.nr)));
+    liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>{ const nr=Number(b.dataset.nr); if(stempelTyp) stempleKachel(nr); else schuelerBlatt(nr); });  // Stempel gilt auch ohne Sitzplatz (Tag-Simulation L1)
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
 $('plan').addEventListener('pointerup',e=>{
@@ -665,8 +665,10 @@ function renderRail(){
     tr(),
     mk('entfernen','⌫','breit'));
   const k=kurs(); let erfasst=0,total=0;
-  if(k){ const idx=tagesStandIndex(terminDatum); const sicht=sichtbareSchueler(k); total=sicht.length;
-    erfasst=sicht.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length; }
+  if(k){ const idx=tagesStandIndex(terminDatum); const sicht=sichtbareSchueler(k);
+    const da=sicht.filter(s=>!(idx.get(s.nr)||{}).fehlt);  // Abwesende nicht im Nenner: „komplett" = alle ANWESENDEN erfasst (Tag-Simulation L2)
+    total=da.length;
+    erfasst=da.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length; }
   const fill=el('div',{}); fill.style.width=(total?Math.round(erfasst/total*100):0)+'%';
   const komplett=total>0&&erfasst===total;  // alle erfasst → grünes „Stunde komplett"-Signal
   const erfasstKarte=el('div',{class:'rail-karte erfasst-karte'+(komplett?' komplett':'')},
@@ -1423,7 +1425,7 @@ function sitzplanEditor(kursId){
 
   // ── Pointer-Drag (Touch + Maus; HTML5-DnD ist auf iPad-Safari tot) ──
   let drag=null, justDragged=false;
-  function zielReset(){ plan.querySelectorAll('.kachel.ziel').forEach(z=>z.classList.remove('ziel')); trash.classList.remove('ziel'); }
+  function zielReset(){ plan.querySelectorAll('.kachel.ziel, .reihe-plus.ziel').forEach(z=>z.classList.remove('ziel')); trash.classList.remove('ziel'); }
   function onMove(e){
     if(!drag) return;
     if(!drag.moving){
@@ -1440,7 +1442,9 @@ function sitzplanEditor(kursId){
     drag.ghost.style.display='';
     zielReset();
     if(t&&t.closest('.sp-trash')) trash.classList.add('ziel');
-    else { const kach=t&&t.closest('.kachel'); if(kach&&plan.contains(kach)) kach.classList.add('ziel'); }
+    else { const plus=t&&t.closest('.reihe-plus');
+      if(plus&&plan.contains(plus)) plus.classList.add('ziel');  // Drop-zwischen: neue Reihe hier (Ghost-Punkt 2)
+      else { const kach=t&&t.closest('.kachel'); if(kach&&plan.contains(kach)) kach.classList.add('ziel'); } }
   }
   function onUp(e){
     if(!drag) return;
@@ -1454,6 +1458,15 @@ function sitzplanEditor(kursId){
     const g=sp().grid;
     if(t&&t.closest('.sp-trash')){
       if(d.vonKey){ delete g[d.vonKey]; stammMutiert(); speichern(); renderHeute(); renderRail(); toast('entfernt'); }
+      return;
+    }
+    const plus=t&&t.closest('.reihe-plus');
+    if(plus&&plan.contains(plus)){  // Drop auf ＋ zwischen den Reihen → neue Reihe dort, Schüler an der Finger-Spalte (Ghost-Punkt 2)
+      if(d.vonKey) delete g[d.vonKey];
+      const reihe=plan.querySelector('.plan-reihe'); let c=0;
+      if(reihe){ const rr=reihe.getBoundingClientRect(); c=Math.max(0,Math.min(11,Math.floor((e.clientX-rr.left)/(rr.width/12)))); }
+      reiheEinfuegen(Number(plus.dataset.vor),d.nr,c);
+      renderRail(); toast('Neue Reihe');
       return;
     }
     const kach=t&&t.closest('.kachel');
@@ -1498,9 +1511,10 @@ function sitzplanEditor(kursId){
         setTimeout(()=>elx.querySelector('#s-such').focus(),60);
       });
   }
-  function reiheEinfuegen(vorR){  // Ghost-＋: alle Reihen ab vorR um +1 schieben → leere Reihe entsteht bei vorR (Nr bleibt, nur Position)
+  function reiheEinfuegen(vorR,dropNr,dropC){  // Ghost-＋: Reihen ab vorR um +1 schieben → leere Reihe bei vorR; optional Schüler direkt hineindroppen
     const g=sp().grid, neu={};
     for(const key in g){ const [r,c]=key.split(',').map(Number); neu[(r>=vorR?r+1:r)+','+c]=g[key]; }
+    if(dropNr!=null) neu[vorR+','+dropC]=dropNr;
     vault.stamm.sitzplaene[k.id].grid=neu; stammMutiert(); speichern(); renderHeute();
   }
   function kompaktiere(){  // leere Reihen raus, r-Werte neu durchnummerieren (0,1,2…) — Nr bleibt der Anker, nur die Position ändert sich

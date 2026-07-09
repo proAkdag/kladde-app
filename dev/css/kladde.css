@@ -121,8 +121,10 @@
   #plan-wrap { overflow: auto; }
   #plan { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 600px; }
   .plan-reihe { display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px; }
-  .reihe-plus { width: 100%; min-height: 20px; padding: 2px; border: 1px dashed transparent; background: transparent; color: var(--leise); cursor: pointer; font-size: 15px; line-height: 1; opacity: .4; border-radius: 6px; }
+  .reihe-plus { width: 100%; min-height: 22px; padding: 2px; border: 1px dashed transparent; background: transparent; color: var(--leise); cursor: pointer; font-size: 15px; line-height: 1; opacity: .4; border-radius: 6px; }
   .reihe-plus:hover { opacity: 1; background: var(--karte2); border-color: var(--kante); }
+  body.sp-dragging .reihe-plus { opacity: .8; border-color: var(--kante); }  /* Drop-Zonen beim Ziehen sichtbar */
+  .reihe-plus.ziel { opacity: 1; border-color: var(--band); color: var(--band); background: var(--karte2); }
   #plan .kachel {
     aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
     display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
@@ -522,6 +524,8 @@
   }
   .rail-btn.breit { width: 100%; flex: none; }
   .rail-btn svg { width: 19px; height: 19px; }
+  /* iPad: Long-Press-Callout/Text-Selection/Doppeltipp-Zoom unterdrücken (Rail-Long-Press-Label + Stempel-Serien) */
+  .rail-btn, #plan .kachel { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
   .rail-btn.an { background: var(--band); border-color: var(--band); color: var(--auf-band); }
   .rail-btn.plus.an { background: var(--gut); border-color: var(--gut); color: var(--auf-pos); }
   .rail-btn.minus.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
