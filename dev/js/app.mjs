@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783617229';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783617229';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783617229';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783617229';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783617229';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783617229';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783617229';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783617229';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783617229';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783617229';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783620293';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783620293';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783620293';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783620293';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783620293';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783620293';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783620293';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783620293';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783620293';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783620293';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -578,6 +578,7 @@ function stempleKachel(nr){
   if(stempelTyp==='verweigert'){ verweigerungDialog(s); return; }  // 6 mit gekoppelter Kurznotiz
   if(stempelTyp==='versp'){ verspDialog(s); return; }              // Minuten-Abfrage je Schüler
   if(stempelTyp==='notiz'){ notizDialog(s); return; }              // Kurznotiz je Schüler
+  if(stempelTyp==='note'){ noteDialog(s); return; }                // Notenauswahl je Schüler (Rail-2×2-Feld 📊)
   if(stempelTyp==='entfernen'){ entferneLetzten(nr); pulseKachel(nr); return; } // schnelle Korrektur im Stempelfluss
   addEvent(stempelTyp,nr);        // +/o/−/∅/e/u/📱/📕 direkt · landet im Undo-Stapel (LIFO)
   renderHeute();                  // Zähler + Kachel-Symbole aktualisieren
@@ -606,7 +607,7 @@ function verweigerungDialog(s){
 }
 /* ═══ PERMANENTE STEMPEL-RAIL (v2) · Werkzeug-in-die-Hand-Paradigma (Zero-Wunsch) ═══
    Stempel wählen → Kacheln antippen. Löst das alte „Schüler wählen → dann eintragen" ab. */
-const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','notiz':'Notiz','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
+const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','note':'Direkte Note','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','notiz':'Notiz','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
 function setStempel(typ){
   stempelTyp=(stempelTyp===typ)?null:typ; // gleichen Stempel nochmal antippen → aus
   document.body.classList.toggle('stempeln',stempelTyp!==null);
@@ -617,11 +618,19 @@ function setStempel(typ){
 function stempelAus(){ stempelTyp=null; document.body.classList.remove('stempeln','st-plus','st-minus'); } // Verlassen von „Heute"
 function renderRail(){
   const rail=$('rail'); if(!rail) return;
-  const mk=(typ,txt,cls)=>el('button',{class:'rail-btn'+(cls?' '+cls:'')+(stempelTyp===typ?' an':''),title:RAIL_TITEL[typ]||'',onclick:()=>setStempel(typ)},txt);
+  // Long-Press zeigt das Label (Touch hat keine Tooltips) — lpFired unterdrückt dann den Stempel-Klick
+  const mk=(typ,txt,cls)=>{
+    let lpTimer, lpFired=false;
+    const start=()=>{ lpFired=false; lpTimer=setTimeout(()=>{ lpFired=true; toast(RAIL_TITEL[typ]||typ); },450); };
+    const stop=()=>clearTimeout(lpTimer);
+    return el('button',{class:'rail-btn'+(cls?' '+cls:'')+(stempelTyp===typ?' an':''),title:RAIL_TITEL[typ]||'',
+      onclick:()=>{ if(lpFired){ lpFired=false; return; } setStempel(typ); },
+      onpointerdown:start, onpointerup:stop, onpointerleave:stop, onpointercancel:stop},txt);
+  };
   const tr=()=>el('div',{class:'rail-trenner'});
   const stempelKarte=el('div',{class:'rail-karte'},
     el('div',{class:'rail-titel'},'Stempel'),
-    el('div',{class:'rail-gruppe'}, mk('+','＋','plus'), mk('o','o'), mk('-','−','minus')),
+    el('div',{class:'rail-gruppe raster2'}, mk('+','＋','plus'), mk('o','o'), mk('-','−','minus'), mk('note','📊')),
     tr(),
     el('div',{class:'rail-gruppe raster2'}, mk('fehlt_o','∅'), mk('fehlt_e','✓'), mk('fehlt_u','✗'), mk('versp','⏰')),
     tr(),
@@ -634,11 +643,12 @@ function renderRail(){
   if(k){ const idx=tagesStandIndex(terminDatum); const sicht=sichtbareSchueler(k); total=sicht.length;
     erfasst=sicht.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length; }
   const fill=el('div',{}); fill.style.width=(total?Math.round(erfasst/total*100):0)+'%';
-  const erfasstKarte=el('div',{class:'rail-karte'},
+  const komplett=total>0&&erfasst===total;  // alle erfasst → grünes „Stunde komplett"-Signal
+  const erfasstKarte=el('div',{class:'rail-karte'+(komplett?' komplett':'')},
     el('div',{class:'rail-titel'},'Erfasst'),
     el('div',{class:'rail-erfasst-zahl'}, String(erfasst), el('small',{},' / '+total)),
     el('div',{class:'rail-bar'}, fill));
-  rail.replaceChildren(stempelKarte, erfasstKarte);
+  rail.replaceChildren(erfasstKarte, stempelKarte);  // Erfasst oben (auf Höhe der Datums-Leiste), Stempel darunter
 }
 function pulseKachel(nr){
   const k=$('plan').querySelector('.kachel[data-nr="'+nr+'"]'); if(!k) return;
@@ -1190,7 +1200,7 @@ function schuelerPflegeDialog(kursId){
     const hatEv=vault.events.some(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.typ!=='storno');
     dlgZeigenEl(
       el('h3',{},'Entfernen?'),
-      el('p',{class:'u-hinweis'},esc(s.vorname)+' '+esc(s.name)+' (Nr '+s.nr+') aus der Teilnehmerliste nehmen?'+(hatEv?' Es gibt schon Einträge — die bleiben im Log (bei erneutem Hinzufügen derselben Nr erscheinen sie wieder).':'')),
+      el('p',{class:'u-hinweis'},esc(s.vorname)+' '+esc(s.name)+' aus der Teilnehmerliste nehmen?'+(hatEv?' Es gibt schon Einträge — die bleiben im Log. Die Nr wird frei; wird sie später neu vergeben, erscheinen die alten Einträge wieder.':'')),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn gefahr',onclick:()=>{
           vault.stamm.schueler[k.id]=(vault.stamm.schueler[k.id]||[]).filter(x=>x.nr!==s.nr);
@@ -1200,30 +1210,28 @@ function schuelerPflegeDialog(kursId){
         el('button',{class:'btn still',onclick:zeige},'Abbrechen')));
   };
   const zeige=()=>{
-    const arr=(vault.stamm.schueler[k.id]||[]).slice().sort((a,b)=>a.nr-b.nr);
+    // Anzeige alphabetisch nach Nachname; die Nr bleibt intern der feste Anker (Events/Sitzplan/Sync/Excel-Zeile)
+    const arr=(vault.stamm.schueler[k.id]||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','de')||(a.vorname||'').localeCompare(b.vorname||'','de'));
     const zeilen=arr.length?arr.map(s=>el('div',{class:'zeile'},
-      el('span',{},s.nr+' · '+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')),
+      el('span',{},esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':''),el('small',{class:'u-leise'},' · Nr '+s.nr)),
       el('button',{class:'btn gefahr u-btn-klein',title:'Entfernen',onclick:()=>entferne(s)},'🗑'))):[el('p',{class:'u-leise'},'Noch keine Schüler.')];
-    const nrIn=el('input',{type:'number',min:'1',max:'32',value:String(freieNr()),class:'u-w110'});
     const vnIn=el('input',{type:'text',placeholder:'Vorname',class:'u-w130'});
     const nnIn=el('input',{type:'text',placeholder:'Nachname',class:'u-w130'});
     const lbIn=el('input',{type:'checkbox',class:'u-check'});
     const hinzu=()=>{
-      const nr=parseInt(nrIn.value,10), vorname=vnIn.value.trim(), name=nnIn.value.trim();
-      if(!(nr>=1&&nr<=32)){ toast('Nr muss 1–32 sein'); return; }
+      const vorname=vnIn.value.trim(), name=nnIn.value.trim();
       if(!vorname&&!name){ toast('Name fehlt'); return; }
       const list=vault.stamm.schueler[k.id]=vault.stamm.schueler[k.id]||[];
-      if(list.some(s=>s.nr===nr)){ toast('Nr '+nr+' ist schon vergeben'); return; }
-      list.push({nr,name,vorname,lb:lbIn.checked}); list.sort((a,b)=>a.nr-b.nr);
+      if(list.length>=32){ toast('Max 32 Schüler (Mappen-Grenze)'); return; }
+      list.push({nr:freieNr(),name,vorname,lb:lbIn.checked}); list.sort((a,b)=>a.nr-b.nr);
       stammMutiert(); speichern(); toast('Hinzugefügt: '+(vorname||name)); zeige();
     };
     dlgZeigenEl(
       el('h3',{},'Teilnehmer · '+esc(k.name)),
-      el('p',{class:'u-hinweis'},arr.length+' Schüler · Nr 1–32 (Mappen-Grenze). Reihenfolge = Excel-Mappe.'),
+      el('p',{class:'u-hinweis'},arr.length+' Schüler · alphabetisch nach Nachname · die Nr vergibt das System (max 32).'),
       el('div',{class:'u-scroll30'},...zeilen),
       el('div',{class:'tag-gruppe'},
         el('div',{class:'tag-kopf'},'Hinzufügen'),
-        el('div',{class:'zeile'},el('span',{},'Nr'),nrIn),
         el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
         el('div',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
         el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:hinzu},'＋ Hinzufügen'))),

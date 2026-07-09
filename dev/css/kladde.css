@@ -528,6 +528,8 @@
   .rail-erfasst-zahl small { color: var(--leise); font-size: 14px; }
   .rail-bar { height: 6px; background: var(--kante); border-radius: 4px; overflow: hidden; margin-top: 7px; }
   .rail-bar > div { height: 100%; background: var(--gut); border-radius: 4px; }
+  .rail-karte.komplett { border-color: var(--gut); }  /* alle erfasst → grünes Stunde-komplett-Signal */
+  .rail-karte.komplett .rail-erfasst-zahl { color: var(--gut); }
 
   /* <1200 px: Sidebar auf Icon-Rail (Budget iPad 8 quer 1080) */
   @media (max-width: 1199px) {
