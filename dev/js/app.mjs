@@ -1,16 +1,16 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.1.1.1783552485';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.1.1.1783552485';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.1.1.1783552485';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.1.1.1783552485';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.1.1.1783552485';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.1.1.1783552485';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.1.1.1783552485';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.1.1.1783552485';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.1.1.1783552485';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.1.1.1783552485';
-const APP_VERSION = '1.1.1';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783575500';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783575500';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783575500';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783575500';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783575500';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783575500';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783575500';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783575500';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783575500';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783575500';
+const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -145,7 +145,6 @@ function sperren(){
   if(editorCleanup){ try{ editorCleanup(); }catch{} } // Sitzplan-Editor-Leiste + Listener räumen
   try{ dlgZu(); }catch{}
   $('dlg').innerHTML='';
-  $('aktionsbar').classList.add('hidden');
   $('undo-chip').classList.add('hidden');
   $('soft-lock').classList.add('hidden');
   lockInit();
@@ -194,12 +193,6 @@ let aktiverKursId=null, terminDatum=heuteIso(), aktiverSchueler=null, undoStack=
 function heuteIso(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function kurs(){ return vault?.stamm.kurse.find(k=>k.id===aktiverKursId)||null; }
 function kursSchueler(k){ return (vault.stamm.schueler[k.id]||[]); }
-function profilTypen(k){
-  const p=vault.stamm.kursprofile[k.id]||{};
-  const basis=['+','o','-','mat','ipad_fehlt','ipad_leer','lernzeit'];
-  if(p.ha) basis.push('ha');
-  return basis;
-}
 // Bewertungs-Modus: bildet die 3 Fälle (Sek I=Drittel · Sek II=Punkte · Sek II=Drittel)
 // auf die getestete 2-Wege-Logik ab — Sek-II-Drittel rechnet wie Sek I (Drittelnoten 1–6).
 function bewertProfil(k){ return (k&&k.profil==='sek2'&&(k.notenmodus||'punkte')!=='drittel')?'sek2':'sek1'; }
@@ -219,10 +212,6 @@ function stornoVon(e){
 }
 const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
 // Kompaktes Symbol eines Eintrags (für die entfernbaren Heute-Chips in der Aktionsbar)
-function markSymbol(e){
-  return ({'+':'＋','o':'o','-':'−',mat:'📕',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA',notiz:'✎',
-    versp:'⏰'+(e.minuten||'')+'′',note:'📊'+(e.wert!=null?e.wert:''),fehlt_o:'abw',fehlt_e:'e',fehlt_u:'u',verweigert:'⊘',quartalsnote:'Q'})[e.typ]||e.typ;
-}
 function zeigeUndo(e){
   const chip=$('undo-chip');
   const s=schuelerVonNr(e.schuelerNr);
@@ -375,6 +364,21 @@ function oeffneDatum(){
 $('btn-beamer').addEventListener('click',()=>setzeBeamer(!beamerModus));
 $('beamer-opt').addEventListener('click',beamerOptionenSheet);
 
+/* ═══ THEME · Tag/Nacht/System · Default Nacht (Zero-Entscheid E1) ═══ */
+const THEME_KEY='kladde_theme';
+const themePref=()=>{ const t=localStorage.getItem(THEME_KEY); return (t==='tag'||t==='nacht'||t==='system')?t:'nacht'; };
+const themeHell=()=>matchMedia('(prefers-color-scheme: light)').matches;
+const themeEff=()=>{ const p=themePref(); return p==='system'?(themeHell()?'tag':'nacht'):p; };
+function themeAnwenden(){
+  const eff=themeEff();
+  document.documentElement.dataset.theme=eff;
+  const mc=document.querySelector('meta[name="theme-color"]'); if(mc) mc.content=eff==='tag'?'#F4F0E7':'#17150F';
+  const b=$('btn-theme'); if(b){ b.textContent=eff==='tag'?'☀':'🌙'; b.title='Ansicht: '+(themePref()==='system'?'System (folgt Gerät)':eff==='tag'?'Tag':'Nacht'); }
+}
+$('btn-theme')?.addEventListener('click',()=>{ localStorage.setItem(THEME_KEY, themeEff()==='tag'?'nacht':'tag'); themeAnwenden(); });
+matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{ if(themePref()==='system') themeAnwenden(); });
+themeAnwenden();
+
 /* ═══ SICHERE DOM-ERZEUGUNG (P1.7 · Migrationsregel: neue Views nutzen el(), Bestand esc()) ═══ */
 // el('div', {class:'zeile', onclick:fn}, 'Text', kindEl, …) — Kinder IMMER via textContent/append,
 // nie HTML-Parsing: Schülernamen/Notizen können strukturell kein Markup einschleusen.
@@ -410,11 +414,14 @@ function dlgZeigenEl(...knoten){
 
 /* ═══ VIEWS / TABS (replaceState-only — Edge-Swipe-Doktrin) ═══ */
 let aktView='heute';
-document.querySelector('nav.tabs').addEventListener('click',e=>{
+const VIEW_TITEL={heute:['Heute','Sitzplan · live erfassen'],deck:['Deck','Klasse zügig durchgehen'],schueler:['Schüler','Verläufe, Notizen & Details'],kurse:['Kurse','Klassen verwalten'],mehr:['Mehr','Einstellungen & Sicherung']};
+function setzeViewTitel(v){ const t=VIEW_TITEL[v]||['','']; $('view-titel').textContent=t[0]; $('view-sub').textContent=t[1]; }
+document.getElementById('hauptnav').addEventListener('click',e=>{
   const b=e.target.closest('button[data-view]'); if(!b||b.dataset.view===aktView) return;
   aktView=b.dataset.view;
-  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x===b));
-  $('aktionsbar').classList.add('hidden'); aktiverSchueler=null; stempelAus(); // Stempelmodus lebt nur in „Heute"
+  document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x===b));
+  aktiverSchueler=null; stempelAus(); // Stempelmodus lebt nur in „Heute"
+  setzeViewTitel(aktView);
   mitUebergang(()=>{
     ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==aktView));
     renderAlles();
@@ -459,24 +466,21 @@ function sichtbareSchueler(k){
   if(aktiveTeilgruppe) liste=liste.filter(s=>(s.gruppe||'')===aktiveTeilgruppe);
   return liste;
 }
-function datumStreifen(erfasst,total){
+function datumStreifen(){
   const el=$('datum-streifen'); if(!kurs()){ el.innerHTML=''; el.className=''; return; }
   const heute=heuteIso(), istHeute=terminDatum===heute;
   el.className='datum-streifen'+(istHeute?'':' nachtrag');
-  const zaehler=total?'<span class="erf-zaehler" title="heute mit +/o/− erfasst">'+erfasst+'/'+total+'</span>':'';
   const jetztText=(istHeute&&autowahlInfo)
     ?'Jetzt · '+datumLabel(terminDatum)+' · '+formatZeit(autowahlInfo.startSek)+'–'+formatZeit(autowahlInfo.endeSek)+(autowahlInfo.quelle==='kommend'?' (gleich)':'')
     :(istHeute?'Heute':'Nachtrag')+' · '+datumLabel(terminDatum);
   el.innerHTML='<span class="heute-tag">'+jetztText+'</span>'+
-    (istHeute?zaehler:'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+
+    (istHeute?'':'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+
     '<span class="rechts">'+
     (istHeute?'':'<button data-heute>↩ Heute</button>')+
-    '<button data-stempeln'+(stempelBarOffen?' class="aktiv"':'')+' title="Stempelmodus: schnell serienweise bewerten">✋</button>'+
     '<button data-zufall title="Zufällig – bevorzugt wer noch selten dran war">🎲</button>'+
     '<button data-legende title="Symbol-Legende">?</button>'+
     '<button data-datum title="Anderer Termin (Nachtrag)">📅</button></span>';
   el.querySelector('[data-datum]').onclick=oeffneDatum;
-  el.querySelector('[data-stempeln]').onclick=toggleStempelBar;
   el.querySelector('[data-zufall]').onclick=zufallsSchueler;
   el.querySelector('[data-legende]').onclick=zeigeLegende;
   const bh=el.querySelector('[data-heute]'); if(bh) bh.onclick=()=>{ terminDatum=heute; mitUebergang(renderHeute); };
@@ -491,7 +495,7 @@ function zufallsSchueler(){
   const s=gewichteteWahl(pool,ss=>{ const st=info.get(ss.nr); return zufallsGewicht(st.plus+st.neutral+st.minus+(st.note!=null?1:0)); });
   if(!s) return;
   aktiverSchueler=s.nr;
-  renderHeute(); renderAktionsbar();
+  renderHeute();
   const kachel=$('plan').querySelector('.kachel[data-nr="'+s.nr+'"]');
   if(kachel) kachel.scrollIntoView({block:'center',behavior:'smooth'});
   toast('🎲 '+anzeigeVorname(s)+' '+anzeigeNachname(s));
@@ -525,12 +529,11 @@ function kachelHtml(s,st){
 function renderHeute(){
   const k=kurs(); const plan=$('plan');
   plan.classList.toggle('editor',editorAktiv);
-  if(!k){ datumStreifen(0,0); $('heute-leer').classList.remove('hidden'); plan.innerHTML=''; return; }
+  if(!k){ datumStreifen(); renderRail(); $('heute-leer').classList.remove('hidden'); plan.innerHTML=''; return; }
   $('heute-leer').classList.add('hidden');
   const idx=tagesStandIndex(terminDatum);
   const sichtSchueler=sichtbareSchueler(k);
-  const erfasst=sichtSchueler.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length;
-  datumStreifen(erfasst,sichtSchueler.length);
+  datumStreifen(); renderRail();
   const grid=(vault.stamm.sitzplaene[k.id]||{}).grid||{};
   plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv);
   const sichtbar=new Set(sichtSchueler.map(s=>s.nr));
@@ -546,25 +549,28 @@ function renderHeute(){
   if(ohnePlatz.length){
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
     liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</button>').join('');
-    liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>waehleSchueler(Number(b.dataset.nr)));
+    liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>schuelerBlatt(Number(b.dataset.nr)));
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
 $('plan').addEventListener('pointerup',e=>{
   const kachel=e.target.closest('.kachel.schueler'); if(!kachel) return;
   if(editorAktiv||$('plan').classList.contains('editor')) return;
   const nr=Number(kachel.dataset.nr);
-  if(stempelTyp){ stempleKachel(nr); return; }   // Serien-Stempel: direkt setzen, kein Dialog
+  if(stempelTyp){ stempleKachel(nr); return; }   // Stempel scharf: direkt setzen, kein Dialog
   if(busy) return;
-  waehleSchueler(nr);
+  schuelerBlatt(nr);   // leere Hand = anschauen (Detail-Blatt · Master-Detail)
 });
 // P4.5 · Serien-Stempel: eine Kachel bekommt den scharfen Stempel. Pro Kachel ~80 ms Sperre,
 // damit ein Wischen nicht doppelt zählt — aber verschiedene Kacheln bleiben frei (kein globaler Lock).
 function stempleKachel(nr){
   if(stempelCooldown.has(nr)) return;
   stempelCooldown.add(nr); setTimeout(()=>stempelCooldown.delete(nr),80);
-  if(stempelTyp==='verweigert'){ verweigerungDialog(schuelerVonNr(nr)); return; } // 6 mit gekoppelter Kurznotiz
+  const s=schuelerVonNr(nr);
+  if(stempelTyp==='verweigert'){ verweigerungDialog(s); return; }  // 6 mit gekoppelter Kurznotiz
+  if(stempelTyp==='versp'){ verspDialog(s); return; }              // Minuten-Abfrage je Schüler
+  if(stempelTyp==='notiz'){ notizDialog(s); return; }              // Kurznotiz je Schüler
   if(stempelTyp==='entfernen'){ entferneLetzten(nr); pulseKachel(nr); return; } // schnelle Korrektur im Stempelfluss
-  addEvent(stempelTyp,nr);        // landet wie jeder Eintrag im Undo-Stapel (LIFO)
+  addEvent(stempelTyp,nr);        // +/o/−/∅/e/u/📱/📕 direkt · landet im Undo-Stapel (LIFO)
   renderHeute();                  // Zähler + Kachel-Symbole aktualisieren
   pulseKachel(nr);
 }
@@ -589,68 +595,60 @@ function verweigerungDialog(s){
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
-let stempelBarOffen=false;
-function toggleStempelBar(){
-  stempelBarOffen=!stempelBarOffen;
-  if(!stempelBarOffen) setStempel(null);
-  $('stempel-bar').classList.toggle('hidden',!stempelBarOffen);
-  renderStempelBar();
-  renderHeute(); // Datums-Streifen: Button-Zustand
-}
-function stempelAus(){ stempelBarOffen=false; setStempel(null); $('stempel-bar').classList.add('hidden'); }
+/* ═══ PERMANENTE STEMPEL-RAIL (v2) · Werkzeug-in-die-Hand-Paradigma (Zero-Wunsch) ═══
+   Stempel wählen → Kacheln antippen. Löst das alte „Schüler wählen → dann eintragen" ab. */
+const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','notiz':'Notiz','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
 function setStempel(typ){
   stempelTyp=(stempelTyp===typ)?null:typ; // gleichen Stempel nochmal antippen → aus
   document.body.classList.toggle('stempeln',stempelTyp!==null);
   document.body.classList.toggle('st-plus',stempelTyp==='+');
   document.body.classList.toggle('st-minus',stempelTyp==='-'||stempelTyp==='entfernen');
-  if(stempelTyp!==null){ aktiverSchueler=null; $('aktionsbar').classList.add('hidden'); }
-  renderStempelBar();
+  renderRail();
 }
-function renderStempelBar(){
-  const bar=$('stempel-bar');
-  if(!stempelBarOffen){ bar.replaceChildren(); return; }
-  const stamps=[['+','＋','plus'],['o','o','neutral'],['-','−','minus'],['fehlt_o','abwesend','fehlt'],['verweigert','⊘','verw'],['entfernen','↩','entf']];
-  const label=el('span',{class:'st-label'}, stempelTyp?'→ Kachel antippen':'Stempel wählen:');
-  const btns=stamps.map(([typ,txt,cls])=>el('button',{class:'st-btn '+cls+(stempelTyp===typ?' an':''),onclick:()=>setStempel(typ)},txt));
-  bar.replaceChildren(label,...btns,el('button',{class:'st-btn st-zu',onclick:toggleStempelBar},'fertig'));
-}
-function waehleSchueler(nr){
-  aktiverSchueler=nr;
-  renderHeute(); renderAktionsbar();
+function stempelAus(){ stempelTyp=null; document.body.classList.remove('stempeln','st-plus','st-minus'); } // Verlassen von „Heute"
+function renderRail(){
+  const rail=$('rail'); if(!rail) return;
+  const mk=(typ,txt,cls)=>el('button',{class:'rail-btn'+(cls?' '+cls:'')+(stempelTyp===typ?' an':''),title:RAIL_TITEL[typ]||'',onclick:()=>setStempel(typ)},txt);
+  const tr=()=>el('div',{class:'rail-trenner'});
+  const stempelKarte=el('div',{class:'rail-karte'},
+    el('div',{class:'rail-titel'},'Stempel'),
+    el('div',{class:'rail-gruppe'}, mk('+','＋','plus'), mk('o','o'), mk('-','−','minus')),
+    tr(),
+    el('div',{class:'rail-gruppe'}, mk('fehlt_o','∅'), mk('fehlt_e','✓'), mk('fehlt_u','✗'), mk('versp','⏰')),
+    tr(),
+    el('div',{class:'rail-gruppe'}, mk('ipad_fehlt','📱'), mk('mat','📕')),
+    tr(),
+    el('div',{class:'rail-gruppe'}, mk('notiz','✎'), mk('verweigert','⊘','verw')),
+    tr(),
+    mk('entfernen','⌫','breit'));
+  const k=kurs(); let erfasst=0,total=0;
+  if(k){ const idx=tagesStandIndex(terminDatum); const sicht=sichtbareSchueler(k); total=sicht.length;
+    erfasst=sicht.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length; }
+  const fill=el('div',{}); fill.style.width=(total?Math.round(erfasst/total*100):0)+'%';
+  const erfasstKarte=el('div',{class:'rail-karte'},
+    el('div',{class:'rail-titel'},'Erfasst'),
+    el('div',{class:'rail-erfasst-zahl'}, String(erfasst), el('small',{},' / '+total)),
+    el('div',{class:'rail-bar'}, fill));
+  rail.replaceChildren(stempelKarte, erfasstKarte);
 }
 function pulseKachel(nr){
   const k=$('plan').querySelector('.kachel[data-nr="'+nr+'"]'); if(!k) return;
   k.classList.remove('puls'); void k.offsetWidth; k.classList.add('puls'); // Reflow-Re-Trigger (Werft flash_animation)
 }
-function renderAktionsbar(){
-  const k=kurs(); const bar=$('aktionsbar');
-  if(!k||aktiverSchueler===null){ bar.classList.add('hidden'); return; }
-  const s=schuelerVonNr(aktiverSchueler); if(!s){ bar.classList.add('hidden'); return; }
-  const typen=profilTypen(k);
-  let html='<span class="wer">'+esc(anzeigeVorname(s))+'</span>';
-  for(const t of typen){
-    const cls=t==='+'?' class="plus"':t==='-'?' class="minus"':'';
-    html+='<button'+cls+' data-typ="'+t+'">'+({'+':'＋','o':'o','-':'−',mat:'📕',ipad_fehlt:'📱∅',ipad_leer:'🔋',lernzeit:'📝',ha:'HA'}[t]||t)+'</button>';
-  }
-  // Heutige Einträge dieses Schülers als entfernbare Chips (direkter Weg statt Detail-Blatt)
-  const heuteEvs=wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote').sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
-  if(heuteEvs.length){ html+='<span class="ab-sep"></span>';
-    for(const e of heuteEvs) html+='<button class="ab-entf" data-entf="'+e.id+'" title="tippen zum Entfernen">'+esc(markSymbol(e))+'<span class="x">✕</span></button>'; }
-  html+='<button data-blatt title="Verlauf ansehen">📖</button><button data-mehr>…</button><button data-zu>✕</button>';
-  bar.innerHTML=html; bar.classList.remove('hidden');
-  bar.querySelectorAll('[data-typ]').forEach(b=>b.onclick=()=>{
-    if(busy) return; busy=true;
-    const nr=aktiverSchueler;
-    addEvent(b.dataset.typ,nr);
-    setTimeout(()=>{ busy=false; },220);
-    renderHeute();
-    renderAktionsbar(); // Entfernen-Chip des neuen Eintrags sofort anzeigen (direkte Korrektur)
-    pulseKachel(nr);
-  });
-  bar.querySelector('[data-zu]').onclick=()=>{ aktiverSchueler=null; bar.classList.add('hidden'); renderHeute(); };
-  bar.querySelector('[data-mehr]').onclick=()=>zeigeMehrAktionen(s);
-  bar.querySelector('[data-blatt]').onclick=()=>schuelerBlatt(aktiverSchueler);
-  bar.querySelectorAll('[data-entf]').forEach(b=>b.onclick=()=>{ const e=vault.events.find(x=>x.id===b.dataset.entf); if(e){ stornoVon(e); toast('entfernt: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); renderAktionsbar(); pulseKachel(s.nr); } });
+// Per-Schüler-Dialoge — aus dem Stempelfluss (⏰/✎) ODER dem „…"-Menü des Detail-Blatts erreichbar.
+function verspDialog(s){ if(!s) return;
+  dlgZeigen('<h3>Verspätung · '+esc(s.vorname)+'</h3><input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="67"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); renderHeute(); } dlgZu(); }; setTimeout(()=>d.querySelector('#min-in').focus(),60); });
+}
+function notizDialog(s){ if(!s) return;
+  dlgZeigen('<h3>Notiz · '+esc(s.vorname)+'</h3><textarea id="notiz-in" rows="3" class="u-textarea u-fs16"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt){ addEvent('notiz',s.nr,{notiz:txt}); toast('Notiz gespeichert · '+esc(s.vorname)); renderHeute(); } dlgZu(); }; setTimeout(()=>d.querySelector('#notiz-in').focus(),60); });
+}
+function noteDialog(s){ if(!s) return;
+  const k=kurs(); const sek2=bewertProfil(k)==='sek2';
+  const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
+  dlgZeigen('<h3>Direkte Note · '+esc(s.vorname)+'</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); toast('Note eingetragen · '+esc(s.vorname)); renderHeute(); dlgZu(); }; });
 }
 function zeigeMehrAktionen(s){
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3>'+
@@ -667,18 +665,10 @@ function zeigeMehrAktionen(s){
     el=>{
       el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
         const t=b.dataset.t; dlgZu();
-        if(t==='versp'){
-          dlgZeigen('<h3>Verspätung</h3><input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="67"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-            d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); } dlgZu(); }; });
-        } else if(t==='note'){
-          const k=kurs(); const sek2=bewertProfil(k)==='sek2';
-          const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
-          dlgZeigen('<h3>Direkte Note</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-            d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); dlgZu(); }; });
-        } else if(t==='notiz'){
-          dlgZeigen('<h3>Notiz</h3><textarea id="notiz-in" rows="3" class="u-textarea"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-            d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); }; });
-        } else if(t==='verweigert'){ verweigerungDialog(s); }
+        if(t==='versp') verspDialog(s);
+        else if(t==='note') noteDialog(s);
+        else if(t==='notiz') notizDialog(s);
+        else if(t==='verweigert') verweigerungDialog(s);
         else { addEvent(t,s.nr); renderHeute(); }
       });
     });
@@ -689,8 +679,9 @@ function schuelerBlatt(nr){
   const k=kurs(); const s=schuelerVonNr(nr); if(!k||!s) return;
   const v=verdichte(vault.events.filter(e=>e.kursId===k.id),nr,{profil:bewertProfil(k),lb:s.lb});
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</h3>'+schuelerDetailHtml(s,k,v)+
-    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
+    '<div class="btn-reihe"><button class="btn still" data-akt>＋ Eintrag hinzufügen …</button><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
+      el.querySelector('[data-akt]').onclick=()=>{ dlgZu(); zeigeMehrAktionen(s); };
       el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e){ stornoVon(e); toast('storniert'); dlgZu(); renderHeute(); schuelerBlatt(nr); } });
       el.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); dlgZu(); setzeQuartalsnote(s,v.vorschlag); });
     });
@@ -1130,7 +1121,7 @@ function renderKurse(){
   $('btn-stundenplan').onclick=stundenplanAssistent;
   $('btn-schuljahr').onclick=schuljahrAssistent;
   wrap.querySelectorAll('[data-archiv]').forEach(b=>b.onclick=()=>archiviereKurs(b.dataset.archiv));
-  wrap.querySelectorAll('[data-oeffnen]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.oeffnen; aktualisiereKursChip(); aktView='schueler'; document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='schueler')); ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='schueler')); renderSchueler(); toast('Archiv-Kurs (schreibgeschützt)'); });
+  wrap.querySelectorAll('[data-oeffnen]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.oeffnen; aktualisiereKursChip(); aktView='schueler'; document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='schueler')); setzeViewTitel('schueler'); ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='schueler')); renderSchueler(); toast('Archiv-Kurs (schreibgeschützt)'); });
   wrap.querySelectorAll('[data-loeschen]').forEach(b=>b.onclick=()=>loescheKursEndgueltig(b.dataset.loeschen));
   $('btn-import-kurs').onclick=()=>$('file-kurs').click();
   $('file-kurs').onchange=async e=>{
@@ -1278,7 +1269,7 @@ function sitzplanEditor(kursId){
   if(editorCleanup){ try{ editorCleanup(); }catch{} }
   aktiverKursId=kursId; aktualisiereKursChip();
   aktView='heute';
-  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute'));
+  document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute')); setzeViewTitel('heute');
   ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='heute'));
   editorAktiv=true;
   document.body.classList.add('sp-edit');
@@ -1438,29 +1429,35 @@ function stundenplanAssistent(){
 
   // ── Schritt 1: Zeitraster + Live-Vorschau (= resolveBloecke, kann nicht driften) ──
   function renderS1(){
-    const setNum=(feld,wert)=>{ zm[feld]=wert; renderVorschau(); };
     const startInput=el('input',{type:'time',value:formatZeit(zm.startSekunden),class:'u-w130',
-      oninput:e=>{ const [h,m]=e.target.value.split(':').map(Number); if(!isNaN(h)){ zm.startSekunden=h*3600+m*60; renderVorschau(); } }});
+      oninput:e=>{ const [h,m]=e.target.value.split(':').map(Number); if(!isNaN(h)){ zm.startSekunden=h*3600+m*60; nurVorschau(); } }});
     const dauerInput=el('input',{type:'number',value:String(zm.dauerSekunden/60),min:'20',max:'120',step:'0.5',class:'u-w110',
-      oninput:e=>{ const v=parseFloat(e.target.value.replace(',','.')); if(v>0) setNum('dauerSekunden',Math.round(v*60)); }});
+      oninput:e=>{ const v=parseFloat(e.target.value.replace(',','.')); if(v>0){ zm.dauerSekunden=Math.round(v*60); nurVorschau(); } }});
     const blockInput=el('input',{type:'number',value:String(zm.bloeckeProTag),min:'1',max:'12',class:'u-w110',
-      oninput:e=>{ const v=parseInt(e.target.value,10); if(v>=1&&v<=12) setNum('bloeckeProTag',v); }});
+      oninput:e=>{ const v=parseInt(e.target.value,10); if(v>=1&&v<=12){ zm.bloeckeProTag=v; renderVorschau(); } }}); // Block-Anzahl ändert die Pausen-Zeilen → volles renderVorschau
     const pausenBox=el('div',{class:'sp-pausen'});
+    // Pausen in Minuten mit 0,5-Genauigkeit: bei 67,5-min-Blöcken bringt eine :30-Pause die Blockgrenzen
+    // auf glatte Minuten. parseInt hätte die 30 s verschluckt (Drift gegen den echten Schulplan · FEHLER 2026-07-09).
     const renderPausen=()=>{
       pausenBox.replaceChildren();
       for(let n=1;n<zm.bloeckeProTag;n++){
-        const pin=el('input',{type:'number',min:'0',max:'120',value:String(Math.round((zm.pausenNachBlock[n]||0)/60)),class:'u-w110',
-          oninput:e=>{ zm.pausenNachBlock[n]=(parseInt(e.target.value,10)||0)*60; renderVorschau(); }});
+        const pin=el('input',{type:'number',min:'0',max:'120',step:'0.5',value:String((zm.pausenNachBlock[n]||0)/60),class:'u-w110',
+          oninput:e=>{ const v=parseFloat(e.target.value.replace(',','.')); zm.pausenNachBlock[n]=Math.round((v||0)*60); nurVorschau(); }});
         pausenBox.append(el('div',{class:'zeile'},el('span',{},'Pause nach Block '+n),el('span',{},pin,' min')));
       }
     };
     const vorschau=el('div',{class:'sp-vorschau'});
-    const renderVorschau=()=>{
-      renderPausen();
+    // nurVorschau rührt die Pausen-Inputs NICHT an — sonst verliert der getippte Input je Ziffer den Fokus,
+    // die iPad-Tastatur klappt zu (FEHLER 2026-07-09). Exakte HH:MM:SS in Klammern, wenn eine Grenze auf :30 fällt.
+    const nurVorschau=()=>{
       vorschau.replaceChildren(el('div',{class:'tag-kopf'},'So sieht der Tag aus (Mo–Do):'));
-      for(const b of resolveBloecke(zm,1))
-        vorschau.append(el('div',{class:'zeile'},el('span',{},'Block '+b.blockNr),el('span',{class:'wert'},formatZeit(b.startSek)+'–'+formatZeit(b.endeSek)+(zm.dauerSekunden%60?' ('+formatZeit(b.endeSek,false)+')':''))));
+      for(const b of resolveBloecke(zm,1)){
+        const sek=(b.startSek%60)||(b.endeSek%60);
+        vorschau.append(el('div',{class:'zeile'},el('span',{},'Block '+b.blockNr),
+          el('span',{class:'wert'},formatZeit(b.startSek)+'–'+formatZeit(b.endeSek)+(sek?' ('+formatZeit(b.startSek,false)+'–'+formatZeit(b.endeSek,false)+')':''))));
+      }
     };
+    const renderVorschau=()=>{ renderPausen(); nurVorschau(); };
     const frTag=zm.tagesAusnahmen&&zm.tagesAusnahmen[5];
     const frCheck=el('input',{type:'checkbox',class:'u-check',...(frTag?{checked:'checked'}:{}),
       onchange:e=>{ zm.tagesAusnahmen=zm.tagesAusnahmen||{}; if(e.target.checked) zm.tagesAusnahmen[5]={bloeckeProTag:Math.max(1,zm.bloeckeProTag-2)}; else delete zm.tagesAusnahmen[5]; }});

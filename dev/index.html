@@ -4,24 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 
-<!-- ╔═══ KLADDE v0.8.0 · SoMi-Erfassungs-PWA (Multi-File, P1.1) ═══════════════╗
+<!-- ╔═══ KLADDE · SoMi-Erfassungs-PWA (Multi-File) ════════════════════════════╗
      Werk: klausurkorrektur · Plan: ~/.claude/plans/kladde-v08-v10-werksbau.md
+     Design v2 „Studio" (2026-07-09): Shell = Sidebar + Cockpit + permanente Stempel-Rail.
      Struktur: css/kladde.css · js/app.mjs (ES-Modul) · logic/*.mjs (pur, Node-getestet)
      App und Tests importieren DIESELBEN logic-Dateien — Drift unmöglich.
-     Härtung: REF_iOS_WEBVIEW_HAERTUNG · Vault = KLD1-Container in IndexedDB
 ╚══════════════════════════════════════════════════════════════════════════╝ -->
 
 <title>Kladde</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=()">
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#14161c">
+<meta name="theme-color" content="#17150F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.1.1.1783552485">
+<link rel="stylesheet" href="./css/kladde.css?v=1.3.0.1783575500">
 </head>
 <body>
 
@@ -46,59 +46,94 @@
   <h1>Kladde</h1>
 </div>
 
-<header class="app">
-  <span class="band"></span>
-  <div id="kurs-chip"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></div>
-  <div class="spacer"></div>
-  <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken">👁</button>
-  <button class="icon-btn" id="btn-lock" title="Sperren">🔒</button>
-</header>
-
-<div id="banner" class="hidden"></div>
-<div id="beamer-hinweis" class="hidden"><span>👁 Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
-
-<main>
-  <section id="view-heute">
-    <div id="datum-streifen"></div>
-    <div id="stempel-bar" class="hidden"></div>
-    <div id="plan-wrap"><div id="plan"></div></div>
-    <p id="heute-leer" class="hidden u-leise">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
-  </section>
-
-  <section id="view-deck" class="hidden">
-    <div id="deck-fortschritt"></div>
-    <div id="deck-optionen" class="deck-optionen"></div>
-    <div id="deck-karte"></div>
-    <div class="deck-hilfe"><span>← −</span><span>↑ Notiz · ↓ weiter</span><span>+ →</span></div>
-    <div class="deck-btns">
-      <button class="btn deck-minus" data-deck="-">−</button>
-      <button class="btn still" data-deck="o">o</button>
-      <button class="btn deck-plus" data-deck="+">+</button>
-      <button class="btn still" data-deck="skip">weiter ↓</button>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="marke">
+      <span class="marke-band"></span>
+      <div class="marke-txt">
+        <div class="marke-name">Kladde</div>
+        <div class="marke-sub">Sonstige Mitarbeit</div>
+      </div>
     </div>
-  </section>
+    <nav id="hauptnav">
+      <button data-view="heute" class="aktiv">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.4"></rect><rect x="14" y="3" width="7" height="7" rx="1.4"></rect><rect x="3" y="14" width="7" height="7" rx="1.4"></rect><rect x="14" y="14" width="7" height="7" rx="1.4"></rect></svg>
+        <span class="nav-label">Heute</span>
+      </button>
+      <button data-view="deck">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="12" height="15" rx="2"></rect><path d="M8.5 4H17a2 2 0 0 1 2 2v10.5"></path></svg>
+        <span class="nav-label">Deck</span>
+      </button>
+      <button data-view="schueler">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>
+        <span class="nav-label">Schüler</span>
+      </button>
+      <button data-view="kurse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"></rect><path d="M9 4v16"></path></svg>
+        <span class="nav-label">Kurse</span>
+      </button>
+      <button data-view="mehr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"></line><line x1="4" y1="16" x2="20" y2="16"></line><circle cx="9" cy="8" r="2.3" fill="currentColor" stroke="none"></circle><circle cx="15" cy="16" r="2.3" fill="currentColor" stroke="none"></circle></svg>
+        <span class="nav-label">Mehr</span>
+      </button>
+    </nav>
+  </aside>
 
-  <section id="view-schueler" class="hidden"></section>
+  <div class="hauptspalte">
+    <header class="app">
+      <div class="kopf-titel">
+        <div id="view-titel" class="v-titel">Heute</div>
+        <div id="view-sub" class="v-sub">Sitzplan · live erfassen</div>
+      </div>
+      <div class="spacer"></div>
+      <button id="kurs-chip"><span class="kurs-band"></span><span class="kurs-txt"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></span></button>
+      <button class="icon-btn" id="btn-theme" title="Tag / Nacht">🌙</button>
+      <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken">👁</button>
+      <button class="icon-btn" id="btn-lock" title="Sperren">🔒</button>
+    </header>
 
-  <section id="view-kurse" class="hidden"></section>
+    <div id="banner" class="hidden"></div>
+    <div id="beamer-hinweis" class="hidden"><span>👁 Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
 
-  <section id="view-mehr" class="hidden"></section>
-</main>
+    <main>
+      <section id="view-heute">
+        <div class="heute-grid">
+          <div class="plan-spalte">
+            <div id="datum-streifen"></div>
+            <div id="plan-wrap"><div id="plan"></div></div>
+            <p id="heute-leer" class="hidden u-leise">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
+          </div>
+          <aside id="rail" class="rail"></aside>
+        </div>
+      </section>
 
-<div class="aktionsbar hidden" id="aktionsbar"></div>
+      <section id="view-deck" class="hidden">
+        <div id="deck-fortschritt"></div>
+        <div id="deck-optionen" class="deck-optionen"></div>
+        <div id="deck-karte"></div>
+        <div class="deck-hilfe"><span>← −</span><span>↑ Notiz · ↓ weiter</span><span>+ →</span></div>
+        <div class="deck-btns">
+          <button class="btn deck-minus" data-deck="-">−</button>
+          <button class="btn still" data-deck="o">o</button>
+          <button class="btn deck-plus" data-deck="+">+</button>
+          <button class="btn still" data-deck="skip">weiter ↓</button>
+        </div>
+      </section>
+
+      <section id="view-schueler" class="hidden"></section>
+
+      <section id="view-kurse" class="hidden"></section>
+
+      <section id="view-mehr" class="hidden"></section>
+    </main>
+  </div>
+</div>
+
 <button id="undo-chip" class="hidden"></button>
 <div id="toast" class="hidden"></div>
 
-<nav class="tabs">
-  <button data-view="heute" class="aktiv"><span class="t-ico">▦</span>Heute</button>
-  <button data-view="deck"><span class="t-ico">🃏</span>Deck</button>
-  <button data-view="schueler"><span class="t-ico">👤</span>Schüler</button>
-  <button data-view="kurse"><span class="t-ico">📚</span>Kurse</button>
-  <button data-view="mehr"><span class="t-ico">⚙</span>Mehr</button>
-</nav>
-
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.1.1.1783552485"></script>
+<script type="module" src="./js/app.mjs?v=1.3.0.1783575500"></script>
 </body>
 </html>

@@ -1,13 +1,36 @@
 @layer reset, base, components, views, anim;
 
+/* Selbst-gehostete Schriften (SIL OFL · subsettet Latein · Variable Fonts) — DSGVO: kein CDN, im SW-Precache */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  src: url('../fonts/HankenGrotesk-subset.woff2') format('woff2');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Newsreader';
+  src: url('../fonts/Newsreader-subset.woff2') format('woff2');
+  font-weight: 200 800; font-style: normal; font-display: swap;
+}
+
 @layer reset {
   *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.45; }
+  body { margin: 0; font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif; line-height: 1.45; }
+  /* ═══ Token · Nacht = Default (Zero-Entscheid E1) · Tag via :root[data-theme=tag] ═══ */
   :root {
     color-scheme: dark;
-    --grund: #14161c; --karte: #1d2027; --karte2: #24272f; --kante: #2c303a;
-    --text: #e8e4da; --leise: #9a958a; --band: #c49a5a;
-    --gut: #7fb069; --warn: #d9a441; --fehl: #c96f6f; --info: #6f9dc9;
+    --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+    --grund:#17150F; --karte:#211E17; --karte2:#2B2820; --kante:#38342A;
+    --text:#ECE6D8; --leise:#A49C8A; --band:#C79A4B;
+    --gut:#6FA080; --warn:#CE9B4B; --fehl:#C67C60; --info:#6E9DB8;
+    --tile-plus:#1E2A1C; --tile-minus:#2E1F1A; --tile-fehlt:#201E17;
+    --auf-band:#201400; --auf-pos:#FFFFFF; --auf-neg:#FFFFFF; --auf-info:#FFFFFF;
+  }
+  :root[data-theme="tag"] {
+    color-scheme: light;
+    --grund:#F4F0E7; --karte:#FBF8F1; --karte2:#FFFFFF; --kante:#E7E1D4;
+    --text:#26241E; --leise:#8A8478; --band:#C79A4B;
+    --gut:#5B8C6E; --warn:#B5852F; --fehl:#B4654A; --info:#4E7A99;
+    --tile-plus:#EBF0EA; --tile-minus:#F6E8E1; --tile-fehlt:#EDEAE1;
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   button { font: inherit; color: inherit; }
@@ -46,17 +69,7 @@
     min-width: 44px; min-height: 44px; cursor: pointer; font-size: 17px;
   }
   .icon-btn.aktiv { border-color: var(--band); color: var(--band); }
-  nav.tabs {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    display: flex; background: var(--karte); border-top: 1px solid var(--kante);
-    padding-bottom: env(safe-area-inset-bottom); z-index: 30;
-  }
-  nav.tabs button {
-    flex: 1; background: none; border: none; padding: 10px 4px 8px; min-height: 52px;
-    color: var(--leise); font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  }
-  nav.tabs button .t-ico { font-size: 19px; }
-  nav.tabs button.aktiv { color: var(--band); }
+  /* Navigation lebt seit v2 in der Sidebar (.sidebar #hauptnav) — Bottom-Tabs entfernt. */
   .panel { background: var(--karte); border: 1px solid var(--kante); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
   .panel h2 { font-size: 13px; margin: 0 0 8px; color: var(--leise); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
   .zeile { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--kante); font-size: 15px; align-items: center; }
@@ -82,12 +95,12 @@
   }
   dialog::backdrop { background: rgba(0,0,0,.55); }
   #toast {
-    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 84px);
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 22px);
     background: var(--karte2); border: 1px solid var(--kante); border-radius: 10px; padding: 10px 16px;
     z-index: 60; max-width: 88vw; font-size: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.4);
   }
   #undo-chip {
-    position: fixed; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 84px); z-index: 40;
+    position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 22px); z-index: 40;
     background: var(--karte2); border: 1px solid var(--band); color: var(--band);
     border-radius: 20px; padding: 10px 16px; min-height: 44px; cursor: pointer; font-size: 14px;
     box-shadow: 0 6px 18px rgba(0,0,0,.35);
@@ -106,7 +119,6 @@
   .datum-streifen .rechts { margin-left: auto; display: flex; gap: 6px; }
   .datum-streifen button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 14px; }
   .datum-streifen button.aktiv { border-color: var(--band); color: var(--band); }
-  .datum-streifen .erf-zaehler { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 3px 11px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--leise); }
   .legende { display: flex; flex-direction: column; gap: 9px; font-size: 14px; margin: 4px 0 10px; }
   .legende .chip { border-radius: 3px; padding: 0 7px; font-weight: 700; display: inline-block; }
 
@@ -124,40 +136,29 @@
   #plan .kachel.leer { background: transparent; }
   #plan .kachel.schueler { background: var(--karte); border-color: var(--kante); cursor: pointer; }
   #plan .kachel.schueler.gewaehlt { outline: 2px solid var(--band); outline-offset: -2px; }
-  #plan .kachel.netto-plus  { background: #1c2a1a; }   /* mehrheitlich + */
-  #plan .kachel.netto-minus { background: #2c1a1a; }   /* mehrheitlich − */
-  #plan .kachel.netto-fehlt { background: #202226; opacity: .55; }
+  #plan .kachel.netto-plus  { background: var(--tile-plus); }   /* mehrheitlich + */
+  #plan .kachel.netto-minus { background: var(--tile-minus); }   /* mehrheitlich − */
+  #plan .kachel.netto-fehlt { background: var(--tile-fehlt); opacity: .55; }
   #plan .kachel .kopf { display: flex; align-items: center; gap: 3px; padding: 3px 4px 0; }
   #plan .kachel .vn { font-weight: 600; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-  #plan .kachel .lb-badge { background: var(--info); color: #06121e; font-size: 8px; font-weight: 800; border-radius: 3px; padding: 0 3px; letter-spacing: .03em; }
+  #plan .kachel .lb-badge { background: var(--info); color: var(--auf-info); font-size: 8px; font-weight: 800; border-radius: 3px; padding: 0 3px; letter-spacing: .03em; }
   #plan .kachel .nn { color: var(--leise); font-size: 9px; padding: 0 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
   #plan .kachel .marken { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 3px 3px; min-height: 15px; }
   #plan .kachel .mk { border-radius: 3px; padding: 0 3px; font-size: 10px; font-weight: 700; line-height: 1.3; }
-  #plan .kachel .mk.p { background: var(--gut); color: #08160a; }
-  #plan .kachel .mk.m { background: var(--fehl); color: #1c0606; }
+  #plan .kachel .mk.p { background: var(--gut); color: var(--auf-pos); }
+  #plan .kachel .mk.m { background: var(--fehl); color: var(--auf-neg); }
   #plan .kachel .mk.o { background: var(--kante); color: var(--text); }
   #plan .kachel .mk.u { background: var(--fehl); color: #fff; }
   #plan .kachel .mk.verw { background: var(--fehl); color: #fff; font-weight: 800; }
   #plan .kachel .mk.abw { background: var(--leise); color: var(--grund); font-weight: 800; }
-  #plan .kachel .mk.e { background: var(--info); color: #06121e; }
+  #plan .kachel .mk.e { background: var(--info); color: var(--auf-info); }
   #plan .kachel .mk.sym { background: transparent; padding: 0 1px; }
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
   #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
   #plan.editor .kachel .marken { display: none; }
-  .aktionsbar {
-    position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 52px);
-    background: var(--karte); border-top: 1px solid var(--kante); padding: 8px 10px; z-index: 35;
-    display: flex; gap: 6px; overflow-x: auto;
-  }
-  .aktionsbar .wer { font-weight: 700; padding: 8px 6px; white-space: nowrap; }
-  .aktionsbar button {
-    background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
-    min-width: 48px; min-height: 48px; font-size: 16px; cursor: pointer; white-space: nowrap; padding: 4px 10px;
-  }
-  .aktionsbar button:active { border-color: var(--band); }
-  .aktionsbar button.plus { color: var(--gut); } .aktionsbar button.minus { color: var(--fehl); }
+  /* Aktionsbar entfernt (v2): Tap-ohne-Stempel öffnet das Detail-Blatt; Erfassen läuft über die Rail. */
   /* ── Deck ── */
   #deck-karte {
     background: var(--karte); border: 1px solid var(--kante); border-radius: 16px;
@@ -165,7 +166,7 @@
     display: flex; flex-direction: column; justify-content: center; gap: 8px;
     touch-action: none; position: relative;
   }
-  #deck-karte .gross { font-size: 30px; font-weight: 700; }
+  #deck-karte .gross { font-size: 32px; font-weight: 500; font-family: var(--font-serif); }
   #deck-karte .sub { color: var(--leise); }
   #deck-fortschritt { text-align: center; color: var(--leise); font-variant-numeric: tabular-nums; }
   .deck-bar { height: 6px; background: var(--karte); border: 1px solid var(--kante); border-radius: 4px; overflow: hidden; max-width: 420px; margin: 6px auto 0; }
@@ -191,13 +192,13 @@
   .gr-name { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gr-btns { display: flex; gap: 4px; }
   .gr-b { background: var(--karte2); border: 1px solid var(--kante); border-radius: 7px; min-width: 38px; min-height: 40px; cursor: pointer; font-weight: 700; color: inherit; }
-  .gr-b.an { background: var(--band); color: #1a1206; border-color: var(--band); }
+  .gr-b.an { background: var(--band); color: var(--auf-band); border-color: var(--band); }
   /* ── Lock ── */
   #lock {
     position: fixed; inset: 0; background: var(--grund); z-index: 100;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px;
   }
-  #lock h1 { font-size: 26px; margin: 0; }
+  #lock h1 { font-size: 30px; margin: 0; font-family: var(--font-serif); font-weight: 500; }
   #lock input { text-align: center; letter-spacing: .3em; font-size: 22px; width: 220px; }
   #lock .fehler { color: var(--fehl); min-height: 1.4em; font-size: 14px; }
 }
@@ -210,11 +211,11 @@
 ╚══════════════════════════════════════════════════════════════════════════╝ */
 @layer anim {
   /* ── Press-Feedback (universell, Touch + Zeiger) ── */
-  .btn, .icon-btn, .aktionsbar button, nav.tabs button, .gr-b, .datum-streifen button,
-  #kurs-chip, #plan .kachel.schueler, .s-item, .zeile, .deck-btns .btn {
+  .btn, .icon-btn, .gr-b, .datum-streifen button,
+  #kurs-chip, #plan .kachel.schueler, .s-item, .zeile, .deck-btns .btn, .rail-btn, #hauptnav button {
     transition: transform .09s ease-out, background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, outline-color .12s ease;
   }
-  .btn:active, .icon-btn:active, .aktionsbar button:active, nav.tabs button:active,
+  .btn:active, .icon-btn:active, .rail-btn:active,
   .gr-b:active, .deck-btns .btn:active, .datum-streifen button:active, #kurs-chip:active,
   #plan .kachel.schueler:active { transform: scale(.96); }
   #plan .kachel { transition: background-color .2s ease, outline-color .12s ease, transform .09s ease-out; }
@@ -223,13 +224,11 @@
   @keyframes kladde-puls { 0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)} }
   #plan .kachel.puls { animation: kladde-puls .18s cubic-bezier(.2,0,0,1); }
 
-  /* ── Toast · Undo-Chip · Aktionsbar: Eintritt ── */
+  /* ── Toast · Undo-Chip: Eintritt ── */
   @keyframes kladde-toast-rein { from{opacity:0; transform:translateX(-50%) translateY(8px)} to{opacity:1; transform:translateX(-50%) translateY(0)} }
   #toast:not(.hidden) { animation: kladde-toast-rein .22s cubic-bezier(.05,.7,.1,1); }
   @keyframes kladde-chip-rein { from{opacity:0; transform:translateY(10px) scale(.96)} to{opacity:1; transform:none} }
   #undo-chip:not(.hidden) { animation: kladde-chip-rein .2s cubic-bezier(.05,.7,.1,1); }
-  @keyframes kladde-bar-hoch { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .aktionsbar:not(.hidden) { animation: kladde-bar-hoch .2s cubic-bezier(.05,.7,.1,1); }
 
   /* ── Dialog/Sheet: @starting-style Eintritt + allow-discrete Austritt ── */
   #dlg {
@@ -261,7 +260,7 @@
 
   /* ── View Transitions (Tab-/Ansichtswechsel) · Kopf+Leiste bleiben statisch ── */
   header.app { view-transition-name: vt-kopf; }
-  nav.tabs   { view-transition-name: vt-nav; }
+  .sidebar   { view-transition-name: vt-nav; }
   ::view-transition-old(root), ::view-transition-new(root) {
     animation-duration: .14s; animation-timing-function: cubic-bezier(.2,0,0,1);
   }
@@ -272,8 +271,7 @@
     .s-item:hover { background: var(--karte2); }
     .zeile:hover { background: color-mix(in srgb, var(--karte2) 45%, transparent); }
     .btn:hover { background: rgba(196,154,90,.12); }
-    .icon-btn:hover, .datum-streifen button:hover, .gr-b:hover, .aktionsbar button:hover, #kurs-chip:hover { border-color: var(--band); }
-    nav.tabs button:hover:not(.aktiv) { color: var(--text); }
+    .icon-btn:hover, .datum-streifen button:hover, .gr-b:hover, #kurs-chip:hover { border-color: var(--band); }
   }
 
   /* ── Tastatur-Fokus (PC) ── */
@@ -281,8 +279,8 @@
 
   /* ── Reduced-Motion: alles aus (Apple HIG · DSGVO-A11y) ── */
   @media (prefers-reduced-motion: reduce) {
-    #dlg, #dlg::backdrop, .aktionsbar, #toast, #undo-chip, #deck-karte, #plan .kachel,
-    .btn, .icon-btn, nav.tabs button, .s-item, .zeile, #kurs-chip {
+    #dlg, #dlg::backdrop, #toast, #undo-chip, #deck-karte, #plan .kachel,
+    .btn, .icon-btn, #hauptnav button, .rail-btn, .s-item, .zeile, #kurs-chip {
       animation: none !important; transition-duration: .01ms !important;
     }
     #dlg { transform: none; }
@@ -356,10 +354,10 @@
   .dev-badge { background: var(--fehl); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
   .band-hoch { height: 34px; }
   .bal-p { background: var(--gut); } .bal-o { background: var(--leise); } .bal-m { background: var(--fehl); }
-  .chip-gut { background: var(--gut); color: #08160a; }
-  .chip-fehl { background: var(--fehl); color: #1c0606; }
+  .chip-gut { background: var(--gut); color: var(--auf-pos); }
+  .chip-fehl { background: var(--fehl); color: var(--auf-neg); }
   .chip-kante { background: var(--kante); color: var(--text); }
-  .chip-info { background: var(--info); color: #06121e; }
+  .chip-info { background: var(--info); color: var(--auf-info); }
   .deck-minus { color: var(--fehl); border-color: var(--fehl); }
   .deck-plus { color: var(--gut); border-color: var(--gut); }
 }
@@ -370,7 +368,7 @@
   .sp-kopf h3 { margin: 0; }
   .sp-steps { display: flex; gap: 5px; }
   .sp-step { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); }
-  .sp-step.an { background: var(--band); color: #1a1206; border-color: var(--band); font-weight: 700; }
+  .sp-step.an { background: var(--band); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
   .sp-pausen .zeile { padding: 3px 0; }
   .sp-vorschau { margin-top: 10px; background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; padding: 6px 10px; }
   .sp-vorschau .zeile { padding: 3px 0; }
@@ -386,7 +384,7 @@
 @layer views {
   .zr-leiste { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; }
   .zr-chip { flex: 0 0 auto; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 14px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
-  .zr-chip.an { background: var(--band); color: #1a1206; border-color: var(--band); font-weight: 700; }
+  .zr-chip.an { background: var(--band); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
 }
 
 /* ── v0.10.0 · Klärungsliste (P3.5) ── */
@@ -399,18 +397,7 @@
 
 /* ── v1.0.0 · Politur (P4) ── */
 @layer views {
-  /* Stempelmodus (P4.5): Kachel antippen = Stempel setzen, ohne Einzeldialog („24 in 2 min") */
-  #stempel-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
-    background: var(--karte); border: 1px solid var(--band); border-radius: 10px; padding: 8px 10px; }
-  #stempel-bar.hidden { display: none; }
-  #stempel-bar .st-label { font-size: 13px; color: var(--leise); margin-right: 2px; }
-  #stempel-bar .st-btn { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
-    min-width: 48px; min-height: 44px; font-size: 16px; font-weight: 700; cursor: pointer; color: inherit; padding: 4px 12px; }
-  #stempel-bar .st-btn.an { border-color: var(--band); background: var(--band); color: #1a1206; }
-  #stempel-bar .st-btn.plus.an { background: var(--gut); border-color: var(--gut); color: #08160a; }
-  #stempel-bar .st-btn.minus.an { background: var(--fehl); border-color: var(--fehl); color: #1c0606; }
-  #stempel-bar .st-zu { margin-left: auto; }
-  /* Puls-Rahmen um den Sitzplan, solange ein Stempel scharf ist (Modus sichtbar, nicht nur gefühlt) */
+  /* Stempel-Bar (P4.5) → permanente Rail (v2, .rail unten). Puls-Rahmen um den Sitzplan bleibt: */
   body.stempeln #plan-wrap { outline: 2px solid var(--band); outline-offset: 4px; border-radius: 10px; }
   body.stempeln.st-plus #plan-wrap { outline-color: var(--gut); }
   body.stempeln.st-minus #plan-wrap { outline-color: var(--fehl); }
@@ -422,7 +409,6 @@
   #beamer-hinweis .btn { margin-left: auto; }
   /* „Nur Sitzplan": Datums-Extras ausblenden — reine Namenskarte an die Wand */
   body.beamer.nurplan .datum-streifen .rechts,
-  body.beamer.nurplan .datum-streifen .erf-zaehler,
   body.beamer.nurplan .datum-streifen .nachtrag-hinweis { display: none; }
 
   /* Deck-Start-Optionen (P4.4) */
@@ -435,7 +421,7 @@
   /* Kurskarten-Badge (P4.2 · „Klasse auf einen Blick") */
   .kurs-badge { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 9px; margin-left: 6px;
     text-transform: none; letter-spacing: 0; vertical-align: middle; border: 1px solid var(--kante); color: var(--leise); white-space: nowrap; }
-  .kurs-badge.jetzt { background: var(--band); color: #1a1206; border-color: var(--band); }
+  .kurs-badge.jetzt { background: var(--band); color: var(--auf-band); border-color: var(--band); }
   .kurs-badge.warn { background: transparent; color: var(--warn); border-color: var(--warn); }
 }
 @layer anim {
@@ -450,7 +436,7 @@
 
 /* ── v1.1.0 · Sitzplan Drag & Drop (Namen-Schiene + Mülleimer, Pointer-Events) ── */
 @layer views {
-  .sp-editor-bar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 52px);
+  .sp-editor-bar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 10px);
     display: flex; align-items: center; gap: 8px; z-index: 40;
     background: var(--karte); border-top: 1px solid var(--band); padding: 8px 10px; }
   .sp-rail-label { font-size: 12px; color: var(--leise); flex: 0 0 auto; white-space: nowrap; }
@@ -462,18 +448,110 @@
     border: 1px dashed var(--kante); border-radius: 10px; }
   .sp-trash.ziel { border-color: var(--fehl); background: rgba(201,111,111,.2); }
   .sp-ghost { position: fixed; z-index: 90; transform: translate(-50%,-150%); pointer-events: none;
-    background: var(--band); color: #1a1206; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700;
+    background: var(--band); color: var(--auf-band); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700;
     box-shadow: 0 8px 22px rgba(0,0,0,.5); white-space: nowrap; }
-  body.sp-edit main { padding-bottom: 168px; }
+  body.sp-edit main { padding-bottom: 120px; }
   body.sp-edit #plan.editor .kachel.schueler { touch-action: none; cursor: grab; }
   #plan .kachel.ziel { outline: 2px solid var(--band); outline-offset: -2px; }
   body.sp-dragging, body.sp-dragging * { cursor: grabbing !important; }
 }
 
-/* ── v1.1.1 · Entfernen direkt (Aktionsbar-Chips + ↩-Stempel) ── */
-@layer views {
-  .aktionsbar .ab-sep { flex: 0 0 auto; width: 1px; align-self: stretch; background: var(--kante); margin: 4px 4px; }
-  .aktionsbar .ab-entf { display: inline-flex; align-items: center; gap: 4px; }
-  .aktionsbar .ab-entf .x { color: var(--fehl); font-size: 12px; font-weight: 700; }
-  #stempel-bar .st-btn.entf.an { background: var(--fehl); border-color: var(--fehl); color: #fff; }
+/* ══════════════════════════════════════════════════════════════════════════
+   v2 „Studio" · SHELL — Sidebar + Cockpit + permanente Stempel-Rail (2026-07-09)
+   Adaptiv: ≥1200 px volle Sidebar (200) · <1200 px Icon-Rail (64) · iPad 8 quer = 1080.
+   ══════════════════════════════════════════════════════════════════════════ */
+@layer base {
+  main { flex: 1; overflow-y: auto; padding: 18px 22px calc(env(safe-area-inset-bottom) + 20px); }
 }
+@layer components {
+  .shell { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+  .hauptspalte { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 200px; flex: none; display: flex; flex-direction: column; gap: 4px;
+    background: var(--karte); border-right: 1px solid var(--kante);
+    padding: calc(env(safe-area-inset-top) + 16px) 12px 14px;
+  }
+  .marke { display: flex; align-items: center; gap: 11px; padding: 2px 8px 16px; }
+  .marke-band { width: 7px; height: 30px; background: var(--band); border-radius: 3px; flex: none; }
+  .marke-name { font-family: var(--font-serif); font-size: 22px; font-weight: 500; line-height: 1; }
+  .marke-sub { font-size: 10px; color: var(--leise); letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
+  #hauptnav { display: flex; flex-direction: column; gap: 3px; }
+  #hauptnav button {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; min-height: 44px;
+    background: transparent; border: none; border-left: 3px solid transparent; color: var(--leise);
+    font-family: inherit; font-size: 14.5px; padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  }
+  #hauptnav button svg { width: 20px; height: 20px; flex: none; }
+  #hauptnav button.aktiv { background: var(--karte2); color: var(--band); border-left-color: var(--band); font-weight: 600; }
+
+  /* ── Header ── */
+  header.app {
+    flex: none; display: flex; align-items: center; gap: 12px;
+    padding: calc(env(safe-area-inset-top) + 12px) 22px 12px;
+    border-bottom: 1px solid var(--kante); background: var(--karte);
+  }
+  .kopf-titel { min-width: 0; }
+  .v-titel { font-family: var(--font-serif); font-size: 24px; font-weight: 500; line-height: 1.05; }
+  .v-sub { font-size: 12px; color: var(--leise); margin-top: 2px; }
+  #kurs-chip {
+    display: flex; align-items: center; gap: 10px; background: var(--karte2); color: var(--text);
+    border: 1px solid var(--kante); border-radius: 11px; padding: 7px 13px; min-height: 44px; cursor: pointer; max-width: 260px;
+  }
+  .kurs-band { width: 6px; height: 28px; background: var(--band); border-radius: 3px; flex: none; }
+  .kurs-txt { display: flex; flex-direction: column; text-align: left; min-width: 0; }
+  #kurs-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #kurs-chip small { color: var(--leise); font-size: 11.5px; }
+  header.app .icon-btn { border-radius: 11px; }
+
+  /* ── Heute-Cockpit: Sitzplan + permanente Rail ── */
+  .heute-grid { display: flex; gap: 18px; align-items: flex-start; }
+  .plan-spalte { flex: 1; min-width: 0; }
+  .rail { width: 150px; flex: none; position: sticky; top: 0; align-self: flex-start; display: flex; flex-direction: column; gap: 10px; }
+  .rail-karte { background: var(--karte); border: 1px solid var(--kante); border-radius: 14px; padding: 12px; }
+  .rail-titel { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); margin: 0 2px 9px; }
+  .rail-gruppe { display: flex; gap: 6px; }
+  .rail-trenner { height: 1px; background: var(--kante); margin: 9px 0; }
+  .rail-btn {
+    flex: 1; min-width: 0; min-height: 44px; border-radius: 10px; cursor: pointer; padding: 4px;
+    border: 1.5px solid var(--kante); background: var(--karte2); color: var(--text);
+    font-size: 17px; font-weight: 700; display: grid; place-items: center;
+  }
+  .rail-btn.breit { width: 100%; flex: none; }
+  .rail-btn svg { width: 19px; height: 19px; }
+  .rail-btn.an { background: var(--band); border-color: var(--band); color: var(--auf-band); }
+  .rail-btn.plus.an { background: var(--gut); border-color: var(--gut); color: var(--auf-pos); }
+  .rail-btn.minus.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
+  .rail-btn.verw.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
+  .rail-erfasst-zahl { font-family: var(--font-serif); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .rail-erfasst-zahl small { color: var(--leise); font-size: 14px; }
+  .rail-bar { height: 6px; background: var(--kante); border-radius: 4px; overflow: hidden; margin-top: 7px; }
+  .rail-bar > div { height: 100%; background: var(--gut); border-radius: 4px; }
+
+  /* <1200 px: Sidebar auf Icon-Rail (Budget iPad 8 quer 1080) */
+  @media (max-width: 1199px) {
+    .sidebar { width: 64px; padding-left: 8px; padding-right: 8px; }
+    .marke-txt, .nav-label { display: none; }
+    .marke { justify-content: center; padding: 2px 0 14px; }
+    #hauptnav button { justify-content: center; gap: 0; padding: 11px 0; }
+  }
+  /* Rand-Fall sehr schmal (Hochkant): Rail unter den Plan, horizontal */
+  @media (max-width: 720px) {
+    header.app { padding-left: 16px; padding-right: 16px; }
+    main { padding: 14px 16px calc(env(safe-area-inset-bottom) + 20px); }
+    .heute-grid { flex-direction: column; }
+    .rail { width: 100%; position: static; flex-direction: row; flex-wrap: wrap; }
+    .rail-karte { flex: 1 1 auto; }
+  }
+}
+/* ── PC/Mac: Zeiger-Hover für Sidebar/Rail/Kurs-Card (greift nicht auf Touch) ── */
+@layer anim {
+  @media (hover: hover) and (pointer: fine) {
+    #hauptnav button:hover:not(.aktiv) { color: var(--text); background: var(--karte2); }
+    .rail-btn:hover { border-color: var(--band); }
+    #kurs-chip:hover { border-color: var(--band); }
+  }
+}
+
+/* (v2: Aktionsbar + Stempel-Bar entfernt — Entfernen läuft über ⌫-Rail-Stempel, Undo-Chip, Detail-Storno) */
