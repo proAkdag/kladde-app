@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783575500';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783575500';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783575500';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783575500';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783575500';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783575500';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783575500';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783575500';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783575500';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783575500';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783576092';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783576092';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783576092';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783576092';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783576092';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783576092';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783576092';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783576092';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783576092';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783576092';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -1626,6 +1626,13 @@ function renderMehr(){
     $('btn-pull').onclick=syncPull;
     fetch('/api/kladde/status',{cache:'no-store'}).then(r=>r.json()).then(s=>{ $('sync-status').textContent='Server ok · Zert bis '+s.zert_bis; }).catch(()=>{ $('sync-status').textContent='Server nicht erreichbar'; });
   }
+  // Darstellung: Tag/Nacht/System (Zero-Entscheid E1: Default Nacht) — 3-Weg, ergänzt den Header-Schnell-Toggle. el()-Neubau (CSP).
+  const themeBtn=(p,txt)=>el('button',{class:'btn'+(themePref()===p?'':' still'),onclick:()=>{ localStorage.setItem(THEME_KEY,p); themeAnwenden(); renderMehr(); }},txt);
+  wrap.append(el('div',{class:'panel'},
+    el('h2',{},'Darstellung'),
+    el('div',{class:'zeile'},el('span',{},'Erscheinungsbild'),
+      el('span',{class:'seg'}, themeBtn('tag','Tag'), themeBtn('nacht','Nacht'), themeBtn('system','System'))),
+    el('p',{class:'u-hinweis'},'System folgt dem Gerät. Der 🌙/☀-Knopf oben schaltet schnell zwischen Tag und Nacht.')));
 }
 async function aktuellerContainerBlob(){
   await speichern();
