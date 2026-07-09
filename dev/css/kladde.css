@@ -158,6 +158,13 @@
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
   #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
   #plan.editor .kachel .marken { display: none; }
+  /* TAFEL-Linie unten am Sitzplan (Orientierung „vorne" · Gerüst §1) — nur wenn ein Plan sichtbar ist */
+  .tafel { display: none; }
+  #plan-wrap:has(#plan:not(.hidden):not(:empty)) .tafel {
+    display: flex; align-items: center; gap: 12px; margin-top: 10px;
+    font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--leise);
+  }
+  .tafel::before, .tafel::after { content: ""; flex: 1; height: 2px; background: var(--kante); border-radius: 2px; }
   /* Aktionsbar entfernt (v2): Tap-ohne-Stempel öffnet das Detail-Blatt; Erfassen läuft über die Rail. */
   /* ── Deck ── */
   #deck-karte {
@@ -512,6 +519,7 @@
   .rail-karte { background: var(--karte); border: 1px solid var(--kante); border-radius: 14px; padding: 12px; }
   .rail-titel { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); margin: 0 2px 9px; }
   .rail-gruppe { display: flex; gap: 6px; }
+  .rail-gruppe.raster2 { display: grid; grid-template-columns: repeat(2, 1fr); }  /* Anwesenheits-4er als 2×2 → ≥44 px Touch (Zero-Entscheid 2026-07-09) */
   .rail-trenner { height: 1px; background: var(--kante); margin: 9px 0; }
   .rail-btn {
     flex: 1; min-width: 0; min-height: 44px; border-radius: 10px; cursor: pointer; padding: 4px;
@@ -551,6 +559,7 @@
     #hauptnav button:hover:not(.aktiv) { color: var(--text); background: var(--karte2); }
     .rail-btn:hover { border-color: var(--band); }
     #kurs-chip:hover { border-color: var(--band); }
+    .kurs-karte:hover { border-color: var(--band); }
   }
 }
 
@@ -580,4 +589,19 @@
   .s-suche { margin-bottom: 12px; }
   .s-suche input { width: 100%; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; min-height: 44px; font-size: 16px; }
   .s-suche input:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
+  /* Kurse = Karten-Grid (Band · Serif-Name · echter Status-Badge · dashed Anlege-Karte) */
+  .kurse-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .kurse-kopf .kk-sj { color: var(--leise); font-size: 13px; }
+  .kurse-kopf .kk-sj b { color: var(--text); font-weight: 600; }
+  .kurs-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: stretch; }
+  .kurs-karte { display: flex; gap: 13px; align-items: stretch; text-align: left; width: 100%;
+    background: var(--karte); border: 1px solid var(--kante); border-radius: 14px; padding: 15px 16px; cursor: pointer; color: var(--text); min-height: 96px; }
+  .kurs-karte:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
+  .kurs-karte .kurs-band { height: auto; min-height: 46px; align-self: stretch; }
+  .kurs-karte .kk-txt { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .kurs-karte .k-name { font-family: var(--font-serif); font-size: 19px; font-weight: 500; line-height: 1.1; }
+  .kurs-karte .k-meta { color: var(--leise); font-size: 12.5px; }
+  .kurs-karte .k-badge .kurs-badge { margin-left: 0; }
+  .kurs-karte.neu { border-style: dashed; color: var(--leise); align-items: center; justify-content: center; font-size: 15px; font-weight: 600; }
+  @media (max-width: 720px) { .kurs-grid { grid-template-columns: 1fr; } }
 }

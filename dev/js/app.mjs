@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783600713';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783600713';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783600713';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783600713';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783600713';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783600713';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783600713';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783600713';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783600713';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783600713';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783615718';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783615718';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783615718';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783615718';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783615718';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783615718';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783615718';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783615718';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783615718';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783615718';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -623,7 +623,7 @@ function renderRail(){
     el('div',{class:'rail-titel'},'Stempel'),
     el('div',{class:'rail-gruppe'}, mk('+','＋','plus'), mk('o','o'), mk('-','−','minus')),
     tr(),
-    el('div',{class:'rail-gruppe'}, mk('fehlt_o','∅'), mk('fehlt_e','✓'), mk('fehlt_u','✗'), mk('versp','⏰')),
+    el('div',{class:'rail-gruppe raster2'}, mk('fehlt_o','∅'), mk('fehlt_e','✓'), mk('fehlt_u','✗'), mk('versp','⏰')),
     tr(),
     el('div',{class:'rail-gruppe'}, mk('ipad_fehlt','📱'), mk('mat','📕')),
     tr(),
@@ -1089,39 +1089,26 @@ function kursBadgeHtml(k){
 }
 function renderKurse(){
   const wrap=$('view-kurse');
-  let html='<div class="panel"><h2>Neuer Kurs</h2>'+
-    '<p class="u-hinweis">Am schnellsten: in Excel die Klassenlisten-Spalten markieren (Nr · Name · Vorname · ggf. LB), kopieren, hier einfügen. Alternativ die kurs.json vom PC-Werkzeug laden.</p>'+
-    '<div class="btn-reihe"><button class="btn" id="btn-kurs-wizard">Kurs anlegen (geführt)</button>'+
-    '<button class="btn still" id="btn-kurs-neu">Schnell (Einfügen)</button>'+
-    '<button class="btn still" id="btn-import-kurs">kurs.json laden</button></div>'+
-    '<input type="file" id="file-kurs" accept=".json,application/json" class="hidden"></div>'+
-    '<div class="panel"><h2>Stundenplan</h2>'+
-    '<p class="u-hinweis">Zeitraster + Wochenplan deiner Schule — die Kladde öffnet dann automatisch den richtigen Kurs.'+
-    ((vault.stamm.zeitmodelle||[]).length?' <b class="u-gut">eingerichtet</b>':' <b class="u-warn13">noch nicht eingerichtet</b>')+'</p>'+
-    '<div class="btn-reihe"><button class="btn" id="btn-stundenplan">Stundenplan einrichten</button></div></div>';
-  // Schuljahr-Panel (P3.2)
+  // Kopfzeile: aktives Schuljahr + Verwaltungs-Aktionen (Stundenplan-Signal · Schuljahres-Assistent)
   const sj=aktivesSchuljahr();
-  html+='<div class="panel"><h2>Schuljahr</h2>'+
-    '<div class="zeile"><span>Aktiv</span><span class="wert">'+esc(sj?sj.label:'—')+'</span></div>'+
-    '<div class="btn-reihe"><button class="btn still" id="btn-schuljahr">Neues Schuljahr starten…</button></div></div>';
-  // Kurse des AKTIVEN Schuljahres, nicht archiviert
+  const spEingerichtet=(vault.stamm.zeitmodelle||[]).length>0;
+  let html='<div class="kurse-kopf"><div class="kk-sj">Schuljahr <b>'+esc(sj?sj.label:'—')+'</b></div>'+
+    '<div class="btn-reihe"><button class="btn'+(spEingerichtet?' still':'')+' u-btn-klein" id="btn-stundenplan">'+(spEingerichtet?'Stundenplan':'Stundenplan einrichten')+'</button>'+
+    '<button class="btn still u-btn-klein" id="btn-schuljahr">Neues Schuljahr…</button></div></div>';
+  // Kurse des AKTIVEN Schuljahres, nicht archiviert → Karten-Grid
   const aktiveId=vault.stamm.aktivesSchuljahrId;
   const sichtbar=vault.stamm.kurse.filter(k=>(k.schuljahrId||aktiveId)===aktiveId&&k.status!=='archiviert');
   const archiviert=vault.stamm.kurse.filter(k=>k.status==='archiviert');
+  html+='<div class="kurs-grid">';
   for(const k of sichtbar){
     const anz=kursSchueler(k).length;
-    const p=vault.stamm.kursprofile[k.id]||{};
-    html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(k.fach)+kursBadgeHtml(k)+' <small class="u-notransform">('+k.profil+' · '+anz+' Schüler)</small></h2>'+
-      '<div class="zeile"><span>Kladde-m-Slot (Export)</span><span><select data-slot="'+k.id+'">'+['m1','m2','m3','m4','m5','m6'].map(m=>'<option'+((k.slot||'m1')===m?' selected':'')+'>'+m+'</option>').join('')+'</select></span></div>'+
-      (k.profil==='sek2'?'<div class="zeile"><span>Sek II · Noten-Eingabe</span><span><select data-notenmodus="'+k.id+'"><option value="punkte"'+((k.notenmodus||'punkte')==='punkte'?' selected':'')+'>Punkte 0–15</option><option value="drittel"'+(k.notenmodus==='drittel'?' selected':'')+'>Drittelnoten</option></select></span></div>':'')+
-      '<div class="zeile"><span>HA-Typ aktiv (SekI-Schule: aus)</span><span><input type="checkbox" data-ha="'+k.id+'"'+(p.ha?' checked':'')+' class="u-check"></span></div>'+
-      '<div class="btn-reihe">'+
-      '<button class="btn still" data-teilnehmer="'+k.id+'">Teilnehmer</button>'+
-      '<button class="btn still" data-plan-edit="'+k.id+'">Sitzplan bearbeiten</button>'+
-      '<button class="btn still" data-slots="'+k.id+'">Stundenplan-Slots</button>'+
-      '<button class="btn still" data-gruppen="'+k.id+'">Halbgruppen</button>'+
-      '<button class="btn still" data-archiv="'+k.id+'">Archivieren</button></div></div>';
+    html+='<button class="kurs-karte" data-kurs="'+k.id+'"><span class="kurs-band"></span>'+
+      '<span class="kk-txt"><span class="k-name">'+esc(k.name)+'</span>'+
+      '<span class="k-meta">'+esc(k.fach)+' · '+k.profil+' · '+anz+' Schüler</span>'+
+      '<span class="k-badge">'+kursBadgeHtml(k)+'</span></span></button>';
   }
+  html+='<button class="kurs-karte neu" id="btn-kurs-anlegen">＋ Kurs anlegen</button></div>';
+  html+='<input type="file" id="file-kurs" accept=".json,application/json" class="hidden">';
   // Archiv (P3.3) — schreibgeschützt, eingeklappt
   if(archiviert.length){
     html+='<details class="panel"><summary><b>Archiv ('+archiviert.length+')</b></summary>'+
@@ -1129,14 +1116,12 @@ function renderKurse(){
         '<span><button class="btn still u-btn-klein" data-oeffnen="'+k.id+'">öffnen</button> <button class="btn gefahr u-btn-klein" data-loeschen="'+k.id+'">löschen</button></span></div>').join('')+'</details>';
   }
   wrap.innerHTML=html;
-  $('btn-kurs-wizard').onclick=kursWizard;
-  $('btn-kurs-neu').onclick=kursAnlegenDialog;
   $('btn-stundenplan').onclick=stundenplanAssistent;
   $('btn-schuljahr').onclick=schuljahrAssistent;
-  wrap.querySelectorAll('[data-archiv]').forEach(b=>b.onclick=()=>archiviereKurs(b.dataset.archiv));
+  $('btn-kurs-anlegen').onclick=kursAnlegenSheet;
+  wrap.querySelectorAll('[data-kurs]').forEach(b=>b.onclick=()=>kursDetailSheet(b.dataset.kurs));
   wrap.querySelectorAll('[data-oeffnen]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.oeffnen; aktualisiereKursChip(); aktView='schueler'; document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='schueler')); setzeViewTitel('schueler'); ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='schueler')); renderSchueler(); toast('Archiv-Kurs (schreibgeschützt)'); });
   wrap.querySelectorAll('[data-loeschen]').forEach(b=>b.onclick=()=>loescheKursEndgueltig(b.dataset.loeschen));
-  $('btn-import-kurs').onclick=()=>$('file-kurs').click();
   $('file-kurs').onchange=async e=>{
     const f=e.target.files[0]; if(!f) return;
     try {
@@ -1153,13 +1138,47 @@ function renderKurse(){
     } catch(err){ toast('⚠ Import: '+err.message,4000); }
     e.target.value='';
   };
-  wrap.querySelectorAll('[data-slot]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.slot); k.slot=sel.value; stammMutiert(); speichern(); toast('Export-Slot: '+sel.value); });
-  wrap.querySelectorAll('[data-notenmodus]').forEach(sel=>sel.onchange=()=>{ const k=vault.stamm.kurse.find(x=>x.id===sel.dataset.notenmodus); k.notenmodus=sel.value; stammMutiert(); speichern(); toast('Sek II: '+(sel.value==='drittel'?'Drittelnoten':'Punkte 0–15')); });
-  wrap.querySelectorAll('[data-ha]').forEach(cb=>cb.onchange=()=>{ vault.stamm.kursprofile[cb.dataset.ha]={...(vault.stamm.kursprofile[cb.dataset.ha]||{}),ha:cb.checked}; stammMutiert(); speichern(); });
-  wrap.querySelectorAll('[data-plan-edit]').forEach(b=>b.onclick=()=>sitzplanEditor(b.dataset.planEdit));
-  wrap.querySelectorAll('[data-slots]').forEach(b=>b.onclick=()=>slotsEditor(b.dataset.slots));
-  wrap.querySelectorAll('[data-gruppen]').forEach(b=>b.onclick=()=>gruppenEditor(b.dataset.gruppen));
-  wrap.querySelectorAll('[data-teilnehmer]').forEach(b=>b.onclick=()=>schuelerPflegeDialog(b.dataset.teilnehmer));
+}
+// Kurs-Detail-Sheet (Studio): Einstellungen (Slot/Noten/HA) + Aktionen aus der Karten-Ansicht.
+// el()/dlgZeigenEl — CSP-sauber (kein innerHTML). dlgZu() vor jeder Aktion → sauberer Wechsel in #dlg- ODER Vollbild-Ziele.
+function kursDetailSheet(id){
+  const k=vault.stamm.kurse.find(x=>x.id===id); if(!k) return;
+  const anz=kursSchueler(k).length;
+  const p=vault.stamm.kursprofile[k.id]||{};
+  const slotSel=el('select',{onchange:e=>{ k.slot=e.target.value; stammMutiert(); speichern(); toast('Export-Slot: '+e.target.value); }},
+    ...['m1','m2','m3','m4','m5','m6'].map(m=>el('option',(k.slot||'m1')===m?{selected:'selected'}:{},m)));
+  const zeilen=[el('div',{class:'zeile'},el('span',{},'Kladde-m-Slot (Export)'),el('span',{},slotSel))];
+  if(k.profil==='sek2'){
+    const nmSel=el('select',{onchange:e=>{ k.notenmodus=e.target.value; stammMutiert(); speichern(); toast('Sek II: '+(e.target.value==='drittel'?'Drittelnoten':'Punkte 0–15')); }},
+      el('option',{value:'punkte',...((k.notenmodus||'punkte')==='punkte'?{selected:'selected'}:{})},'Punkte 0–15'),
+      el('option',{value:'drittel',...(k.notenmodus==='drittel'?{selected:'selected'}:{})},'Drittelnoten'));
+    zeilen.push(el('div',{class:'zeile'},el('span',{},'Sek II · Noten-Eingabe'),el('span',{},nmSel)));
+  }
+  const haCb=el('input',{type:'checkbox',class:'u-check',...(p.ha?{checked:'checked'}:{}),onchange:e=>{ vault.stamm.kursprofile[k.id]={...(vault.stamm.kursprofile[k.id]||{}),ha:e.target.checked}; stammMutiert(); speichern(); }});
+  zeilen.push(el('div',{class:'zeile'},el('span',{},'HA-Typ aktiv (SekI-Schule: aus)'),el('span',{},haCb)));
+  dlgZeigenEl(
+    el('h3',{},esc(k.name)+' · '+esc(k.fach)),
+    el('p',{class:'u-hinweis'},k.profil+' · '+anz+' Schüler'),
+    ...zeilen,
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); schuelerPflegeDialog(k.id); }},'Teilnehmer'),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); sitzplanEditor(k.id); }},'Sitzplan bearbeiten')),
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); slotsEditor(k.id); }},'Stundenplan-Slots'),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); gruppenEditor(k.id); }},'Halbgruppen')),
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn gefahr',onclick:()=>{ dlgZu(); archiviereKurs(k.id); }},'Archivieren'),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); renderKurse(); }},'Fertig')));
+}
+// Kurs anlegen — Auswahl-Sheet (Geführt / Schnell / kurs.json), aus der dashed Karte im Grid.
+function kursAnlegenSheet(){
+  dlgZeigenEl(
+    el('h3',{},'Kurs anlegen'),
+    el('p',{class:'u-hinweis'},'Am schnellsten: in Excel die Listen-Spalten (Nr · Name · Vorname · ggf. LB) markieren, kopieren, hier einfügen. Alternativ die kurs.json vom PC-Werkzeug laden.'),
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn',onclick:()=>{ dlgZu(); kursWizard(); }},'Geführt (Wizard)'),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); kursAnlegenDialog(); }},'Schnell (Einfügen)'),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); $('file-kurs').click(); }},'kurs.json laden')));
 }
 // Teilnehmer nachträglich pflegen — hinzufügen/entfernen (Zero-Wunsch 2026-07-09).
 // Fokus-sicher: neu gerendert wird NUR bei Submit/Entfernen, nie beim Tippen (Stundenplan-Lehre).
