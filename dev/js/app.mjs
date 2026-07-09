@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783630714';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783630714';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783630714';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783630714';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783630714';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783630714';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783630714';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783630714';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783630714';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783630714';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783631152';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783631152';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783631152';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783631152';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783631152';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783631152';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783631152';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783631152';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783631152';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783631152';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -601,6 +601,7 @@ function stempleKachel(nr){
   stempelCooldown.add(nr); setTimeout(()=>stempelCooldown.delete(nr),80);
   const s=schuelerVonNr(nr);
   if(stempelTyp==='verweigert'){ verweigerungDialog(s); return; }  // 6 mit gekoppelter Kurznotiz
+  if(stempelTyp==='bestleistung'){ bestleistungDialog(s); return; } // Gegenstück: Bestnote mit Begründung
   if(stempelTyp==='versp'){ verspDialog(s); return; }              // Minuten-Abfrage je Schüler
   if(stempelTyp==='notiz'){ notizDialog(s); return; }              // Kurznotiz je Schüler
   if(stempelTyp==='note'){ noteDialog(s); return; }                // Notenauswahl je Schüler (Rail-2×2-Feld 📊)
@@ -630,9 +631,26 @@ function verweigerungDialog(s){
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
+// v1.3 · Besondere Leistung (Zero 2026-07-09): Gegenstück zur Verweigerung — trägt automatisch die
+// Bestnote als direkte note ein (Sek I: 1 · Sek II: 15 P, bestehender note-Pfad, keine Logik-Änderung)
+// + optionale gekoppelte Notiz zur Begründung. Kachel zeigt danach 📊 (+ ✎ bei Notiz).
+function bestleistungDialog(s){
+  if(!s) return;
+  const sek2=bewertProfil(kurs())==='sek2';
+  const wert=sek2?'15':'1', label=sek2?'15 P':'Note 1';
+  const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. herausragender Beitrag, eigenständige Lösung vorgestellt'});
+  dlgZeigenEl(
+    el('h3',{},'⭐ Besondere Leistung · '+esc(s.vorname)),
+    el('p',{class:'u-hinweis'},'Trägt '+label+' als direkte Note ein. Kurznotiz zur Begründung (empfohlen):'),
+    ta,
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn',onclick:()=>{ addEvent('note',s.nr,{wert}); const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); toast('⭐ '+label+' · '+esc(s.vorname)); renderHeute(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
+      el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+  setTimeout(()=>ta.focus(),60);
+}
 /* ═══ PERMANENTE STEMPEL-RAIL (v2) · Werkzeug-in-die-Hand-Paradigma (Zero-Wunsch) ═══
    Stempel wählen → Kacheln antippen. Löst das alte „Schüler wählen → dann eintragen" ab. */
-const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','note':'Direkte Note','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','lernzeit':'Lernzeit/HA nicht erledigt','notiz':'Notiz','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
+const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','note':'Direkte Note','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','lernzeit':'Lernzeit/HA nicht erledigt','notiz':'Notiz','bestleistung':'Besondere Leistung (Note 1)','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
 function setStempel(typ){
   stempelTyp=(stempelTyp===typ)?null:typ; // gleichen Stempel nochmal antippen → aus
   document.body.classList.toggle('stempeln',stempelTyp!==null);
@@ -659,9 +677,9 @@ function renderRail(){
     tr(),
     el('div',{class:'rail-gruppe raster2'}, mk('fehlt_o','∅'), mk('fehlt_e','✓'), mk('fehlt_u','✗'), mk('versp','⏰')),
     tr(),
-    el('div',{class:'rail-gruppe raster2'}, mk('ipad_fehlt','📱'), mk('mat','📕'), mk('lernzeit','📝')),
+    el('div',{class:'rail-gruppe raster2'}, mk('ipad_fehlt','📱'), mk('mat','📕'), mk('lernzeit','📝'), mk('notiz','✎')),
     tr(),
-    el('div',{class:'rail-gruppe'}, mk('notiz','✎'), mk('verweigert','⊘','verw')),
+    el('div',{class:'rail-gruppe'}, mk('bestleistung','⭐','best'), mk('verweigert','⊘','verw')),
     tr(),
     mk('entfernen','⌫','breit'));
   const k=kurs(); let erfasst=0,total=0;
@@ -709,6 +727,7 @@ function zeigeMehrAktionen(s){
     '<p class="u-hinweis">Fehlt jetzt: „abwesend" — e/u klärst du später in der Wiedervorlage.</p>'+
     '<div class="btn-reihe">'+
     '<button class="btn still" data-t="fehlt_o">abwesend</button>'+
+    '<button class="btn still" data-t="bestleistung">⭐ bes. Leistung…</button>'+
     '<button class="btn still" data-t="verweigert">⊘ verweigert (6)…</button>'+
     '<button class="btn still" data-t="versp">zu spät…</button>'+
     '<button class="btn still" data-t="note">Note…</button>'+
@@ -724,6 +743,7 @@ function zeigeMehrAktionen(s){
         else if(t==='note') noteDialog(s);
         else if(t==='notiz') notizDialog(s);
         else if(t==='verweigert') verweigerungDialog(s);
+        else if(t==='bestleistung') bestleistungDialog(s);
         else { addEvent(t,s.nr); renderHeute(); }
       });
     });

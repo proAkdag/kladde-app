@@ -552,6 +552,7 @@
   .rail-btn.plus.an { background: var(--gut); border-color: var(--gut); color: var(--auf-pos); }
   .rail-btn.minus.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
   .rail-btn.verw.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
+  .rail-btn.best.an { background: var(--gut); border-color: var(--gut); color: var(--auf-pos); }  /* ⭐ Gegenstück zu ⊘ */
   .rail-erfasst-zahl { font-family: var(--font-serif); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
   .rail-erfasst-zahl small { color: var(--leise); font-size: 14px; }
   .rail-bar { height: 6px; background: var(--kante); border-radius: 4px; overflow: hidden; margin-top: 7px; }
