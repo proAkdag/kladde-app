@@ -57,12 +57,7 @@
     border-bottom: 1px solid var(--kante);
   }
   .band { width: 6px; height: 22px; background: var(--band); border-radius: 2px; }
-  #kurs-chip {
-    background: var(--karte); border: 1px solid var(--kante); border-radius: 8px;
-    padding: 8px 12px; min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer;
-    font-weight: 600; max-width: 60vw; overflow: hidden; white-space: nowrap;
-  }
-  #kurs-chip small { color: var(--leise); font-weight: 400; }
+  /* #kurs-chip: volle Definition lebt im Header-Block (@layer components, Band+Text-Struktur) */
   .spacer { flex: 1; }
   .icon-btn {
     background: transparent; border: 1px solid var(--kante); border-radius: 8px;
@@ -83,8 +78,6 @@
   .btn.still { color: var(--leise); border-color: var(--kante); }
   .btn.gefahr { color: var(--fehl); border-color: var(--fehl); }
   .btn-reihe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--leise); flex-shrink: 0; }
-  .dot.gut { background: var(--gut); } .dot.warn { background: var(--warn); } .dot.fehl { background: var(--fehl); }
   select, input[type=text], input[type=password], input[type=date], input[type=time], input[type=number] {
     background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px;
     padding: 10px; min-height: 44px; font-size: 16px; /* ≥16px gegen iOS-Zoom */
@@ -348,7 +341,6 @@
   .u-maxw55 { max-width: 55%; }
   .u-selfcenter { align-self: center; }
   .u-center { justify-content: center; }
-  .u-notransform { text-transform: none; }
   .u-w108 { width: 108px; } .u-w110 { width: 110px; } .u-w130 { width: 130px; }
   .u-w160 { width: 160px; } .u-w170 { width: 170px; }
   .u-check { width: 22px; height: 22px; }
