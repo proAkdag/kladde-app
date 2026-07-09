@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783630359';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783630359';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783630359';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783630359';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783630359';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783630359';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783630359';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783630359';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783630359';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783630359';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783630714';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783630714';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783630714';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783630714';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783630714';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783630714';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783630714';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783630714';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783630714';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783630714';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -210,7 +210,7 @@ function stornoVon(e){
   const s={id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id};
   vault.events.push(s); speichern();
 }
-const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
+const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit/HA',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
 // Kompaktes Symbol eines Eintrags (für die entfernbaren Heute-Chips in der Aktionsbar)
 function zeigeUndo(e){
   const chip=$('undo-chip');
@@ -632,7 +632,7 @@ function verweigerungDialog(s){
 }
 /* ═══ PERMANENTE STEMPEL-RAIL (v2) · Werkzeug-in-die-Hand-Paradigma (Zero-Wunsch) ═══
    Stempel wählen → Kacheln antippen. Löst das alte „Schüler wählen → dann eintragen" ab. */
-const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','note':'Direkte Note','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','notiz':'Notiz','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
+const RAIL_TITEL={'+':'Positiv','o':'Neutral','-':'Negativ','note':'Direkte Note','fehlt_o':'Abwesend (∅)','fehlt_e':'Entschuldigt gefehlt (e)','fehlt_u':'Unentschuldigt gefehlt (u)','versp':'Verspätung (Minuten)','ipad_fehlt':'iPad fehlt/leer','mat':'Material vergessen','lernzeit':'Lernzeit/HA nicht erledigt','notiz':'Notiz','verweigert':'Verweigerung (zählt 6)','entfernen':'Letzten Eintrag entfernen'};
 function setStempel(typ){
   stempelTyp=(stempelTyp===typ)?null:typ; // gleichen Stempel nochmal antippen → aus
   document.body.classList.toggle('stempeln',stempelTyp!==null);
@@ -659,7 +659,7 @@ function renderRail(){
     tr(),
     el('div',{class:'rail-gruppe raster2'}, mk('fehlt_o','∅'), mk('fehlt_e','✓'), mk('fehlt_u','✗'), mk('versp','⏰')),
     tr(),
-    el('div',{class:'rail-gruppe'}, mk('ipad_fehlt','📱'), mk('mat','📕')),
+    el('div',{class:'rail-gruppe raster2'}, mk('ipad_fehlt','📱'), mk('mat','📕'), mk('lernzeit','📝')),
     tr(),
     el('div',{class:'rail-gruppe'}, mk('notiz','✎'), mk('verweigert','⊘','verw')),
     tr(),
@@ -712,7 +712,8 @@ function zeigeMehrAktionen(s){
     '<button class="btn still" data-t="verweigert">⊘ verweigert (6)…</button>'+
     '<button class="btn still" data-t="versp">zu spät…</button>'+
     '<button class="btn still" data-t="note">Note…</button>'+
-    '<button class="btn still" data-t="notiz">Notiz…</button></div>'+
+    '<button class="btn still" data-t="notiz">Notiz…</button>'+
+    '<button class="btn still" data-t="lernzeit">Lernzeit/HA</button></div>'+
     '<div class="btn-reihe"><button class="btn still" data-t="fehlt_e">direkt entschuldigt</button>'+
     '<button class="btn still" data-t="fehlt_u">direkt unentsch.</button></div>'+
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
@@ -765,7 +766,7 @@ function zeigeLegende(){
     kopf('Organisatorisches')+
     zeile(mk('sym','📕'),'Material vergessen')+
     zeile(mk('sym','📱'),'iPad fehlt / leer')+
-    zeile(mk('sym','📝'),'Lernzeit nicht gemacht')+
+    zeile(mk('sym','📝'),'Lernzeit / Hausaufgabe nicht erledigt')+
     zeile(mk('sym','✎'),'Notiz vorhanden')+
     zeile(mk('sym','⏰'),'Verspätung (Minuten)')+
     kopf('Anwesenheit')+
