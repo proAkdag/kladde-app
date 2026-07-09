@@ -3,7 +3,8 @@
 //   score = (n⁺ − n⁻) / max(1, n⁺ + n° + n⁻)   ∈ [−1, +1]
 //   SekI:  Ereignis-Note = 3 − 2·score, auf Drittel gerundet, geklemmt [1,6]
 //   SekII: Ereignis-Punkte = 9 + 6·score, ganzzahlig, geklemmt [0,15]
-//   direkte note-Events (falls vorhanden): Mittel, dann 50:50 mit Ereignis-Note gemischt
+//   direkte note-Events: TERMINGEWICHTET — jede Note wiegt einen Termin (Zero-Entscheid 2026-07-10;
+//   schwer gewichtete Einzelleistungen wie Referate leben in der Excel-Mappe, nicht hier)
 //   Aktivitätsquote = beteiligte Termine / Kurstermine
 //   Verlaufspfeil: score(2. Termin-Hälfte) − score(1. Hälfte) → ↑/→/↓ bei |Δ| > 0.15
 //   LB-Schüler: Bilanz ja, Vorschlag null (kein m-Slot-Export).
@@ -97,26 +98,28 @@ function verdichte(kursEvents, schuelerNr, opt) {
   const sechsWirkt = nSechs > 0;
 
   // Vorschlag (LB: keiner; ohne jede Grundlage: keiner)
+  // Termingewichtete Mischung DREIER Quellen: Stempel-Note über nSomi Termine · 6/0-P-Stunden über
+  // nSechs Termine · direkte Noten über ihre Termine (jede Note = EIN Termin-Gewicht — kein
+  // 50:50-Kollektivgewicht mehr; Referate & Co. gewichtet die Excel-Mappe · Zero 2026-07-10).
+  const nDirekt = new Set(direkte.map(terminVon)).size;
+  const misch = (ereignis, sechsWert, mittelDirekt) => {
+    let summe = 0, gewicht = 0;
+    if (ereignis !== null) { summe += ereignis * nSomi; gewicht += nSomi; }
+    if (nSechs) { summe += sechsWert * nSechs; gewicht += nSechs; }
+    if (mittelDirekt !== null) { summe += mittelDirekt * nDirekt; gewicht += nDirekt; }
+    return gewicht ? summe / gewicht : null;
+  };
   let vorschlag = null;
   if (!lb && (somi.length > 0 || direkte.length > 0 || sechsWirkt)) {
     if (profil === 'sek2') {
-      // SomiPunkte termingewichtet mit 0 P je 6-Stunde (u / verweigert)
-      let punkte = somi.length ? 9 + 6 * bilanz.score : null;
-      if (sechsWirkt) punkte = punkte === null ? 0 : (punkte * nSomi + 0 * nSechs) / (nSomi + nSechs);
-      if (direkte.length) {
-        const mittel = direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek2'), 0) / direkte.length;
-        punkte = punkte === null ? mittel : (punkte + mittel) / 2;
-      }
-      const p = klemmePunkte(punkte);
+      const ereignis = somi.length ? 9 + 6 * bilanz.score : null;
+      const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek2'), 0) / direkte.length : null;
+      const p = klemmePunkte(misch(ereignis, 0, mittel));
       vorschlag = { wert: p, label: String(p) + ' P' };
     } else {
-      let note = somi.length ? 3 - 2 * bilanz.score : null;
-      if (sechsWirkt) note = note === null ? 6 : (note * nSomi + 6 * nSechs) / (nSomi + nSechs);
-      if (direkte.length) {
-        const mittel = direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek1'), 0) / direkte.length;
-        note = note === null ? mittel : (note + mittel) / 2;
-      }
-      const w = rundeAufDrittel(note);
+      const ereignis = somi.length ? 3 - 2 * bilanz.score : null;
+      const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek1'), 0) / direkte.length : null;
+      const w = rundeAufDrittel(misch(ereignis, 6, mittel));
       vorschlag = { wert: w, label: wertZuLabel(w) };
     }
   }
@@ -135,7 +138,7 @@ function verdichte(kursEvents, schuelerNr, opt) {
 }
 
 function regelText(profil, nSechs = 0) {
-  const basis = 'score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen 50:50';
+  const basis = 'score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen wie ein Termin';
   const kopf = profil === 'sek2'
     ? 'Punkte-Vorschlag = 9 + 6·score (0–15) · '
     : 'Noten-Vorschlag = 3 − 2·score (Drittelnoten) · ';
