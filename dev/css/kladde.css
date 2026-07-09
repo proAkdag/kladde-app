@@ -112,6 +112,8 @@
   .datum-streifen .rechts { margin-left: auto; display: flex; gap: 6px; }
   .datum-streifen button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 14px; }
   .datum-streifen button.aktiv { border-color: var(--band); color: var(--band); }
+  .datum-streifen button.ds-icon { width: 40px; padding: 0; display: grid; place-items: center; }  /* quadratisch, einheitliche Größe */
+  .datum-streifen button.ds-icon svg { width: 20px; height: 20px; }
   .legende { display: flex; flex-direction: column; gap: 9px; font-size: 14px; margin: 4px 0 10px; }
   .legende .chip { border-radius: 3px; padding: 0 7px; font-weight: 700; display: inline-block; }
 

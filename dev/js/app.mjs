@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783620293';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783620293';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783620293';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783620293';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783620293';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783620293';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783620293';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783620293';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783620293';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783620293';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783622606';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783622606';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783622606';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783622606';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783622606';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783622606';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783622606';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783622606';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783622606';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783622606';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -470,6 +470,13 @@ function sichtbareSchueler(k){
   }
   return liste;
 }
+// SVG-Line-Icons für die Datums-Zeile — einheitliche Größe (Emoji rendern unterschiedlich groß), Duktus wie Sidebar
+const SVG_DS={
+  zufall:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  legende:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11.2v4.8"/><circle cx="12" cy="7.8" r="0.7" fill="currentColor" stroke="none"/></svg>',
+  sitzplan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="5" height="5" rx="1"/><rect x="10" y="5" width="5" height="5" rx="1"/><rect x="17" y="5" width="4" height="5" rx="1"/><rect x="3" y="13" width="5" height="5" rx="1"/><rect x="10" y="13" width="5" height="5" rx="1"/></svg>',
+  datum:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9.5h16"/><path d="M9 3.5v3"/><path d="M15 3.5v3"/></svg>'
+};
 function datumStreifen(){
   const el=$('datum-streifen'); const k=kurs(); if(!k){ el.innerHTML=''; el.className=''; return; }
   const heute=heuteIso(), istHeute=terminDatum===heute;
@@ -484,13 +491,15 @@ function datumStreifen(){
   el.innerHTML='<span class="heute-tag">'+jetztText+'</span>'+
     (istHeute?'':'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+chips+
     '<span class="rechts">'+
-    (istHeute?'':'<button data-heute>↩ Heute</button>')+
-    '<button data-zufall title="Zufällig – bevorzugt wer noch selten dran war">🎲</button>'+
-    '<button data-legende title="Symbol-Legende">?</button>'+
-    '<button data-datum title="Anderer Termin (Nachtrag)">📅</button></span>';
+    (istHeute?'':'<button data-heute class="ds-txt">↩ Heute</button>')+
+    '<button data-zufall class="ds-icon" title="Zufällig – bevorzugt wer noch selten dran war">'+SVG_DS.zufall+'</button>'+
+    '<button data-legende class="ds-icon" title="Symbol-Legende">'+SVG_DS.legende+'</button>'+
+    '<button data-sitzplan class="ds-icon" title="Sitzplan bearbeiten">'+SVG_DS.sitzplan+'</button>'+
+    '<button data-datum class="ds-icon" title="Anderer Termin (Nachtrag)">'+SVG_DS.datum+'</button></span>';
   el.querySelector('[data-datum]').onclick=oeffneDatum;
   el.querySelector('[data-zufall]').onclick=zufallsSchueler;
   el.querySelector('[data-legende]').onclick=zeigeLegende;
+  el.querySelector('[data-sitzplan]').onclick=()=>{ if(aktiverKursId) sitzplanEditor(aktiverKursId); };
   el.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{ aktiveTeilgruppe=b.dataset.tg||null; mitUebergang(renderHeute); });
   const bh=el.querySelector('[data-heute]'); if(bh) bh.onclick=()=>{ terminDatum=heute; mitUebergang(renderHeute); };
 }
@@ -656,8 +665,15 @@ function pulseKachel(nr){
 }
 // Per-Schüler-Dialoge — aus dem Stempelfluss (⏰/✎) ODER dem „…"-Menü des Detail-Blatts erreichbar.
 function verspDialog(s){ if(!s) return;
-  dlgZeigen('<h3>Verspätung · '+esc(s.vorname)+'</h3><input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="67"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); renderHeute(); } dlgZu(); }; setTimeout(()=>d.querySelector('#min-in').focus(),60); });
+  // Vorschlag aus dem Stundenplan: jetzt − Blockbeginn (nur heute + laufender Block; sonst leer)
+  let vorschlag='', hinweis='';
+  if(terminDatum===heuteIso() && autowahlInfo && autowahlInfo.startSek!=null){
+    const now=new Date(), jetztSek=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+    const min=Math.round((jetztSek-autowahlInfo.startSek)/60);
+    if(min>=1 && min<=90){ vorschlag=String(min); hinweis='<p class="u-hinweis">Nach Stundenplan: '+min+' min (Block ab '+formatZeit(autowahlInfo.startSek)+') — anpassbar.</p>'; }
+  }
+  dlgZeigen('<h3>Verspätung · '+esc(s.vorname)+'</h3>'+hinweis+'<input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="90" value="'+vorschlag+'"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); renderHeute(); } dlgZu(); }; setTimeout(()=>{const mi=d.querySelector('#min-in'); mi.focus(); mi.select();},60); });
 }
 function notizDialog(s){ if(!s) return;
   dlgZeigen('<h3>Notiz · '+esc(s.vorname)+'</h3><textarea id="notiz-in" rows="3" class="u-textarea u-fs16"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
