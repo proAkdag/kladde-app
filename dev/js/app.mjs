@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783629872';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783629872';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783629872';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783629872';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783629872';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783629872';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783629872';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783629872';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783629872';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783629872';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783630359';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783630359';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783630359';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783630359';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783630359';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783630359';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783630359';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783630359';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783630359';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783630359';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -741,16 +741,39 @@ function schuelerBlatt(nr){
     });
 }
 function zeigeLegende(){
-  const chip=(cls,t)=>'<span class="chip '+cls+'">'+t+'</span>';
+  // Anatomie-Beispiel = ECHTE kachelHtml-Ausgabe (eine Quelle der Wahrheit — Legende driftet nie vom Plan)
+  const demo=kachelHtml({nr:0,vorname:'Anna',name:'Anders',lb:true},
+    {plus:2,neutral:0,minus:0,fehlt:null,note:'2',mat:true,ipad:false,lernzeit:false,notiz:true,versp:1,verweigert:false},0,0);
+  const mk=(cls,t)=>'<span class="mk '+cls+'">'+t+'</span>';
+  const zeile=(sym,txt)=>'<div class="lg-zeile"><span class="lg-sym">'+sym+'</span><span>'+txt+'</span></div>';
+  const kopf=t=>'<div class="tag-kopf">'+t+'</div>';
   dlgZeigen('<h3>Legende</h3><div class="legende">'+
-    '<div>'+chip('chip-gut','＋')+' überwiegend Plus (Kachel grün)</div>'+
-    '<div>'+chip('chip-fehl','−')+' überwiegend Minus (Kachel rot)</div>'+
-    '<div>'+chip('chip-kante','o')+' nur neutrale Meldungen</div>'+
-    '<div>📊 direkte Note · 📕 Material vergessen · 📱 iPad fehlt/leer</div>'+
-    '<div>📝 Lernzeit · ✎ Notiz · ⏰ Verspätung (Minuten)</div>'+
-    '<div><b>e</b> entschuldigt gefehlt · <b class="u-fehl">u</b> unentschuldigt (Wiedervorlage)</div>'+
-    '<div>'+chip('chip-info','LB')+' zieldifferent — kein Notenvorschlag</div>'+
-    '<div class="u-leise u-mt4">👁 Beamer-Modus (oben) versteckt alle Bewertungen für die Projektion.</div>'+
+    '<div class="lg-kachel">'+demo+
+      '<div class="lg-anatomie">'+
+      '<div>oben <b>Vorname</b> + LB-Badge, darunter der Nachname</div>'+
+      '<div>unten alle <b>Marken</b> des heutigen Tages</div>'+
+      '<div><b>Kachelfarbe</b> = Tagesstand (hier: überwiegend ＋)</div></div></div>'+
+    kopf('Tagesstand — Kachelfarbe')+
+    zeile('<span class="lg-swatch plus"></span>','überwiegend Plus')+
+    zeile('<span class="lg-swatch minus"></span>','überwiegend Minus')+
+    zeile('<span class="lg-swatch"></span>','neutral oder noch kein Eintrag')+
+    kopf('Bewertung')+
+    zeile(mk('p','＋2')+' '+mk('m','−'),'Plus / Minus — Zahl = wie oft heute')+
+    zeile(mk('o','o'),'neutrale Meldung')+
+    zeile(mk('sym','📊'),'direkte Note')+
+    zeile(mk('verw','⊘'),'Verweigerung — zählt als 6 (Sek II: 0 P)')+
+    kopf('Organisatorisches')+
+    zeile(mk('sym','📕'),'Material vergessen')+
+    zeile(mk('sym','📱'),'iPad fehlt / leer')+
+    zeile(mk('sym','📝'),'Lernzeit nicht gemacht')+
+    zeile(mk('sym','✎'),'Notiz vorhanden')+
+    zeile(mk('sym','⏰'),'Verspätung (Minuten)')+
+    kopf('Anwesenheit')+
+    zeile(mk('abw','abw'),'abwesend — Klärung offen (Wiedervorlage)')+
+    zeile(mk('e','e')+' '+mk('u','u'),'entschuldigt / unentschuldigt gefehlt')+
+    kopf('Sonderfälle')+
+    zeile('<span class="chip chip-info">LB</span>','zieldifferent — Bewertung möglich (Konferenz-Grundlage), nur kein Noten-Vorschlag')+
+    zeile('👁','Beamer-Modus (oben rechts) versteckt alle Bewertungen für die Projektion')+
     '</div><div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>');
 }
 

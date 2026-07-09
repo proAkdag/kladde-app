@@ -114,8 +114,19 @@
   .datum-streifen button.aktiv { border-color: var(--band); color: var(--band); }
   .datum-streifen button.ds-icon { width: 40px; padding: 0; display: grid; place-items: center; }  /* quadratisch, einheitliche Größe */
   .datum-streifen button.ds-icon svg { width: 20px; height: 20px; }
-  .legende { display: flex; flex-direction: column; gap: 9px; font-size: 14px; margin: 4px 0 10px; }
+  /* Legende (Studio-Umbau 2026-07-09): Anatomie-Beispielkachel + Sektionen + ausgerichtete Symbol-Spalte */
+  .legende { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; margin: 4px 0 10px; }
   .legende .chip { border-radius: 3px; padding: 0 7px; font-weight: 700; display: inline-block; }
+  .legende .tag-kopf { margin-top: 9px; }
+  .lg-kachel { display: flex; gap: 14px; align-items: center; background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 12px 14px; }
+  .lg-kachel .kachel { width: 78px; flex: none; pointer-events: none; }
+  .lg-anatomie { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--leise); min-width: 0; }
+  .lg-anatomie b { color: var(--text); }
+  .lg-zeile { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; }
+  .lg-sym { display: flex; gap: 3px; align-items: center; }
+  .lg-swatch { display: inline-block; width: 24px; height: 15px; border-radius: 4px; background: var(--karte); border: 1px solid var(--kante); }
+  .lg-swatch.plus { background: var(--tile-plus); }
+  .lg-swatch.minus { background: var(--tile-minus); }
 
   /* ── Sitzplan: Name + Tages-Stand als Symbole/Farben · Beamer-Toggle versteckt Werte ── */
   #plan-wrap { overflow: auto; }
@@ -127,31 +138,32 @@
   .reihe-plus:hover { opacity: 1; color: var(--band); background: var(--karte2); }
   body.sp-dragging .reihe-plus { opacity: .7; background: var(--karte2); }  /* Drop-Zonen beim Ziehen sichtbar — Höhe konstant (kein Ziel-Wandern) */
   .reihe-plus.ziel { opacity: 1; color: var(--band); background: var(--karte2); box-shadow: inset 0 0 0 1px var(--band); }
-  #plan .kachel {
+  /* Kachel-Anatomie gilt für den Plan UND die Legende-Beispielkachel (:is → eine Quelle der Wahrheit) */
+  :is(#plan, .lg-kachel) .kachel {
     aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
     display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
     font-size: 11px; overflow: hidden; position: relative;
   }
-  #plan .kachel.leer { background: transparent; }
-  #plan .kachel.schueler { background: var(--karte); border-color: var(--kante); cursor: pointer; }
+  :is(#plan, .lg-kachel) .kachel.leer { background: transparent; }
+  :is(#plan, .lg-kachel) .kachel.schueler { background: var(--karte); border-color: var(--kante); cursor: pointer; }
   #plan .kachel.schueler.gewaehlt { outline: 2px solid var(--band); outline-offset: -2px; }
-  #plan .kachel.netto-plus  { background: var(--tile-plus); }   /* mehrheitlich + */
-  #plan .kachel.netto-minus { background: var(--tile-minus); }   /* mehrheitlich − */
-  #plan .kachel.netto-fehlt { background: var(--tile-fehlt); opacity: .55; }
-  #plan .kachel .kopf { display: flex; align-items: center; gap: 3px; padding: 3px 4px 0; }
-  #plan .kachel .vn { font-weight: 600; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-  #plan .kachel .lb-badge { background: var(--info); color: var(--auf-info); font-size: 8px; font-weight: 800; border-radius: 3px; padding: 0 3px; letter-spacing: .03em; }
-  #plan .kachel .nn { color: var(--leise); font-size: 9px; padding: 0 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-  #plan .kachel .marken { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 3px 3px; min-height: 15px; }
-  #plan .kachel .mk { border-radius: 3px; padding: 0 3px; font-size: 10px; font-weight: 700; line-height: 1.3; }
-  #plan .kachel .mk.p { background: var(--gut); color: var(--auf-pos); }
-  #plan .kachel .mk.m { background: var(--fehl); color: var(--auf-neg); }
-  #plan .kachel .mk.o { background: var(--kante); color: var(--text); }
-  #plan .kachel .mk.u { background: var(--fehl); color: #fff; }
-  #plan .kachel .mk.verw { background: var(--fehl); color: #fff; font-weight: 800; }
-  #plan .kachel .mk.abw { background: var(--leise); color: var(--grund); font-weight: 800; }
-  #plan .kachel .mk.e { background: var(--info); color: var(--auf-info); }
-  #plan .kachel .mk.sym { background: transparent; padding: 0 1px; }
+  :is(#plan, .lg-kachel) .kachel.netto-plus  { background: var(--tile-plus); }   /* mehrheitlich + */
+  :is(#plan, .lg-kachel) .kachel.netto-minus { background: var(--tile-minus); }   /* mehrheitlich − */
+  :is(#plan, .lg-kachel) .kachel.netto-fehlt { background: var(--tile-fehlt); opacity: .55; }
+  :is(#plan, .lg-kachel) .kachel .kopf { display: flex; align-items: center; gap: 3px; padding: 3px 4px 0; }
+  :is(#plan, .lg-kachel) .kachel .vn { font-weight: 600; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  :is(#plan, .lg-kachel) .kachel .lb-badge { background: var(--info); color: var(--auf-info); font-size: 8px; font-weight: 800; border-radius: 3px; padding: 0 3px; letter-spacing: .03em; }
+  :is(#plan, .lg-kachel) .kachel .nn { color: var(--leise); font-size: 9px; padding: 0 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  :is(#plan, .lg-kachel) .kachel .marken { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 3px 3px; min-height: 15px; }
+  :is(#plan, .legende) .mk { border-radius: 3px; padding: 0 3px; font-size: 10px; font-weight: 700; line-height: 1.3; }
+  :is(#plan, .legende) .mk.p { background: var(--gut); color: var(--auf-pos); }
+  :is(#plan, .legende) .mk.m { background: var(--fehl); color: var(--auf-neg); }
+  :is(#plan, .legende) .mk.o { background: var(--kante); color: var(--text); }
+  :is(#plan, .legende) .mk.u { background: var(--fehl); color: #fff; }
+  :is(#plan, .legende) .mk.verw { background: var(--fehl); color: #fff; font-weight: 800; }
+  :is(#plan, .legende) .mk.abw { background: var(--leise); color: var(--grund); font-weight: 800; }
+  :is(#plan, .legende) .mk.e { background: var(--info); color: var(--auf-info); }
+  :is(#plan, .legende) .mk.sym { background: transparent; padding: 0 1px; }
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
