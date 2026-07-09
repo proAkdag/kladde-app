@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783631448';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783631448';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783631448';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783631448';
-import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783631448';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783631448';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783631448';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783631448';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783631448';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783631448';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783632895';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783632895';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783632895';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783632895';
+import { parseSchuelerListe } from '../logic/parser.mjs?v=1.3.0.1783632895';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783632895';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783632895';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783632895';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783632895';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783632895';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -906,6 +906,8 @@ function renderSchueler(){
   // Beamer/Projektion: sensible Auswertung KOMPLETT sperren (§3.4)
   if(beamerModus){ wrap.innerHTML='<div class="panel"><h2>👁 Projektionsmodus</h2><p class="u-leise">Die Schüler-Auswertung ist bei aktiver Projektion ausgeblendet. Auge oben antippen zum Beenden.</p></div>'; return; }
   const kursEvents=vault.events.filter(e=>e.kursId===k.id);
+  // Vollseite statt Akkordeon (Zero 2026-07-09): gewählter Schüler bekommt die ganze Ansicht
+  if(offenerSchueler!=null){ const s=schuelerVonNr(offenerSchueler); if(s){ renderSchuelerSeite(wrap,k,s,kursEvents); return; } offenerSchueler=null; }
   const sj=aktivesSchuljahr();
   const zr=zeitraumFilter;
   const vOpt={profil:bewertProfil(k),von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'};
@@ -933,15 +935,15 @@ function renderSchueler(){
   for(const s of kursSchueler(k)){
     const v=verdichte(kursEvents,s.nr,{...vOpt,lb:s.lb});
     const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
-    const offen=offenerSchueler===s.nr;
     const fInfo=(v.nFehltE||v.nFehltU||v.nFehltO||v.nVerweigert)?' · F '+v.nFehltE+'e/'+v.nFehltU+'u'+(v.nFehltO?'/'+v.nFehltO+'o':'')+(v.nVerweigert?' ⊘'+v.nVerweigert:''):'';
-    html+='<div class="s-block'+(offen?' offen':'')+'" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'"><div class="s-item" data-nr="'+s.nr+'">'+
+    // rechte Spalte: die GESETZTE Quartalsnote gewinnt (mit ●), sonst Live-Vorschlag (S216: gesetzte Noten haben jetzt einen Lebensweg)
+    const qnEv=zr?quartalsnotenVon(kursEvents,s.nr)[QN_KEY[zr.id]]:null;
+    html+='<div class="s-block" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'"><div class="s-item" data-nr="'+s.nr+'">'+
       '<div class="u-minw104"><b>'+esc(s.vorname)+'</b> <small class="u-leise">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div>'+
       '<div class="u-flex1"><div class="balken"><div class="bal-p" data-w="'+(100*v.nPlus/sum)+'"></div><div class="bal-o" data-w="'+(100*v.nNull/sum)+'"></div><div class="bal-m" data-w="'+(100*v.nMinus/sum)+'"></div></div>'+
       '<small class="u-leise">'+v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻ · '+Math.round(100*v.aktivQuote)+'% · '+v.pfeil+fInfo+'</small></div>'+
-      '<div class="u-wert-rechts">'+(v.vorschlag?esc(v.vorschlag.label):'—')+'</div>'+
-      '<span class="pfeil">'+(offen?'▾':'›')+'</span></div>'+
-      (offen?schuelerDetailHtml(s,k,v):'')+'</div>';
+      '<div class="u-wert-rechts">'+(qnEv?'<span class="qn-fest" title="gesetzte Quartalsnote">'+esc(String(qnEv.wert))+' ●</span>':(v.vorschlag?esc(v.vorschlag.label):'—'))+'</div>'+
+      '<span class="pfeil">›</span></div></div>';
   }
   html+='</div>';
   wrap.innerHTML=html;
@@ -969,15 +971,19 @@ async function kopiereVorschlaege(){
   const k=kurs(); if(!k) return;
   const zr=zeitraumFilter;
   const kursEvents=vault.events.filter(e=>e.kursId===k.id);
+  let nFest=0;
   const rows=kursSchueler(k).map(s=>{
     const v=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'});
     const f=(v.nFehltE||v.nFehltU||v.nVerweigert)?(v.nFehltE+'e/'+v.nFehltU+'u'+(v.nVerweigert?'/'+v.nVerweigert+'verw':'')):'';
-    return {nr:s.nr,vorschlag:v.vorschlag?v.vorschlag.label:'',fSummen:f};
+    // GESETZTE Quartalsnote des gewählten Zeitraums schlägt den Live-Vorschlag (der Lehrer hat entschieden)
+    const qnEv=zr?quartalsnotenVon(kursEvents,s.nr)[QN_KEY[zr.id]]:null;
+    if(qnEv) nFest++;
+    return {nr:s.nr,vorschlag:qnEv?String(qnEv.wert):(v.vorschlag?v.vorschlag.label:''),fSummen:f};
   });
   const text=vorschlagsZeilen(rows);
   try{
     await navigator.clipboard.writeText(text);
-    toast('Vorschläge kopiert ('+rows.length+' Zeilen) — in Excel einfügen');
+    toast('Kopiert ('+rows.length+' Zeilen'+(nFest?' · '+nFest+' gesetzte Quartalsnoten bevorzugt':'')+') — in Excel einfügen');
   }catch{
     // Fallback ohne Clipboard-Zugriff: Text zum manuellen Kopieren anzeigen
     const ta=el('textarea',{class:'u-textarea u-fs14',rows:'10',readonly:'readonly'}); ta.value=text;
@@ -987,6 +993,48 @@ async function kopiereVorschlaege(){
       el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:dlgZu},'Schließen')));
     setTimeout(()=>{ ta.focus(); ta.select(); },60);
   }
+}
+// ═══ Quartalsnoten-Lebensweg (S216 · Zeros Befund „da fehlt ein Baustein") ═══
+// Gesetzte quartalsnote-Events waren nach dem Setzen unsichtbar (nur Verlaufszeile).
+// Jetzt: Übersicht Q1–Q4 auf der Schüler-Seite · Liste + „Vorschläge kopieren" bevorzugen die gesetzte Note.
+const QN_KEY={q1:'1-1',q2:'1-2',q3:'2-1',q4:'2-2'};
+function quartalsnotenVon(kursEvents,nr){
+  const m={};
+  for(const e of wirksameEvents(kursEvents)) if(e.typ==='quartalsnote'&&e.schuelerNr===nr){
+    const key=e.hj+'-'+e.quartal;
+    if(!m[key]||String(e.ts)>String(m[key].ts)) m[key]=e;  // jüngste je HJ/Q gewinnt
+  }
+  return m;
+}
+// Vollseite eines Schülers (ersetzt das Akkordeon · Zero 2026-07-09): Quartalsnoten-Karte,
+// Bilanz des gewählten Zeitraums, voller datierter Verlauf, Zurück zur Liste.
+function renderSchuelerSeite(wrap,k,s,kursEvents){
+  const sj=aktivesSchuljahr();
+  const zr=zeitraumFilter;
+  const v=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'});
+  const qn=quartalsnotenVon(kursEvents,s.nr);
+  const zellen=['q1','q2','q3','q4'].map(id=>{
+    const z=sj&&sj.zeitraeume?sj.zeitraeume.find(x=>x.id===id):null;
+    const ev=qn[QN_KEY[id]];
+    const vz=z?verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis}):null;
+    return '<button class="qn-zelle'+(ev?'':' offen')+'" data-qz="'+id+'">'+
+      '<span class="qn-label">'+id.toUpperCase()+'</span>'+
+      '<span class="qn-note">'+(ev?esc(String(ev.wert)):'—')+'</span>'+
+      '<span class="qn-sub">'+(vz&&vz.vorschlag?'Vorschlag '+esc(vz.vorschlag.label):(s.lb?'LB — frei benotbar':'noch kein Vorschlag'))+'</span></button>';
+  }).join('');
+  wrap.innerHTML='<div class="sseite-kopf"><button class="btn still" id="s-zurueck">‹ Alle Schüler</button>'+
+    '<div class="sseite-name">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div></div>'+
+    '<div class="panel"><h2>Quartalsnoten'+(sj?' · '+esc(sj.label):'')+'</h2>'+
+    '<div class="qn-grid">'+zellen+'</div>'+
+    '<p class="u-hinweis">Zelle antippen zum Setzen/Ändern — der Zeitraum-Vorschlag ist vorbelegt, du entscheidest. ● in der Liste = gesetzt.</p></div>'+
+    '<div class="panel"><h2>Bilanz · '+esc(zr?zr.label:'Gesamt')+'</h2>'+schuelerDetailHtml(s,k,v)+'</div>';
+  $('s-zurueck').onclick=()=>{ offenerSchueler=null; mitUebergang(renderSchueler); };
+  wrap.querySelectorAll('[data-qz]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.qz; const z=sj&&sj.zeitraeume?sj.zeitraeume.find(x=>x.id===id):null; if(!z){ toast('Kein Schuljahres-Zeitraum definiert'); return; }
+    const vz=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis});
+    setzeQuartalsnote(s,vz.vorschlag||{wert:null,label:'—'},z);
+  });
+  verdrahteDetail(wrap);
 }
 function schuelerDetailHtml(s,k,v){
   const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr)).filter(e=>e.typ!=='storno'); // Storno-Buchungen nicht im Verlauf zeigen

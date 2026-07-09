@@ -614,6 +614,18 @@
   .datum-streifen .tg-chips { display: flex; gap: 4px; margin-left: 8px; }
   .datum-streifen .tg-chip, .sp-tagchips .tg-chip { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 12px; min-height: 40px; padding: 3px 12px; cursor: pointer; font-size: 13px; }
   .datum-streifen .tg-chip.an, .sp-tagchips .tg-chip.an { border-color: var(--band); color: var(--band); font-weight: 600; }
+  /* Schüler-Vollseite + Quartalsnoten-Karte (S216 · Quartalsnoten-Lebensweg) */
+  .sseite-kopf { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .sseite-name { font-family: var(--font-serif); font-size: 26px; font-weight: 500; }
+  .qn-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin: 6px 0 10px; }
+  @media (max-width: 720px) { .qn-grid { grid-template-columns: repeat(2, 1fr); } }
+  .qn-zelle { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px; min-height: 88px;
+    background: var(--karte2); border: 1px solid var(--band); border-radius: 12px; cursor: pointer; color: var(--text); }
+  .qn-zelle.offen { border: 1px dashed var(--kante); }
+  .qn-zelle .qn-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--leise); }
+  .qn-zelle .qn-note { font-family: var(--font-serif); font-size: 24px; font-weight: 500; line-height: 1.05; }
+  .qn-zelle .qn-sub { font-size: 10.5px; color: var(--leise); text-align: center; }
+  .qn-fest { color: var(--band); font-weight: 700; }
   /* Schüler-Suchfeld (Studio) */
   .s-suche { margin-bottom: 12px; }
   .s-suche input { width: 100%; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; min-height: 44px; font-size: 16px; }
