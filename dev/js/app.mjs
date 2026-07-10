@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783642443';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783642443';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783642443';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783642443';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783642443';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783642443';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783642443';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783642443';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783642443';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783642443';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783642782';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783642782';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783642782';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783642782';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783642782';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783642782';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783642782';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783642782';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783642782';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783642782';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -2263,15 +2263,20 @@ async function zeigeStartHinweise(){
 /* ═══ INIT ═══ */
 if('serviceWorker' in navigator) window.addEventListener('load',()=>{
   navigator.serviceWorker.register('./service-worker.js').then(reg=>{
+    const updateBanner=()=>zeigeBanner('<span>Neue Version geladen.</span><button class="btn" data-reload>Neu laden</button>',
+      b=>{ b.querySelector('[data-reload]').onclick=()=>location.reload(); });
     // Update-Banner (P1.7, vorgezogen aus P4): kein stilles Doppel-Reload-Rätsel mehr
     reg.addEventListener('updatefound',()=>{
       const nw=reg.installing;
       if(nw) nw.addEventListener('statechange',()=>{
-        if(nw.state==='installed'&&navigator.serviceWorker.controller)
-          zeigeBanner('<span>Neue Version geladen.</span><button class="btn" data-reload>Neu laden</button>',
-            b=>{ b.querySelector('[data-reload]').onclick=()=>location.reload(); });
+        if(nw.state==='installed'&&navigator.serviceWorker.controller) updateBanner();
       });
     });
+    if(reg.waiting&&navigator.serviceWorker.controller) updateBanner();  // Update kam früher an, Banner wurde verpasst
+    // iPad-Safari prüft den SW nur nach eigener träger Heuristik → beim Start und bei jedem
+    // Sichtbarwerden AKTIV nachschauen (Zero 2026-07-10: iPad blieb auf altem Precache hängen)
+    reg.update().catch(()=>{});
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
   }).catch(()=>{});
 });
 if(navigator.storage?.persist) navigator.storage.persist();
