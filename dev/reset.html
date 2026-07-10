@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kladde · Frisch laden</title>
+<style>
+  /* Eigenständige Notfall-Seite (kein App-Asset, nie im SW-Precache): räumt NUR die
+     kladde-dev-Altlast (SW-Registrierungen im /dev/-Scope + kladde-dev-*-Caches).
+     Produktiv-Caches (kladde-v*) und ALLE IndexedDB-Daten bleiben unberührt. */
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #17150f; color: #e8e2d4; font: 16px/1.5 system-ui, sans-serif; text-align: center; }
+  main { padding: 24px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 10px; color: #d9a441; }
+  p { margin: 0; color: #b9b2a0; }
+</style>
+<body>
+<main>
+  <h1>Kladde wird frisch geladen …</h1>
+  <p id="status">Alte Dev-Version wird entfernt.</p>
+</main>
+<script>
+(async () => {
+  const s = document.getElementById('status');
+  try {
+    let sw = 0, ca = 0;
+    if ('serviceWorker' in navigator) {
+      for (const reg of await navigator.serviceWorker.getRegistrations()) {
+        if (new URL(reg.scope).pathname.includes('/dev/')) { await reg.unregister(); sw++; }
+      }
+    }
+    if (window.caches) {
+      for (const k of await caches.keys()) {
+        if (k.startsWith('kladde-dev-')) { await caches.delete(k); ca++; }
+      }
+    }
+    s.textContent = 'Alte Version entfernt (' + sw + ' Service Worker, ' + ca + ' Caches). Neu laden …';
+  } catch (e) {
+    s.textContent = 'Konnte nicht alles räumen (' + e.message + ') — lade trotzdem neu …';
+  }
+  setTimeout(() => location.replace('./'), 900);
+})();
+</script>
+</body>
+</html>
