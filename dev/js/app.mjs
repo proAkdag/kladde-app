@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783641099';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783641099';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783641099';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783641099';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783641099';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783641099';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783641099';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783641099';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783641099';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783641099';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783641623';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783641623';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783641623';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783641623';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783641623';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783641623';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783641623';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783641623';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783641623';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783641623';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -711,11 +711,7 @@ function renderRail(){
       el('span',{class:'rail-titel'},'Erfasst'),
       el('span',{class:'rail-erfasst-zahl'}, String(erfasst), el('small',{},'/'+total))),
     el('div',{class:'rail-bar'}, fill));
-  // Aktiver Stempel in Klartext (C2): Rahmen/Farbe bleiben Ergänzung, nicht alleinige Zustandsanzeige
-  const status=stempelTyp?el('div',{class:'rail-status'},
-    el('b',{},RAIL_TITEL[stempelTyp]||stempelTyp),
-    el('span',{},'erneut antippen = beenden')):null;
-  rail.replaceChildren(...(status?[erfasstKarte,status,stempelKarte]:[erfasstKarte,stempelKarte]));  // Erfasst oben (auf Höhe der Datums-Leiste)
+  rail.replaceChildren(erfasstKarte, stempelKarte);  // Erfasst oben (auf Höhe der Datums-Leiste). Aktiv-Zustand zeigt NUR der leuchtende Stempel (Zero 2026-07-10: keine Statuszeile — sie ließ die Rail springen)
 }
 function pulseKachel(nr){
   const k=$('plan').querySelector('.kachel[data-nr="'+nr+'"]'); if(!k) return;
