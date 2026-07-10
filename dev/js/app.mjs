@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783646088';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783646088';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783646088';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783646088';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783646088';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783646088';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783646088';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783646088';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783646088';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783646088';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783646491';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783646491';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783646491';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783646491';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783646491';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783646491';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783646491';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783646491';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783646491';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783646491';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -622,9 +622,23 @@ $('plan').addEventListener('pointerup',e=>{
 });
 // P4.5 · Serien-Stempel: eine Kachel bekommt den scharfen Stempel. Pro Kachel ~80 ms Sperre,
 // damit ein Wischen nicht doppelt zählt — aber verschiedene Kacheln bleiben frei (kein globaler Lock).
+// Fehlende sind nicht bewertbar (Zero-Feldtest 2026-07-10): keine ＋/o/−, keine direkte Note,
+// kein ⭐, kein ⊘ (Verweigerung setzt Anwesenheit voraus). Die 6 bei unentschuldigtem Fehlen
+// entsteht RECHNERISCH (verdichte: u zählt als 6/0 P termingewichtet) — nie per Hand-Stempel.
+// Frei bleiben: ⏰ (kommt zu spät), ✎ Notiz, Lernzeit/Material-Doku, Anwesenheits-Stempel, ⌫.
+const BEWERTUNGS_TYPEN=new Set(['+','o','-','note','bestleistung','verweigert']);
+const FEHLT_WORT={o:'abwesend (offen)',e:'entschuldigt',u:'unentschuldigt'};
+function bewertGuard(nr){
+  const st=standAmTermin(nr,terminDatum);
+  if(!st.fehlt) return true;
+  const s=schuelerVonNr(nr);
+  toast((s?s.vorname:'Nr '+nr)+' fehlt heute — '+(FEHLT_WORT[st.fehlt]||st.fehlt)+'. Erst Abwesenheit entfernen (⌫), dann bewerten.',3200);
+  return false;
+}
 function stempleKachel(nr){
   if(stempelCooldown.has(nr)) return;
   stempelCooldown.add(nr); setTimeout(()=>stempelCooldown.delete(nr),80);
+  if(BEWERTUNGS_TYPEN.has(stempelTyp)&&!bewertGuard(nr)) return;
   const s=schuelerVonNr(nr);
   if(stempelTyp==='verweigert'){ verweigerungDialog(s); return; }  // 6 mit gekoppelter Kurznotiz
   if(stempelTyp==='bestleistung'){ bestleistungDialog(s); return; } // Gegenstück: Bestnote mit Begründung
@@ -746,14 +760,17 @@ function noteDialog(s){ if(!s) return;
     d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); toast('Note eingetragen · '+esc(s.vorname)); renderHeute(); dlgZu(); }; });
 }
 function zeigeMehrAktionen(s){
+  const fehlt=standAmTermin(s.nr,terminDatum).fehlt;
+  // Bewertungs-Aktionen (⭐/⊘/Note) für Fehlende gar nicht erst anbieten (Zero 2026-07-10)
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3>'+
-    '<p class="u-hinweis">Fehlt jetzt: „abwesend" — e/u klärst du später in der Wiedervorlage.</p>'+
+    (fehlt?'<p class="u-warn13">Fehlt heute ('+(FEHLT_WORT[fehlt]||fehlt)+') — Bewertung gesperrt. Der ⌫-Stempel entfernt die Abwesenheit.</p>'
+      :'<p class="u-hinweis">Fehlt jetzt: „abwesend" — e/u klärst du später in der Wiedervorlage.</p>')+
     '<div class="btn-reihe">'+
-    '<button class="btn still" data-t="fehlt_o">abwesend</button>'+
-    '<button class="btn still" data-t="bestleistung">⭐ bes. Leistung…</button>'+
-    '<button class="btn still" data-t="verweigert">⊘ verweigert (6)…</button>'+
+    (fehlt?'':'<button class="btn still" data-t="fehlt_o">abwesend</button>'+
+      '<button class="btn still" data-t="bestleistung">⭐ bes. Leistung…</button>'+
+      '<button class="btn still" data-t="verweigert">⊘ verweigert (6)…</button>')+
     '<button class="btn still" data-t="versp">zu spät…</button>'+
-    '<button class="btn still" data-t="note">Note…</button>'+
+    (fehlt?'':'<button class="btn still" data-t="note">Note…</button>')+
     '<button class="btn still" data-t="notiz">Notiz…</button>'+
     '<button class="btn still" data-t="lernzeit">Lernzeit/HA</button></div>'+
     '<div class="btn-reihe"><button class="btn still" data-t="fehlt_e">direkt entschuldigt</button>'+
