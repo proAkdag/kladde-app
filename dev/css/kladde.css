@@ -191,6 +191,23 @@
   .deck-bar > div { height: 100%; background: var(--gut); transition: width .2s; }
   .deck-hilfe { display: flex; justify-content: space-between; max-width: 420px; margin: 0 auto; color: var(--leise); font-size: 13px; padding: 0 8px; }
   .deck-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  /* Deck-Layout: Karte mittig, daneben die mitlaufende Runden-Historie (Zero-Feldtest 2026-07-10) */
+  #view-deck { display: flex; gap: 18px; justify-content: center; align-items: flex-start; }
+  .deck-mitte { flex: 0 1 520px; min-width: 0; }
+  #deck-verlauf { flex: 0 0 190px; background: var(--karte); border: 1px solid var(--kante); border-radius: 14px;
+    padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-height: 70vh; overflow-y: auto; }
+  .dv-zeile { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px;
+    background: none; border: none; border-bottom: 1px solid var(--kante); padding: 5px 2px; cursor: pointer;
+    font: inherit; color: inherit; text-align: left; width: 100%; }
+  .dv-zeile:last-child { border-bottom: none; }
+  .dv-zeile .dv-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .dv-zeile .dv-mark { font-weight: 700; flex: none; }
+  .dv-zeile .dv-mark.plus { color: var(--gut); }
+  .dv-zeile .dv-mark.minus { color: var(--warn); }
+  .dv-zeile.leer { opacity: .55; }
+  .dv-zeile:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; border-radius: 8px; }
+  @media (max-width: 900px) { #view-deck { flex-direction: column; align-items: stretch; }
+    .deck-mitte { flex: 1 1 auto; } #deck-verlauf { flex: 1 1 auto; max-height: 34vh; } }
   /* ── Schüler-Liste + Inline-Detail-Akkordeon ── */
   .s-block { border-top: 1px solid var(--kante); }
   .s-block:first-child { border-top: none; }
@@ -250,6 +267,7 @@
   #toast:not(.hidden) { animation: kladde-toast-rein .22s cubic-bezier(.05,.7,.1,1); }
   @keyframes kladde-chip-rein { from{opacity:0; transform:translateY(10px) scale(.96)} to{opacity:1; transform:none} }
   #undo-chip:not(.hidden) { animation: kladde-chip-rein .2s cubic-bezier(.05,.7,.1,1); }
+  #undo-chip.weg { opacity: 0; transition: opacity .4s ease; }  /* sanftes Ausblenden nach 6 s (Zero: Chip darf nicht kleben) */
 
   /* ── Dialog/Sheet: @starting-style Eintritt + allow-discrete Austritt ── */
   #dlg {
@@ -602,11 +620,12 @@
 /* ══ v2 „Studio" · Karten-Layout für Deck/Schüler/Kurse/Mehr (2026-07-09) ══ */
 @layer views {
   #view-schueler, #view-kurse { max-width: 880px; }
-  /* Mehr = 2 Spalten im FLUSS (columns statt Grid): Karten folgen dicht untereinander —
-     das Grid koppelte die Zeilenhöhe an die höchste Karte und riss Leerräume (Zero 2026-07-10) */
-  #view-mehr { max-width: 940px; columns: 2; column-gap: 16px; }
-  #view-mehr > .panel { margin: 0 0 16px; break-inside: avoid; }
-  @media (max-width: 900px) { #view-mehr { columns: 1; } }
+  /* Mehr = 2 FESTE Spalten (Zero 2026-07-10: automatischer Fluss kippte am iPad zu 4:1):
+     Karten je Spalte dicht untereinander, Verteilung deterministisch aus renderMehr. */
+  #view-mehr { max-width: 940px; display: flex; gap: 16px; align-items: flex-start; }
+  .mehr-spalte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  .mehr-spalte > .panel { margin: 0; }
+  @media (max-width: 900px) { #view-mehr { flex-direction: column; } .mehr-spalte { width: 100%; } }
   /* Panel-Politur: mehr Luft, weicher */
   .panel { border-radius: 14px; padding: 16px 18px; }
   .panel h2 { font-size: 11.5px; letter-spacing: .08em; }

@@ -1,15 +1,15 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783644871';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783644871';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783644871';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783644871';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783644871';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783644871';
-import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783644871';
-import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783644871';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783644871';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783644871';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.3.0.1783646088';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.3.0.1783646088';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.3.0.1783646088';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.3.0.1783646088';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.3.0.1783646088';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.3.0.1783646088';
+import { resolveBloecke, formatZeit } from '../logic/zeitmodell.mjs?v=1.3.0.1783646088';
+import { kursZurZeit } from '../logic/autowahl.mjs?v=1.3.0.1783646088';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.3.0.1783646088';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.3.0.1783646088';
 const APP_VERSION = '1.3.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -212,14 +212,22 @@ function stornoVon(e){
 }
 const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit/HA',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
 // Kompaktes Symbol eines Eintrags (für die entfernbaren Heute-Chips in der Aktionsbar)
-// Undo-Chip bleibt STEHEN bis zur nächsten Aktion (C2: verlässliches Rückgängig statt 6-Sekunden-Fenster);
-// Kurs-/Tag-Wechsel versteckt ihn (resetSitzung). Ein Storno bietet sofort den Gegenweg an (zeigeRedo).
-function zeigeUndo(e){
+// Undo/Redo-Chip: erscheint pro Aktion und BLENDET nach 6 s sanft aus (Zero-Feldtest 2026-07-10:
+// ein klebender Chip stört — für späte Korrekturen gibt es Verlauf-↶ und die Deck-Historie).
+// Ein Storno bietet sofort den Gegenweg an (zeigeRedo).
+function chipZeig(text,onTap){
   const chip=$('undo-chip');
+  chip.textContent=text;
+  clearTimeout(chip._t1); clearTimeout(chip._t2);
+  chip.classList.remove('weg'); chip.classList.add('hidden'); void chip.offsetWidth; chip.classList.remove('hidden');
+  chip._t1=setTimeout(()=>chip.classList.add('weg'),5600);
+  chip._t2=setTimeout(()=>{ chip.classList.add('hidden'); chip.classList.remove('weg'); },6050);
+  chip.onclick=()=>{ clearTimeout(chip._t1); clearTimeout(chip._t2); chip.classList.remove('weg'); onTap(); };
+}
+function zeigeUndo(e){
   const s=schuelerVonNr(e.schuelerNr);
-  chip.textContent='↶ '+(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ);
-  chip.classList.add('hidden'); void chip.offsetWidth; chip.classList.remove('hidden');
-  chip.onclick=()=>{ stornoVon(e); toast('Rückgängig: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); zeigeRedo(e); };
+  chipZeig('↶ '+(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ),
+    ()=>{ stornoVon(e); toast('Rückgängig: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); zeigeRedo(e); });
 }
 // Storniertes Original mit einem Tap wieder einbuchen — append-only bleibt gewahrt (kein Löschen,
 // der Storno bleibt im Log; addEvent stempelt id/ts frisch, alle Sachfelder reisen mit).
@@ -228,11 +236,9 @@ function bucheErneut(e){
   return addEvent(typ,schuelerNr,sach);
 }
 function zeigeRedo(e){
-  const chip=$('undo-chip');
   const s=schuelerVonNr(e.schuelerNr);
-  chip.textContent='↷ '+(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ)+' wiederherstellen';
-  chip.classList.add('hidden'); void chip.offsetWidth; chip.classList.remove('hidden');
-  chip.onclick=()=>{ bucheErneut(e); toast('Wiederhergestellt: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); };
+  chipZeig('↷ '+(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ)+' wiederherstellen',
+    ()=>{ bucheErneut(e); toast('Wiederhergestellt: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); });
 }
 function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.nr===nr):null; }
 
@@ -818,6 +824,7 @@ function zeigeLegende(){
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Notiz ↓weiter) ═══ */
 let deckListe=[], deckIdx=0, deckNurOhne=false;
+let deckVerlauf=[]; // Buchungen DIESER Deck-Runde [{nr,name,evId,typ}] — mitlaufende, korrigierbare Historie (Zero-Feldtest 2026-07-10)
 function baueDeckListe(){
   const k=kurs(); if(!k) return [];
   // Abwesende (fehlt_o/e/u) nie im Deck — kein Bewerten von Fehlenden
@@ -830,7 +837,7 @@ function mischeArray(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Mat
 function neuesDeck(mischen){
   const k=kurs(); let liste=baueDeckListe(); if(mischen) liste=mischeArray(liste);
   liste._kurs=k?k.id:null; liste._datum=terminDatum; liste._nurOhne=deckNurOhne;
-  deckListe=liste; deckIdx=0;
+  deckListe=liste; deckIdx=0; deckVerlauf=[];
 }
 function renderDeckOptionen(){
   const box=$('deck-optionen'); if(!kurs()){ box.replaceChildren(); return; }
@@ -861,6 +868,7 @@ function zeigeDeckKarte(){
       (fehlend&&!deckNurOhne?'<div class="btn-reihe u-center"><button class="btn" data-fehlende>Fehlende durchgehen ('+fehlend+')</button></div>':'');
     $('deck-fortschritt').innerHTML=total===0?'':'fertig · <b>'+erfasst+'</b> / '+total+' erfasst'+balken;
     setzeBalken();
+    renderDeckVerlauf();  // gerade auf der End-Karte will man die Runde noch korrigieren können
     const bf=karte.querySelector('[data-fehlende]'); if(bf) bf.onclick=()=>{ deckNurOhne=true; neuesDeck(false); mitUebergang(renderDeck); };
     return;
   }
@@ -868,13 +876,45 @@ function zeigeDeckKarte(){
   $('deck-fortschritt').innerHTML='Karte '+(deckIdx+1)+' / '+total+' · <b>'+erfasst+'</b> erfasst'+balken;
   setzeBalken();
   karte.innerHTML='<span class="gross">'+esc(anzeigeVorname(s))+'</span><span class="sub">'+esc(anzeigeNachname(s))+(s.lb&&!beamerModus?' · LB':'')+'</span>';
+  renderDeckVerlauf();
+}
+// Mitlaufende Runden-Historie (Zero-Feldtest): jede Buchung als Zeile, Tap → korrigieren.
+// Nur UI-Log — die Wahrheit sind die Events (Korrektur = storno + neu, append-only).
+const DECK_SYMBOL={'+':'＋','o':'o','-':'−'};
+function renderDeckVerlauf(){
+  const box=$('deck-verlauf'); if(!box) return;
+  box.classList.toggle('hidden',!deckVerlauf.length);
+  box.replaceChildren(
+    el('div',{class:'rail-titel'},'Diese Runde'),
+    ...deckVerlauf.map(v=>el('button',{class:'dv-zeile'+(v.typ?'':' leer'),onclick:()=>deckKorrektur(v)},
+      el('span',{class:'dv-name'},v.name),
+      el('span',{class:'dv-mark'+(v.typ==='+'?' plus':v.typ==='-'?' minus':'')},v.typ?DECK_SYMBOL[v.typ]:'⌫'))));
+}
+function deckKorrektur(v){
+  const setze=typ=>{
+    if(v.evId){ const alt=vault.events.find(x=>x.id===v.evId); if(alt) stornoVon(alt); }
+    if(typ){ const e=addEvent(typ,v.nr); v.evId=e?e.id:null; v.typ=e?typ:null; }
+    else { v.evId=null; v.typ=null; }
+    dlgZu(); renderDeckVerlauf(); zeigeDeckKarte(); toast(v.name+': '+(typ?DECK_SYMBOL[typ]:'Eintrag entfernt'));
+  };
+  const wahl=typ=>el('button',{class:'btn'+(v.typ===typ?'':' still'),onclick:()=>setze(typ)},DECK_SYMBOL[typ]);
+  dlgZeigenEl(
+    el('h3',{},v.name+' korrigieren'),
+    el('p',{class:'u-hinweis'},'Aktuell: '+(v.typ?DECK_SYMBOL[v.typ]:'kein Eintrag')+' — neu wählen oder entfernen.'),
+    el('div',{class:'btn-reihe'},wahl('+'),wahl('o'),wahl('-')),
+    el('div',{class:'btn-reihe'},
+      ...(v.typ?[el('button',{class:'btn gefahr',onclick:()=>setze(null)},'Eintrag entfernen')]:[]),
+      el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
 }
 function deckAktion(aktion){
   if(busy||deckIdx>=deckListe.length) return;
   const s=deckListe[deckIdx];
   if(aktion==='notiz'){ zeigeMehrAktionen(s); return; }
   busy=true;
-  if(aktion==='+'||aktion==='o'||aktion==='-') addEvent(aktion,s.nr);
+  if(aktion==='+'||aktion==='o'||aktion==='-'){
+    const e=addEvent(aktion,s.nr);
+    if(e) deckVerlauf.unshift({nr:s.nr,name:anzeigeVorname(s),evId:e.id,typ:aktion});
+  }
   const karte=$('deck-karte');
   const reduziert=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const weiter=()=>{
@@ -884,6 +924,7 @@ function deckAktion(aktion){
     busy=false;
   };
   if(reduziert){ weiter(); return; }
+  karte.classList.remove('rein');  // sonst überschreibt die spätere .rein-Regel die weg-Animation ab Karte 2 (iPad-Feldtest: „nur der erste animiert")
   karte.classList.add(aktion==='+'?'weg-plus':aktion==='-'?'weg-minus':'weg-weiter');
   let fertig=false;
   const einmal=e=>{ if(fertig) return; if(e&&e.animationName==='kladde-karte-rein') return; fertig=true; karte.removeEventListener('animationend',einmal); weiter(); };
@@ -2052,7 +2093,10 @@ function gruppenEditor(kursId){
 /* ═══ MEHR · Sync (Export/Import) + Heimnetz + Diagnose ═══ */
 function renderMehr(){
   const wrap=$('view-mehr');
+  // Zwei FESTE Spalten (Zero-Feldtest 2026-07-10: automatischer Spaltenfluss kippte am iPad zu 4:1):
+  // links die Aktionen (Sicherheit · Sichern · Sync), rechts die Info/Optik (Werkstatt · Darstellung).
   wrap.innerHTML=
+    '<div class="mehr-spalte">'+
     '<div class="panel"><h2>Sicherheit</h2>'+
     '<div class="zeile"><span>Automatisch sperren nach</span><span><select id="sec-lockmin">'+[5,10,15,30].map(m=>'<option value="'+m+'"'+(lockMinuten()===m?' selected':'')+'>'+m+' min</option>').join('')+'</select></span></div>'+
     '<div class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' class="u-check"></span></div>'+
@@ -2066,6 +2110,8 @@ function renderMehr(){
     (PAGES_KONTEXT?'':'<div class="panel"><h2>Heimnetz-Sync (PC-Server)</h2><div class="btn-reihe">'+
       '<button class="btn" id="btn-push">Push</button><button class="btn" id="btn-pull">Pull + Merge</button>'+
       '<span id="sync-status" class="u-hinweis u-selfcenter"></span></div></div>')+
+    '</div>'+
+    '<div class="mehr-spalte" id="mehr-spalte-b">'+
     '<div class="panel"><h2>Werkstatt</h2>'+
     '<div class="zeile"><span>Version</span><span class="wert">v'+APP_VERSION+' · '+GERAET+(PAGES_KONTEXT?' · Pages':' · Heimnetz')+'</span></div>'+
     '<div class="zeile"><span>Modus</span><span class="wert" id="dg-mode">…</span></div>'+
@@ -2073,7 +2119,8 @@ function renderMehr(){
     '<div class="zeile"><span>Speicher</span><span class="wert" id="dg-quota">…</span></div>'+
     '<div class="zeile"><span>Ereignisse im Log</span><span class="wert">'+vault.events.length+'</span></div>'+
     '<div class="zeile"><span>Letzte Sicherung</span><span class="wert" id="dg-save">Write-through aktiv</span></div>'+
-    '<div class="zeile"><span>Regel</span><span class="wert u-maxw55">'+esc(regelText(bewertProfil(kurs())))+'</span></div></div>';
+    '<div class="zeile"><span>Regel</span><span class="wert u-maxw55">'+esc(regelText(bewertProfil(kurs())))+'</span></div></div>'+
+    '</div>';
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
   $('dg-mode').textContent=standalone?'standalone (installiert)':'Browser-Tab';
   if(navigator.storage?.persisted) navigator.storage.persisted().then(p=>$('dg-persist').textContent=p?'gewährt':'nicht gewährt');
@@ -2092,7 +2139,7 @@ function renderMehr(){
   }
   // Darstellung: Tag/Nacht/System (Zero-Entscheid E1: Default Nacht) — 3-Weg, ergänzt den Header-Schnell-Toggle. el()-Neubau (CSP).
   const themeBtn=(p,txt)=>el('button',{class:'btn'+(themePref()===p?'':' still'),onclick:()=>{ localStorage.setItem(THEME_KEY,p); themeAnwenden(); renderMehr(); }},txt);
-  wrap.append(el('div',{class:'panel'},
+  $('mehr-spalte-b').append(el('div',{class:'panel'},
     el('h2',{},'Darstellung'),
     el('div',{class:'zeile'},el('span',{},'Erscheinungsbild'),
       el('span',{class:'seg'}, themeBtn('tag','Tag'), themeBtn('nacht','Nacht'), themeBtn('system','System'))),
