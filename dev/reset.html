@@ -38,9 +38,19 @@
   } catch (e) {
     s.textContent = 'Konnte nicht alles räumen (' + e.message + ') — lade trotzdem neu …';
   }
+  // Safaris HTTP-Cache-Einträge der kritischen URLs ÜBERSCHREIBEN (cache:'reload' erzwingt Netz
+  // und aktualisiert den Eintrag): sonst re-registriert sich nach dem Redirect der ALTE sw.js
+  // aus dem HTTP-Cache und baut den alten Precache wieder auf (iPad-Rückfall 2026-07-10).
+  try {
+    await Promise.all([
+      fetch('./service-worker.js', { cache: 'reload' }),
+      fetch('./', { cache: 'reload' }),
+      fetch('./index.html', { cache: 'reload' })
+    ]);
+  } catch (e) { /* offline o. ä. — Redirect versucht es trotzdem */ }
   // Frische-Query = neuer HTTP-Cache-Schlüssel: Safari MUSS die index.html übers Netz holen
   // (den HTTP-Cache kann kein Skript räumen — nur umgehen; Pages ignoriert Query-Strings).
-  setTimeout(() => location.replace('./?frisch=' + Date.now()), 900);
+  setTimeout(() => location.replace('./?frisch=' + Date.now()), 400);
 })();
 </script>
 </body>
