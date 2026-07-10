@@ -38,7 +38,9 @@
   } catch (e) {
     s.textContent = 'Konnte nicht alles räumen (' + e.message + ') — lade trotzdem neu …';
   }
-  setTimeout(() => location.replace('./'), 900);
+  // Frische-Query = neuer HTTP-Cache-Schlüssel: Safari MUSS die index.html übers Netz holen
+  // (den HTTP-Cache kann kein Skript räumen — nur umgehen; Pages ignoriert Query-Strings).
+  setTimeout(() => location.replace('./?frisch=' + Date.now()), 900);
 })();
 </script>
 </body>
