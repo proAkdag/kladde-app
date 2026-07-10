@@ -602,10 +602,11 @@
 /* ══ v2 „Studio" · Karten-Layout für Deck/Schüler/Kurse/Mehr (2026-07-09) ══ */
 @layer views {
   #view-schueler, #view-kurse { max-width: 880px; }
-  /* Mehr = 2-Spalten-Karten-Grid (wie Gerüst) · schmal → 1 Spalte */
-  #view-mehr { max-width: 940px; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; align-items: start; }
-  #view-mehr > .panel { margin: 0; }
-  @media (max-width: 900px) { #view-mehr { grid-template-columns: 1fr; } }
+  /* Mehr = 2 Spalten im FLUSS (columns statt Grid): Karten folgen dicht untereinander —
+     das Grid koppelte die Zeilenhöhe an die höchste Karte und riss Leerräume (Zero 2026-07-10) */
+  #view-mehr { max-width: 940px; columns: 2; column-gap: 16px; }
+  #view-mehr > .panel { margin: 0 0 16px; break-inside: avoid; }
+  @media (max-width: 900px) { #view-mehr { columns: 1; } }
   /* Panel-Politur: mehr Luft, weicher */
   .panel { border-radius: 14px; padding: 16px 18px; }
   .panel h2 { font-size: 11.5px; letter-spacing: .08em; }
