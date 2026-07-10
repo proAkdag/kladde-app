@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-dev-v1.3.0-1783644703';
+const CACHE_NAME = 'kladde-dev-v1.3.0-1783644871';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -18,18 +18,18 @@ const ASSETS = [
   './icon-512.png',
   './fonts/HankenGrotesk-subset.woff2',
   './fonts/Newsreader-subset.woff2',
-  './css/kladde.css?v=1.3.0.1783644703',
-  './js/app.mjs?v=1.3.0.1783644703',
-  './logic/skalen.mjs?v=1.3.0.1783644703',
-  './logic/verdichtung.mjs?v=1.3.0.1783644703',
-  './logic/merge.mjs?v=1.3.0.1783644703',
-  './logic/container.mjs?v=1.3.0.1783644703',
-  './logic/parser.mjs?v=1.3.0.1783644703',
-  './logic/zeitmodell.mjs?v=1.3.0.1783644703',
-  './logic/autowahl.mjs?v=1.3.0.1783644703',
-  './logic/migration.mjs?v=1.3.0.1783644703',
-  './logic/kursStatus.mjs?v=1.3.0.1783644703',
-  './logic/auswahl.mjs?v=1.3.0.1783644703'
+  './css/kladde.css?v=1.3.0.1783644871',
+  './js/app.mjs?v=1.3.0.1783644871',
+  './logic/skalen.mjs?v=1.3.0.1783644871',
+  './logic/verdichtung.mjs?v=1.3.0.1783644871',
+  './logic/merge.mjs?v=1.3.0.1783644871',
+  './logic/container.mjs?v=1.3.0.1783644871',
+  './logic/parser.mjs?v=1.3.0.1783644871',
+  './logic/zeitmodell.mjs?v=1.3.0.1783644871',
+  './logic/autowahl.mjs?v=1.3.0.1783644871',
+  './logic/migration.mjs?v=1.3.0.1783644871',
+  './logic/kursStatus.mjs?v=1.3.0.1783644871',
+  './logic/auswahl.mjs?v=1.3.0.1783644871'
 ];
 
 self.addEventListener('install', (event) => {
