@@ -1,19 +1,19 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.4.1788100887';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.4.1788100887';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.4.1788100887';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.4.1788100887';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.4.1788100887';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.4.1788100887';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.4.1788100887';
-import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.4.1788100887';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.4.1788100887';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.4.1788100887';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.4.1788100887';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.4.1788100887';
-import { fachFarbe, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.4.1788100887';
-const APP_VERSION = '1.5.4';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.5.1788101502';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.5.1788101502';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.5.1788101502';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.5.1788101502';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.5.1788101502';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.5.1788101502';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.5.1788101502';
+import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.5.1788101502';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.5.1788101502';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.5.1788101502';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.5.1788101502';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.5.1788101502';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.5.1788101502';
+const APP_VERSION = '1.5.5';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -2036,8 +2036,11 @@ const WT_KURZ=['','Mo','Di','Mi','Do','Fr'];
 function wochenplanZellText(plan,wt,nr){
   const slots=plan.filter(p=>p.wochentag===wt&&p.blockNr===nr);
   if(!slots.length) return '—';
+  // Klasse UND Fach-Kuerzel (Zero 2026-08-30): dieselbe Klasse in zwei Faechern war sonst
+  // nicht auseinanderzuhalten — man riet.
   return slots.map(s=>{ const k=vault.stamm.kurse.find(x=>x.id===s.kursId);
-    return (k?k.name:'?')+(s.teilgruppe?'·'+s.teilgruppe:'')+(s.rhythmus&&s.rhythmus!=='jede'?' ('+s.rhythmus+')':''); }).join(' · ');
+    const kz=k?fachKuerzel(k.fach):'';
+    return (k?k.name+(kz?' '+kz:''):'?')+(s.teilgruppe?'·'+s.teilgruppe:'')+(s.rhythmus&&s.rhythmus!=='jede'?' ('+s.rhythmus+')':''); }).join(' · ');
 }
 /* ── Ausfall & Vertretung (S257 · „was macht man wenn eine Stunde oder ein Tag ausfällt") ──
    Schreibt NUR das bestehende, Node-getestete ausnahmeSlots-Modell (Ausnahme schlägt Plan ·
@@ -2385,7 +2388,8 @@ function stundenplanAssistent(){
       const chip=(wert,txt,titel)=>el('button',{class:'tg-chip'+(malKurs===wert?' an':''),title:titel||'','aria-pressed':malKurs===wert?'true':'false',
         onclick:()=>{ malKurs=(malKurs===wert)?undefined:wert; renderPalette(); }},txt);   // nochmal antippen = ablegen (wie Stempel)
       palette.replaceChildren(
-        ...kurse.map(k=>chip(k.id,k.name,k.name+' · '+k.fach)),
+        // Fach sichtbar am Chip, nicht nur im title — auf dem iPad gibt es kein Hover
+        ...kurse.map(k=>chip(k.id,k.name+' '+fachKuerzel(k.fach),k.name+' · '+k.fach)),
         chip('FREI','✕ frei','Stunde leeren'));
       if(!kurse.length) palette.append(el('span',{class:'u-hinweis'},'Noch keine Kurse — unter „Kurse" anlegen.'));
     };

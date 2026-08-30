@@ -76,7 +76,9 @@ const ALIASE = {
   'technik': 'Technik', 'tc': 'Technik',
   'deutsch': 'Deutsch', 'de': 'Deutsch', 'd': 'Deutsch',
   'englisch': 'Englisch', 'engl': 'Englisch', 'e': 'Englisch', 'en': 'Englisch',
-  'spanisch': 'Spanisch', 'sp': 'Spanisch', 'span': 'Spanisch',
+  // 'sp' gehoert SPORT (NRW-Konvention) — vorher zeigte es auf Spanisch, das haette
+  // beim Tippen still das falsche Fach (und die falsche Farbe) gesetzt.
+  'spanisch': 'Spanisch', 's': 'Spanisch', 'sn': 'Spanisch', 'span': 'Spanisch',
   'französisch': 'Französisch', 'franzoesisch': 'Französisch', 'franz': 'Französisch', 'fr': 'Französisch',
   'latein': 'Latein', 'la': 'Latein',
   'geschichte': 'Geschichte', 'ge': 'Geschichte', 'gesch': 'Geschichte',
@@ -93,7 +95,7 @@ const ALIASE = {
   'wirtschaft': 'Wirtschaft', 'wi': 'Wirtschaft',
   'kunst': 'Kunst', 'ku': 'Kunst',
   'musik': 'Musik', 'mu': 'Musik',
-  'sport': 'Sport', 'sp o': 'Sport',
+  'sport': 'Sport', 'sp': 'Sport',
   'hauswirtschaft': 'Hauswirtschaft', 'hw': 'Hauswirtschaft',
   'religion': 'Religion', 'rel': 'Religion', 're': 'Religion',
   'katholische religion': 'Katholische Religion', 'kath. religion': 'Katholische Religion', 'kr': 'Katholische Religion',
@@ -125,6 +127,33 @@ function fachTon(text) {
   return norm ? FAECHER[norm] : null;
 }
 
+/**
+ * Fach-Kuerzel fuer enge Flaechen (Stundenplan-Zelle, Maler-Chip) — NRW-uebliche Formen.
+ * Zero 2026-08-30: „in der Stundenplan-Uebersicht auch das Fach reinschreiben" — die Klasse
+ * allein reicht nicht, wenn man dieselbe Klasse in zwei Faechern hat.
+ */
+const KUERZEL = {
+  'Mathematik': 'Ma', 'Physik': 'Ph', 'Informatik': 'If', 'Chemie': 'Ch', 'Biologie': 'Bi',
+  'NW': 'NW', 'Technik': 'Tc', 'Deutsch': 'D', 'Englisch': 'E', 'Spanisch': 'S',
+  'Französisch': 'F', 'Latein': 'L', 'Geschichte': 'Ge', 'Philosophie': 'Pl',
+  'Praktische Philosophie': 'PP', 'Pädagogik': 'EW', 'Sozialwissenschaften': 'SW',
+  'Gesellschaftslehre': 'GL', 'Politik': 'Pk', 'Erdkunde': 'Ek', 'Wirtschaft': 'Wi',
+  'Kunst': 'Ku', 'Musik': 'Mu', 'Sport': 'Sp', 'Hauswirtschaft': 'HW', 'Religion': 'Re',
+  'Katholische Religion': 'KR', 'Evangelische Religion': 'ER', 'Arbeitslehre': 'AL',
+  'Darstellen und Gestalten': 'DG',
+};
+
+/**
+ * Kurzform eines Fachs. Unbekanntes Fach: die ersten zwei Zeichen des Freitexts —
+ * besser als nichts, und es bleibt sichtbar, dass es kein gefuehrtes Fach ist.
+ */
+function fachKuerzel(text) {
+  const norm = normalisiereFach(text);
+  if (norm) return KUERZEL[norm] || norm.slice(0, 2);
+  const roh = String(text ?? '').trim();
+  return roh ? roh.slice(0, 2) : '';
+}
+
 /** Farbton eines Fachs (0–360) oder null. */
 function fachHue(text) {
   const t = fachTon(text);
@@ -152,7 +181,7 @@ function helligkeit(stufe) {
 /** Zwoelf gut getrennte Toene fuer die Farbauswahl je Kurs (30°-Schritte). */
 const WAEHLER_HUES = [0, 36, 72, 108, 144, 180, 216, 252, 264, 288, 312, 336];
 
-/** Namen fuer das <datalist> beim Kurs-Anlegen. */
-const FACH_LISTE = Object.keys(FAECHER);
+/** Namen fuer das <datalist> beim Kurs-Anlegen — alphabetisch, sonst sucht man sich dumm. */
+const FACH_LISTE = Object.keys(FAECHER).sort((a, b) => a.localeCompare(b, 'de'));
 
-export { normalisiereFach, fachHue, fachTon, fachFarbe, FACH_LISTE, WAEHLER_HUES, FAECHER, CHROMA };
+export { normalisiereFach, fachHue, fachTon, fachKuerzel, KUERZEL, fachFarbe, FACH_LISTE, WAEHLER_HUES, FAECHER, CHROMA };
