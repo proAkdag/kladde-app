@@ -28,7 +28,9 @@
   :root[data-theme="tag"] {
     color-scheme: light;
     --grund:#F4F0E7; --karte:#FBF8F1; --karte2:#FFFFFF; --kante:#E7E1D4;
-    --text:#26241E; --leise:#8A8478; --band:#C79A4B;
+    /* --leise: #8A8478 maß nur 3,50:1 auf --karte (AA braucht 4,5) — #716B5D ist der hellste
+       Ton derselben warmen Familie mit AA auf grund/karte/karte2 (4,66/5,00/5,30 · W5.2-Messung 2026-08-29) */
+    --text:#26241E; --leise:#716B5D; --band:#C79A4B;
     --gut:#5B8C6E; --warn:#B5852F; --fehl:#B4654A; --info:#4E7A99;
     --tile-plus:#EBF0EA; --tile-minus:#F6E8E1; --tile-fehlt:#EDEAE1;
   }
@@ -64,6 +66,10 @@
     min-width: 44px; min-height: 44px; cursor: pointer; font-size: 17px;
   }
   .icon-btn.aktiv { border-color: var(--band); color: var(--band); }
+  /* SVG-Icon-Buttons (S257b): inline-SVG hängt an der Text-Baseline und säße ~3 px zu hoch —
+     Grid-Zentrierung nur für Buttons mit SVG, die Emoji-Nachbarn zentrieren als Text von selbst */
+  #btn-plan { display: grid; place-items: center; }
+  #btn-plan svg { display: block; }
   /* Navigation lebt seit v2 in der Sidebar (.sidebar #hauptnav) — Bottom-Tabs entfernt. */
   .panel { background: var(--karte); border: 1px solid var(--kante); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
   .panel h2 { font-size: 13px; margin: 0 0 8px; color: var(--leise); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
@@ -166,6 +172,7 @@
   :is(#plan, .legende, .s-detail) .mk.sym { background: transparent; padding: 0 1px; }
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
+  body.beamer #deck-verlauf { display: none; }  /* Runden-Historie = Name + Bewertung — nie projizieren (§4-Beamer-Regel gilt in ALLEN Ansichten) */
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
   #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
   #plan.editor .kachel .marken { display: none; }
@@ -421,6 +428,25 @@
   .sp-dmin.abweich { border-color: var(--band); color: var(--band); font-weight: 700; }
   .sp-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 6px; min-height: 40px; font-size: 11px; padding: 2px; cursor: pointer; color: inherit; overflow: hidden; }
   .sp-zelle.belegt { border-color: var(--band); color: var(--band); }
+  /* Stundenplan-ANSICHT (S256d): Lesen + Heute/Jetzt-Orientierung · Zellen öffnen das Ausnahme-Blatt (S257) */
+  .sp-zelle.sp-lese { display: grid; place-items: center; text-align: center; }
+  .sp-th.sp-heute { color: var(--band); font-weight: 700; }
+  .sp-zelle.sp-jetzt { outline: 2px solid var(--gut); outline-offset: -1px; }
+  /* Tagesblick (S257b): ein konkreter Schultag mit Zeiten, Ausfällen, Vertretung, Kurztag, A/B */
+  .sp-tagblick { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  .sp-tag-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sp-tag-kopf .tg-chip { min-width: 40px; }
+  .sp-tag-titel { flex: 1; text-align: center; font-weight: 700; font-size: 14px; }
+  .sp-tag-zeile { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px;
+    background: none; border: none; border-top: 1px solid var(--kante); padding: 6px 4px;
+    font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 8px; }
+  .sp-tag-zeile:first-of-type { border-top: none; }
+  .sp-tz-std { flex: 0 0 52px; color: var(--leise); font-size: 12.5px; }
+  .sp-tz-zeit { flex: 0 0 92px; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .sp-tz-kurs { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sp-tz-kurs.sp-entf { text-decoration: line-through; color: var(--leise); font-weight: 400; }
+  .sp-tz-badge { flex: none; font-size: 11px; font-weight: 700; border: 1px solid var(--band); color: var(--band); border-radius: 10px; padding: 1px 8px; }
+  .sp-tz-badge.fehl { border-color: var(--fehl); color: var(--fehl); }
   .sp-ergebnis { margin: 10px 0; font-size: 16px; text-align: center; }
 }
 

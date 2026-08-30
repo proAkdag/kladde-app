@@ -1,11 +1,18 @@
 // kladde/logic/zeitmodell · Zeitraster der Schule (P2.2 · Plan Phase 2)
 // IMMER Sekunden, nie Dezimalminuten (67,5 min = 4050 s). Pure Funktionen, kein DOM.
 
-// resolveBloecke(zeitmodell, wochentag) → [{blockNr, startSek, endeSek}]
+// resolveBloecke(zeitmodell, wochentag, datumIso?) → [{blockNr, startSek, endeSek}]
 // Pausen kumulieren; tagesAusnahmen (z. B. Freitag kürzer) überschreiben bloeckeProTag.
 // blockDauern je Tag: {blockNr: sek} — einzelner Block länger/kürzer (Konferenztag 45 min,
 // Oberstufe 90 min); Folgeblöcke verschieben sich kumulativ.
-function resolveBloecke(zm, wochentag) {
+// Kurztage (S256b): steht datumIso in zm.kurztage und existiert zm.zweitRaster, gilt an
+// diesem DATUM das komplette Zweitraster (z. B. 7×45 min) — Wochentags-Ausnahmen des
+// Hauptrasters greifen dann bewusst NICHT (der Kurztag ersetzt den ganzen Tag).
+function resolveBloecke(zm, wochentag, datumIso = null) {
+  if (datumIso && zm.zweitRaster && (zm.kurztage || []).includes(datumIso)) {
+    const zweit = { ...zm.zweitRaster, tagesAusnahmen: {}, zweitRaster: null, kurztage: [] };
+    return resolveBloecke(zweit, wochentag);
+  }
   const ausnahme = (zm.tagesAusnahmen || {})[wochentag] || {};
   const anzahl = ausnahme.bloeckeProTag ?? zm.bloeckeProTag;
   const dauer = ausnahme.dauerSekunden ?? zm.dauerSekunden;
@@ -34,6 +41,16 @@ function formatZeit(sek, runden = true) {
   return s ? basis + ':' + String(s).padStart(2, '0') : basis;
 }
 
+// Anzeige-Nummer einer Stunde (S256b): Schul-Aushänge zählen mit Lücken (Zeros Raster:
+// 1,2,3,4,6,7 — die Mittagspause schluckt die „5"). blockLabels = {blockNr: 'Label'} ist
+// reine ANZEIGE; intern bleiben Blöcke lückenlos 1..N (Wochenplan/Slots unberührt).
+// Am Kurztag gelten die Labels des Zweitrasters (Fallback: durchgezählte Nummern).
+function blockLabel(zm, blockNr, datumIso = null) {
+  const kurz = datumIso && zm?.zweitRaster && (zm.kurztage || []).includes(datumIso);
+  const labels = (kurz ? zm.zweitRaster.blockLabels : zm?.blockLabels) || {};
+  return String(labels[blockNr] ?? labels[String(blockNr)] ?? blockNr);
+}
+
 // A/B-Woche über GANZE Wochen-Differenz zum Anker-Montag mod 2 — bewusst NICHT
 // ISO-Wochenparität (die kippt über den Jahreswechsel). anker = {datum:'YYYY-MM-DD', typ:'A'|'B'}.
 function montagVon(datumIso) {
@@ -51,4 +68,4 @@ function istAWoche(datumIso, anker) {
   return gerade ? ankerTyp : (ankerTyp === 'A' ? 'B' : 'A');
 }
 
-export { resolveBloecke, formatZeit, istAWoche };
+export { resolveBloecke, formatZeit, istAWoche, blockLabel };
