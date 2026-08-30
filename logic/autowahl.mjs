@@ -33,7 +33,7 @@ function kursZurZeit(jetzt, kontext) {
   if (wochentag > 5) return null;
   const datumIso = jetzt.getFullYear() + '-' + String(jetzt.getMonth() + 1).padStart(2, '0') + '-' + String(jetzt.getDate()).padStart(2, '0');
   const sek = jetzt.getHours() * 3600 + jetzt.getMinutes() * 60 + jetzt.getSeconds();
-  const bloecke = resolveBloecke(zeitmodell, wochentag);
+  const bloecke = resolveBloecke(zeitmodell, wochentag, datumIso); // Kurztag-Daten liefern das Zweitraster (S256b)
 
   const laufend = bloecke.find(b => b.startSek <= sek && sek <= b.endeSek);
   if (laufend) {

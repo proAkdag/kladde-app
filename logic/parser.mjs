@@ -1,6 +1,7 @@
 // kladde/logic/parser · Schülerlisten-Parser (Excel-Copy&Paste: Tab/Semikolon/Komma-tolerant)
 // Pure Funktion, kein DOM — 1:1 aus index.html v0.7 extrahiert (P1.1, verhaltensneutral).
-// Grenze 32 = Mappen-Grenze v1 (MAPPING.md §1); Anhebung auf 35 kommt mit der v8-Brücken-Angleichung (Block B).
+
+const MAX_SCHUELER = 35; // Mappen-Grenze v15 (MAPPING.md §1) — EINE Quelle für App + Parser
 
 function parseSchuelerListe(text){
   const schueler=[]; const warnungen=[]; const nrGesehen=new Set();
@@ -17,7 +18,7 @@ function parseSchuelerListe(text){
     const inhalt=felder.filter(f=>!/^lb$/i.test(f));
     if(!inhalt.length){ warnungen.push('Zeile ohne Namen übersprungen: „'+zeile.slice(0,30)+'"'); continue; }
     if(nr===null){ ohneNr=true; nr=schueler.length+1; }
-    if(nr<1||nr>32){ warnungen.push('Nr '+nr+' außerhalb 1–32 — übersprungen (Mappen-Grenze)'); continue; }
+    if(nr<1||nr>MAX_SCHUELER){ warnungen.push('Nr '+nr+' außerhalb 1–'+MAX_SCHUELER+' — übersprungen (Mappen-Grenze)'); continue; }
     if(nrGesehen.has(nr)){ warnungen.push('Nr '+nr+' doppelt — zweite Zeile übersprungen'); continue; }
     nrGesehen.add(nr);
     schueler.push({nr,name:inhalt[0]||'',vorname:inhalt[1]||'',lb});
@@ -28,4 +29,4 @@ function parseSchuelerListe(text){
   return {schueler,warnungen};
 }
 
-export { parseSchuelerListe };
+export { parseSchuelerListe, MAX_SCHUELER };

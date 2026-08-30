@@ -1,19 +1,30 @@
 // kladde/logic/zeitmodell · Zeitraster der Schule (P2.2 · Plan Phase 2)
 // IMMER Sekunden, nie Dezimalminuten (67,5 min = 4050 s). Pure Funktionen, kein DOM.
 
-// resolveBloecke(zeitmodell, wochentag) → [{blockNr, startSek, endeSek}]
+// resolveBloecke(zeitmodell, wochentag, datumIso?) → [{blockNr, startSek, endeSek}]
 // Pausen kumulieren; tagesAusnahmen (z. B. Freitag kürzer) überschreiben bloeckeProTag.
-function resolveBloecke(zm, wochentag) {
+// blockDauern je Tag: {blockNr: sek} — einzelner Block länger/kürzer (Konferenztag 45 min,
+// Oberstufe 90 min); Folgeblöcke verschieben sich kumulativ.
+// Kurztage (S256b): steht datumIso in zm.kurztage und existiert zm.zweitRaster, gilt an
+// diesem DATUM das komplette Zweitraster (z. B. 7×45 min) — Wochentags-Ausnahmen des
+// Hauptrasters greifen dann bewusst NICHT (der Kurztag ersetzt den ganzen Tag).
+function resolveBloecke(zm, wochentag, datumIso = null) {
+  if (datumIso && zm.zweitRaster && (zm.kurztage || []).includes(datumIso)) {
+    const zweit = { ...zm.zweitRaster, tagesAusnahmen: {}, zweitRaster: null, kurztage: [] };
+    return resolveBloecke(zweit, wochentag);
+  }
   const ausnahme = (zm.tagesAusnahmen || {})[wochentag] || {};
   const anzahl = ausnahme.bloeckeProTag ?? zm.bloeckeProTag;
   const dauer = ausnahme.dauerSekunden ?? zm.dauerSekunden;
   const start0 = ausnahme.startSekunden ?? zm.startSekunden;
   const pausen = ausnahme.pausenNachBlock ?? zm.pausenNachBlock ?? {};
+  const blockDauern = ausnahme.blockDauern || {};
   const bloecke = [];
   let t = start0;
   for (let nr = 1; nr <= anzahl; nr++) {
-    bloecke.push({ blockNr: nr, startSek: t, endeSek: t + dauer });
-    t += dauer + (pausen[nr] ?? pausen[String(nr)] ?? 0);
+    const d = blockDauern[nr] ?? blockDauern[String(nr)] ?? dauer;
+    bloecke.push({ blockNr: nr, startSek: t, endeSek: t + d });
+    t += d + (pausen[nr] ?? pausen[String(nr)] ?? 0);
   }
   return bloecke;
 }
@@ -28,6 +39,16 @@ function formatZeit(sek, runden = true) {
   const h = Math.floor(sek / 3600), m = Math.floor((sek % 3600) / 60), s = sek % 60;
   const basis = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
   return s ? basis + ':' + String(s).padStart(2, '0') : basis;
+}
+
+// Anzeige-Nummer einer Stunde (S256b): Schul-Aushänge zählen mit Lücken (Zeros Raster:
+// 1,2,3,4,6,7 — die Mittagspause schluckt die „5"). blockLabels = {blockNr: 'Label'} ist
+// reine ANZEIGE; intern bleiben Blöcke lückenlos 1..N (Wochenplan/Slots unberührt).
+// Am Kurztag gelten die Labels des Zweitrasters (Fallback: durchgezählte Nummern).
+function blockLabel(zm, blockNr, datumIso = null) {
+  const kurz = datumIso && zm?.zweitRaster && (zm.kurztage || []).includes(datumIso);
+  const labels = (kurz ? zm.zweitRaster.blockLabels : zm?.blockLabels) || {};
+  return String(labels[blockNr] ?? labels[String(blockNr)] ?? blockNr);
 }
 
 // A/B-Woche über GANZE Wochen-Differenz zum Anker-Montag mod 2 — bewusst NICHT
@@ -47,4 +68,4 @@ function istAWoche(datumIso, anker) {
   return gerade ? ankerTyp : (ankerTyp === 'A' ? 'B' : 'A');
 }
 
-export { resolveBloecke, formatZeit, istAWoche };
+export { resolveBloecke, formatZeit, istAWoche, blockLabel };
