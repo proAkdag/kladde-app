@@ -1,19 +1,19 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.5.1788101502';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.5.1788101502';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.5.1788101502';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.5.1788101502';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.5.1788101502';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.5.1788101502';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.5.1788101502';
-import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.5.1788101502';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.5.1788101502';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.5.1788101502';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.5.1788101502';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.5.1788101502';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.5.1788101502';
-const APP_VERSION = '1.5.5';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.6.1788105234';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.6.1788105234';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.6.1788105234';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.6.1788105234';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.6.1788105234';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.6.1788105234';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.6.1788105234';
+import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.6.1788105234';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.6.1788105234';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.6.1788105234';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.6.1788105234';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.6.1788105234';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.6.1788105234';
+const APP_VERSION = '1.5.6';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -880,6 +880,7 @@ function zeigeLegende(){
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Notiz ↓weiter) ═══ */
 let deckListe=[], deckIdx=0, deckNurOhne=false;
+let deckRundeStart=null;
 let deckVerlauf=[]; // Buchungen DIESER Deck-Runde [{nr,name,evId,typ}] — mitlaufende, korrigierbare Historie (Zero-Feldtest 2026-07-10)
 function baueDeckListe(){
   const k=kurs(); if(!k) return [];
@@ -894,6 +895,7 @@ function neuesDeck(mischen){
   const k=kurs(); let liste=baueDeckListe(); if(mischen) liste=mischeArray(liste);
   liste._kurs=k?k.id:null; liste._datum=terminDatum; liste._nurOhne=deckNurOhne;
   deckListe=liste; deckIdx=0; deckVerlauf=[];
+  deckRundeStart=new Date().toISOString();   // Marke fuer Buchungen, die nicht per Swipe entstehen
 }
 function renderDeckOptionen(){
   const box=$('deck-optionen'); if(!kurs()){ box.replaceChildren(); return; }
@@ -911,13 +913,16 @@ function renderDeck(){
 function zeigeDeckKarte(){
   const karte=$('deck-karte');
   const total=deckListe.length;
-  const erfasst=deckListe.filter(s=>{const st=standAmTermin(s.nr,terminDatum);return st.plus+st.neutral+st.minus>0;}).length;
+  // EIN Indexlauf statt eines vollen Event-Durchlaufs je Schueler (gemessen bei 7.624 Events:
+  // 146 ms -> 7 ms je Deck-Runde, Faktor 21; die Funktion gab es laengst, sie wurde hier nur
+  // nicht benutzt). Derselbe Index traegt unten die End-Karte und die Abwesenheits-Anzeige.
+  const idxNow=tagesStandIndex(terminDatum);
+  const erfasst=deckListe.filter(s=>{const st=idxNow.get(s.nr);return !!st&&st.plus+st.neutral+st.minus>0;}).length;
   const balken='<div class="deck-bar"><div data-w="'+(total?100*erfasst/total:0)+'"></div></div>';
   const setzeBalken=()=>{ const d=$('deck-fortschritt').querySelector('[data-w]'); if(d) d.style.width=d.dataset.w+'%'; }; // CSSOM (CSP)
   if(deckIdx>=total){
     // End-Karte: „Fehlende durchgehen" — noch nicht erfasste Anwesende in ein Nur-Ohne-Deck (P4.4)
-    const idx=tagesStandIndex(terminDatum);
-    const fehlend=deckListe.filter(s=>{const st=idx.get(s.nr);return !st||(st.plus+st.neutral+st.minus)===0;}).length;
+    const fehlend=deckListe.filter(s=>{const st=idxNow.get(s.nr);return !st||(st.plus+st.neutral+st.minus)===0;}).length;
     // Grenzfall leeres Deck freundlich erklären statt „0 Karten durch" (Tag-Simulation B1)
     const leerText=deckNurOhne?'Alle Anwesenden sind heute schon erfasst.':'Keine Schüler im Deck — heute alle abwesend.';
     karte.innerHTML='<span class="gross">✓</span><span class="sub">'+(total===0?leerText:total+' Karten durch · '+erfasst+' erfasst.')+'</span>'+
@@ -931,20 +936,43 @@ function zeigeDeckKarte(){
   const s=deckListe[deckIdx];
   $('deck-fortschritt').innerHTML='Karte '+(deckIdx+1)+' / '+total+' · <b>'+erfasst+'</b> erfasst'+balken;
   setzeBalken();
-  karte.innerHTML='<span class="gross">'+esc(anzeigeVorname(s))+'</span><span class="sub">'+esc(anzeigeNachname(s))+(s.lb&&!beamerModus?' · LB':'')+'</span>';
+  // Wurde jemand waehrend der Runde als abwesend gestempelt, sagt es die Karte — sonst tippt
+  // man ins Leere und bekommt erst danach den Guard-Toast.
+  const fehltJetzt=(idxNow.get(s.nr)||{}).fehlt;
+  karte.innerHTML='<span class="gross">'+esc(anzeigeVorname(s))+'</span><span class="sub">'+esc(anzeigeNachname(s))+(s.lb&&!beamerModus?' · LB':'')+'</span>'+
+    (fehltJetzt?'<span class="deck-fehlt">fehlt heute ('+esc(FEHLT_WORT[fehltJetzt]||fehltJetzt)+') · ↓ weiter</span>':'');
   renderDeckVerlauf();
 }
 // Mitlaufende Runden-Historie (Zero-Feldtest): jede Buchung als Zeile, Tap → korrigieren.
 // Nur UI-Log — die Wahrheit sind die Events (Korrektur = storno + neu, append-only).
 const DECK_SYMBOL={'+':'＋','o':'o','-':'−'};
+// „Diese Runde" zeigte nur, was per Swipe/Knopf gebucht wurde — was aus dem Mehr-Menue kam
+// (Notiz, Note, zu spaet …), fehlte und liess sich dort folglich nicht antippen. Nachtragen
+// statt Umbau: alles, was seit Rundenbeginn fuer einen Schueler DIESES Decks entstand.
+// Bewertungen tragen ihr Symbol, alles andere ein Stift — der Tap fuehrt in dieselbe Korrektur.
+function ergaenzeVerlaufAusEvents(){
+  const k=kurs(); if(!k||!deckRundeStart) return;
+  const imDeck=new Set(deckListe.map(s=>s.nr));
+  const bekannt=new Set(deckVerlauf.map(v=>v.evId).filter(Boolean));
+  const neu=wirksameEvents(vault.events).filter(e=>
+    e.kursId===k.id&&e.datum===terminDatum&&imDeck.has(e.schuelerNr)&&
+    e.typ!=='storno'&&String(e.ts||'')>=deckRundeStart&&!bekannt.has(e.id));
+  for(const e of neu.sort((a,b)=>String(a.ts).localeCompare(String(b.ts)))){
+    const s=schuelerVonNr(e.schuelerNr);
+    deckVerlauf.unshift({nr:e.schuelerNr,name:s?anzeigeVorname(s):'Nr '+e.schuelerNr,
+      evId:e.id,typ:DECK_SYMBOL[e.typ]?e.typ:null,fremd:!DECK_SYMBOL[e.typ]});
+  }
+}
 function renderDeckVerlauf(){
   const box=$('deck-verlauf'); if(!box) return;
+  ergaenzeVerlaufAusEvents();
   box.classList.toggle('hidden',!deckVerlauf.length);
   box.replaceChildren(
     el('div',{class:'rail-titel'},'Diese Runde'),
     ...deckVerlauf.map(v=>el('button',{class:'dv-zeile'+(v.typ?'':' leer'),onclick:()=>deckKorrektur(v)},
       el('span',{class:'dv-name'},v.name),
-      el('span',{class:'dv-mark'+(v.typ==='+'?' plus':v.typ==='-'?' minus':'')},v.typ?DECK_SYMBOL[v.typ]:'⌫'))));
+      el('span',{class:'dv-mark'+(v.typ==='+'?' plus':v.typ==='-'?' minus':'')},
+        v.typ?DECK_SYMBOL[v.typ]:(v.fremd?'✎':'⌫')))));
 }
 function deckKorrektur(v){
   const setze=typ=>{
@@ -966,6 +994,13 @@ function deckAktion(aktion){
   if(busy||deckIdx>=deckListe.length) return;
   const s=deckListe[deckIdx];
   if(aktion==='notiz'){ zeigeMehrAktionen(s); return; }
+  // Der Bewertungs-Guard galt bisher nur fuer den Stempelpfad (stempleKachel). Das Deck baut
+  // seine Liste zwar ohne Abwesende, prueft aber NICHT nach: wer waehrend der laufenden Runde
+  // als abwesend gestempelt wird (kurzer Wechsel nach „Heute"), blieb im Stapel und liess sich
+  // bewerten — genau das, was der Guard anderswo verhindert. Zero-Befund 2026-08-30.
+  // zeigeDeckKarte() danach: der Hinweis auf der Karte soll SOFORT stehen, nicht erst beim
+  // naechsten Kartenwechsel — sonst tippt man ein zweites Mal ins Leere.
+  if((aktion==='+'||aktion==='o'||aktion==='-')&&!bewertGuard(s.nr)){ zeigeDeckKarte(); return; }
   busy=true;
   if(aktion==='+'||aktion==='o'||aktion==='-'){
     const e=addEvent(aktion,s.nr);

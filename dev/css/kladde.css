@@ -177,6 +177,10 @@
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
   body.beamer #deck-verlauf { display: none; }  /* Runden-Historie = Name + Bewertung — nie projizieren (§4-Beamer-Regel gilt in ALLEN Ansichten) */
+  /* Die Flugrichtung war die zweite Verraeterin: + flog nach rechts, − nach links — an der Wand
+     ablesbar. Bei Projektion fliegt jede Karte gleich (nach unten wie „weiter"). Zero-Befund 2026-08-30. */
+  body.beamer #deck-karte.weg-plus,
+  body.beamer #deck-karte.weg-minus { animation-name: kladde-karte-weiter; }
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
   #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
   #plan.editor .kachel .marken { display: none; }
@@ -402,6 +406,8 @@
   .u-btn-klein { min-height: 32px; padding: 2px 10px; }
   /* Zwei Aktions-Knoepfe in einer .zeile: Abstand, damit der Finger den destruktiven nicht streift */
   .u-akt { display: flex; gap: 8px; }
+  /* Hinweis auf der Deck-Karte, wenn der Schueler waehrend der Runde abwesend gestempelt wurde */
+  .deck-fehlt { display: block; margin-top: 10px; color: var(--warn); font-size: 13px; }
   /* Farbwahl je Kurs: 12 Tupfer, der aktive traegt einen Ring */
   .farbwahl { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
   .farbtupf { width: 26px; height: 26px; min-height: 26px; border-radius: 8px; padding: 0;
