@@ -1,19 +1,19 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.6.1788105234';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.6.1788105234';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.6.1788105234';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.6.1788105234';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.6.1788105234';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.6.1788105234';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.6.1788105234';
-import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.6.1788105234';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.6.1788105234';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.6.1788105234';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.6.1788105234';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.6.1788105234';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.6.1788105234';
-const APP_VERSION = '1.5.6';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.7.1788107676';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.7.1788107676';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.7.1788107676';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.7.1788107676';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.7.1788107676';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.7.1788107676';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.7.1788107676';
+import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.7.1788107676';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.7.1788107676';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.7.1788107676';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.7.1788107676';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.7.1788107676';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.7.1788107676';
+const APP_VERSION = '1.5.7';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -925,8 +925,10 @@ function zeigeDeckKarte(){
     const fehlend=deckListe.filter(s=>{const st=idxNow.get(s.nr);return !st||(st.plus+st.neutral+st.minus)===0;}).length;
     // Grenzfall leeres Deck freundlich erklären statt „0 Karten durch" (Tag-Simulation B1)
     const leerText=deckNurOhne?'Alle Anwesenden sind heute schon erfasst.':'Keine Schüler im Deck — heute alle abwesend.';
-    karte.innerHTML='<span class="gross">✓</span><span class="sub">'+(total===0?leerText:total+' Karten durch · '+erfasst+' erfasst.')+'</span>'+
-      (fehlend&&!deckNurOhne?'<div class="btn-reihe u-center"><button class="btn" data-fehlende>Fehlende durchgehen ('+fehlend+')</button></div>':'');
+    karte.innerHTML='<span class="gross">'+(fehlend?'↻':'✓')+'</span><span class="sub">'+
+      (total===0?leerText:total+' Karten durch · '+erfasst+' erfasst'+(fehlend?' · '+fehlend+' noch offen.':'.'))+'</span>'+
+      (fehlend?'<div class="btn-reihe u-center"><button class="btn" data-fehlende>'+
+        (deckNurOhne?'Nochmal durchgehen':'Fehlende durchgehen')+' ('+fehlend+')</button></div>':'');
     $('deck-fortschritt').innerHTML=total===0?'':'fertig · <b>'+erfasst+'</b> / '+total+' erfasst'+balken;
     setzeBalken();
     renderDeckVerlauf();  // gerade auf der End-Karte will man die Runde noch korrigieren können
@@ -966,9 +968,11 @@ function ergaenzeVerlaufAusEvents(){
 function renderDeckVerlauf(){
   const box=$('deck-verlauf'); if(!box) return;
   ergaenzeVerlaufAusEvents();
-  box.classList.toggle('hidden',!deckVerlauf.length);
+  // NICHT mehr ein-/ausblenden: das Feld hielt bis zur ersten Buchung keinen Platz und schob
+  // die Karte danach zur Seite (Zero am Gerät 2026-08-30). Leer steht jetzt ein ruhiger Hinweis.
   box.replaceChildren(
     el('div',{class:'rail-titel'},'Diese Runde'),
+    ...(deckVerlauf.length?[]:[el('p',{class:'dv-leer'},'Noch nichts gebucht.')]),
     ...deckVerlauf.map(v=>el('button',{class:'dv-zeile'+(v.typ?'':' leer'),onclick:()=>deckKorrektur(v)},
       el('span',{class:'dv-name'},v.name),
       el('span',{class:'dv-mark'+(v.typ==='+'?' plus':v.typ==='-'?' minus':'')},

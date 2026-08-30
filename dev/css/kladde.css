@@ -408,6 +408,8 @@
   .u-akt { display: flex; gap: 8px; }
   /* Hinweis auf der Deck-Karte, wenn der Schueler waehrend der Runde abwesend gestempelt wurde */
   .deck-fehlt { display: block; margin-top: 10px; color: var(--warn); font-size: 13px; }
+  /* Leerer Runden-Verlauf: haelt die Spaltenbreite, ohne zu rufen */
+  .dv-leer { color: var(--leise); font-size: 13px; margin: 6px 2px 0; font-style: italic; }
   /* Farbwahl je Kurs: 12 Tupfer, der aktive traegt einen Ring */
   .farbwahl { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
   .farbtupf { width: 26px; height: 26px; min-height: 26px; border-radius: 8px; padding: 0;
