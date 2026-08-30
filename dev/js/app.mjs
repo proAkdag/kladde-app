@@ -1,18 +1,19 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.3.1788097450';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.3.1788097450';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.3.1788097450';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.3.1788097450';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.3.1788097450';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.3.1788097450';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.3.1788097450';
-import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.3.1788097450';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.3.1788097450';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.3.1788097450';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.3.1788097450';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.3.1788097450';
-const APP_VERSION = '1.5.3';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.4.1788100887';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.4.1788100887';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.4.1788100887';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.4.1788100887';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.4.1788100887';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.4.1788100887';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.4.1788100887';
+import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.4.1788100887';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.4.1788100887';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.4.1788100887';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.4.1788100887';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.4.1788100887';
+import { fachFarbe, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.4.1788100887';
+const APP_VERSION = '1.5.4';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -1283,7 +1284,8 @@ function slugId(text){ return String(text).toLowerCase().replace(/[^a-z0-9]+/g,'
 function kursAnlegenDialog(){
   dlgZeigen('<h3>Kurs anlegen</h3>'+
     '<div class="zeile"><span>Klasse/Kurs</span><span><input type="text" id="kn-name" placeholder="z. B. 7b" class="u-w130"></span></div>'+
-    '<div class="zeile"><span>Fach</span><span><input type="text" id="kn-fach" placeholder="z. B. Mathematik" class="u-w160"></span></div>'+
+    '<div class="zeile"><span>Fach</span><span><input type="text" id="kn-fach" placeholder="z. B. Mathematik" class="u-w160" list="fach-liste">'+
+    '<datalist id="fach-liste">'+FACH_LISTE.map(f=>'<option value="'+esc(f)+'">').join('')+'</datalist></span></div>'+
     '<div class="zeile"><span>Schuljahr</span><span><input type="text" id="kn-jahr" placeholder="2026/27" class="u-w110"></span></div>'+
     '<div class="zeile"><span>Stufe</span><span><select id="kn-profil"><option value="sek1">Sek I (Drittelnoten)</option><option value="sek2">Oberstufe (Punkte)</option></select></span></div>'+
     '<p class="u-hinweis u-mt10">Schülerliste — aus Excel kopieren (Nr · Name · Vorname · ggf. LB) und hier einfügen, oder tippen (eine Zeile pro Kind, „Name; Vorname"):</p>'+
@@ -1335,7 +1337,7 @@ function kursWizard(){
 
   function s1(){ // Kursdaten
     const nameI=el('input',{type:'text',value:w.name,placeholder:'z. B. 7b',class:'u-w130',oninput:e=>w.name=e.target.value});
-    const fachI=el('input',{type:'text',value:w.fach,placeholder:'z. B. Mathematik',class:'u-w160',oninput:e=>w.fach=e.target.value});
+    const fachI=el('input',{type:'text',value:w.fach,placeholder:'z. B. Mathematik',class:'u-w160',list:'fach-liste',oninput:e=>w.fach=e.target.value});
     const jahrI=el('input',{type:'text',value:w.jahr,placeholder:'2026/27',class:'u-w110',oninput:e=>w.jahr=e.target.value});
     const notenBox=el('div',{});
     const renderNoten=()=>{ notenBox.replaceChildren();
@@ -1349,7 +1351,7 @@ function kursWizard(){
     renderNoten();
     dlgZeigenEl(kopf('Kursdaten'),
       el('div',{class:'zeile'},el('span',{},'Klasse/Kurs'),el('span',{},nameI)),
-      el('div',{class:'zeile'},el('span',{},'Fach'),el('span',{},fachI)),
+      el('div',{class:'zeile'},el('span',{},'Fach'),el('span',{},fachI,fachDatalist())),
       el('div',{class:'zeile'},el('span',{},'Schuljahr'),el('span',{},jahrI)),
       el('div',{class:'zeile'},el('span',{},'Stufe'),el('span',{},profilSel)),
       notenBox,
@@ -1481,7 +1483,7 @@ function renderKurse(){
       [...jahre.entries()].sort((a,b)=>b[0].localeCompare(a[0],'de')).map(([label,ks])=>
         '<div class="archiv-jahr"><div class="archiv-jahr-kopf">'+esc(label)+' · '+ks.length+'</div>'+
         ks.map(k=>'<div class="zeile"><span>'+esc(k.name)+' · '+esc(k.fach)+'</span>'+
-          '<span><button class="btn still u-btn-klein" data-oeffnen="'+k.id+'">Schüleransicht öffnen</button> <button class="btn gefahr u-btn-klein" data-loeschen="'+k.id+'">löschen</button></span></div>').join('')+'</div>').join('')+'</details>';
+          '<span class="u-akt"><button class="btn still u-btn-klein" data-reaktivieren="'+k.id+'" title="Wieder aktiv setzen">↻ aktivieren</button><button class="btn still u-btn-klein" data-oeffnen="'+k.id+'">öffnen</button><button class="btn gefahr u-btn-klein" data-loeschen="'+k.id+'">löschen</button></span></div>').join('')+'</div>').join('')+'</details>';
   }
   // Jahresabschluss: selten + folgenreich → eigener Verwaltungsbereich unten statt Kopfzeile (C4)
   html+='<div class="kurse-fuss"><span class="u-leise">Jahresabschluss</span><button class="btn still u-btn-klein" id="btn-schuljahr">Neues Schuljahr…</button></div>';
@@ -1493,6 +1495,10 @@ function renderKurse(){
   wrap.querySelectorAll('[data-verwalten]').forEach(b=>b.onclick=()=>kursDetailSheet(b.dataset.verwalten));
   wrap.querySelectorAll('[data-oeffnen]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.oeffnen; aktualisiereKursChip(); aktView='schueler'; document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='schueler')); setzeViewTitel('schueler'); ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='schueler')); renderSchueler(); toast('Archiv-Kurs (schreibgeschützt)'); });
   wrap.querySelectorAll('[data-loeschen]').forEach(b=>b.onclick=()=>loescheKursEndgueltig(b.dataset.loeschen));
+  wrap.querySelectorAll('[data-reaktivieren]').forEach(b=>b.onclick=()=>reaktiviereKurs(b.dataset.reaktivieren));
+  // Fachfarbe je Kachel — erst nach innerHTML, weil das Band im HTML-String entsteht
+  wrap.querySelectorAll('.kurs-karte[data-kurs]').forEach(b=>
+    faerbe(b.querySelector('.kurs-band'),vault.stamm.kurse.find(x=>x.id===b.dataset.kurs)));
   // Stapel-Import (Zero 2026-08-30): mehrere kurs.json auf einmal — der PC-Konverter
   // (mappen_konverter.py) wirft pro Mappe eine Datei aus, die kommen zum Schuljahresstart im Bund.
   // Je Datei eigenes try: eine kaputte Datei darf die anderen nicht mitreissen (fail-soft je Kurs,
@@ -1542,6 +1548,17 @@ function kursDetailSheet(id){
   const slotSel=el('select',{onchange:e=>{ k.slot=e.target.value; stammMutiert(); speichern(); toast('Export-Slot: '+e.target.value); }},
     ...['m1','m2','m3','m4','m5','m6'].map(m=>el('option',(k.slot||'m1')===m?{selected:'selected'}:{},m)));
   const zeilen=[el('div',{class:'zeile'},el('span',{},'Kladde-m-Slot (Export)'),el('span',{},slotSel))];
+  // Farbe je Kurs (Zero 2026-08-30): der Fach-Standard ist vorbelegt, die Wahl gilt nur hier.
+  // Sie ueberschreibt nur den Farbton — Helligkeit und Buntheit bleiben, damit kein Kurs sticht.
+  const tupfer=[el('button',{class:'farbtupf auto'+(Number.isFinite(k.farbHue)?'':' an'),title:'Standard des Fachs',
+    onclick:()=>{ delete k.farbHue; stammMutiert(); speichern(); renderKurse(); kursDetailSheet(id); }},'Fach')];
+  for(const h of WAEHLER_HUES){
+    const t=el('button',{class:'farbtupf'+(k.farbHue===h?' an':''),title:'Farbe '+h+'°',
+      onclick:()=>{ k.farbHue=h; stammMutiert(); speichern(); renderKurse(); kursDetailSheet(id); }});
+    t.style.setProperty('--f',fachFarbe(k.fach,h));
+    tupfer.push(t);
+  }
+  zeilen.push(el('div',{class:'zeile'},el('span',{},'Farbe'),el('span',{class:'farbwahl'},...tupfer)));
   if(k.profil==='sek2'){
     // Bewertungsmodus ändert den semantischen Rahmen aller Vorschläge → Bestätigung statt Still-Speichern (C4)
     const nmSel=el('select',{onchange:e=>{
@@ -1786,6 +1803,44 @@ function archiviereKurs(id){
   const k=vault.stamm.kurse.find(x=>x.id===id); if(!k) return;
   dlgZeigen('<h3>Kurs archivieren?</h3><p class="u-leise">'+esc(k.name)+' verschwindet aus der aktiven Liste. Alle Einträge bleiben verschlüsselt erhalten und im Archiv einsehbar (schreibgeschützt).</p><div class="btn-reihe"><button class="btn" data-ok>Archivieren</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=()=>{ k.status='archiviert'; stammMutiert(); speichern(); if(aktiverKursId===id){ aktiverKursId=null; kursAutowahl(); } dlgZu(); renderKurse(); toast('Archiviert: '+k.name); }; });
+}
+// Archivierung zurücknehmen (Zero 2026-08-30). Zwei Fälle, weil die Kursliste NUR das aktive
+// Schuljahr zeigt: ein Kurs aus einem früheren Jahr stünde nach dem Reaktivieren weder in der
+// Liste noch im Archiv — er wäre unsichtbar. Darum wandert er dann ins aktive Schuljahr, und
+// das wird vorher gesagt statt still getan. Die Kurs-Id bleibt unangetastet (Events, Sitzplan
+// und Excel-Zeile hängen daran), nur schuljahrId/schuljahr werden nachgezogen.
+function reaktiviereKurs(id){
+  const k=vault.stamm.kurse.find(x=>x.id===id); if(!k) return;
+  const aktivId=vault.stamm.aktivesSchuljahrId;
+  const sj=aktivesSchuljahr();
+  const machs=(jahrWechsel)=>{
+    k.status='aktiv';
+    if(jahrWechsel){ k.schuljahrId=aktivId; if(sj) k.schuljahr=sj.label; }
+    stammMutiert(); speichern(); renderKurse();
+    toast('Wieder aktiv: '+k.name+(jahrWechsel&&sj?' · jetzt in '+sj.label:''));
+  };
+  if((k.schuljahrId||aktivId)===aktivId){ machs(false); return; }  // gleiches Jahr: einfach zurück
+  const alt=(vault.stamm.schuljahre||[]).find(j=>j.id===k.schuljahrId)?.label||'einem früheren Jahr';
+  dlgZeigenEl(
+    el('h3',{},'Kurs zurückholen?'),
+    el('p',{class:'u-hinweis'},k.name+' · '+k.fach+' gehört zu '+alt+'. Die Kursliste zeigt nur das aktive Schuljahr — der Kurs wird deshalb nach '+(sj?sj.label:'das aktive Jahr')+' geholt.'),
+    el('p',{class:'u-hinweis'},'Alle bisherigen Einträge dieses Kurses kommen mit. Wenn du nur die Struktur (Namen, Sitzplan) ins neue Jahr übernehmen willst, ist „Neues Schuljahr…" der richtige Weg — der lässt die Bewertungen im alten Jahr.'),
+    el('div',{class:'btn-reihe'},
+      el('button',{class:'btn',onclick:()=>{ dlgZu(); machs(true); }},'Zurückholen'),
+      el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+}
+// Fach-Vorschlagsliste: EIN Feld zum Tippen UND Auswaehlen (datalist ist im Werk erprobt —
+// die Sitzplan-Platzvergabe nutzt es schon). Freitext bleibt moeglich; die Normalisierung in
+// fachfarben.mjs faengt „Mathe"/„MA"/„SoWi" ohnehin ab.
+function fachDatalist(){
+  return el('datalist',{id:'fach-liste'},...FACH_LISTE.map(f=>el('option',{value:f})));
+}
+// Fachfarbe auf ein Element legen. Per CSSOM, weil inline style-Attribute per CSP gesperrt sind.
+function faerbe(elm,k){ if(elm&&k) elm.style.setProperty('--f',fachFarbe(k.fach,k.farbHue)); }
+// Erster Kurs eines Wochenplan-Blocks (fuer die Faerbung der Stundenplan-Zelle)
+function wochenplanZellKurs(plan,wt,nr){
+  const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr);
+  return s?(vault.stamm.kurse.find(x=>x.id===s.kursId)||null):null;
 }
 // Endgültiges Löschen — NUR im Archiv, doppelt bestätigt (Kursname abtippen), Zwangs-Export vorher
 function loescheKursEndgueltig(id){
@@ -2106,9 +2161,11 @@ function stundenplanAnsicht(ansichtDatum){
     grid.append(el('div',{class:'sp-th sp-blockkopf'},blockLabel(zm,nr),el('small',{class:'sp-zeit'},rb?formatZeit(rb.startSek)+'–'+formatZeit(rb.endeSek):'')));
     for(const wt of [1,2,3,4,5]){
       const laeuft=wt===heuteWt&&autowahlInfo&&autowahlInfo.blockNr===nr;
-      grid.append(el('button',{class:'sp-zelle sp-lese'+(wochenplanZellText(plan,wt,nr)!=='—'?' belegt':'')+(laeuft?' sp-jetzt':''),
+      const spZelle=el('button',{class:'sp-zelle sp-lese'+(wochenplanZellText(plan,wt,nr)!=='—'?' belegt':'')+(laeuft?' sp-jetzt':''),
         title:(laeuft?'läuft gerade · ':'')+'Ausfall/Vertretung…',
-        onclick:()=>ausnahmeBlatt(wt,nr,naechstesDatumFuerWt(wt,tagDatum))},wochenplanZellText(plan,wt,nr)));
+        onclick:()=>ausnahmeBlatt(wt,nr,naechstesDatumFuerWt(wt,tagDatum))},wochenplanZellText(plan,wt,nr));
+      faerbe(spZelle,wochenplanZellKurs(plan,wt,nr));
+      grid.append(spZelle);
     }
     const p=zm.pausenNachBlock[nr]??zm.pausenNachBlock[String(nr)]??0;
     if(p&&nr<zm.bloeckeProTag) grid.append(el('div',{class:'sp-pausenzeile'},'Pause · '+(p/60)+' min'));

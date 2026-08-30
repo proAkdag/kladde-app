@@ -22,6 +22,9 @@
     --grund:#17150F; --karte:#211E17; --karte2:#2B2820; --kante:#38342A;
     --text:#ECE6D8; --leise:#A49C8A; --band:#C79A4B;
     --gut:#6FA080; --warn:#CE9B4B; --fehl:#C67C60; --info:#6E9DB8;
+    /* --L = Helligkeit der Fachfarben (logic/fachfarben.mjs). Eine Zahl je Theme schaltet
+       die ganze Palette um; die dunkle Stufe rechnet selbst -0.15 davon ab. */
+    --L: .70;
     --tile-plus:#1E2A1C; --tile-minus:#2E1F1A; --tile-fehlt:#201E17;
     --auf-band:#201400; --auf-pos:#FFFFFF; --auf-neg:#FFFFFF; --auf-info:#FFFFFF;
   }
@@ -32,6 +35,7 @@
        Ton derselben warmen Familie mit AA auf grund/karte/karte2 (4,66/5,00/5,30 · W5.2-Messung 2026-08-29) */
     --text:#26241E; --leise:#716B5D; --band:#C79A4B;
     --gut:#5B8C6E; --warn:#B5852F; --fehl:#B4654A; --info:#4E7A99;
+    --L: .52;
     --tile-plus:#EBF0EA; --tile-minus:#F6E8E1; --tile-fehlt:#EDEAE1;
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -398,6 +402,13 @@
   .u-btn-klein { min-height: 32px; padding: 2px 10px; }
   /* Zwei Aktions-Knoepfe in einer .zeile: Abstand, damit der Finger den destruktiven nicht streift */
   .u-akt { display: flex; gap: 8px; }
+  /* Farbwahl je Kurs: 12 Tupfer, der aktive traegt einen Ring */
+  .farbwahl { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+  .farbtupf { width: 26px; height: 26px; min-height: 26px; border-radius: 8px; padding: 0;
+    background: var(--f, var(--band)); border: 2px solid transparent; cursor: pointer; }
+  .farbtupf.an { border-color: var(--text); }
+  .farbtupf.auto { background: var(--karte2); border: 1px dashed var(--kante); color: var(--leise);
+    font-size: 11px; width: auto; padding: 0 9px; }
   .u-textarea { width: 100%; background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px; padding: 8px; }
   .dev-badge { background: var(--fehl); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
   .band-hoch { height: 34px; }
@@ -429,7 +440,8 @@
   .sp-tagchips { display: flex; gap: 4px; margin: 2px 0 8px; }
   .sp-dmin.abweich { border-color: var(--band); color: var(--band); font-weight: 700; }
   .sp-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 6px; min-height: 40px; font-size: 11px; padding: 2px; cursor: pointer; color: inherit; overflow: hidden; }
-  .sp-zelle.belegt { border-color: var(--band); color: var(--band); }
+  .sp-zelle.belegt { border-color: var(--f, var(--band)); color: var(--f, var(--band));
+    background: color-mix(in oklab, var(--f, var(--band)) 13%, var(--karte2)); }
   /* Stundenplan-ANSICHT (S256d): Lesen + Heute/Jetzt-Orientierung · Zellen öffnen das Ausnahme-Blatt (S257) */
   .sp-zelle.sp-lese { display: grid; place-items: center; text-align: center; }
   .sp-th.sp-heute { color: var(--band); font-weight: 700; }
@@ -573,7 +585,8 @@
     display: flex; align-items: center; gap: 10px; background: var(--karte2); color: var(--text);
     border: 1px solid var(--kante); border-radius: 11px; padding: 7px 13px; min-height: 44px; cursor: pointer; max-width: 260px;
   }
-  .kurs-band { width: 6px; height: 28px; background: var(--band); border-radius: 3px; flex: none; }
+  /* --f = Fachfarbe (logic/fachfarben.mjs, per CSSOM gesetzt) · Rückfall: Markenton */
+  .kurs-band { width: 6px; height: 28px; background: var(--f, var(--band)); border-radius: 3px; flex: none; }
   .kurs-txt { display: flex; flex-direction: column; text-align: left; min-width: 0; }
   #kurs-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #kurs-chip small { color: var(--leise); font-size: 11.5px; }
@@ -713,7 +726,9 @@
   .kurse-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
   .kurse-kopf .kk-sj { color: var(--leise); font-size: 13px; }
   .kurse-kopf .kk-sj b { color: var(--text); font-weight: 600; }
-  .kurs-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: stretch; }
+  /* margin-bottom = gap: der Abstand zum Archiv soll derselbe sein wie zwischen den Karten
+     (Zero 2026-08-30: das Archiv klebte am Grid, weil .panel nur margin-bottom traegt) */
+  .kurs-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: stretch; margin-bottom: 14px; }
   .kurs-karte { display: flex; gap: 13px; align-items: stretch; text-align: left; width: 100%;
     background: var(--karte); border: 1px solid var(--kante); border-radius: 14px; padding: 15px 16px; cursor: pointer; color: var(--text); min-height: 96px; }
   .kurs-karte:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
