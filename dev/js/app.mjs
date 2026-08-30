@@ -1,17 +1,18 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.2.1788089975';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.2.1788089975';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.2.1788089975';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.2.1788089975';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.2.1788089975';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.2.1788089975';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.2.1788089975';
-import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.2.1788089975';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.2.1788089975';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.2.1788089975';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.2.1788089975';
-const APP_VERSION = '1.5.2';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.3.1788097450';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.3.1788097450';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.3.1788097450';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.3.1788097450';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.3.1788097450';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.3.1788097450';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.3.1788097450';
+import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.3.1788097450';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.3.1788097450';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.3.1788097450';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.3.1788097450';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.3.1788097450';
+const APP_VERSION = '1.5.3';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -1467,7 +1468,7 @@ function renderKurse(){
       '<button class="kk-mehr" data-verwalten="'+k.id+'" title="Verwalten">⋯</button></div>';
   }
   html+='<button class="kurs-karte neu" id="btn-kurs-anlegen">＋ Kurs anlegen</button></div>';
-  html+='<input type="file" id="file-kurs" accept=".json,application/json" class="hidden">';
+  html+='<input type="file" id="file-kurs" accept=".xlsx,.json,application/json" multiple class="hidden">';
   // Archiv (P3.3) — schreibgeschützt, eingeklappt, nach Schuljahr gruppiert (C4)
   if(archiviert.length){
     const jahre=new Map();
@@ -1492,20 +1493,43 @@ function renderKurse(){
   wrap.querySelectorAll('[data-verwalten]').forEach(b=>b.onclick=()=>kursDetailSheet(b.dataset.verwalten));
   wrap.querySelectorAll('[data-oeffnen]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.oeffnen; aktualisiereKursChip(); aktView='schueler'; document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='schueler')); setzeViewTitel('schueler'); ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='schueler')); renderSchueler(); toast('Archiv-Kurs (schreibgeschützt)'); });
   wrap.querySelectorAll('[data-loeschen]').forEach(b=>b.onclick=()=>loescheKursEndgueltig(b.dataset.loeschen));
+  // Stapel-Import (Zero 2026-08-30): mehrere kurs.json auf einmal — der PC-Konverter
+  // (mappen_konverter.py) wirft pro Mappe eine Datei aus, die kommen zum Schuljahresstart im Bund.
+  // Je Datei eigenes try: eine kaputte Datei darf die anderen nicht mitreissen (fail-soft je Kurs,
+  // fail-closed je Datei). Gespeichert wird EINMAL am Ende, nicht je Kurs.
   $('file-kurs').onchange=async e=>{
-    const f=e.target.files[0]; if(!f) return;
-    try {
-      const kursJson=JSON.parse(await f.text());
-      if(kursJson.schema!=='kladde/v1'||!kursJson.kurs) throw new Error('kein kladde/v1-Kurs');
-      const k=kursJson.kurs; k.slot=k.slot||'m1';
-      const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
-      if(idx>=0) vault.stamm.kurse[idx]=k; else vault.stamm.kurse.push(k);
-      vault.stamm.schueler[k.id]=kursJson.schueler;
+    const dateien=[...e.target.files]; if(!dateien.length) return;
+    const geladen=[], fehler=[]; let warnungen=0;
+    if(dateien.some(f=>/\.xlsx$/i.test(f.name))&&!xlsxLesbar()){
+      toast('⚠ Dieser Browser kann keine Mappen entpacken — bitte kurs.json vom PC nutzen',5000);
+      e.target.value=''; return;
+    }
+    for(const f of dateien){
+      try {
+        // Mappe (.xlsx) wird hier gelesen, kurs.json bleibt der Weg vom PC-Werkzeug —
+        // beide Leser muessen dasselbe ergeben, gesichert durch test/mappe.test.mjs
+        const kursJson=/\.xlsx$/i.test(f.name) ? await lieseMappe(f,f.name) : JSON.parse(await f.text());
+        if(kursJson.schema!=='kladde/v1'||!kursJson.kurs) throw new Error('kein kladde/v1-Kurs');
+        const k=kursJson.kurs; k.slot=k.slot||'m1';
+        const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
+        if(idx>=0) vault.stamm.kurse[idx]=k; else vault.stamm.kurse.push(k);
+        vault.stamm.schueler[k.id]=kursJson.schueler;
+        warnungen+=kursJson.warnungen?.length||0;
+        geladen.push(k);
+      } catch(err){ fehler.push(f.name+': '+err.message); }
+    }
+    if(geladen.length){
       stammMutiert(); speichern();
-      aktiverKursId=k.id; aktualisiereKursChip();
-      toast('Importiert: '+k.name+' ('+kursJson.schueler.length+' Schüler'+(kursJson.warnungen?.length?' · '+kursJson.warnungen.length+' Warnung(en)':'')+')');
+      aktiverKursId=geladen[geladen.length-1].id; aktualisiereKursChip();
       renderKurse();
-    } catch(err){ toast('⚠ Import: '+err.message,4000); }
+    }
+    // Ein Toast fuer den ganzen Stapel — bei genau einem Kurs bleibt der Wortlaut wie bisher
+    const teile=[];
+    if(geladen.length===1) teile.push('Importiert: '+geladen[0].name+' ('+(vault.stamm.schueler[geladen[0].id]||[]).length+' Schüler)');
+    else if(geladen.length) teile.push('Importiert: '+geladen.length+' Kurse ('+geladen.map(k=>k.name).join(' · ')+')');
+    if(warnungen) teile.push(warnungen+' Warnung(en)');
+    if(fehler.length) teile.push('⚠ '+fehler.length+' Datei(en) nicht gelesen — '+fehler.join(' | '));
+    if(teile.length) toast(teile.join(' · '),fehler.length?6000:3500);
     e.target.value='';
   };
 }
@@ -1555,11 +1579,11 @@ function kursDetailSheet(id){
 function kursAnlegenSheet(){
   dlgZeigenEl(
     el('h3',{},'Kurs anlegen'),
-    el('p',{class:'u-hinweis'},'Am schnellsten: in Excel die Listen-Spalten (Nr · Name · Vorname · ggf. LB) markieren, kopieren, hier einfügen. Alternativ die kurs.json vom PC-Werkzeug laden.'),
+    el('p',{class:'u-hinweis'},'Am einfachsten: die Kursmappe(n) direkt laden — auch mehrere auf einmal. Alternativ in Excel die Listen-Spalten (Nr · Name · Vorname · ggf. LB) markieren, kopieren und hier einfügen.'),
     el('div',{class:'btn-reihe'},
       el('button',{class:'btn',onclick:()=>{ dlgZu(); kursWizard(); }},'Geführt (Wizard)'),
       el('button',{class:'btn still',onclick:()=>{ dlgZu(); kursAnlegenDialog(); }},'Schnell (Einfügen)'),
-      el('button',{class:'btn still',onclick:()=>{ dlgZu(); $('file-kurs').click(); }},'kurs.json laden')));
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); $('file-kurs').click(); }},'Mappe laden (.xlsx)')));
 }
 // Teilnehmer nachträglich pflegen — hinzufügen/deaktivieren/reaktivieren (Zero 2026-07-09 · Tombstone-P0 2026-07-10).
 // Eine Nr wird NIE an ein anderes Kind vergeben: Deaktivierte bleiben mit inaktiv:true im Stamm
@@ -1603,6 +1627,27 @@ function schuelerPflegeDialog(kursId){
         }},'Deaktivieren'),
         el('button',{class:'btn still',onclick:zeige},'Abbrechen')));
   };
+  // Namenskorrektur (Zero 2026-08-30): Der Name ist reine Anzeige — gebunden wird ueber die Nr
+  // (MAPPING.md §1: "Namen werden NIE zum Matchen benutzt"), Events/Sitzplan/Sync/Excel-Zeile bleiben also
+  // unberuehrt. Fokus-sicher wie der Stundenplan: kein oninput, neu gerendert wird erst bei Speichern.
+  const bearbeite=(s)=>{
+    const vnIn=el('input',{type:'text',value:s.vorname||'',placeholder:'Vorname',class:'u-w130'});
+    const nnIn=el('input',{type:'text',value:s.name||'',placeholder:'Nachname',class:'u-w130'});
+    const lbIn=el('input',{type:'checkbox',class:'u-check',...(s.lb?{checked:'checked'}:{})});
+    dlgZeigenEl(
+      el('h3',{},'Bearbeiten · Nr '+s.nr),
+      el('p',{class:'u-hinweis'},'Nr '+s.nr+' bleibt — Bewertungen, Sitzplan und Excel-Zeile bleiben gebunden.'),
+      el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
+      el('div',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn',onclick:()=>{
+          const vorname=vnIn.value.trim(), name=nnIn.value.trim();
+          if(!vorname&&!name){ toast('Name fehlt'); return; }
+          s.vorname=vorname; s.name=name; s.lb=lbIn.checked;
+          stammMutiert(); speichern(); toast('Geändert: '+(vorname||name)); zeige();
+        }},'Speichern'),
+        el('button',{class:'btn still',onclick:zeige},'Abbrechen')));
+  };
   const zeige=()=>{
     // Anzeige alphabetisch nach Nachname; die Nr bleibt intern der feste Anker (Events/Sitzplan/Sync/Excel-Zeile)
     const sortiert=arr=>arr.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','de')||(a.vorname||'').localeCompare(b.vorname||'','de'));
@@ -1610,7 +1655,9 @@ function schuelerPflegeDialog(kursId){
     const inaktive=sortiert(alle().filter(s=>s.inaktiv));
     const zeilen=aktive.length?aktive.map(s=>el('div',{class:'zeile'},
       el('span',{},s.vorname+' '+s.name+(s.lb?' · LB':''),el('small',{class:'u-leise'},' · Nr '+s.nr)),
-      el('button',{class:'btn gefahr u-btn-klein',title:'Deaktivieren',onclick:()=>deaktiviere(s)},'🗑'))):[el('p',{class:'u-leise'},'Noch keine Schüler.')];
+      el('span',{class:'u-akt'},
+        el('button',{class:'btn still u-btn-klein',title:'Bearbeiten',onclick:()=>bearbeite(s)},'✏️'),
+        el('button',{class:'btn gefahr u-btn-klein',title:'Deaktivieren',onclick:()=>deaktiviere(s)},'🗑')))):[el('p',{class:'u-leise'},'Noch keine Schüler.')];
     const inaktivBlock=inaktive.length?[el('div',{class:'tag-gruppe'},
       el('div',{class:'tag-kopf'},'Inaktiv (Nr bleibt reserviert)'),
       ...inaktive.map(s=>el('div',{class:'zeile'},

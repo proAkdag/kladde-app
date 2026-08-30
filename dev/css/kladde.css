@@ -396,6 +396,8 @@
   .u-btn-block { display: block; width: 100%; margin: 6px 0; }
   .u-btn-block.u-eng { margin: 4px 0; }
   .u-btn-klein { min-height: 32px; padding: 2px 10px; }
+  /* Zwei Aktions-Knoepfe in einer .zeile: Abstand, damit der Finger den destruktiven nicht streift */
+  .u-akt { display: flex; gap: 8px; }
   .u-textarea { width: 100%; background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px; padding: 8px; }
   .dev-badge { background: var(--fehl); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
   .band-hoch { height: 34px; }
