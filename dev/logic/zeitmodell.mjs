@@ -68,4 +68,10 @@ function istAWoche(datumIso, anker) {
   return gerade ? ankerTyp : (ankerTyp === 'A' ? 'B' : 'A');
 }
 
-export { resolveBloecke, formatZeit, istAWoche, blockLabel };
+// Ferien & Feiertage (Zero 2026-09-02, Punkt 15): zm.ferien = [{von,bis,name}] (ISO-Datum, inklusiv).
+// → Eintrag oder null. Autowahl sagt dann „frei", der Tagesblick schreibt den Namen.
+function istFerien(zm, datumIso) {
+  return (zm?.ferien || []).find(f => f.von <= datumIso && datumIso <= f.bis) || null;
+}
+
+export { resolveBloecke, formatZeit, istAWoche, blockLabel, istFerien };

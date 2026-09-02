@@ -10,7 +10,7 @@
 // (kursId null, art gesetzt). Sie tragen KEINE Bewertung — die Autowahl liefert sie mit `art`,
 // die App wechselt dann keinen Kurs, zeigt aber, was laut Plan läuft.
 
-import { resolveBloecke, istAWoche } from './zeitmodell.mjs';
+import { resolveBloecke, istAWoche, istFerien } from './zeitmodell.mjs';
 
 const KOMMEND_FENSTER_SEK = 600;
 
@@ -42,6 +42,7 @@ function kursZurZeit(jetzt, kontext) {
   const wochentag = ((jetzt.getDay() + 6) % 7) + 1;            // Mo=1 … So=7
   if (wochentag > 5) return null;
   const datumIso = jetzt.getFullYear() + '-' + String(jetzt.getMonth() + 1).padStart(2, '0') + '-' + String(jetzt.getDate()).padStart(2, '0');
+  if (istFerien(zeitmodell, datumIso)) return null;             // Ferien/Feiertag: kein Block, kein Kurs (Punkt 15)
   const sek = jetzt.getHours() * 3600 + jetzt.getMinutes() * 60 + jetzt.getSeconds();
   const bloecke = resolveBloecke(zeitmodell, wochentag, datumIso); // Kurztag-Daten liefern das Zweitraster (S256b)
 
