@@ -167,6 +167,38 @@ async function decodeContainerAuto(bytes, passwort) {
   };
 }
 
+// DEK-Rohbytes mit der Passphrase entwrappen — NUR für die Einrichtung einer zweiten Hülle
+// (biometrie.mjs). Der Aufrufer nullt die Rohbytes nach dem Wrap. v1-Container haben keinen DEK.
+async function dekRohMitPassphrase(bytes, passwort) {
+  const kopf = leseHeader(bytes);
+  if (kopf.version !== FORMAT_V2) throw new Error('Nur v2-Container haben einen DEK — bitte erst mit Passphrase öffnen (Migration)');
+  const kek = await ableiteSchluessel(passwort, kopf.salt, kopf.iterationen);
+  try {
+    return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kopf.ivWrap }, kek, kopf.wrappedDek));
+  } catch {
+    throw new Error('Entschlüsselung fehlgeschlagen — falsche Passphrase oder Container beschädigt');
+  }
+}
+
+// v2-Container mit einem FERTIGEN DEK öffnen (Fingerabdruck-Weg): keine KDF, kein Passwort.
+// Liefert dieselbe Form wie decodeContainerAuto — der Kopf bleibt der Passphrasen-Kopf, damit
+// encodeContainerV2 danach unverändert speichert.
+async function decodeContainerMitDek(bytes, dek) {
+  const kopf = leseHeader(bytes);
+  if (kopf.version !== FORMAT_V2) throw new Error('Container ist noch v1 — bitte einmal mit Passphrase öffnen');
+  let klartext;
+  try {
+    klartext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kopf.ivData }, dek, kopf.ciphertext);
+  } catch {
+    throw new Error('Daten-Entschlüsselung fehlgeschlagen — Schlüssel passt nicht zum Container');
+  }
+  return {
+    daten: JSON.parse(new TextDecoder().decode(klartext)),
+    version: 2, dek,
+    kopf: { iterationen: kopf.iterationen, salt: kopf.salt, ivWrap: kopf.ivWrap, wrappedDek: kopf.wrappedDek },
+  };
+}
+
 // Abwärtskompatibler Alias (Alt-Tests + Import-Pfad): liefert nur die Daten.
 async function decodeContainer(bytes, passwort) {
   return (await decodeContainerAuto(bytes, passwort)).daten;
@@ -215,6 +247,6 @@ async function neueV2Identitaet(passwort, iterationen = DEFAULT_ITERATIONEN) {
 
 export {
   encodeContainer, encodeContainerV2, decodeContainer, decodeContainerAuto,
-  wechslePassphrase, neueV2Identitaet, wrapDek, importDekKey, leseHeader,
+  wechslePassphrase, neueV2Identitaet, wrapDek, importDekKey, leseHeader, dekRohMitPassphrase, decodeContainerMitDek,
   DEFAULT_ITERATIONEN, FORMAT_V1, FORMAT_V2,
 };

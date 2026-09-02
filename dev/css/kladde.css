@@ -861,3 +861,16 @@
   .ut-matrix .mk .ico { margin: 2px 1px; }
 }
 @media print { .ico { stroke: #000; } }
+
+/* ── v1.9.0 · Dialog-Rahmen mit Schließen-Knopf oben rechts (Zero 2026-09-02) · Lock: Fingerabdruck-Knopf ── */
+@layer components {
+  /* Dialog = Rahmen (fixiert) + .dlg-inhalt (scrollt). Der X-Knopf liegt außerhalb des Scrollbereichs und bleibt stehen. */
+  #dlg[open] { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+  .dlg-inhalt { overflow: auto; padding: 16px; min-height: 0; }
+  .dlg-inhalt > h3:first-child, .dlg-inhalt > .sp-kopf:first-child { padding-right: 46px; }
+  .dlg-x { position: absolute; top: 8px; right: 8px; z-index: 3; width: 40px; height: 40px; border-radius: 10px;
+    border: 1px solid var(--kante); background: var(--karte2); color: var(--leise); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .dlg-x .ico { width: 18px; height: 18px; }
+  #lock-bio { min-width: 220px; }
+}
+@layer anim { @media (hover: hover) and (pointer: fine) { .dlg-x:hover { border-color: var(--band); color: var(--text); } } }
