@@ -1,22 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.8.1';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.8.1';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.8.1';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.8.1';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.8.1';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.8.1';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.8.1';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.8.1';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.8.1';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.8.1';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.8.1';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.8.1';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.8.1';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.8.1';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.8.1';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.8.1';
-const APP_VERSION = '1.8.1';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.9.1';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.9.1';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.9.1';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.9.1';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.9.1';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.9.1';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.9.1';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.9.1';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.9.1';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.9.1';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.9.1';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.9.1';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.9.1';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.9.1';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.9.1';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.9.1';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.9.1';
+const APP_VERSION = '1.9.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -41,6 +42,7 @@ function mitDb(){ return new Promise((res,rej)=>{ if(db) return res(db);
   req.onsuccess=()=>{db=req.result;res(db);}; req.onerror=()=>rej(req.error); }); }
 function idbGet(k){ return mitDb().then(d=>new Promise((res,rej)=>{ const r=d.transaction('meta').objectStore('meta').get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); })); }
 function idbPut(k,v){ return mitDb().then(d=>new Promise((res,rej)=>{ const tx=d.transaction('meta','readwrite'); tx.objectStore('meta').put(v,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); })); }
+function idbDel(k){ return mitDb().then(d=>new Promise((res,rej)=>{ const tx=d.transaction('meta','readwrite'); tx.objectStore('meta').delete(k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); })); }
 
 let speicherKette=Promise.resolve(); // Write-through seriell (keine Races)
 function speichern(){
@@ -98,6 +100,7 @@ const ICON={
   wieder:[['p','m15 14 5-5-5-5'],['p','M20 9H10a6 6 0 0 0 0 12h3']],
   mischen:[['p','M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5']],
   warnung:[['p','M12 3 2 21h20z'],['p','M12 9.5v5M12 17.5v.3']],
+  schliessen:[['p','M6 6l12 12M18 6 6 18']],
 };
 const SVG_NS='http://www.w3.org/2000/svg';
 function iconEl(key){
@@ -140,7 +143,13 @@ async function lockInit(){
   $('pin').value=''; $('pin2').value=''; $('lock-fehler').textContent='';
   $('pin-staerke').textContent='';
   $('lock').classList.remove('hidden');
-  setTimeout(()=>$('pin').focus(),50);
+  // Fingerabdruck (Zero 2026-09-02): nur wenn eine Bio-Hülle liegt UND der Browser WebAuthn kann — sonst bleibt der Knopf weg
+  const bio=neu?null:await idbGet('bio');
+  const bioBtn=$('lock-bio');
+  bioBtn.classList.toggle('hidden',!(bio&&bioVerfuegbar()));
+  bioBtn.onclick=()=>bioEntsperren(bio);
+  if(bio&&bioVerfuegbar()) $('lock-text').textContent='Fingerabdruck oder Passphrase';
+  setTimeout(()=>{ if(!(bio&&bioVerfuegbar())) $('pin').focus(); },50);   // mit Bio-Hülle keine Tastatur hochschieben
   $('pin').oninput=()=>{ // Live-Stärke nur bei Neuanlage sinnvoll
     if(!neu){ $('pin-staerke').textContent=''; return; }
     const s=passStaerke($('pin').value);
@@ -200,6 +209,86 @@ async function lockInit(){
   };
   const enter=e=>{ if(e.key==='Enter') $('lock-btn').click(); };
   $('pin').onkeydown=enter; $('pin2').onkeydown=enter;
+}
+/* ═══ FINGERABDRUCK / FACE ID · WebAuthn-Passkey mit PRF (Zero 2026-09-02) ═══
+   Kryptografie in logic/biometrie.mjs (Node-getestet). Hier nur die WebAuthn-Geste und der Vault-Weg.
+   Paket in IndexedDB 'bio': {credId, prfSalt, salt, iv, wrappedDek, angelegt}. Rückweg immer die Passphrase.
+   pinRam bleibt nach Bio-Unlock null — Import/Pull fragen die Passphrase dann einmalig ab (passphraseAbfragen). */
+const BIO_RP=()=>({name:'Kladde',id:location.hostname});
+function bioVerfuegbar(){ return !!(window.PublicKeyCredential&&navigator.credentials&&navigator.credentials.get&&window.isSecureContext); }
+// PRF-Geheimwert für eine bestehende Hülle holen (Touch/Face ID) — Nutzergeste nötig
+async function bioSecret(bio){
+  const cred=await navigator.credentials.get({publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)), rpId:BIO_RP().id, userVerification:'required', timeout:60000,
+    allowCredentials:[{type:'public-key',id:bio.credId}],
+    extensions:{prf:{eval:{first:bio.prfSalt}}}}});
+  const prf=cred.getClientExtensionResults().prf;
+  if(!prf||!prf.results||!prf.results.first) throw new Error('Dieses Gerät liefert keinen PRF-Wert — Fingerabdruck-Hülle hier nicht nutzbar');
+  return new Uint8Array(prf.results.first);
+}
+async function bioEntsperren(bio){
+  const btn=$('lock-bio'); btn.disabled=true; $('lock-fehler').textContent='';
+  const t0=performance.now();
+  try{
+    const secret=await bioSecret(bio);
+    const dekRoh=await bioUnwrap(bio,secret); secret.fill(0);
+    const key=await importDekKey(dekRoh); dekRoh.fill(0);
+    const roh=await idbGet('vault');
+    const r=await decodeContainerMitDek(roh,key);
+    dekKey=r.dek; containerKopf=r.kopf; vault=r.daten; pinRam=null;
+    const migriert=migriereStamm(vault);
+    if(bereinigeAusnahmen(vault.stamm)||migriert) speichern();
+    console.log('[kladde] Unlock (Fingerabdruck) in',Math.round(performance.now()-t0),'ms');
+    entsperrt();
+  }catch(e){
+    // AbortError/NotAllowedError = Nutzer hat abgebrochen — kein Alarm, Passphrase bleibt der Weg
+    $('lock-fehler').textContent=(e.name==='NotAllowedError'||e.name==='AbortError')?'Abgebrochen — Passphrase eingeben oder erneut versuchen.':e.message;
+  }
+  btn.disabled=false;
+}
+// Einrichtung aus Mehr → Sicherheit. Braucht die Passphrase (DEK-Rohbytes) UND eine Nutzergeste.
+async function bioEinrichten(){
+  if(!bioVerfuegbar()){ toast('Dieser Browser kann kein WebAuthn — Fingerabdruck hier nicht möglich',4500); return; }
+  const pin=pinRam||await passphraseAbfragen('Zum Einrichten einmal die Passphrase');
+  if(!pin) return;
+  try{
+    const roh=await idbGet('vault');
+    const dekRoh=await dekRohMitPassphrase(roh,pin);
+    pinRam=pin;
+    const userId=crypto.getRandomValues(new Uint8Array(16));
+    const cred=await navigator.credentials.create({publicKey:{
+      rp:BIO_RP(), user:{id:userId,name:'kladde'+(IST_DEV?'-dev':''),displayName:'Kladde'+(IST_DEV?' DEV':'')},
+      challenge:crypto.getRandomValues(new Uint8Array(32)), timeout:60000,
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'required',userVerification:'required'},
+      extensions:{prf:{}}}});
+    const ext=cred.getClientExtensionResults();
+    if(!ext.prf||!ext.prf.enabled){ dekRoh.fill(0); toast('Passkey angelegt, aber ohne PRF-Erweiterung — dieses Gerät/System kann die Hülle nicht bilden (iPadOS 18+ nötig). Nichts gespeichert.',7000); return; }
+    const prfSalt=crypto.getRandomValues(new Uint8Array(32));
+    const bioTeil={credId:new Uint8Array(cred.rawId),prfSalt};
+    const secret=await bioSecret(bioTeil);                 // zweite Geste: PRF-Wert dieses Passkeys
+    const paket=await bioWrap(dekRoh,secret); dekRoh.fill(0); secret.fill(0);
+    await idbPut('bio',{...bioTeil,...paket,angelegt:new Date().toISOString()});
+    toast('Fingerabdruck eingerichtet — beim nächsten Öffnen erscheint der Knopf',4500);
+    renderMehr();
+  }catch(e){
+    toast((e.name==='NotAllowedError'||e.name==='AbortError')?'Abgebrochen — nichts gespeichert':'⚠ Einrichtung: '+e.message,5000);
+  }
+}
+async function bioEntfernen(){ await idbDel('bio'); toast('Fingerabdruck entfernt — es gilt wieder nur die Passphrase'); renderMehr(); }
+// Passphrase nachfragen (nach Fingerabdruck-Unlock für Import/Pull/Einrichtung) → Promise<string|null>
+function passphraseAbfragen(titel){
+  return new Promise(res=>{
+    const inp=el('input',{type:'password',autocomplete:'off',class:'u-w170'});
+    dlgZeigenEl(el('h3',{},titel||'Passphrase'),
+      el('p',{class:'u-hinweis'},'Nach dem Öffnen per Fingerabdruck kennt die Kladde deine Passphrase nicht — für diesen Schritt wird sie einmal gebraucht.'),
+      el('div',{class:'zeile'},el('span',{},'Passphrase'),el('span',{},inp)),
+      el('div',{class:'btn-reihe'},
+        el('button',{class:'btn',onclick:()=>{ const v=inp.value; dlgZu(); res(v||null); }},'Weiter'),
+        el('button',{class:'btn still',onclick:()=>{ dlgZu(); res(null); }},'Abbrechen')));
+    inp.onkeydown=e=>{ if(e.key==='Enter'){ const v=inp.value; dlgZu(); res(v||null); } };
+    setTimeout(()=>inp.focus(),60);
+  });
 }
 function sperren(){
   // Hard-Lock: RAM-Wipe + UI-Hygiene (§5) — nach dem Sperren darf kein Name mehr im DOM stehen
@@ -537,8 +626,17 @@ function el(tag, props, ...kinder){
 
 /* ═══ DIALOG-HELFER ═══ */
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// Dialog-Rahmen (Zero 2026-09-02): ein Schließen-Knopf oben rechts, der beim Scrollen stehen bleibt.
+// Der Dialog trägt zwei Kinder: .dlg-x (absolut, außerhalb des Scrollbereichs) + .dlg-inhalt (scrollt).
+// Aller Bestand schreibt weiter „in den Dialog" — nur eben in .dlg-inhalt; querySelector-Zugriffe bleiben gültig.
+function dlgInhalt(){
+  const d=$('dlg');
+  let i=d.querySelector(':scope>.dlg-inhalt');
+  if(!i){ i=el('div',{class:'dlg-inhalt'}); d.replaceChildren(el('button',{class:'dlg-x',type:'button','aria-label':'Schließen',title:'Schließen',onclick:()=>d.close()},iconEl('schliessen')),i); }
+  return i;
+}
 function dlgZeigen(html,setup){
-  const d=$('dlg'); d.classList.remove('breit'); d.innerHTML=html;
+  const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().innerHTML=html;
   d.querySelectorAll('[data-schliessen]').forEach(b=>b.onclick=()=>d.close());
   if(setup) setup(d);
   d.showModal();
@@ -546,7 +644,7 @@ function dlgZeigen(html,setup){
 function dlgZu(){ $('dlg').close(); }
 // el()-Variante: Dialog aus DOM-Knoten (CSP-sicher, kein innerHTML) — für neue Views (P2.4+)
 function dlgZeigenEl(...knoten){
-  const d=$('dlg'); d.classList.remove('breit'); d.replaceChildren(...knoten);
+  const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().replaceChildren(...knoten);
   if(!d.open) d.showModal();
 }
 // Breiter Dialog (Stundenplan): das Wochen-Grid nutzt die Breite, nicht nur die Höhe (Zero 2026-09-02).
@@ -3015,6 +3113,7 @@ function renderMehr(){
     '<div class="zeile"><span>Automatisch sperren nach</span><span><select id="sec-lockmin">'+[5,10,15,30].map(m=>'<option value="'+m+'"'+(lockMinuten()===m?' selected':'')+'>'+m+' min</option>').join('')+'</select></span></div>'+
     '<div class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' class="u-check"></span></div>'+
     '<div class="zeile"><span>Während des Unterrichts nicht sperren</span><span><input type="checkbox" id="sec-unterricht"'+(localStorage.getItem('kladde_lock_unterricht')!=='0'?' checked':'')+' class="u-check"></span></div>'+
+    '<div class="zeile"><span>Fingerabdruck / Face ID</span><span id="sec-bio">…</span></div>'+
     '<div class="btn-reihe"><button class="btn still" id="sec-pass">Passphrase ändern…</button></div></div>'+
     '<div class="panel"><h2>Sichern & Übertragen</h2>'+
     '<p class="u-hinweis">Container ist AES-GCM-verschlüsselt (Passphrase nötig zum Öffnen). iPad: „In Dateien sichern" → SMB-Ordner des PCs.</p>'+
@@ -3046,6 +3145,14 @@ function renderMehr(){
   $('sec-sofort').onchange=e=>localStorage.setItem('kladde_lock_sofort',e.target.checked?'1':'0');
   $('sec-unterricht').onchange=e=>localStorage.setItem('kladde_lock_unterricht',e.target.checked?'1':'0');
   $('sec-pass').onclick=passphraseWechselDialog;
+  // Fingerabdruck-Zeile: Zustand aus IndexedDB, Knopf je nach Lage (einrichten/entfernen/nicht möglich)
+  idbGet('bio').then(bio=>{
+    const z=$('sec-bio'); if(!z) return;
+    if(!bioVerfuegbar()){ z.replaceChildren(el('span',{class:'u-hinweis'},'hier nicht verfügbar')); return; }
+    z.replaceChildren(bio
+      ?el('button',{class:'btn still u-btn-klein',onclick:bioEntfernen},'eingerichtet · entfernen')
+      :el('button',{class:'btn u-btn-klein',onclick:bioEinrichten},'einrichten…'));
+  });
   if(!PAGES_KONTEXT){
     $('btn-push').onclick=syncPush;
     $('btn-pull').onclick=syncPull;
@@ -3101,9 +3208,10 @@ async function exportiereContainerJetzt(){
 }
 async function importiereContainer(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  const pin=pinRam||await passphraseAbfragen('Passphrase für den Import'); if(!pin) return;
   let fremd;
   try {
-    fremd=(await decodeContainerAuto(new Uint8Array(await f.arrayBuffer()),pinRam)).daten;
+    fremd=(await decodeContainerAuto(new Uint8Array(await f.arrayBuffer()),pin)).daten; pinRam=pin;
   } catch(err){ toast('⚠ Import: '+err.message+' (gleiche Passphrase auf beiden Geräten?)',5000); return; }
   if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren (neu laden).',6000); return; }
   // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
@@ -3171,7 +3279,8 @@ async function syncPull(){
     const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store'});
     if(r.status===404){ toast('Noch kein Container von „'+von+'" auf dem Server'); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pinRam)).daten;
+    const pin=pinRam||await passphraseAbfragen('Passphrase für den Pull'); if(!pin) return;
+    const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pin)).daten; pinRam=pin;
     if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren.',6000); return; }
     const dry=mergeContainerDaten(vault,fremd);
     const anwenden=async()=>{
@@ -3208,6 +3317,15 @@ async function zeigeStartHinweise(){
   if(pinRam&&passStaerke(pinRam)==='schwach'&&!localStorage.getItem('kladde_pass_hinweis')){
     localStorage.setItem('kladde_pass_hinweis','1');
     zeigeBanner('<span>Deine PIN ist kurz — für echte Schülerdaten ist eine Passphrase (12+ Zeichen) empfohlen: Mehr → Sicherheit → Passphrase ändern.</span>');
+    return;
+  }
+  // Fingerabdruck-Einstieg (Zero 2026-09-02): ein Knopf, der erst nach einer Einrichtung erscheint, braucht einen
+  // sichtbaren Weg dorthin. Einmalig nach einem Passphrase-Login, wenn das Gerät WebAuthn kann und noch keine Hülle liegt;
+  // × merkt sich die Ablehnung dauerhaft (localStorage), „Einrichten" führt direkt in bioEinrichten.
+  if(pinRam&&bioVerfuegbar()&&!localStorage.getItem('kladde_bio_hinweis')&&!(await idbGet('bio'))){
+    zeigeBanner('<span>Schneller öffnen: Fingerabdruck / Face ID einrichten — die Passphrase bleibt als Rückweg.</span><button class="btn" data-bio>Einrichten</button>',
+      b=>{ b.querySelector('[data-bio]').onclick=()=>{ b.classList.add('hidden'); bioEinrichten(); };
+           b.querySelector('[data-zu]').addEventListener('click',()=>localStorage.setItem('kladde_bio_hinweis','1')); });
     return;
   }
   // Backup-Erinnerung (P1.5): das realste Verlustszenario ist Gerätedefekt/Speicherbereinigung, nicht der Angreifer

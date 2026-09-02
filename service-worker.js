@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-v1.8.1';
+const CACHE_NAME = 'kladde-v1.9.1';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -18,25 +18,26 @@ const ASSETS = [
   './icon-512.png',
   './fonts/HankenGrotesk-subset.woff2',
   './fonts/Newsreader-subset.woff2',
-  './css/kladde.css?v=1.8.1',
-  './js/app.mjs?v=1.8.1',
-  './logic/skalen.mjs?v=1.8.1',
-  './logic/verdichtung.mjs?v=1.8.1',
-  './logic/merge.mjs?v=1.8.1',
-  './logic/container.mjs?v=1.8.1',
-  './logic/parser.mjs?v=1.8.1',
-  './logic/zeitmodell.mjs?v=1.8.1',
-  './logic/rasterVorlagen.mjs?v=1.8.1',
-  './logic/autowahl.mjs?v=1.8.1',
-  './logic/migration.mjs?v=1.8.1',
-  './logic/kursStatus.mjs?v=1.8.1',
-  './logic/kursSort.mjs?v=1.8.1',
-  './logic/teilnehmer.mjs?v=1.8.1',
-  './logic/bericht.mjs?v=1.8.1',
-  './logic/auswahl.mjs?v=1.8.1',
-  './logic/fachfarben.mjs?v=1.8.1',
-  './logic/mappe.mjs?v=1.8.1',
-  './logic/xlsx.mjs?v=1.8.1'
+  './css/kladde.css?v=1.9.1',
+  './js/app.mjs?v=1.9.1',
+  './logic/skalen.mjs?v=1.9.1',
+  './logic/verdichtung.mjs?v=1.9.1',
+  './logic/merge.mjs?v=1.9.1',
+  './logic/container.mjs?v=1.9.1',
+  './logic/parser.mjs?v=1.9.1',
+  './logic/zeitmodell.mjs?v=1.9.1',
+  './logic/rasterVorlagen.mjs?v=1.9.1',
+  './logic/autowahl.mjs?v=1.9.1',
+  './logic/migration.mjs?v=1.9.1',
+  './logic/kursStatus.mjs?v=1.9.1',
+  './logic/kursSort.mjs?v=1.9.1',
+  './logic/teilnehmer.mjs?v=1.9.1',
+  './logic/bericht.mjs?v=1.9.1',
+  './logic/biometrie.mjs?v=1.9.1',
+  './logic/auswahl.mjs?v=1.9.1',
+  './logic/fachfarben.mjs?v=1.9.1',
+  './logic/mappe.mjs?v=1.9.1',
+  './logic/xlsx.mjs?v=1.9.1'
 ];
 
 self.addEventListener('install', (event) => {
