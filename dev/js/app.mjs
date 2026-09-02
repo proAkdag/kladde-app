@@ -1,19 +1,21 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.5.7.1788107676';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.5.7.1788107676';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.5.7.1788107676';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.5.7.1788107676';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.5.7.1788107676';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.5.7.1788107676';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.5.7.1788107676';
-import { kursZurZeit, slotFuerBlock } from '../logic/autowahl.mjs?v=1.5.7.1788107676';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.5.7.1788107676';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.5.7.1788107676';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.5.7.1788107676';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.5.7.1788107676';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.5.7.1788107676';
-const APP_VERSION = '1.5.7';
+import { DRITTELNOTEN, wertZuLabel } from '../logic/skalen.mjs?v=1.6.0.1788369347';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen } from '../logic/verdichtung.mjs?v=1.6.0.1788369347';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.6.0.1788369347';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.6.0.1788369347';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.6.0.1788369347';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.6.0.1788369347';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche } from '../logic/zeitmodell.mjs?v=1.6.0.1788369347';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.6.0.1788369347';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.6.0.1788369347';
+import { entferneNachrueckend } from '../logic/teilnehmer.mjs?v=1.6.0.1788369347';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.6.0.1788369347';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.6.0.1788369347';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.6.0.1788369347';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.6.0.1788369347';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.6.0.1788369347';
+const APP_VERSION = '1.6.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -120,13 +122,15 @@ async function lockInit(){
           dekKey=id.dek; containerKopf=id.kopf;
           vault=r.daten; pinRam=pin;
           migriereStamm(vault); // Schema kladde/v2 (P2.1) — idempotent
+          bereinigeAusnahmen(vault.stamm); // folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
           await speichern(); // erste v2-Schreibung — erst NACH verifiziertem Backup
           migrationsHinweis=true;
           console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
         } else {
           dekKey=r.dek; containerKopf=r.kopf;
           vault=r.daten; pinRam=pin;
-          if(migriereStamm(vault)) speichern(); // Schema-Nachzug (v0.8-Bestand → kladde/v2)
+          const migriert=migriereStamm(vault); // Schema-Nachzug (v0.8-Bestand → kladde/v2)
+          if(bereinigeAusnahmen(vault.stamm)||migriert) speichern(); // + folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
           console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
         }
         entsperrt();
@@ -335,8 +339,10 @@ function kursAutowahl(sanft=false){
       autowahlInfo={...t,startSek:block.startSek,endeSek:block.endeSek};
       if(t.quelle!=='kommend'&&t.blockNr!==vorherBlock) manuelleWahl=false; // Blockwechsel hebt manuelle Wahl auf
       if(!sanft||!manuelleWahl){
-        aktiverKursId=t.kursId; aktiveTeilgruppe=t.teilgruppe||null;
-        $('kurs-slot').textContent=' · Std. '+blockLabel(zm,t.blockNr,heuteIsoStr)+' · '+formatZeit(block.startSek)+'–'+formatZeit(block.endeSek)+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'');
+        // Klassen-/Reservestunde (art, kein Kurs): der zuletzt aktive Kurs bleibt stehen, der Slot-Text sagt, was laut Plan läuft
+        if(t.kursId){ aktiverKursId=t.kursId; aktiveTeilgruppe=t.teilgruppe||null; }
+        else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)) aktiverKursId=ersterKursId();
+        $('kurs-slot').textContent=' · Std. '+blockLabel(zm,t.blockNr,heuteIsoStr)+' · '+formatZeit(block.startSek)+'–'+formatZeit(block.endeSek)+(t.art?' · '+SLOT_ARTEN[t.art].label:'')+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'');
       }
       aktualisiereKursChip(); return;
     }
@@ -346,13 +352,15 @@ function kursAutowahl(sanft=false){
   const hhmm=String(jetzt.getHours()).padStart(2,'0')+':'+String(jetzt.getMinutes()).padStart(2,'0');
   const slot=vault.stamm.stundenplanSlots.find(s=>s.wochentag===wtag&&s.von<=hhmm&&hhmm<=s.bis);
   if(slot&&(!sanft||!manuelleWahl)){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
-  else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)){
-    // Fallback: erster NICHT-archivierter Kurs des aktiven Schuljahres (nie ein Archiv-Kurs)
-    const aid=vault.stamm.aktivesSchuljahrId;
-    const w=vault.stamm.kurse.find(x=>(x.schuljahrId||aid)===aid&&x.status!=='archiviert')||vault.stamm.kurse.find(x=>x.status!=='archiviert');
-    aktiverKursId=w?w.id:null;
-  }
+  else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)) aktiverKursId=ersterKursId();
   aktualisiereKursChip();
+}
+// Fallback: erster NICHT-archivierter Kurs des aktiven Schuljahres (nie ein Archiv-Kurs) — in Schul-Reihenfolge (5a zuerst)
+function ersterKursId(){
+  const aid=vault.stamm.aktivesSchuljahrId;
+  const aktive=sortiereKurse(vault.stamm.kurse.filter(x=>x.status!=='archiviert'));
+  const w=aktive.find(x=>(x.schuljahrId||aid)===aid)||aktive[0];
+  return w?w.id:null;
 }
 function kursIstArchiviert(id){ const k=vault.stamm.kurse.find(x=>x.id===id); return k&&k.status==='archiviert'; }
 // 60-s-Tick (P2.5): nur bei sichtbarer Heute-Ansicht, nie über offene Dialoge hinweg
@@ -376,7 +384,7 @@ $('kurs-chip').addEventListener('click',()=>{
   if(!vault) return;
   const k=kurs();
   dlgZeigen('<h3>Kurs wählen</h3>'+
-    vault.stamm.kurse.map(x=>'<button class="btn'+(k&&x.id===k.id?'':' still')+' u-btn-block" data-kurs="'+x.id+'">'+esc(x.name)+' · '+esc(x.fach)+'</button>').join('')+
+    sortiereKurse(vault.stamm.kurse).map(x=>'<button class="btn'+(k&&x.id===k.id?'':' still')+' u-btn-block" data-kurs="'+x.id+'">'+esc(x.name)+' · '+esc(x.fach)+'</button>').join('')+
     '<div class="zeile"><span>Teilgruppe</span><span><select id="tg-sel"><option value="">alle</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></span></div>'+
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
@@ -395,7 +403,7 @@ $('kurs-chip').addEventListener('click',()=>{
           const lbl=blockLabel(zmA,planJetzt.blockNr,heuteD);
           const btn=document.createElement('button');
           btn.className='btn '+(entfallen?'still':'gefahr');
-          btn.textContent=entfallen?('Entfall zurücknehmen (Std. '+lbl+')'):('Std. '+lbl+' fällt aus'+(kPlan?' ('+kPlan.name+')':''));
+          btn.textContent=entfallen?('Entfall zurücknehmen (Std. '+lbl+')'):('Std. '+lbl+' fällt aus'+(kPlan?' ('+kPlan.name+')':planJetzt.art?' ('+SLOT_ARTEN[planJetzt.art].label+')':''));
           btn.onclick=()=>{
             if(entfallen){ entferneAusnahme(heuteD,planJetzt.blockNr); toast('Entfall zurückgenommen — es gilt der Plan'); }
             else { setzeAusnahme(heuteD,planJetzt.blockNr,null,'entfall'); toast('Std. '+lbl+' heute: Entfall vermerkt'); }
@@ -459,7 +467,7 @@ function el(tag, props, ...kinder){
 /* ═══ DIALOG-HELFER ═══ */
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function dlgZeigen(html,setup){
-  const d=$('dlg'); d.innerHTML=html;
+  const d=$('dlg'); d.classList.remove('breit'); d.innerHTML=html;
   d.querySelectorAll('[data-schliessen]').forEach(b=>b.onclick=()=>d.close());
   if(setup) setup(d);
   d.showModal();
@@ -467,9 +475,12 @@ function dlgZeigen(html,setup){
 function dlgZu(){ $('dlg').close(); }
 // el()-Variante: Dialog aus DOM-Knoten (CSP-sicher, kein innerHTML) — für neue Views (P2.4+)
 function dlgZeigenEl(...knoten){
-  const d=$('dlg'); d.replaceChildren(...knoten);
+  const d=$('dlg'); d.classList.remove('breit'); d.replaceChildren(...knoten);
   if(!d.open) d.showModal();
 }
+// Breiter Dialog (Stundenplan): das Wochen-Grid nutzt die Breite, nicht nur die Höhe (Zero 2026-09-02).
+// Nach dlgZeigen/dlgZeigenEl aufrufen — jeder neue Dialog startet wieder schmal.
+function dlgBreit(){ $('dlg').classList.add('breit'); }
 
 /* ═══ VIEWS / TABS (replaceState-only — Edge-Swipe-Doktrin) ═══ */
 let aktView='heute';
@@ -617,24 +628,28 @@ function renderHeute(){
   const idx=tagesStandIndex(terminDatum);
   const sichtSchueler=sichtbareSchueler(k);
   datumStreifen(); renderRail();
-  const grid=(vault.stamm.sitzplaene[k.id]||{}).grid||{};
+  const spDaten=vault.stamm.sitzplaene[k.id]||{};
+  const grid=spDaten.grid||{};
+  const luecken=new Set(spDaten.luecken||[]);   // bewusst leere Reihen (Gang) — überleben das Kompaktieren (Zero 2026-09-02)
   plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv);
   const sichtbar=new Set(sichtSchueler.map(s=>s.nr));
   const SPALTEN=12;
   const belegteReihen=[...new Set(Object.keys(grid).map(key=>Number(key.split(',')[0])))].sort((a,b)=>a-b);
   // Editor: alle Reihen bis zur letzten belegten + 1 leere „Ghost"-Reihe am Ende (wächst beim Befüllen).
-  // Unterricht: nur die belegten Reihen (kompakt — kein leerer Raum, TAFEL direkt unter der letzten).
+  // Unterricht: belegte Reihen + markierte Lücken (kompakt — kein unbeabsichtigter Leerraum, TAFEL direkt unter der letzten).
   let reihen;
   if(editorAktiv){
     const maxR=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
     reihen=[]; for(let r=0;r<=maxR+1;r++) reihen.push(r);
-  } else reihen=belegteReihen;
+  } else reihen=[...new Set([...belegteReihen,...luecken])].sort((a,b)=>a-b);
   let html='';
   const maxBelegt=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
   for(const r of reihen){
     // Ghost-„＋": leere Reihe hier einfügen — vor belegten Reihen (oben + zwischen); „unten" deckt die wachsende Ghost-Reihe ab
     if(editorAktiv && r<=maxBelegt) html+='<button class="reihe-plus" data-vor="'+r+'" title="Leere Reihe hier einfügen">＋</button>';
-    html+='<div class="plan-reihe" data-r="'+r+'">';
+    html+='<div class="plan-reihe'+(luecken.has(r)?' luecke':'')+'" data-r="'+r+'">';
+    // Leere Reihe zwischen belegten (nicht die wachsende Ghost-Reihe): „Lücke lassen" macht sie zum festen Gang
+    if(editorAktiv && r<=maxBelegt && !belegteReihen.includes(r)) html+='<button class="luecke-btn" data-luecke="'+r+'" title="'+(luecken.has(r)?'Antippen hebt die Lücke auf':'Reihe bleibt als Gang leer')+'">'+(luecken.has(r)?'✓ Lücke bleibt':'Lücke lassen')+'</button>';
     for(let c=0;c<SPALTEN;c++){
       const nr=grid[r+','+c];
       const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
@@ -1497,7 +1512,7 @@ function renderKurse(){
     '<div class="btn-reihe"><button class="btn'+(spEingerichtet?' still':'')+' u-btn-klein" id="btn-stundenplan">'+(spEingerichtet?'Stundenplan':'Stundenplan einrichten')+'</button></div></div>';
   // Kurse des AKTIVEN Schuljahres, nicht archiviert → Karten-Grid (Tap = benutzen · ⋯ = verwalten)
   const aktiveId=vault.stamm.aktivesSchuljahrId;
-  const sichtbar=vault.stamm.kurse.filter(k=>(k.schuljahrId||aktiveId)===aktiveId&&k.status!=='archiviert');
+  const sichtbar=sortiereKurse(vault.stamm.kurse.filter(k=>(k.schuljahrId||aktiveId)===aktiveId&&k.status!=='archiviert'));   // Schul-Reihenfolge 5a … Q2 (Zero 2026-09-02)
   const archiviert=vault.stamm.kurse.filter(k=>k.status==='archiviert');
   html+='<div class="kurs-grid">';
   for(const k of sichtbar){
@@ -1521,7 +1536,7 @@ function renderKurse(){
     html+='<details class="panel"><summary><b>Archiv ('+archiviert.length+')</b></summary>'+
       [...jahre.entries()].sort((a,b)=>b[0].localeCompare(a[0],'de')).map(([label,ks])=>
         '<div class="archiv-jahr"><div class="archiv-jahr-kopf">'+esc(label)+' · '+ks.length+'</div>'+
-        ks.map(k=>'<div class="zeile"><span>'+esc(k.name)+' · '+esc(k.fach)+'</span>'+
+        sortiereKurse(ks).map(k=>'<div class="zeile"><span>'+esc(k.name)+' · '+esc(k.fach)+'</span>'+
           '<span class="u-akt"><button class="btn still u-btn-klein" data-reaktivieren="'+k.id+'" title="Wieder aktiv setzen">↻ aktivieren</button><button class="btn still u-btn-klein" data-oeffnen="'+k.id+'">öffnen</button><button class="btn gefahr u-btn-klein" data-loeschen="'+k.id+'">löschen</button></span></div>').join('')+'</div>').join('')+'</details>';
   }
   // Jahresabschluss: selten + folgenreich → eigener Verwaltungsbereich unten statt Kopfzeile (C4)
@@ -1659,16 +1674,33 @@ function schuelerPflegeDialog(kursId){
   const deaktiviere=(s)=>{
     const hatEv=vault.events.some(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.typ!=='storno');
     if(!hatEv){
-      // Ohne Einträge ist echtes Entfernen gefahrlos (kein Erbe möglich) — der Tippfehler-Weg
+      // Ohne Einträge ist echtes Entfernen gefahrlos (kein Erbe möglich) — der Tippfehler-Weg.
+      // Hat der ganze KURS noch keine Einträge, dürfen die Folgenden nachrücken (Zero 2026-09-02):
+      // in Excel war die Zeile gelöscht und die Mappe zählte neu — Nr n = Zeile n+5 muss stimmen
+      // (MAPPING.md §1). Sobald irgendein Eintrag existiert, binden Events an Nrn → nur noch Lücke lassen.
+      const kursHatEv=vault.events.some(e=>e.kursId===k.id&&e.typ!=='storno');
+      const dahinter=alle().filter(x=>x.nr>s.nr).length;
+      const nachrueckbar=!kursHatEv&&dahinter>0;
+      const nurEntfernen=()=>{
+        vault.stamm.schueler[k.id]=alle().filter(x=>x.nr!==s.nr);
+        raeumeSitzplatz(s.nr);
+        stammMutiert(); speichern(); toast('Entfernt: '+(s.vorname||s.name)); zeige();
+      };
+      const nachruecken=()=>{
+        const r=entferneNachrueckend(alle(),(vault.stamm.sitzplaene[k.id]||{}).grid||{},s.nr);
+        vault.stamm.schueler[k.id]=r.schueler;
+        if(vault.stamm.sitzplaene[k.id]) vault.stamm.sitzplaene[k.id].grid=r.grid;
+        stammMutiert(); speichern(); toast('Entfernt: '+(s.vorname||s.name)+' · '+dahinter+' nachgerückt'); zeige();
+      };
       dlgZeigenEl(
         el('h3',{},'Entfernen?'),
-        el('p',{class:'u-hinweis'},s.vorname+' '+s.name+' hat noch keine Einträge und wird vollständig entfernt — Nr '+s.nr+' wird wieder frei.'),
+        el('p',{class:'u-hinweis'},s.vorname+' '+s.name+' hat noch keine Einträge und wird vollständig entfernt.'),
+        el('p',{class:'u-hinweis'},nachrueckbar
+          ?'Der Kurs hat noch keine Einträge: die '+dahinter+' Schüler nach Nr '+s.nr+' können nachrücken — wie die Excel-Liste nach dem Löschen der Zeile.'
+          :(kursHatEv?'Nr '+s.nr+' wird wieder frei — die anderen Nummern bleiben, weil der Kurs schon Einträge hat.':'Nr '+s.nr+' wird wieder frei.')),
         el('div',{class:'btn-reihe'},
-          el('button',{class:'btn gefahr',onclick:()=>{
-            vault.stamm.schueler[k.id]=alle().filter(x=>x.nr!==s.nr);
-            raeumeSitzplatz(s.nr);
-            stammMutiert(); speichern(); toast('Entfernt: '+(s.vorname||s.name)); zeige();
-          }},'Entfernen'),
+          ...(nachrueckbar?[el('button',{class:'btn gefahr',onclick:nachruecken},'Entfernen, Rest rückt nach')]:[]),
+          el('button',{class:'btn '+(nachrueckbar?'still':'gefahr'),onclick:nurEntfernen},nachrueckbar?'Nur entfernen (Nr '+s.nr+' bleibt frei)':'Entfernen'),
           el('button',{class:'btn still',onclick:zeige},'Abbrechen')));
       return;
     }
@@ -1759,7 +1791,7 @@ function naechstesSchuljahr(label){ const j=parseInt(label,10); return isNaN(j)?
 function schuljahrAssistent(){
   const alt=aktivesSchuljahr(); if(!alt){ toast('Kein aktives Schuljahr'); return; }
   const neuLabel=naechstesSchuljahr(alt.label);
-  const aktiveKurse=vault.stamm.kurse.filter(k=>(k.schuljahrId||vault.stamm.aktivesSchuljahrId)===alt.id&&k.status!=='archiviert');
+  const aktiveKurse=sortiereKurse(vault.stamm.kurse.filter(k=>(k.schuljahrId||vault.stamm.aktivesSchuljahrId)===alt.id&&k.status!=='archiviert'));
   const wahl=new Map(aktiveKurse.map(k=>[k.id,{nehmen:true,name:naechsterName(k.name),liste:true,plan:true}]));
   let schritt=1;
   const kopf=t=>el('div',{class:'sp-kopf'},el('h3',{},t),el('div',{class:'sp-steps'},...[1,2,3,4].map(n=>el('span',{class:'sp-step'+(n===schritt?' an':'')},String(n)))));
@@ -1881,6 +1913,9 @@ function wochenplanZellKurs(plan,wt,nr){
   const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr);
   return s?(vault.stamm.kurse.find(x=>x.id===s.kursId)||null):null;
 }
+// Slot-Art eines Blocks (klasse/reserve) oder null — für die gestrichelte Zell-Optik
+function wochenplanZellArt(plan,wt,nr){ const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr&&p.art); return s?s.art:null; }
+const slotArtLabel=s=>(s&&s.art&&SLOT_ARTEN[s.art])?SLOT_ARTEN[s.art].label:'';
 // Endgültiges Löschen — NUR im Archiv, doppelt bestätigt (Kursname abtippen), Zwangs-Export vorher
 function loescheKursEndgueltig(id){
   const k=vault.stamm.kurse.find(x=>x.id===id); if(!k) return;
@@ -1996,7 +2031,8 @@ function sitzplanEditor(kursId){
     e.stopPropagation(); picker(key);
   };
   const onCancel=()=>{ if(drag&&drag.ghost) drag.ghost.remove(); drag=null; document.body.classList.remove('sp-dragging'); zielReset(); };
-  const plusClick=e=>{ const p=e.target.closest('.reihe-plus'); if(p){ e.stopPropagation(); reiheEinfuegen(Number(p.dataset.vor)); } };
+  const plusClick=e=>{ const p=e.target.closest('.reihe-plus'); if(p){ e.stopPropagation(); reiheEinfuegen(Number(p.dataset.vor)); return; }
+    const l=e.target.closest('.luecke-btn'); if(l){ e.stopPropagation(); toggleLuecke(Number(l.dataset.luecke)); } };
   rail.addEventListener('pointerdown',railDown);
   plan.addEventListener('click',plusClick);
   plan.addEventListener('pointerdown',planDown);
@@ -2024,14 +2060,23 @@ function sitzplanEditor(kursId){
     const g=sp().grid, neu={};
     for(const key in g){ const [r,c]=key.split(',').map(Number); neu[(r>=vorR?r+1:r)+','+c]=g[key]; }
     if(dropNr!=null) neu[vorR+','+dropC]=dropNr;
+    sp().luecken=(sp().luecken||[]).map(r=>r>=vorR?r+1:r);   // markierte Lücken rücken mit
     vault.stamm.sitzplaene[k.id].grid=neu; stammMutiert(); speichern(); renderHeute();
   }
-  function kompaktiere(){  // leere Reihen raus, r-Werte neu durchnummerieren (0,1,2…) — Nr bleibt der Anker, nur die Position ändert sich
-    const g=sp().grid;
+  function kompaktiere(){  // leere Reihen raus — außer markierte Lücken (Gang); r-Werte neu durchnummerieren (0,1,2…) — Nr bleibt der Anker, nur die Position ändert sich
+    const o=sp(), g=o.grid;
     const belegte=[...new Set(Object.keys(g).map(key=>Number(key.split(',')[0])))].sort((a,b)=>a-b);
-    const neu={};
-    belegte.forEach((altR,neuR)=>{ for(let c=0;c<12;c++){ const nr=g[altR+','+c]; if(nr!=null) neu[neuR+','+c]=nr; } });
-    vault.stamm.sitzplaene[k.id].grid=neu; stammMutiert(); speichern();
+    const maxB=belegte.length?belegte[belegte.length-1]:-1;
+    const luecken=new Set((o.luecken||[]).filter(r=>!belegte.includes(r)&&r<maxB));   // Lücke nur ZWISCHEN belegten Reihen; eine besetzte Reihe ist keine Lücke mehr
+    const alle=[...new Set([...belegte,...luecken])].sort((a,b)=>a-b);
+    const neu={}, neuL=[];
+    alle.forEach((altR,neuR)=>{ if(luecken.has(altR)){ neuL.push(neuR); return; } for(let c=0;c<12;c++){ const nr=g[altR+','+c]; if(nr!=null) neu[neuR+','+c]=nr; } });
+    o.grid=neu; o.luecken=neuL; stammMutiert(); speichern();
+  }
+  function toggleLuecke(r){  // „Lücke lassen" ↔ aufheben (Zero 2026-09-02: leere Reihe zwischen Tischen bewusst stehen lassen)
+    const o=sp(), l=new Set(o.luecken||[]);
+    if(l.has(r)) l.delete(r); else l.add(r);
+    o.luecken=[...l].sort((a,b)=>a-b); stammMutiert(); speichern(); renderHeute();
   }
   function beenden(){
     kompaktiere();
@@ -2077,7 +2122,8 @@ function wochenplanZellText(plan,wt,nr){
   if(!slots.length) return '—';
   // Klasse UND Fach-Kuerzel (Zero 2026-08-30): dieselbe Klasse in zwei Faechern war sonst
   // nicht auseinanderzuhalten — man riet.
-  return slots.map(s=>{ const k=vault.stamm.kurse.find(x=>x.id===s.kursId);
+  return slots.map(s=>{ if(s.art) return (SLOT_ARTEN[s.art]||{}).kurz||s.art;   // Klassen-/Reservestunde: kein Kurs
+    const k=vault.stamm.kurse.find(x=>x.id===s.kursId);
     const kz=k?fachKuerzel(k.fach):'';
     return (k?k.name+(kz?' '+kz:''):'?')+(s.teilgruppe?'·'+s.teilgruppe:'')+(s.rhythmus&&s.rhythmus!=='jede'?' ('+s.rhythmus+')':''); }).join(' · ');
 }
@@ -2116,20 +2162,24 @@ function ausnahmeBlatt(wt,blockNr,datumVorbelegt){
   const datumIn=el('input',{type:'date',value:datumVorbelegt||naechstesDatumFuerWt(wt)});
   const status=el('div',{class:'sp-ergebnis'});
   const aktionen=el('div',{});
-  const kursSel=el('select',{},...vault.stamm.kurse.filter(k=>k.status!=='archiviert').map(k=>el('option',{value:k.id},k.name+' · '+k.fach)));
+  const kursSel=el('select',{},...sortiereKurse(vault.stamm.kurse.filter(k=>k.status!=='archiviert')).map(k=>el('option',{value:k.id},k.name+' · '+k.fach)));
   const zeige=()=>{
     const d=datumIn.value; if(!d){ status.replaceChildren(); return; }
     const wtVonDatum=((new Date(d+'T12:00:00').getDay()+6)%7)+1;
     const falschTag=wtVonDatum!==wt;
     const a=ausnahmeFuer(d,blockNr);
-    const bloecke=resolveBloecke(zm,wt,d);
-    const alleEntfall=bloecke.length>0&&bloecke.every(b=>{ const x=ausnahmeFuer(d,b.blockNr); return x&&x.kursId===null; });
+    // Nur BELEGTE Stunden können ausfallen (Zero 2026-09-02: der Tages-Entfall trug auch freie Stunden als „entfällt" ein)
+    const geplant=geplanteBlockNrn(d,wt,resolveBloecke(zm,wt,d),{wochenplan:vault.stamm.wochenplan||[],ausnahmen:[],zeitmodell:zm});
+    const dieserGeplant=geplant.includes(blockNr);
+    const alleEntfall=geplant.length>0&&geplant.every(nr=>{ const x=ausnahmeFuer(d,nr); return x&&x.kursId===null; });
     status.replaceChildren(el('b',{class:a?(a.kursId?'u-gut':'u-fehl'):'u-leise'},
       falschTag?'⚠ Datum ist kein '+WT_KURZ[wt]+' — bitte prüfen'
       :(a?(a.kursId?('Vertretung: '+((vault.stamm.kurse.find(k=>k.id===a.kursId)||{}).name||a.kursId)):'Fällt aus'):'Keine Ausnahme — es gilt der Plan')));
     aktionen.replaceChildren(
       el('div',{class:'btn-reihe'},
-        el('button',{class:'btn gefahr',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,null,'entfall'); toast('Std. '+blockLabel(zm,blockNr,datumIn.value)+' am '+datumLabel(datumIn.value)+' fällt aus'); kursAutowahl(); zeige(); }},'Fällt aus'),
+        ...(dieserGeplant
+          ?[el('button',{class:'btn gefahr',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,null,'entfall'); toast('Std. '+blockLabel(zm,blockNr,datumIn.value)+' am '+datumLabel(datumIn.value)+' fällt aus'); kursAutowahl(); zeige(); }},'Fällt aus')]
+          :[el('span',{class:'u-hinweis u-selfcenter'},'Laut Plan frei — nichts, was ausfallen könnte.')]),
         ...(a?[el('button',{class:'btn still',onclick:()=>{ entferneAusnahme(datumIn.value,blockNr); toast('Ausnahme entfernt — es gilt der Plan'); kursAutowahl(); zeige(); }},'Ausnahme entfernen')]:[])),
       el('div',{class:'zeile'},el('span',{},'Vertretung'),el('span',{},kursSel,' ',
         el('button',{class:'btn still u-btn-klein',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,kursSel.value,'vertretung'); toast('Vertretung gesetzt'); kursAutowahl(); zeige(); }},'Setzen'))),
@@ -2137,7 +2187,8 @@ function ausnahmeBlatt(wt,blockNr,datumVorbelegt){
         el('button',{class:'btn still',onclick:()=>{
           const d2=datumIn.value;
           if(alleEntfall){ for(const b of resolveBloecke(zm,wt,d2)) entferneAusnahme(d2,b.blockNr); toast('Tages-Entfall zurückgenommen'); }
-          else { for(const b of resolveBloecke(zm,wt,d2)) setzeAusnahme(d2,b.blockNr,null,'entfall'); toast(WT_KURZ[wt]+' '+datumLabel(d2)+' fällt komplett aus'); }
+          else if(!geplant.length){ toast('Laut Plan ist an diesem Tag nichts — kein Entfall nötig'); }
+          else { for(const nr of geplant) setzeAusnahme(d2,nr,null,'entfall'); toast(datumLabel(d2)+' fällt komplett aus ('+geplant.length+' Std.)'); }   // datumLabel trägt den Wochentag schon („Mo Mo" war ein Vorbestand)
           kursAutowahl(); zeige();
         }},alleEntfall?'Tages-Entfall zurücknehmen':'Ganzer Tag fällt aus')));
   };
@@ -2181,7 +2232,7 @@ function stundenplanAnsicht(ansichtDatum){
       onclick:()=>ausnahmeBlatt(tagWt,b.blockNr,tagDatum)},
       el('span',{class:'sp-tz-std'},'Std. '+blockLabel(zm,b.blockNr,tagDatum)),
       el('span',{class:'sp-tz-zeit'},formatZeit(b.startSek)+'–'+formatZeit(b.endeSek)),
-      el('span',{class:'sp-tz-kurs'+(entfall?' sp-entf':'')},(kZeig?kZeig.name+' · '+kZeig.fach:'—')+(wirksam&&wirksam.teilgruppe?' · Gr. '+wirksam.teilgruppe:'')),
+      el('span',{class:'sp-tz-kurs'+(entfall?' sp-entf':'')},(kZeig?kZeig.name+' · '+kZeig.fach:(slotArtLabel(wirksam||planSlot)||'—'))+(wirksam&&wirksam.teilgruppe?' · Gr. '+wirksam.teilgruppe:'')),
       entfall?el('span',{class:'sp-tz-badge fehl'},'entfällt'):(vertretung?el('span',{class:'sp-tz-badge'},'Vertretung'):el('span',{}))));
   }
   const woche=zm.abWochenAnker?' · '+istAWoche(tagDatum,zm.abWochenAnker)+'-Woche':'';
@@ -2203,7 +2254,7 @@ function stundenplanAnsicht(ansichtDatum){
     grid.append(el('div',{class:'sp-th sp-blockkopf'},blockLabel(zm,nr),el('small',{class:'sp-zeit'},rb?formatZeit(rb.startSek)+'–'+formatZeit(rb.endeSek):'')));
     for(const wt of [1,2,3,4,5]){
       const laeuft=wt===heuteWt&&autowahlInfo&&autowahlInfo.blockNr===nr;
-      const spZelle=el('button',{class:'sp-zelle sp-lese'+(wochenplanZellText(plan,wt,nr)!=='—'?' belegt':'')+(laeuft?' sp-jetzt':''),
+      const spZelle=el('button',{class:'sp-zelle sp-lese'+(wochenplanZellText(plan,wt,nr)!=='—'?' belegt':'')+(wochenplanZellArt(plan,wt,nr)?' sp-art':'')+(laeuft?' sp-jetzt':''),
         title:(laeuft?'läuft gerade · ':'')+'Ausfall/Vertretung…',
         onclick:()=>ausnahmeBlatt(wt,nr,naechstesDatumFuerWt(wt,tagDatum))},wochenplanZellText(plan,wt,nr));
       faerbe(spZelle,wochenplanZellKurs(plan,wt,nr));
@@ -2235,6 +2286,7 @@ function stundenplanAnsicht(ansichtDatum){
     el('div',{class:'btn-reihe'},
       el('button',{class:'btn still',onclick:()=>{ dlgZu(); stundenplanAssistent(); }},'Bearbeiten…'),
       el('button',{class:'btn',onclick:dlgZu},'Schließen')));
+  dlgBreit();
 }
 function stundenplanAssistent(){
   // Arbeitskopie (erst bei „Fertig" in den Vault) — bestehendes Zeitmodell weiterbearbeiten
@@ -2250,6 +2302,10 @@ function stundenplanAssistent(){
     kursAutowahl(); renderAlles(); // aktive Ansicht (auch Kurse) auffrischen
     toast('Stundenplan gespeichert');
   };
+  // Wochenplan-Eintrag: Kurs-Id ODER Stempel ohne Kurs ('@klasse'/'@reserve' → art, Zero 2026-09-02)
+  const neuerSlot=(wt,nr,wert)=>wert.startsWith('@')
+    ?{id:'wp-'+wt+'-'+nr,wochentag:wt,blockNr:nr,kursId:null,art:wert.slice(1),teilgruppe:null,rhythmus:'jede'}
+    :{id:'wp-'+wt+'-'+nr,wochentag:wt,blockNr:nr,kursId:wert,teilgruppe:null,rhythmus:'jede'};
 
   function kopf(titel){
     return el('div',{class:'sp-kopf'},
@@ -2412,6 +2468,7 @@ function stundenplanAssistent(){
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:()=>{ schritt=2; renderS2(); }},'Weiter: Wochenplan'),
         el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+    dlgBreit();
   }
 
   // ── Schritt 2: Wochenplan — Kurs in die Hand nehmen und Stunden MALEN (S256b, Stempel-Paradigma
@@ -2426,9 +2483,12 @@ function stundenplanAssistent(){
       const kurse=vault.stamm.kurse.filter(k=>(k.schuljahrId||aid)===aid&&k.status!=='archiviert');
       const chip=(wert,txt,titel)=>el('button',{class:'tg-chip'+(malKurs===wert?' an':''),title:titel||'','aria-pressed':malKurs===wert?'true':'false',
         onclick:()=>{ malKurs=(malKurs===wert)?undefined:wert; renderPalette(); }},txt);   // nochmal antippen = ablegen (wie Stempel)
+      // Fach sichtbar am Chip, nicht nur im title — auf dem iPad gibt es kein Hover. Farbband = Fachfarbe (Zero 2026-09-02: Farbschema auch beim Bearbeiten)
+      const kursChip=k=>{ const c=chip(k.id,k.name+' '+fachKuerzel(k.fach),k.name+' · '+k.fach); c.classList.add('mal-chip'); c.prepend(el('span',{class:'mal-band'})); faerbe(c,k); return c; };
       palette.replaceChildren(
-        // Fach sichtbar am Chip, nicht nur im title — auf dem iPad gibt es kein Hover
-        ...kurse.map(k=>chip(k.id,k.name+' '+fachKuerzel(k.fach),k.name+' · '+k.fach)),
+        ...sortiereKurse(kurse).map(kursChip),
+        // Stempel ohne Kurs (Zero 2026-09-02): Klassenstunde · Reservestunde
+        ...Object.entries(SLOT_ARTEN).map(([art,a])=>chip('@'+art,a.label,a.label+' — ohne Kurs')),
         chip('FREI','✕ frei','Stunde leeren'));
       if(!kurse.length) palette.append(el('span',{class:'u-hinweis'},'Noch keine Kurse — unter „Kurse" anlegen.'));
     };
@@ -2444,13 +2504,15 @@ function stundenplanAssistent(){
         grid.append(el('div',{class:'sp-th sp-blockkopf'},blockLabel(zm,nr),el('small',{class:'sp-zeit'},rb?formatZeit(rb.startSek)+'–'+formatZeit(rb.endeSek):'')));
         for(const wt of tage){
           const belegt=plan.some(p=>p.wochentag===wt&&p.blockNr===nr);
-          grid.append(el('button',{class:'sp-zelle'+(belegt?' belegt':''),onclick:()=>{
+          const zelle=el('button',{class:'sp-zelle'+(belegt?' belegt':'')+(wochenplanZellArt(plan,wt,nr)?' sp-art':''),onclick:()=>{
             if(malKurs===undefined){ blockDialog(wt,nr,renderGrid); return; }   // Detail-Weg (Teilgruppe/A-B) bleibt
             const i=plan.findIndex(p=>p.wochentag===wt&&p.blockNr===nr);
             if(i>=0) plan.splice(i,1);
-            if(malKurs!=='FREI') plan.push({id:'wp-'+wt+'-'+nr,wochentag:wt,blockNr:nr,kursId:malKurs,teilgruppe:null,rhythmus:'jede'});
+            if(malKurs!=='FREI') plan.push(neuerSlot(wt,nr,malKurs));
             renderGrid();
-          }},zelleText(wt,nr)));
+          }},zelleText(wt,nr));
+          faerbe(zelle,wochenplanZellKurs(plan,wt,nr));   // Fachfarbe wie in der Ansicht — fehlte im Editor (Zero 2026-09-02)
+          grid.append(zelle);
         }
         const p=zm.pausenNachBlock[nr]??zm.pausenNachBlock[String(nr)]??0;
         if(p&&nr<zm.bloeckeProTag) grid.append(el('div',{class:'sp-pausenzeile'},'Pause · '+(p/60)+' min'));
@@ -2466,13 +2528,16 @@ function stundenplanAssistent(){
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn still',onclick:()=>{ schritt=1; renderS1(); }},'← Zeitraster'),
         el('button',{class:'btn',onclick:()=>{ schritt=3; renderS3(); }},'Weiter: Prüfen')));
+    dlgBreit();
   }
 
   function blockDialog(wt,nr,zurueck){
     const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr)||{};
+    const gewaehlt=s.art?'@'+s.art:(s.kursId||'');
     const kursSel=el('select',{},
       el('option',{value:''},'— frei —'),
-      ...vault.stamm.kurse.map(k=>el('option',{value:k.id,...(s.kursId===k.id?{selected:'selected'}:{})},k.name+' · '+k.fach)));
+      ...sortiereKurse(vault.stamm.kurse).map(k=>el('option',{value:k.id,...(gewaehlt===k.id?{selected:'selected'}:{})},k.name+' · '+k.fach)),
+      ...Object.entries(SLOT_ARTEN).map(([art,a])=>el('option',{value:'@'+art,...(gewaehlt==='@'+art?{selected:'selected'}:{})},a.label)));
     const tgSel=el('select',{}, ...['','A','B','C','D'].map(g=>el('option',{value:g,...(s.teilgruppe===g?{selected:'selected'}:{})},g||'alle')));
     const rhSel=el('select',{}, ...[['jede','jede Woche'],['A','A-Woche'],['B','B-Woche']].map(([v,t])=>el('option',{value:v,...((s.rhythmus||'jede')===v?{selected:'selected'}:{})},t)));
     dlgZeigenEl(el('h3',{},WT_KURZ[wt]+' · Std. '+blockLabel(zm,nr)),
@@ -2483,10 +2548,10 @@ function stundenplanAssistent(){
         el('button',{class:'btn',onclick:()=>{
           const i=plan.findIndex(p=>p.wochentag===wt&&p.blockNr===nr);
           if(i>=0) plan.splice(i,1);
-          const kursId=kursSel.value;
-          if(kursId){
+          const wert=kursSel.value;
+          if(wert){
             const rhythmus=rhSel.value;
-            plan.push({id:'wp-'+wt+'-'+nr,wochentag:wt,blockNr:nr,kursId,teilgruppe:tgSel.value||null,rhythmus});
+            plan.push({...neuerSlot(wt,nr,wert),teilgruppe:tgSel.value||null,rhythmus});
             // A/B-Anker abfragen, sobald erster A/B-Slot entsteht und noch keiner gesetzt ist (Lücken-Fix #6)
             if((rhythmus==='A'||rhythmus==='B')&&!zm.abWochenAnker){ dlgZu(); ankerDialog(()=>{ schritt=2; renderS2(); }); return; }
           }
@@ -2526,7 +2591,7 @@ function stundenplanAssistent(){
       const k=t&&vault.stamm.kurse.find(x=>x.id===t.kursId);
       const woche=zm.abWochenAnker?' · '+istAWocheLabel(d):'';
       ergebnis.replaceChildren(el('b',{class:t?'u-gut':'u-leise'},
-        t?('→ '+(k?k.name+' · '+k.fach:t.kursId)+' · Std. '+blockLabel(zm,t.blockNr,d)+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'')):'→ frei / kein Kurs'),
+        t?('→ '+(k?k.name+' · '+k.fach:(slotArtLabel(t)||t.kursId))+' · Std. '+blockLabel(zm,t.blockNr,d)+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'')):'→ frei / kein Kurs'),
         el('div',{class:'u-hinweis'},WT_KURZ[wt]+woche+(kurztag?' · Kurzstunden-Tag ('+(zm.zweitRaster.dauerSekunden/60)+' min)':'')));
     };
     pruef();
@@ -2537,6 +2602,7 @@ function stundenplanAssistent(){
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn still',onclick:()=>{ schritt=2; renderS2(); }},'← Wochenplan'),
         el('button',{class:'btn',onclick:speichereUndZu},'Fertig & speichern')));
+    dlgBreit();
   }
   function istAWocheLabel(datumIso){ return istAWoche(datumIso,zm.abWochenAnker)+'-Woche'; }
 

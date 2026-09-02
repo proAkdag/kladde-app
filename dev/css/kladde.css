@@ -759,3 +759,30 @@
   .kurse-fuss { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--kante); }
   @media (max-width: 720px) { .kurs-grid { grid-template-columns: 1fr; } }
 }
+
+/* ── v1.6.0 · Stundenplan breit + Farben im Editor · Klassen-/Reservestunde · Sitzplan-Lücken (Zero 2026-09-02) ── */
+@layer components {
+  /* Breiter Dialog für den Stundenplan: das Wochen-Grid nutzt die Breite, nicht nur die Höhe */
+  dialog.breit { width: min(1040px, 94vw); max-width: none; }
+}
+@layer views {
+  .breit .sp-woche { grid-template-columns: 92px repeat(5, 1fr); gap: 5px; min-width: 0; }
+  .breit .sp-zelle { min-height: 54px; font-size: 13px; padding: 4px 6px; }
+  .breit .sp-th, .breit .sp-ecke { font-size: 13px; }
+  .breit .sp-zeit { font-size: 11px; }
+  .breit .sp-pausenzeile { font-size: 11.5px; }
+  /* Maler-Palette umbricht — viele Fächer passen sonst nicht in eine Zeile */
+  .sp-malpalette { flex-wrap: wrap; row-gap: 6px; }
+  .mal-band { display: inline-block; width: 5px; height: 15px; border-radius: 2px; background: var(--f, var(--band)); margin-right: 7px; vertical-align: -2px; }
+  .sp-malpalette .mal-chip.an { border-color: var(--f, var(--band)); color: var(--f, var(--band)); }
+  /* Klassen-/Reservestunde: gestrichelt, ohne Fachfarbe — ein Slot ohne Kurs */
+  .sp-zelle.sp-art { border-style: dashed; border-color: var(--leise); color: var(--leise);
+    background: color-mix(in oklab, var(--leise) 8%, var(--karte2)); }
+  /* Sitzplan-Lücke: im Editor ein Knopf mitten in der leeren Reihe, im Unterricht schlicht Leerraum (Gang) */
+  #plan .plan-reihe { position: relative; }
+  .luecke-btn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1;
+    background: var(--karte2); border: 1px dashed var(--kante); color: var(--leise); border-radius: 10px;
+    padding: 6px 12px; min-height: 36px; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+  .plan-reihe.luecke .luecke-btn { border-style: solid; border-color: var(--band); color: var(--band); }
+  body.sp-dragging .luecke-btn { pointer-events: none; opacity: .4; }
+}

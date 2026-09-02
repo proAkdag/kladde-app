@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-dev-v1.5.7-1788107676';
+const CACHE_NAME = 'kladde-dev-v1.6.0-1788369347';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -18,22 +18,24 @@ const ASSETS = [
   './icon-512.png',
   './fonts/HankenGrotesk-subset.woff2',
   './fonts/Newsreader-subset.woff2',
-  './css/kladde.css?v=1.5.7.1788107676',
-  './js/app.mjs?v=1.5.7.1788107676',
-  './logic/skalen.mjs?v=1.5.7.1788107676',
-  './logic/verdichtung.mjs?v=1.5.7.1788107676',
-  './logic/merge.mjs?v=1.5.7.1788107676',
-  './logic/container.mjs?v=1.5.7.1788107676',
-  './logic/parser.mjs?v=1.5.7.1788107676',
-  './logic/zeitmodell.mjs?v=1.5.7.1788107676',
-  './logic/rasterVorlagen.mjs?v=1.5.7.1788107676',
-  './logic/autowahl.mjs?v=1.5.7.1788107676',
-  './logic/migration.mjs?v=1.5.7.1788107676',
-  './logic/kursStatus.mjs?v=1.5.7.1788107676',
-  './logic/auswahl.mjs?v=1.5.7.1788107676',
-  './logic/fachfarben.mjs?v=1.5.7.1788107676',
-  './logic/mappe.mjs?v=1.5.7.1788107676',
-  './logic/xlsx.mjs?v=1.5.7.1788107676'
+  './css/kladde.css?v=1.6.0.1788369347',
+  './js/app.mjs?v=1.6.0.1788369347',
+  './logic/skalen.mjs?v=1.6.0.1788369347',
+  './logic/verdichtung.mjs?v=1.6.0.1788369347',
+  './logic/merge.mjs?v=1.6.0.1788369347',
+  './logic/container.mjs?v=1.6.0.1788369347',
+  './logic/parser.mjs?v=1.6.0.1788369347',
+  './logic/zeitmodell.mjs?v=1.6.0.1788369347',
+  './logic/rasterVorlagen.mjs?v=1.6.0.1788369347',
+  './logic/autowahl.mjs?v=1.6.0.1788369347',
+  './logic/migration.mjs?v=1.6.0.1788369347',
+  './logic/kursStatus.mjs?v=1.6.0.1788369347',
+  './logic/kursSort.mjs?v=1.6.0.1788369347',
+  './logic/teilnehmer.mjs?v=1.6.0.1788369347',
+  './logic/auswahl.mjs?v=1.6.0.1788369347',
+  './logic/fachfarben.mjs?v=1.6.0.1788369347',
+  './logic/mappe.mjs?v=1.6.0.1788369347',
+  './logic/xlsx.mjs?v=1.6.0.1788369347'
 ];
 
 self.addEventListener('install', (event) => {
