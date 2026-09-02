@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.7.1.1788372764">
+<link rel="stylesheet" href="./css/kladde.css?v=1.8.0.1788374814">
 </head>
 <body>
 
@@ -31,7 +31,7 @@
   <div id="lock-text" class="sub u-leise">Passphrase eingeben</div>
   <div class="pin-zeile">
     <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase">
-    <button id="pin-auge" class="icon-btn" type="button" title="Anzeigen">👁</button>
+    <button id="pin-auge" class="icon-btn" type="button" title="Anzeigen"></button>
   </div>
   <input id="pin2" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase wiederholen" class="hidden" placeholder="wiederholen">
   <div id="pin-staerke" class="pass-staerke"></div>
@@ -88,13 +88,13 @@
       <div class="spacer"></div>
       <button id="kurs-chip"><span class="kurs-band"></span><span class="kurs-txt"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></span></button>
       <button class="icon-btn" id="btn-plan" title="Stundenplan" aria-label="Stundenplan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="3.5" y="4.5" width="17" height="15" rx="2"></rect><path d="M3.5 9.5h17"></path><path d="M9.2 9.5v10"></path><path d="M14.9 9.5v10"></path></svg></button>
-      <button class="icon-btn" id="btn-theme" title="Tag / Nacht">🌙</button>
-      <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken">👁</button>
-      <button class="icon-btn" id="btn-lock" title="Sperren">🔒</button>
+      <button class="icon-btn" id="btn-theme" title="Tag / Nacht"></button>
+      <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken"></button>
+      <button class="icon-btn" id="btn-lock" title="Sperren"></button>
     </header>
 
     <div id="banner" class="hidden"></div>
-    <div id="beamer-hinweis" class="hidden"><span>👁 Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
+    <div id="beamer-hinweis" class="hidden"><span>Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
 
     <main>
       <section id="view-heute">
@@ -138,6 +138,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.7.1.1788372764"></script>
+<script type="module" src="./js/app.mjs?v=1.8.0.1788374814"></script>
 </body>
 </html>

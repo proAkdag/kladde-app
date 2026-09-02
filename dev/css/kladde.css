@@ -837,3 +837,25 @@
   .ut-matrix .mk { color: #000 !important; background: none !important; border: 1px solid #999; }
   .u-hinweis, .u-leise { color: #444; }
 }
+
+/* ── v1.8.0 · Linien-Icons statt Emoji (Zero-Freigabe 2026-09-02 · Prüfstand W5.1) ──
+   .ico = 24er Raster, Strich 1,7, currentColor — folgt Text, Gold-Token und Theme. Größen je Ort: */
+@layer components {
+  .ico { width: 1em; height: 1em; display: inline-block; vertical-align: -.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .icon-btn { display: grid; place-items: center; }
+  .icon-btn .ico { width: 19px; height: 19px; display: block; }
+  .rail-btn .ico { width: 21px; height: 21px; display: block; }
+  .btn .ico, .zr-chip .ico, .tg-chip .ico { width: 16px; height: 16px; vertical-align: -3px; margin-right: 3px; }
+  .u-btn-klein .ico { width: 15px; height: 15px; }
+  #undo-chip .ico { width: 15px; height: 15px; vertical-align: -3px; }
+  .sp-trash .ico { width: 22px; height: 22px; }
+  .dv-mark .ico { width: 15px; height: 15px; display: block; }
+  .s-abw .ico, .u-warn13 .ico, .u-hinweis .ico, .u-vorschau .ico { width: 13px; height: 13px; vertical-align: -2px; }
+  .ut-tabelle th .ico { width: 13px; height: 13px; vertical-align: -2px; }
+  #beamer-hinweis .ico, dialog h3 .ico, .panel h2 .ico { width: 17px; height: 17px; vertical-align: -3px; }
+  /* Kachel-Marke 11 px: Strich 2,4 — bei 1,7 wäre es ein Haar (Vorschau-Entscheid 5) */
+  .mk .ico { width: 11px; height: 11px; stroke-width: 2.4; vertical-align: -1px; display: block; margin: 2px 0; }
+  .mk.verw .ico { width: 11px; height: 11px; }
+  .ut-matrix .mk .ico { margin: 2px 1px; }
+}
+@media print { .ico { stroke: #000; } }
