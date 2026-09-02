@@ -1,22 +1,22 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.7.0.1788372055';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.7.0.1788372055';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.7.0.1788372055';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.7.0.1788372055';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.7.0.1788372055';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.7.0.1788372055';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.7.0.1788372055';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.7.0.1788372055';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.7.0.1788372055';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.7.0.1788372055';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.7.0.1788372055';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.7.0.1788372055';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.7.0.1788372055';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.7.0.1788372055';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.7.0.1788372055';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.7.0.1788372055';
-const APP_VERSION = '1.7.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.7.1.1788372764';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.7.1.1788372764';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.7.1.1788372764';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet } from '../logic/container.mjs?v=1.7.1.1788372764';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.7.1.1788372764';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.7.1.1788372764';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.7.1.1788372764';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.7.1.1788372764';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.7.1.1788372764';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.7.1.1788372764';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.7.1.1788372764';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.7.1.1788372764';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.7.1.1788372764';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.7.1.1788372764';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.7.1.1788372764';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.7.1.1788372764';
+const APP_VERSION = '1.7.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -198,7 +198,7 @@ document.addEventListener('visibilitychange',()=>{
     if(localStorage.getItem('kladde_lock_sofort')==='1') speicherKette.then(sperren);
   } else if(document.visibilityState==='visible'&&vault){
     $('soft-lock').classList.add('hidden');
-    kursAutowahl(true); // Rückkehr in die App: Block könnte gewechselt haben (sanft)
+    kursAutowahl(); // Rückkehr in die App: Block könnte gewechselt haben (Handwahl hält bis Blockwechsel)
     if(aktView==='heute') renderHeute();
   }
 });
@@ -325,13 +325,20 @@ function beamerOptionenSheet(){
 
 /* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
 let autowahlInfo=null;   // {kursId, blockNr, startSek, endeSek, quelle} — für Heute-Kopf (§28)
-let manuelleWahl=false;  // Kurs-Chip-Wahl übersteht sanfte Ticks; neuer laufender Block hebt sie auf
-function kursAutowahl(sanft=false){
+// Handwahl (Zero-Entscheid 2026-09-02, Variante 1): die Kurs-Chip-Wahl hält BIS ZUM BLOCKWECHSEL — auch über
+// Sperren/Entsperren und Neuladen hinweg. Gerätelokal in localStorage (nur Kurs-Id + Block, keine Schülerdaten);
+// vorher war sie ein RAM-Flag, das jeder harte Autowahl-Lauf (Entsperren, Stundenplan speichern) überschrieb.
+const HANDWAHL_KEY='kladde_handwahl';
+function handwahlLesen(){ try{ const h=JSON.parse(localStorage.getItem(HANDWAHL_KEY)||'null'); return h&&h.datum===heuteIso()?h:null; }catch{ return null; } }
+function handwahlSetzen(h){ if(h) localStorage.setItem(HANDWAHL_KEY,JSON.stringify(h)); else localStorage.removeItem(HANDWAHL_KEY); }
+function kursAutowahl(){
   if(!vault) return;
   const jetzt=new Date();
   const zm=(vault.stamm.zeitmodelle||[])[0];
-  const vorherBlock=autowahlInfo?.blockNr;
   autowahlInfo=null;
+  let hand=handwahlLesen();
+  if(hand&&!vault.stamm.kurse.some(k=>k.id===hand.kursId&&k.status!=='archiviert')){ handwahlSetzen(null); hand=null; }   // Kurs weg/archiviert → Handwahl gegenstandslos
+  const handAnwenden=(bisSek)=>{ aktiverKursId=hand.kursId; aktiveTeilgruppe=hand.teilgruppe||null; $('kurs-slot').textContent=' · von Hand'+(bisSek!=null?' · bis '+formatZeit(bisSek):'')+(hand.teilgruppe?' · Gr. '+hand.teilgruppe:''); };
   if(zm){
     const t=kursZurZeit(jetzt,{zeitmodell:zm,wochenplan:vault.stamm.wochenplan||[],ausnahmen:vault.stamm.ausnahmeSlots||[]});
     if(t){
@@ -339,8 +346,10 @@ function kursAutowahl(sanft=false){
       const heuteIsoStr=heuteIso();
       const block=resolveBloecke(zm,wtag,heuteIsoStr).find(b=>b.blockNr===t.blockNr); // Kurztag-Daten → Zweitraster-Zeiten (S256b)
       autowahlInfo={...t,startSek:block.startSek,endeSek:block.endeSek};
-      if(t.quelle!=='kommend'&&t.blockNr!==vorherBlock) manuelleWahl=false; // Blockwechsel hebt manuelle Wahl auf
-      if(!sanft||!manuelleWahl){
+      // Neuer laufender Block hebt die Handwahl auf — sie ist an den Block gebunden, in dem sie getroffen wurde
+      if(hand&&t.quelle!=='kommend'&&hand.blockNr!==t.blockNr){ handwahlSetzen(null); hand=null; }
+      if(hand) handAnwenden(block.endeSek);
+      else {
         // Klassen-/Reservestunde (art, kein Kurs): der zuletzt aktive Kurs bleibt stehen, der Slot-Text sagt, was laut Plan läuft
         if(t.kursId){ aktiverKursId=t.kursId; aktiveTeilgruppe=t.teilgruppe||null; }
         else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)) aktiverKursId=ersterKursId();
@@ -349,11 +358,12 @@ function kursAutowahl(sanft=false){
       aktualisiereKursChip(); return;
     }
   }
+  if(hand){ handAnwenden(null); aktualisiereKursChip(); return; }   // Pause/Freistunde: die Handwahl bleibt bis zum nächsten Block
   // Fallback: Alt-Slots (Expertenmodus, freie Zeitfenster) — bleibt, solange kein Wochenplan existiert
   const wtag=((jetzt.getDay()+6)%7)+1;
   const hhmm=String(jetzt.getHours()).padStart(2,'0')+':'+String(jetzt.getMinutes()).padStart(2,'0');
   const slot=vault.stamm.stundenplanSlots.find(s=>s.wochentag===wtag&&s.von<=hhmm&&hhmm<=s.bis);
-  if(slot&&(!sanft||!manuelleWahl)){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
+  if(slot){ aktiverKursId=slot.kursId; aktiveTeilgruppe=slot.teilgruppe||null; $('kurs-slot').textContent=' · '+slot.von+'–'+slot.bis+(slot.teilgruppe?' · Gr. '+slot.teilgruppe:''); }
   else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)) aktiverKursId=ersterKursId();
   aktualisiereKursChip();
 }
@@ -372,7 +382,7 @@ function starteAutowahlTick(){
   autowahlTick=setInterval(()=>{
     if(!vault||document.visibilityState!=='visible'||aktView!=='heute'||$('dlg').open) return;
     const vorher=aktiverKursId;
-    kursAutowahl(true);
+    kursAutowahl();
     if(aktiverKursId!==vorher){ mitUebergang(renderHeute); const k=kurs(); toast('→ '+(k?k.name+' · '+k.fach:'')); }
   },60000);
 }
@@ -417,8 +427,11 @@ $('kurs-chip').addEventListener('click',()=>{
         }
       }
       el.querySelector('#tg-sel').value=aktiveTeilgruppe||'';
-      el.querySelectorAll('[data-kurs]').forEach(b=>b.onclick=()=>{ aktiverKursId=b.dataset.kurs; aktiveTeilgruppe=el.querySelector('#tg-sel').value||null; manuelleWahl=true; $('kurs-slot').textContent=aktiveTeilgruppe?' · Gr. '+aktiveTeilgruppe:''; dlgZu(); aktualisiereKursChip(); mitUebergang(renderAlles); });
-      el.querySelector('#tg-sel').onchange=e=>{ aktiveTeilgruppe=e.target.value||null; renderHeute(); };
+      // Handwahl speichern (Variante 1): gebunden an den laufenden Block — der nächste Block löst sie wieder
+      el.querySelectorAll('[data-kurs]').forEach(b=>b.onclick=()=>{
+        handwahlSetzen({kursId:b.dataset.kurs,teilgruppe:el.querySelector('#tg-sel').value||null,datum:heuteIso(),blockNr:autowahlInfo?.blockNr??null});
+        dlgZu(); kursAutowahl(); mitUebergang(renderAlles); });
+      el.querySelector('#tg-sel').onchange=e=>{ aktiveTeilgruppe=e.target.value||null; const h=handwahlLesen(); if(h){ h.teilgruppe=aktiveTeilgruppe; handwahlSetzen(h); } renderHeute(); };
     });
 });
 function oeffneDatum(){

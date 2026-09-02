@@ -21,6 +21,9 @@
     --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
     --grund:#17150F; --karte:#211E17; --karte2:#2B2820; --kante:#38342A;
     --text:#ECE6D8; --leise:#A49C8A; --band:#C79A4B;
+    /* --band-text = Gold als SCHRIFT. Nacht: identisch mit --band (6,46:1 auf Karte). Tag: #8A6420, weil das
+       Markengold auf hellem Grund nur 2,43:1 misst (Zero-Entscheid 2026-09-02) — Flächen/Rahmen behalten --band. */
+    --band-text:#C79A4B;
     --gut:#6FA080; --warn:#CE9B4B; --fehl:#C67C60; --info:#6E9DB8;
     /* --L = Helligkeit der Fachfarben (logic/fachfarben.mjs). Eine Zahl je Theme schaltet
        die ganze Palette um; die dunkle Stufe rechnet selbst -0.15 davon ab. */
@@ -34,6 +37,7 @@
     /* --leise: #8A8478 maß nur 3,50:1 auf --karte (AA braucht 4,5) — #716B5D ist der hellste
        Ton derselben warmen Familie mit AA auf grund/karte/karte2 (4,66/5,00/5,30 · W5.2-Messung 2026-08-29) */
     --text:#26241E; --leise:#716B5D; --band:#C79A4B;
+    --band-text:#8A6420;   /* gemessen 4,71 / 5,05 / 5,35 auf grund/karte/karte2 */
     --gut:#5B8C6E; --warn:#B5852F; --fehl:#B4654A; --info:#4E7A99;
     --L: .52;
     --tile-plus:#EBF0EA; --tile-minus:#F6E8E1; --tile-fehlt:#EDEAE1;
@@ -69,7 +73,7 @@
     background: transparent; border: 1px solid var(--kante); border-radius: 8px;
     min-width: 44px; min-height: 44px; cursor: pointer; font-size: 17px;
   }
-  .icon-btn.aktiv { border-color: var(--band); color: var(--band); }
+  .icon-btn.aktiv { border-color: var(--band); color: var(--band-text); }
   /* SVG-Icon-Buttons (S257b): inline-SVG hängt an der Text-Baseline und säße ~3 px zu hoch —
      Grid-Zentrierung nur für Buttons mit SVG, die Emoji-Nachbarn zentrieren als Text von selbst */
   #btn-plan { display: grid; place-items: center; }
@@ -81,7 +85,7 @@
   .zeile:first-of-type { border-top: none; }
   .zeile .wert { color: var(--leise); text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .btn {
-    background: transparent; color: var(--band); border: 1px solid var(--band); border-radius: 8px;
+    background: transparent; color: var(--band-text); border: 1px solid var(--band); border-radius: 8px;
     padding: 10px 14px; min-height: 44px; min-width: 44px; cursor: pointer; font-size: 15px;
   }
   .btn:active { background: rgba(196,154,90,.15); }
@@ -104,7 +108,7 @@
   }
   #undo-chip {
     position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 22px); z-index: 40;
-    background: var(--karte2); border: 1px solid var(--band); color: var(--band);
+    background: var(--karte2); border: 1px solid var(--band); color: var(--band-text);
     border-radius: 20px; padding: 10px 16px; min-height: 44px; cursor: pointer; font-size: 14px;
     box-shadow: 0 6px 18px rgba(0,0,0,.35);
   }
@@ -121,7 +125,7 @@
   .datum-streifen .nachtrag-hinweis { color: var(--warn); font-size: 13px; }
   .datum-streifen .rechts { margin-left: auto; display: flex; gap: 6px; }
   .datum-streifen button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 14px; }
-  .datum-streifen button.aktiv { border-color: var(--band); color: var(--band); }
+  .datum-streifen button.aktiv { border-color: var(--band); color: var(--band-text); }
   .datum-streifen button.ds-icon { width: 40px; padding: 0; display: grid; place-items: center; }  /* quadratisch, einheitliche Größe */
   .datum-streifen button.ds-icon svg { width: 20px; height: 20px; }
   /* Legende (Studio-Umbau 2026-07-09): Anatomie-Beispielkachel + Sektionen + ausgerichtete Symbol-Spalte */
@@ -145,9 +149,9 @@
   /* Ghost-＋ zwischen den Reihen: leise (16px, nur ein kleines ＋), der Streifen IST der Reihenabstand im Editor */
   #plan.editor { gap: 0; }
   .reihe-plus { width: 100%; min-height: 16px; padding: 0; border: 0; background: transparent; color: var(--leise); cursor: pointer; font-size: 11px; line-height: 1; opacity: .25; border-radius: 6px; display: grid; place-items: center; }
-  .reihe-plus:hover { opacity: 1; color: var(--band); background: var(--karte2); }
+  .reihe-plus:hover { opacity: 1; color: var(--band-text); background: var(--karte2); }
   body.sp-dragging .reihe-plus { opacity: .7; background: var(--karte2); }  /* Drop-Zonen beim Ziehen sichtbar — Höhe konstant (kein Ziel-Wandern) */
-  .reihe-plus.ziel { opacity: 1; color: var(--band); background: var(--karte2); box-shadow: inset 0 0 0 1px var(--band); }
+  .reihe-plus.ziel { opacity: 1; color: var(--band-text); background: var(--karte2); box-shadow: inset 0 0 0 1px var(--band); }
   /* Kachel-Anatomie gilt für den Plan UND die Legende-Beispielkachel (:is → eine Quelle der Wahrheit) */
   :is(#plan, .lg-kachel) .kachel {
     aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
@@ -236,7 +240,7 @@
   .balken div, .balken span { height: 100%; display: block; }
   .s-detail { padding: 4px 10px 12px; }
   .s-detail .tag-gruppe { margin-top: 8px; }
-  .s-detail .tag-kopf { color: var(--band); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .s-detail .tag-kopf { color: var(--band-text); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
   .s-detail .ev-zeile { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--kante); font-size: 14px; }
   .balken { min-width: 60px; }
   /* ── Gruppen-Editor: Direktbuttons ── */
@@ -446,13 +450,13 @@
   .sp-zeit { font-size: 10px; font-variant-numeric: tabular-nums; }
   .sp-pausenzeile { grid-column: 1 / -1; text-align: center; font-size: 10.5px; color: var(--leise); padding: 1px 0 2px; border-bottom: 1px dashed var(--kante); margin: 1px 0 2px; }
   .sp-tagchips { display: flex; gap: 4px; margin: 2px 0 8px; }
-  .sp-dmin.abweich { border-color: var(--band); color: var(--band); font-weight: 700; }
+  .sp-dmin.abweich { border-color: var(--band); color: var(--band-text); font-weight: 700; }
   .sp-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 6px; min-height: 40px; font-size: 11px; padding: 2px; cursor: pointer; color: inherit; overflow: hidden; }
   .sp-zelle.belegt { border-color: var(--f, var(--band)); color: var(--f, var(--band));
     background: color-mix(in oklab, var(--f, var(--band)) 13%, var(--karte2)); }
   /* Stundenplan-ANSICHT (S256d): Lesen + Heute/Jetzt-Orientierung · Zellen öffnen das Ausnahme-Blatt (S257) */
   .sp-zelle.sp-lese { display: grid; place-items: center; text-align: center; }
-  .sp-th.sp-heute { color: var(--band); font-weight: 700; }
+  .sp-th.sp-heute { color: var(--band-text); font-weight: 700; }
   .sp-zelle.sp-jetzt { outline: 2px solid var(--gut); outline-offset: -1px; }
   /* Tagesblick (S257b): ein konkreter Schultag mit Zeiten, Ausfällen, Vertretung, Kurztag, A/B */
   .sp-tagblick { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
@@ -467,7 +471,7 @@
   .sp-tz-zeit { flex: 0 0 92px; font-variant-numeric: tabular-nums; font-size: 13px; }
   .sp-tz-kurs { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sp-tz-kurs.sp-entf { text-decoration: line-through; color: var(--leise); font-weight: 400; }
-  .sp-tz-badge { flex: none; font-size: 11px; font-weight: 700; border: 1px solid var(--band); color: var(--band); border-radius: 10px; padding: 1px 8px; }
+  .sp-tz-badge { flex: none; font-size: 11px; font-weight: 700; border: 1px solid var(--band); color: var(--band-text); border-radius: 10px; padding: 1px 8px; }
   .sp-tz-badge.fehl { border-color: var(--fehl); color: var(--fehl); }
   .sp-ergebnis { margin: 10px 0; font-size: 16px; text-align: center; }
 }
@@ -496,7 +500,7 @@
 
   /* Projektions-Hinweis (P4.3 · §6) */
   #beamer-hinweis { display: flex; align-items: center; gap: 10px; background: var(--karte2);
-    border-bottom: 1px solid var(--band); color: var(--band); padding: 7px 12px; font-size: 13px; font-weight: 600; }
+    border-bottom: 1px solid var(--band); color: var(--band-text); padding: 7px 12px; font-size: 13px; font-weight: 600; }
   #beamer-hinweis.hidden { display: none; }
   #beamer-hinweis .btn { margin-left: auto; }
   /* „Nur Sitzplan": Datums-Extras ausblenden — reine Namenskarte an die Wand */
@@ -508,7 +512,7 @@
   .deck-optionen:empty { display: none; }
   .deck-optionen button { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise);
     border-radius: 14px; padding: 6px 13px; min-height: 40px; font-size: 13px; cursor: pointer; }
-  .deck-optionen button.an { border-color: var(--band); color: var(--band); }
+  .deck-optionen button.an { border-color: var(--band); color: var(--band-text); }
 
   /* Kurskarten-Badge (P4.2 · „Klasse auf einen Blick") */
   .kurs-badge { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 9px; margin-left: 6px;
@@ -578,7 +582,7 @@
     font-family: inherit; font-size: 14.5px; padding: 10px 12px; border-radius: 10px; cursor: pointer;
   }
   #hauptnav button svg { width: 20px; height: 20px; flex: none; }
-  #hauptnav button.aktiv { background: var(--karte2); color: var(--band); border-left-color: var(--band); font-weight: 600; }
+  #hauptnav button.aktiv { background: var(--karte2); color: var(--band-text); border-left-color: var(--band); font-weight: 600; }
 
   /* ── Header ── */
   header.app {
@@ -687,7 +691,7 @@
   /* Halbgruppen-Chips in der Datums-Zeile (A–D-Filter im Unterricht) */
   .datum-streifen .tg-chips { display: flex; gap: 4px; margin-left: 8px; }
   .datum-streifen .tg-chip, .sp-tagchips .tg-chip { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 12px; min-height: 40px; padding: 3px 12px; cursor: pointer; font-size: 13px; }
-  .datum-streifen .tg-chip.an, .sp-tagchips .tg-chip.an { border-color: var(--band); color: var(--band); font-weight: 600; }
+  .datum-streifen .tg-chip.an, .sp-tagchips .tg-chip.an { border-color: var(--band); color: var(--band-text); font-weight: 600; }
   /* Schüler-Vollseite + Quartalsnoten-Karte (S216 · Quartalsnoten-Lebensweg) */
   .sseite-kopf { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
   .sseite-name { font-family: var(--font-serif); font-size: 26px; font-weight: 500; }
@@ -699,7 +703,7 @@
   .qn-zelle .qn-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--leise); }
   .qn-zelle .qn-note { font-family: var(--font-serif); font-size: 24px; font-weight: 500; line-height: 1.05; }
   .qn-zelle .qn-sub { font-size: 10.5px; color: var(--leise); text-align: center; }
-  .qn-fest { color: var(--band); font-weight: 700; }
+  .qn-fest { color: var(--band-text); font-weight: 700; }
   /* Listenzeile = Entscheidung + höchstens ein Anlass (C3) — Detailwerte leben auf der Vollseite */
   .qn-fest small, .s-vorschlag small { font-weight: 400; font-size: 10.5px; color: var(--leise); }
   .s-vorschlag { font-weight: 700; }
@@ -783,7 +787,7 @@
   .luecke-btn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1;
     background: var(--karte2); border: 1px dashed var(--kante); color: var(--leise); border-radius: 10px;
     padding: 6px 12px; min-height: 36px; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
-  .plan-reihe.luecke .luecke-btn { border-style: solid; border-color: var(--band); color: var(--band); }
+  .plan-reihe.luecke .luecke-btn { border-style: solid; border-color: var(--band); color: var(--band-text); }
   body.sp-dragging .luecke-btn { pointer-events: none; opacity: .4; }
 }
 
@@ -809,7 +813,7 @@
   .ut-datum { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 10px; letter-spacing: 0; text-transform: none; }
   .nt-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-width: 44px; min-height: 36px; padding: 4px 8px; cursor: pointer; color: inherit; font: inherit; font-weight: 700; }
   .nt-zelle.vor { color: var(--leise); font-weight: 500; border-style: dashed; }
-  .nt-zelle.gesetzt { border-color: var(--band); color: var(--band); }
+  .nt-zelle.gesetzt { border-color: var(--band); color: var(--band-text); }
   .ut-verlauf { font-size: 12px; }
   tr.ut-warn td { background: color-mix(in oklab, var(--fehl) 10%, transparent); }
   .sp-woche.malen { touch-action: none; }
