@@ -159,4 +159,40 @@ function vorschlagsZeilen(rows) {
   }).join('\n');
 }
 
-export { verdichte, wirksameEvents, regelText, vorschlagsZeilen };
+// ── Quartals-Verlauf (Zero 2026-09-02, Punkt 7): Bilanz-Score je Zeitraum + Pfeil zum vorigen
+// Zeitraum MIT Daten (leere Quartale werden übersprungen, nicht als Absturz gewertet).
+// Dieselbe Schwelle wie der Verlaufspfeil innerhalb eines Zeitraums (|Δ| > 0.15).
+function quartalsVerlauf(kursEvents, schuelerNr, zeitraeume, opt) {
+  const out = []; let vorher = null;
+  for (const z of zeitraeume || []) {
+    const v = verdichte(kursEvents, schuelerNr, { ...opt, von: z.von, bis: z.bis });
+    const n = v.nPlus + v.nNull + v.nMinus;
+    const e = { id: z.id, label: z.label, score: n ? v.score : null, n, vorschlag: v.vorschlag, pfeil: null };
+    if (e.score !== null && vorher !== null) { const d = e.score - vorher; e.pfeil = d > 0.15 ? '↑' : d < -0.15 ? '↓' : '→'; }
+    if (e.score !== null) vorher = e.score;
+    out.push(e);
+  }
+  return out;
+}
+
+// ── Einordnung im Kurs (Punkt 10): Median der Vorschlagswerte + Anteil des Kurses, der
+// SCHLECHTER steht. Sek I: kleiner = besser · Sek II: größer = besser. Zahl gehört der App,
+// Deutung dem Lehrer (Entscheid E3) — darum Prozent, kein Rang und kein Wort.
+function kursEinordnung(werte, wert, profil) {
+  const w = (werte || []).filter(x => x !== null && x !== undefined && Number.isFinite(x)).sort((a, b) => a - b);
+  if (!w.length || wert === null || wert === undefined) return null;
+  const m = w.length % 2 ? w[(w.length - 1) / 2] : (w[w.length / 2 - 1] + w[w.length / 2]) / 2;
+  const schlechter = w.filter(x => profil === 'sek2' ? x < wert : x > wert).length;
+  return { median: m, n: w.length, anteilDahinter: schlechter / w.length };
+}
+
+// ── Abstand gesetzte Note ↔ Vorschlag in NOTENSTUFEN (Punkt 4): Sek I direkt (1 = eine ganze
+// Note), Sek II 3 Punkte = eine Note. Unbekannte Eingaben (Tippfehler) → null, kein Wurf.
+function notenAbstand(gesetzt, vorschlagWert, profil) {
+  if (vorschlagWert === null || vorschlagWert === undefined) return null;
+  let g;
+  try { g = noteAlsWert(gesetzt, profil); } catch { return null; }
+  return profil === 'sek2' ? Math.abs(g - vorschlagWert) / 3 : Math.abs(g - vorschlagWert);
+}
+
+export { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
