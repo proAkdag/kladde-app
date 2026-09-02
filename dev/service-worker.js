@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-dev-v1.9.0-1788377905';
+const CACHE_NAME = 'kladde-dev-v1.9.1-1788379122';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -18,26 +18,26 @@ const ASSETS = [
   './icon-512.png',
   './fonts/HankenGrotesk-subset.woff2',
   './fonts/Newsreader-subset.woff2',
-  './css/kladde.css?v=1.9.0.1788377905',
-  './js/app.mjs?v=1.9.0.1788377905',
-  './logic/skalen.mjs?v=1.9.0.1788377905',
-  './logic/verdichtung.mjs?v=1.9.0.1788377905',
-  './logic/merge.mjs?v=1.9.0.1788377905',
-  './logic/container.mjs?v=1.9.0.1788377905',
-  './logic/parser.mjs?v=1.9.0.1788377905',
-  './logic/zeitmodell.mjs?v=1.9.0.1788377905',
-  './logic/rasterVorlagen.mjs?v=1.9.0.1788377905',
-  './logic/autowahl.mjs?v=1.9.0.1788377905',
-  './logic/migration.mjs?v=1.9.0.1788377905',
-  './logic/kursStatus.mjs?v=1.9.0.1788377905',
-  './logic/kursSort.mjs?v=1.9.0.1788377905',
-  './logic/teilnehmer.mjs?v=1.9.0.1788377905',
-  './logic/bericht.mjs?v=1.9.0.1788377905',
-  './logic/biometrie.mjs?v=1.9.0.1788377905',
-  './logic/auswahl.mjs?v=1.9.0.1788377905',
-  './logic/fachfarben.mjs?v=1.9.0.1788377905',
-  './logic/mappe.mjs?v=1.9.0.1788377905',
-  './logic/xlsx.mjs?v=1.9.0.1788377905'
+  './css/kladde.css?v=1.9.1.1788379122',
+  './js/app.mjs?v=1.9.1.1788379122',
+  './logic/skalen.mjs?v=1.9.1.1788379122',
+  './logic/verdichtung.mjs?v=1.9.1.1788379122',
+  './logic/merge.mjs?v=1.9.1.1788379122',
+  './logic/container.mjs?v=1.9.1.1788379122',
+  './logic/parser.mjs?v=1.9.1.1788379122',
+  './logic/zeitmodell.mjs?v=1.9.1.1788379122',
+  './logic/rasterVorlagen.mjs?v=1.9.1.1788379122',
+  './logic/autowahl.mjs?v=1.9.1.1788379122',
+  './logic/migration.mjs?v=1.9.1.1788379122',
+  './logic/kursStatus.mjs?v=1.9.1.1788379122',
+  './logic/kursSort.mjs?v=1.9.1.1788379122',
+  './logic/teilnehmer.mjs?v=1.9.1.1788379122',
+  './logic/bericht.mjs?v=1.9.1.1788379122',
+  './logic/biometrie.mjs?v=1.9.1.1788379122',
+  './logic/auswahl.mjs?v=1.9.1.1788379122',
+  './logic/fachfarben.mjs?v=1.9.1.1788379122',
+  './logic/mappe.mjs?v=1.9.1.1788379122',
+  './logic/xlsx.mjs?v=1.9.1.1788379122'
 ];
 
 self.addEventListener('install', (event) => {

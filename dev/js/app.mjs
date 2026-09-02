@@ -1,23 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.9.0.1788377905';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.9.0.1788377905';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.9.0.1788377905';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.9.0.1788377905';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.9.0.1788377905';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.9.0.1788377905';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.9.0.1788377905';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.9.0.1788377905';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.9.0.1788377905';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.9.0.1788377905';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.9.0.1788377905';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.9.0.1788377905';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.9.0.1788377905';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.9.0.1788377905';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.9.0.1788377905';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.9.0.1788377905';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.9.0.1788377905';
-const APP_VERSION = '1.9.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.9.1.1788379122';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.9.1.1788379122';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.9.1.1788379122';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.9.1.1788379122';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.9.1.1788379122';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.9.1.1788379122';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.9.1.1788379122';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.9.1.1788379122';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.9.1.1788379122';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.9.1.1788379122';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.9.1.1788379122';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.9.1.1788379122';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.9.1.1788379122';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.9.1.1788379122';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.9.1.1788379122';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.9.1.1788379122';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.9.1.1788379122';
+const APP_VERSION = '1.9.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -3317,6 +3317,15 @@ async function zeigeStartHinweise(){
   if(pinRam&&passStaerke(pinRam)==='schwach'&&!localStorage.getItem('kladde_pass_hinweis')){
     localStorage.setItem('kladde_pass_hinweis','1');
     zeigeBanner('<span>Deine PIN ist kurz — für echte Schülerdaten ist eine Passphrase (12+ Zeichen) empfohlen: Mehr → Sicherheit → Passphrase ändern.</span>');
+    return;
+  }
+  // Fingerabdruck-Einstieg (Zero 2026-09-02): ein Knopf, der erst nach einer Einrichtung erscheint, braucht einen
+  // sichtbaren Weg dorthin. Einmalig nach einem Passphrase-Login, wenn das Gerät WebAuthn kann und noch keine Hülle liegt;
+  // × merkt sich die Ablehnung dauerhaft (localStorage), „Einrichten" führt direkt in bioEinrichten.
+  if(pinRam&&bioVerfuegbar()&&!localStorage.getItem('kladde_bio_hinweis')&&!(await idbGet('bio'))){
+    zeigeBanner('<span>Schneller öffnen: Fingerabdruck / Face ID einrichten — die Passphrase bleibt als Rückweg.</span><button class="btn" data-bio>Einrichten</button>',
+      b=>{ b.querySelector('[data-bio]').onclick=()=>{ b.classList.add('hidden'); bioEinrichten(); };
+           b.querySelector('[data-zu]').addEventListener('click',()=>localStorage.setItem('kladde_bio_hinweis','1')); });
     return;
   }
   // Backup-Erinnerung (P1.5): das realste Verlustszenario ist Gerätedefekt/Speicherbereinigung, nicht der Angreifer
