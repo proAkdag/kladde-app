@@ -33,7 +33,9 @@
   }
   :root[data-theme="tag"] {
     color-scheme: light;
-    --grund:#F4F0E7; --karte:#FBF8F1; --karte2:#FFFFFF; --kante:#E7E1D4;
+    /* --kante Tag: #E7E1D4 maß nur 1,15–1,30:1 auf grund/karte/karte2 — Zero 2026-09-02: „Ränder generell deutlicher".
+       #BFB39A misst 1,82 / 1,95 / 2,07 (Nacht-Kanten liegen bei 1,2–1,5), gleiche warme Familie, Strichstärke bleibt 1 px. */
+    --grund:#F4F0E7; --karte:#FBF8F1; --karte2:#FFFFFF; --kante:#BFB39A;
     /* --leise: #8A8478 maß nur 3,50:1 auf --karte (AA braucht 4,5) — #716B5D ist der hellste
        Ton derselben warmen Familie mit AA auf grund/karte/karte2 (4,66/5,00/5,30 · W5.2-Messung 2026-08-29) */
     --text:#26241E; --leise:#716B5D; --band:#C79A4B;
