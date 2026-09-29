@@ -33,7 +33,11 @@ function listenAbgleich(alt, neu) {
   const neuNr = new Map((neu || []).map(s => [s.nr, s]));
   const neue = (neu || []).filter(s => !altNr.has(s.nr));
   const entfernt = (alt || []).filter(s => !s.inaktiv && !neuNr.has(s.nr));
-  const reaktiviert = (alt || []).filter(s => s.inaktiv && neuNr.has(s.nr));
+  // Inaktives Kind (Tombstone, Einträge gebunden) nur bei GLEICHEM Namen reaktivieren — steht in der Mappe unter
+  // dessen Nr ein anderer Name, ist es ein anderes Kind: nicht still zurückholen, sondern melden (Prüfer 2026-09-29)
+  const gleicherName = s => { const n = neuNr.get(s.nr); return n.name === s.name && n.vorname === s.vorname; };
+  const reaktiviert = (alt || []).filter(s => s.inaktiv && neuNr.has(s.nr) && gleicherName(s));
+  const nrBelegt = (alt || []).filter(s => s.inaktiv && neuNr.has(s.nr) && !gleicherName(s)).map(s => ({ nr: s.nr, alt: s, neu: neuNr.get(s.nr) }));
   const geaendert = []; let gleich = 0;
   for (const s of neu || []) {
     const a = altNr.get(s.nr);
@@ -41,7 +45,7 @@ function listenAbgleich(alt, neu) {
     if (a.name !== s.name || a.vorname !== s.vorname || !!a.lb !== !!s.lb) geaendert.push({ nr: s.nr, alt: a, neu: s });
     else gleich++;
   }
-  return { neue, entfernt, reaktiviert, geaendert, gleich };
+  return { neue, entfernt, reaktiviert, geaendert, gleich, nrBelegt };
 }
 
 // Wendet den Abgleich an — rein, liefert die neue Liste. Entfernte MIT Einträgen werden

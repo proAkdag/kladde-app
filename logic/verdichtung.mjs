@@ -1,8 +1,11 @@
 // kladde/logic/verdichtung · Bilanz + Tendenz + sichtbarer Notenvorschlag (Criterion 11)
 // Regel v1 (Plan-Dok, im UI als Text zeigbar — kein Black-Box-Score):
 //   score = (n⁺ − n⁻) / max(1, n⁺ + n° + n⁻)   ∈ [−1, +1]
-//   SekI:  Ereignis-Note = 3 − 2·score, auf Drittel gerundet, geklemmt [1,6]
-//   SekII: Ereignis-Punkte = 9 + 6·score, ganzzahlig, geklemmt [0,15]
+//   SekI:  Ereignis-Note = 3 − 5/3·score, auf Drittel gerundet, geklemmt [1,6]
+//   SekII: Ereignis-Punkte = 8 + 5·score, ganzzahlig, geklemmt [0,15]
+//   Zero 2026-09-29: nur ＋ → 1− bzw. 13 P · nur o → 3 bzw. 8 P · nur − → 5+ bzw. 3 P. Die Ränder
+//   1/15 P und 6/0 P gehören ⭐ (direkte Note) und ⊘ (Verweigerung). Beide Kurven sind dieselbe:
+//   Punkte = 17 − 3·Note (NRW-Tabelle: 1− = 13, 3 = 8, 5+ = 3).
 //   direkte note-Events: TERMINGEWICHTET — jede Note wiegt einen Termin (Zero-Entscheid 2026-07-10;
 //   schwer gewichtete Einzelleistungen wie Referate leben in der Excel-Mappe, nicht hier)
 //   Aktivitätsquote = beteiligte Termine / Kurstermine
@@ -17,9 +20,37 @@ const SOMI_TYPEN = new Set(['+', 'o', '-']);
 const TERMIN_TYPEN = new Set(['+', 'o', '-', 'note', 'mat', 'ipad_fehlt', 'ipad_leer',
   'lernzeit', 'fehlt_e', 'fehlt_u', 'fehlt_o', 'versp', 'notiz', 'ha', 'verweigert']);
 
+// Eine Rücknahme (typ 'storno') hebt auch die Wirkung auf, die das zurückgenommene Event selbst hatte:
+// Wer eine Klärung (fehlt_e mit stornoVon → fehlt_o) rückgängig macht, bekommt die offene Fehlzeit zurück —
+// vorher war sie danach ganz verschwunden (Prüfer 2026-09-29). Klärungs-Ketten (u → e) bleiben, wie sie sind.
+// Gleiche Regel in export_mappe.py wirksame_events (Brücke) — beide ändern sich nur zusammen.
 function wirksameEvents(events) {
-  const storniert = new Set(events.filter(e => e.stornoVon).map(e => e.stornoVon));
+  const zurueck = new Set(events.filter(e => e.typ === 'storno' && e.stornoVon).map(e => e.stornoVon));
+  const storniert = new Set(events.filter(e => e.stornoVon && !zurueck.has(e.id)).map(e => e.stornoVon));
   return events.filter(e => !storniert.has(e.id));
+}
+
+// Ein Zeichen je Stunde (Zero 2026-09-29: „ich vergebe nicht 2 mal +“): ＋/o/−, direkte Note (📊, ⭐) und ⊘
+// schließen sich an einem Termin aus. Die neue Bewertung trägt stornoVon auf die bisherige — die Rücknahme-Regel
+// oben bringt sie beim Rückgängig zurück, die Brücke rechnet ohne Änderung mit. Notiz, Fehlzeit, Material usw. bleiben.
+const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
+// Was beim Einbuchen von `neu` mit den bisherigen Bewertungen desselben Termins geschieht (null = nichts):
+//   ersetzt → die jüngste, auf sie zeigt neu.stornoVon (↶ bringt sie zurück)
+//   still   → ältere Doppelte (frühere Versionen, zwei Geräte), bekommen je einen Storno
+//   notiz   → Begründungen reisen mit (⊘ trägt seine Notiz im Event), Notizen bleiben unberührt
+function ersetzungFuer(events, neu) {
+  if (!BEWERTUNG_TYPEN.has(neu.typ) || neu.stornoVon) return null;
+  const alt = wirksameEvents(events)
+    .filter(e => BEWERTUNG_TYPEN.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu))
+    .sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+  if (!alt.length) return null;
+  const ersetzt = alt.pop();
+  let notiz = neu.notiz ? String(neu.notiz).trim() : '';   // „includes“: ein ↷ Wiederherstellen bringt den Text schon mit
+  for (const a of [ersetzt, ...alt]) {
+    const t = a.notiz ? String(a.notiz).trim() : '';
+    if (t && !notiz.includes(t)) notiz = notiz ? notiz + ' · ' + t : t;
+  }
+  return { ersetzt, still: alt, notiz };
 }
 
 function terminVon(e) {
@@ -50,7 +81,10 @@ function verdichte(kursEvents, schuelerNr, opt) {
     wirksam.filter(e => TERMIN_TYPEN.has(e.typ)).map(terminVon));
   const meine = wirksam.filter(e => e.schuelerNr === schuelerNr);
   const somi = meine.filter(e => SOMI_TYPEN.has(e.typ));
-  const direkte = meine.filter(e => e.typ === 'note');
+  // Direkte Noten, die im Notenmodus des Kurses nicht lesbar sind (Punkte ↔ Drittel nach einem Wechsel, Importe),
+  // werden übersprungen statt die ganze Auswertung abzubrechen (Prüfer 2026-09-29: Liste und Vollseite warfen).
+  const lesbar = e => { try { noteAlsWert(e.wert, profil); return true; } catch { return false; } };
+  const direkte = meine.filter(e => e.typ === 'note' && lesbar(e));
   const beteiligt = new Set(
     meine.filter(e => SOMI_TYPEN.has(e.typ) || e.typ === 'note').map(terminVon));
 
@@ -112,12 +146,12 @@ function verdichte(kursEvents, schuelerNr, opt) {
   let vorschlag = null;
   if (!lb && (somi.length > 0 || direkte.length > 0 || sechsWirkt)) {
     if (profil === 'sek2') {
-      const ereignis = somi.length ? 9 + 6 * bilanz.score : null;
+      const ereignis = somi.length ? 8 + 5 * bilanz.score : null;
       const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek2'), 0) / direkte.length : null;
       const p = klemmePunkte(misch(ereignis, 0, mittel));
       vorschlag = { wert: p, label: String(p) + ' P' };
     } else {
-      const ereignis = somi.length ? 3 - 2 * bilanz.score : null;
+      const ereignis = somi.length ? 3 - 5 / 3 * bilanz.score : null;
       const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek1'), 0) / direkte.length : null;
       const w = rundeAufDrittel(misch(ereignis, 6, mittel));
       vorschlag = { wert: w, label: wertZuLabel(w) };
@@ -140,8 +174,8 @@ function verdichte(kursEvents, schuelerNr, opt) {
 function regelText(profil, nSechs = 0) {
   const basis = 'score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen wie ein Termin';
   const kopf = profil === 'sek2'
-    ? 'Punkte-Vorschlag = 9 + 6·score (0–15) · '
-    : 'Noten-Vorschlag = 3 − 2·score (Drittelnoten) · ';
+    ? 'Punkte-Vorschlag = 8 + 5·score (＋ bis 13 P, − bis 3 P) · '
+    : 'Noten-Vorschlag = 3 − 5/3·score (＋ bis 1−, − bis 5+) · ';
   const sechsHinweis = nSechs > 0
     ? ' · ' + nSechs + ' Stunde' + (nSechs > 1 ? 'n' : '') + ' ohne bewertbare Leistung (unentsch./verweigert) als ' + (profil === 'sek2' ? '0 P' : '6') + ' termingewichtet'
     : '';
@@ -195,4 +229,4 @@ function notenAbstand(gesetzt, vorschlagWert, profil) {
   return profil === 'sek2' ? Math.abs(g - vorschlagWert) / 3 : Math.abs(g - vorschlagWert);
 }
 
-export { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
+export { verdichte, wirksameEvents, ersetzungFuer, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
