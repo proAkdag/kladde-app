@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-dev-v1.9.2-1790715860';
+const CACHE_NAME = 'kladde-dev-v1.10.0-1790720590';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -18,32 +18,34 @@ const ASSETS = [
   './icon-512.png',
   './fonts/HankenGrotesk-subset.woff2',
   './fonts/Newsreader-subset.woff2',
-  './css/kladde.css?v=1.9.2.1790715860',
-  './js/app.mjs?v=1.9.2.1790715860',
-  './logic/skalen.mjs?v=1.9.2.1790715860',
-  './logic/verdichtung.mjs?v=1.9.2.1790715860',
-  './logic/merge.mjs?v=1.9.2.1790715860',
-  './logic/container.mjs?v=1.9.2.1790715860',
-  './logic/parser.mjs?v=1.9.2.1790715860',
-  './logic/zeitmodell.mjs?v=1.9.2.1790715860',
-  './logic/rasterVorlagen.mjs?v=1.9.2.1790715860',
-  './logic/autowahl.mjs?v=1.9.2.1790715860',
-  './logic/migration.mjs?v=1.9.2.1790715860',
-  './logic/kursStatus.mjs?v=1.9.2.1790715860',
-  './logic/kursSort.mjs?v=1.9.2.1790715860',
-  './logic/teilnehmer.mjs?v=1.9.2.1790715860',
-  './logic/bericht.mjs?v=1.9.2.1790715860',
-  './logic/biometrie.mjs?v=1.9.2.1790715860',
-  './logic/auswahl.mjs?v=1.9.2.1790715860',
-  './logic/fachfarben.mjs?v=1.9.2.1790715860',
-  './logic/mappe.mjs?v=1.9.2.1790715860',
-  './logic/xlsx.mjs?v=1.9.2.1790715860'
+  './css/kladde.css?v=1.10.0.1790720590',
+  './js/app.mjs?v=1.10.0.1790720590',
+  './logic/skalen.mjs?v=1.10.0.1790720590',
+  './logic/verdichtung.mjs?v=1.10.0.1790720590',
+  './logic/merge.mjs?v=1.10.0.1790720590',
+  './logic/container.mjs?v=1.10.0.1790720590',
+  './logic/parser.mjs?v=1.10.0.1790720590',
+  './logic/zeitmodell.mjs?v=1.10.0.1790720590',
+  './logic/rasterVorlagen.mjs?v=1.10.0.1790720590',
+  './logic/autowahl.mjs?v=1.10.0.1790720590',
+  './logic/migration.mjs?v=1.10.0.1790720590',
+  './logic/kursStatus.mjs?v=1.10.0.1790720590',
+  './logic/kursSort.mjs?v=1.10.0.1790720590',
+  './logic/teilnehmer.mjs?v=1.10.0.1790720590',
+  './logic/bericht.mjs?v=1.10.0.1790720590',
+  './logic/biometrie.mjs?v=1.10.0.1790720590',
+  './logic/auswahl.mjs?v=1.10.0.1790720590',
+  './logic/fachfarben.mjs?v=1.10.0.1790720590',
+  './logic/mappe.mjs?v=1.10.0.1790720590',
+  './logic/xlsx.mjs?v=1.10.0.1790720590'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(ASSETS))
+      // cache:'reload' — sonst kann './' bzw. './index.html' (ohne ?v) aus dem HTTP-Cache kommen (Pages ~10 min) und
+      // eine ALTE Seite mit neuem JavaScript in den Offline-Cache legen (Prüfer 2026-09-29)
+      .then((cache) => cache.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
   );
 });

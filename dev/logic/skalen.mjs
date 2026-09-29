@@ -46,9 +46,13 @@ function wertZuLabel(wert) {
   return null;
 }
 
-// Auf das Drittelnoten-Raster runden und in den Noten-Bereich [1, 6] klemmen
+// Auf das Drittelnoten-Raster runden und in den Noten-Bereich [1, 6] klemmen.
+// Die Palette kennt zwischen 5- (16/3) und 6 keinen Wert: 17/3 hätte kein Label, und „Sammeln" setzte dann
+// still eine 3 (Prüfer 2026-09-29). Darum dort auf den nächsten Palettenwert — Gleichstand genau bei 17/3
+// wie das Mappen-LOOKUP (wert − ε) zugunsten von 5-.
 function rundeAufDrittel(wert) {
-  const w = Math.round(wert * 3) / 3;
+  const r = Math.round(wert * 3);
+  const w = r === 17 ? (wert > 17 / 3 ? 6 : 16 / 3) : r / 3;
   return Math.min(6, Math.max(1, w));
 }
 

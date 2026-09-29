@@ -143,6 +143,15 @@
   .lg-swatch { display: inline-block; width: 24px; height: 15px; border-radius: 4px; background: var(--karte); border: 1px solid var(--kante); }
   .lg-swatch.plus { background: var(--tile-plus); }
   .lg-swatch.minus { background: var(--tile-minus); }
+  .lg-swatch.fehlt { background: var(--tile-fehlt); opacity: .55; }
+  /* v1.10.0: drei Spalten Stempel → Marke → Bedeutung (gegliedert wie die Rail) */
+  .lg-zeile.drei { grid-template-columns: 34px 52px 1fr; }
+  .lg-spalten { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--leise); margin-top: 6px; }
+  .lg-stempel { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--kante); background: var(--karte2);
+    display: grid; place-items: center; font-size: 16px; font-weight: 700; }
+  .lg-stempel svg { width: 17px; height: 17px; }
+  .lg-sym > svg { width: 20px; height: 20px; }
+  .lg-hinweis { font-size: 12.5px; color: var(--leise); margin: 2px 0 0; line-height: 1.45; }
 
   /* ── Sitzplan: Name + Tages-Stand als Symbole/Farben · Beamer-Toggle versteckt Werte ── */
   #plan-wrap { overflow: auto; }
@@ -711,7 +720,6 @@
   .s-vorschlag { font-weight: 700; }
   .s-anlass { color: var(--leise); font-size: 12.5px; }
   .s-anlass.warn { color: var(--warn); }
-  .s-filter { padding-top: 0; }
   /* Gegenwartszeile über dem Zeitstrahl (C3) */
   .zs-gegenwart { font-size: 13px; color: var(--leise); margin: 6px 0 4px; }
   .zs-gegenwart b { color: var(--text); }
@@ -732,10 +740,6 @@
   .notiz-zeile { display: flex; gap: 12px; padding: 7px 0; border-top: 1px solid var(--kante); font-size: 13.5px; align-items: baseline; }
   .notiz-zeile:first-child { border-top: none; }
   .notiz-datum { flex: 0 0 76px; color: var(--leise); font-variant-numeric: tabular-nums; font-size: 12.5px; }
-  /* Schüler-Suchfeld (Studio) */
-  .s-suche { margin-bottom: 12px; }
-  .s-suche input { width: 100%; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; min-height: 44px; font-size: 16px; }
-  .s-suche input:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
   /* Kurse = Karten-Grid (Band · Serif-Name · echter Status-Badge · dashed Anlege-Karte) */
   .kurse-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
   .kurse-kopf .kk-sj { color: var(--leise); font-size: 13px; }
@@ -796,7 +800,6 @@
 /* ── v1.7.0 · Übersichten (Noten · Termine · Fehlzeiten) · Druck · Ferien · Wisch-Malen (Zero 2026-09-02) ── */
 @layer views {
   .s-modus { margin-bottom: 4px; }
-  .s-sort { padding-top: 0; align-items: center; }
   .s-abw { color: var(--warn); font-size: 11px; margin-left: 6px; font-weight: 600; }
   .druck-kopf { font-size: 13px; color: var(--leise); margin: 4px 0 8px; }
   .druck-kopf b { color: var(--text); }
@@ -822,7 +825,7 @@
 }
 /* Druck (Punkt 9): nur der Inhalt der Ansicht, schwarz auf weiß, ohne Shell — window.print() aus den Tabellen */
 @media print {
-  .sidebar, header.app, .rail, #banner, #beamer-hinweis, #undo-chip, #toast, .zr-leiste, .s-suche, .btn-reihe, .kurse-fuss, #datum-streifen, .tafel { display: none !important; }
+  .sidebar, header.app, .rail, #banner, #beamer-hinweis, #undo-chip, #toast, .zr-leiste, .s-kopf, .s-seite, .btn-reihe, .kurse-fuss, #datum-streifen, .tafel { display: none !important; }
   html, body { height: auto; background: #fff !important; color: #000 !important; }
   .shell, .hauptspalte { display: block; overflow: visible !important; height: auto; }
   main { overflow: visible !important; padding: 0 !important; }
@@ -874,3 +877,74 @@
   #lock-bio { min-width: 220px; }
 }
 @layer anim { @media (hover: hover) and (pointer: fine) { .dlg-x:hover { border-color: var(--band); color: var(--text); } } }
+
+/* ── v1.10.0 · Redesign (Zero 2026-09-29): Schüler wie Heute · Aufklappen · große Deck-Knöpfe · Ziele ≥ 44 px ── */
+@layer views {
+  /* Schüler: Liste links, offene Fehlzeiten rechts als Spalte wie die Stempel-Rail */
+  #view-schueler { max-width: 1180px; }
+  .s-layout { display: flex; gap: 18px; align-items: flex-start; }
+  .s-haupt { flex: 1 1 auto; min-width: 0; }
+  .s-seite { flex: 0 0 272px; position: sticky; top: 0; max-height: calc(100dvh - 150px); overflow-y: auto; }
+  .s-seite .klaer-zeile { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
+  .s-seite .klaer-wer { display: flex; flex-direction: column; gap: 2px; }
+  .s-seite .klaer-wer small { color: var(--leise); font-size: 12.5px; }
+  .s-seite .klaer-zeile.alt .klaer-wer small { color: var(--warn); }
+  .s-seite .klaer-btns .btn { flex: 1 1 0; padding: 2px 6px; }
+  @media (max-width: 900px) {
+    .s-layout { flex-direction: column; align-items: stretch; }
+    .s-seite { order: -1; flex: none; position: static; max-height: 40vh; }
+  }
+  /* Kopf: Suche + drei Auswahllisten in einer Zeile */
+  .s-kopf { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .s-such-feld { flex: 1 1 180px; min-width: 0; min-height: 44px; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; font-size: 16px; }
+  .s-wahl { flex: 0 0 auto; min-height: 44px; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 0 12px; font: inherit; font-size: 16px; }
+  .s-wahl.an { border-color: var(--band); color: var(--band-text); }
+  .s-such-feld:focus-visible, .s-wahl:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
+  /* Aufklappen: Höhe über grid-template-rows (animiert auch in Safari — interpolate-size kann nur Chromium) */
+  .s-auf { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .18s ease-out; }
+  .s-block.offen .s-auf { grid-template-rows: 1fr; }
+  .s-auf-innen { overflow: hidden; min-height: 0; }
+  .s-auf-inhalt { padding: 2px 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .s-auf-zeile { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; }
+  .s-auf-zeile .balken { flex: 0 1 200px; min-width: 80px; }
+  .s-auf-zahl { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .qn-grid.klein { gap: 8px; margin: 0; }
+  .qn-zelle.klein { min-height: 64px; padding: 6px; }
+  .qn-zelle.klein .qn-note { font-size: 20px; }
+  .s-auf .klaer-zeile { border-top: none; padding: 0; }
+  .s-auf-zuletzt { font-size: 13px; color: var(--leise); }
+  .s-auf-aktionen { justify-content: space-between; margin-top: 0; }
+  .s-item .pfeil { transition: transform .18s ease-out; }
+  .s-item[aria-expanded="true"] .pfeil { transform: rotate(90deg); }
+  @media (prefers-reduced-motion: reduce) { .s-auf, .s-item .pfeil { transition: none; } }
+  /* Deck: Bewertung in Daumengröße unter der Karte, „weiter" abgesetzt darunter */
+  .deck-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 460px; margin: 12px auto 0; }
+  .deck-btns .btn { min-height: 72px; font-size: 28px; border-radius: 16px; }
+  .deck-btns [data-deck="skip"] { grid-column: 1 / -1; min-height: 52px; font-size: 16px; }
+  /* Kurs-Menü „⋯": Gruppen + Gefahr abgesetzt */
+  .kd-kopf { margin-top: 14px; }
+  .kd-fuss { justify-content: space-between; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--kante); }
+  /* Touch-Ziele ≥ 44 px (gemessen vorher: Chips 31, Klär-Knöpfe 32, Deck-Optionen 40) */
+  .zr-chip { min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; }
+  .u-btn-klein { min-height: 44px; }
+  .deck-optionen button { min-height: 44px; }
+  .datum-streifen .tg-chip, .sp-tagchips .tg-chip { min-height: 44px; }
+  .datum-streifen button.ds-icon { width: 44px; min-height: 44px; }
+  .kk-mehr { width: 44px; height: 44px; top: 6px; right: 6px; }
+  .seg button { min-height: 44px; }
+  /* Soft-Lock: offener Dialog im Top Layer wird beim Verlassen der App unsichtbar (App-Umschalter-Bild) */
+  dialog.verdeckt, dialog.verdeckt::backdrop { visibility: hidden; }
+}
+/* ── Zufall (Zero 2026-09-29: „schön aber kurz animiert"): Lichtlauf über ein paar Kacheln, wird langsamer,
+   landet mit einem Puls (≈ 0,6 s). anim-Layer gewinnt über die Tagesstand-Farben (views). ── */
+@layer anim {
+  /* an: sofort (Sprünge ab 60 ms — eine Transition käme nie an) · aus: normale Kachel-Transition = weiche Leuchtspur */
+  #plan .kachel.zufall-lauf { outline: 2px solid var(--band); outline-offset: -2px; transition: none;
+    background-color: color-mix(in oklab, var(--band) 22%, var(--karte)); transform: scale(1.04); }
+  @keyframes kladde-treffer {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 color-mix(in oklab, var(--band) 75%, transparent); }
+    35%  { transform: scale(1.08); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 16px color-mix(in oklab, var(--band) 0%, transparent); }
+  }
+  #plan .kachel.zufall-treffer { animation: kladde-treffer .5s cubic-bezier(.2,0,0,1); }
+}

@@ -1,23 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.9.2.1790715860';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.9.2.1790715860';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.9.2.1790715860';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.9.2.1790715860';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.9.2.1790715860';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.9.2.1790715860';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.9.2.1790715860';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.9.2.1790715860';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.9.2.1790715860';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.9.2.1790715860';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.9.2.1790715860';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.9.2.1790715860';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.9.2.1790715860';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.9.2.1790715860';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.9.2.1790715860';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.9.2.1790715860';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.9.2.1790715860';
-const APP_VERSION = '1.9.2';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.10.0.1790720590';
+import { verdichte, wirksameEvents, ersetzungFuer, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.10.0.1790720590';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.10.0.1790720590';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.10.0.1790720590';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.10.0.1790720590';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.10.0.1790720590';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.10.0.1790720590';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.10.0.1790720590';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.10.0.1790720590';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.10.0.1790720590';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.10.0.1790720590';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.10.0.1790720590';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.10.0.1790720590';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.10.0.1790720590';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.10.0.1790720590';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.10.0.1790720590';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.10.0.1790720590';
+const APP_VERSION = '1.10.0';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -45,14 +45,19 @@ function idbPut(k,v){ return mitDb().then(d=>new Promise((res,rej)=>{ const tx=d
 function idbDel(k){ return mitDb().then(d=>new Promise((res,rej)=>{ const tx=d.transaction('meta','readwrite'); tx.objectStore('meta').delete(k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); })); }
 
 let speicherKette=Promise.resolve(); // Write-through seriell (keine Races)
+// Letzter Speicherfehler (null = alles gespeichert). Solange gesetzt: nicht sperren (der RAM-Stand wäre weg) und nicht
+// exportieren (die Datei hätte einen alten Stand) — vorher überdeckten Sperren/Import die Warnung (Prüfer 2026-09-29)
+let speicherFehler=null;
 function speichern(){
   if(!vault||!dekKey||!containerKopf) return speicherKette;
   const snapshot=JSON.stringify(vault);
+  const key=dekKey, kopf=containerKopf;   // beim Aufruf festhalten — sperren() nullt die Variablen, bevor die Kette läuft
   // v2-Save: reines AES-GCM mit dem DEK — KEIN KDF (gemessen 0,79 ms/Save statt ~1 KDF/Tap)
   speicherKette=speicherKette
-    .then(()=>encodeContainerV2(JSON.parse(snapshot),dekKey,containerKopf))
+    .then(()=>encodeContainerV2(JSON.parse(snapshot),key,kopf))
     .then(blob=>idbPut('vault',blob))
-    .catch(err=>{ console.error('[kladde] speichern',err); toast('⚠ Speichern fehlgeschlagen: '+err.message); });
+    .then(()=>{ speicherFehler=null; })
+    .catch(err=>{ speicherFehler=err; console.error('[kladde] speichern',err); toast('⚠ Speichern fehlgeschlagen: '+err.message+' — nicht sperren, erst Speicher freimachen',10000); });
   return speicherKette;
 }
 function leererVault(){
@@ -277,11 +282,12 @@ async function bioEinrichten(){
 }
 async function bioEntfernen(){ await idbDel('bio'); toast('Fingerabdruck entfernt — es gilt wieder nur die Passphrase'); renderMehr(); }
 // Passphrase nachfragen (nach Fingerabdruck-Unlock für Import/Pull/Einrichtung) → Promise<string|null>
-function passphraseAbfragen(titel){
-  return new Promise(res=>{
+function passphraseAbfragen(titel,hinweis){
+  return new Promise(resRoh=>{
+    const res=aufloesenBeiClose(resRoh,null);
     const inp=el('input',{type:'password',autocomplete:'off',class:'u-w170'});
     dlgZeigenEl(el('h3',{},titel||'Passphrase'),
-      el('p',{class:'u-hinweis'},'Nach dem Öffnen per Fingerabdruck kennt die Kladde deine Passphrase nicht — für diesen Schritt wird sie einmal gebraucht.'),
+      el('p',{class:'u-hinweis'},hinweis||'Nach dem Öffnen per Fingerabdruck kennt die Kladde deine Passphrase nicht — für diesen Schritt wird sie einmal gebraucht.'),
       el('div',{class:'zeile'},el('span',{},'Passphrase'),el('span',{},inp)),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:()=>{ const v=inp.value; dlgZu(); res(v||null); }},'Weiter'),
@@ -290,19 +296,34 @@ function passphraseAbfragen(titel){
     setTimeout(()=>inp.focus(),60);
   });
 }
+// Promise-Dialoge: X/Escape schließen #dlg ohne Knopf — dann mit `beiClose` auflösen, sonst hängt der Aufrufer
+// (Stapel-Import wartete ewig · Prüfer 2026-09-29). `close` feuert erst als späterer Task: öffnet der Aufrufer sofort
+// den nächsten Dialog, darf das verspätete Ereignis dessen Promise nicht treffen — darum nur bei !open, und der
+// Listener geht mit dem ersten Auflösen weg. Nach dlgZeigen* aufrufen; liefert das zu benutzende res.
+function aufloesenBeiClose(res,beiClose){
+  const d=$('dlg'); let fertig=false;
+  const fin=v=>{ if(fertig) return; fertig=true; d.removeEventListener('close',hoer); res(v); };
+  const hoer=()=>{ if(!d.open) fin(beiClose); };
+  setTimeout(()=>{ if(!fertig) d.addEventListener('close',hoer); },0);   // erst NACH dem Öffnen scharf (ein noch anstehendes close des Vorgängers verpufft)
+  return fin;
+}
 function sperren(){
   // Hard-Lock: RAM-Wipe + UI-Hygiene (§5) — nach dem Sperren darf kein Name mehr im DOM stehen
+  // Sitzplan-Editor ZUERST räumen, solange der Tresor noch da ist: danach warf kompaktiere() auf vault=null, der Fehler
+  // wurde geschluckt und die Namen-Schiene blieb hinter dem Lock im DOM (Prüfer 2026-09-29). Netz: Leiste immer entfernen.
+  if(editorCleanup){ try{ editorCleanup(); }catch(err){ console.error('[kladde] Editor beim Sperren',err); } }
+  $('sp-editor-bar')?.remove(); editorAktiv=false; editorCleanup=null; document.body.classList.remove('sp-edit','sp-dragging');
   vault=null; pinRam=null; dekKey=null; containerKopf=null;
-  aktiverSchueler=null; offenerSchueler=null; deckListe=[]; deckVerlauf=[]; undoStack.length=0;
+  if(tabSperreFrei){ tabSperreFrei(); tabSperreFrei=null; }   // anderer Tab darf jetzt entsperren
+  aktiverSchueler=null; offenerSchueler=null; offeneZeile=null; deckListe=[]; deckVerlauf=[]; undoStack.length=0;
   stempelAus(); // RAM-Wipe: kein scharfer Stempel/Modus-Rahmen hinter dem Lock
-  if(editorCleanup){ try{ editorCleanup(); }catch{} } // Sitzplan-Editor-Leiste + Listener räumen
   try{ dlgZu(); }catch{}
   $('dlg').innerHTML='';
   // Views leeren — der Lock verdeckt nur visuell; Find-in-Page/Screenreader läsen die Namen sonst weiter
   $('plan').replaceChildren(); $('datum-streifen').replaceChildren(); $('rail').replaceChildren();
   const op=$('ohne-platz'); if(op) op.remove();
   $('deck-karte').replaceChildren(); $('deck-fortschritt').textContent='';
-  $('deck-optionen').replaceChildren(); $('deck-verlauf').replaceChildren(); $('deck-verlauf').classList.add('hidden');
+  $('deck-optionen').replaceChildren(); $('deck-verlauf').replaceChildren();   // nur leeren — versteckt blieb „Diese Runde“ bis zum Neuladen weg (Prüfer 2026-09-29)
   ['schueler','kurse','mehr'].forEach(v=>$('view-'+v).replaceChildren());
   $('kurs-name').textContent='Kein Kurs'; $('kurs-slot').textContent='';
   $('toast').classList.add('hidden'); $('toast').textContent='';
@@ -318,18 +339,38 @@ function unterrichtAktiv(){
   const j=new Date(); const wtag=((j.getDay()+6)%7)+1; if(wtag>5) return false;
   if(istFerien(zm,heuteIso())) return false;   // Ferien: kein Unterricht, normaler Auto-Lock
   const sek=j.getHours()*3600+j.getMinutes()*60+j.getSeconds();
-  return resolveBloecke(zm,wtag,heuteIso()).some(b=>b.startSek<=sek&&sek<=b.endeSek+600); // Kurztag: Auto-Lock-Pause endet mit dem 45er-Tag (S256b)
+  const h=heuteIso(), imFenster=b=>b.startSek<=sek&&sek<=b.endeSek+600;   // Kurztag: Auto-Lock-Pause endet mit dem 45er-Tag (S256b)
+  // Nur EIGENE Stunden (Wochenplan + Ausnahmen, Entfall zählt nicht) pausieren die Sperre — das Schulraster allein hielt die
+  // Kladde von 07:45 bis 16:18 offen, auch in der Freistunde im Lehrerzimmer (Prüfer 2026-09-29, gemessen). Ohne Wochenplan
+  // bleibt das alte Raster-Verhalten.
+  const plan=wochenplanAktiv();
+  if(!plan.length) return resolveBloecke(zm,wtag,h).some(imFenster);
+  const kontext={zeitmodell:zm,wochenplan:plan,ausnahmen:vault.stamm.ausnahmeSlots||[]};
+  return resolveBloecke(zm,wtag,h).some(b=>{ if(!imFenster(b)) return false; const s=slotFuerBlock(h,wtag,b.blockNr,kontext); return !!s&&!s.entfall; });
 }
-function entsperrt(){
+// Nur EIN Tab darf entsperrt sein: jeder schreibt beim Verlassen seinen ganzen Stand — zwei offene Tabs überschrieben
+// sich still (Prüfer 2026-09-29). Web Lock beim Entsperren, frei beim Sperren/Schließen. Ohne navigator.locks: wie bisher.
+let tabSperreFrei=null;
+function tabSperreHolen(){
+  if(!navigator.locks||tabSperreFrei) return Promise.resolve(true);
+  return new Promise(ok=>{ navigator.locks.request('kladde-vault',{ifAvailable:true},lock=>{
+    if(!lock){ ok(false); return; }
+    ok(true); return new Promise(frei=>{ tabSperreFrei=frei; });
+  }).catch(()=>ok(true)); });
+}
+async function entsperrt(){
+  if(!(await tabSperreHolen())){
+    sperren(); toast('Die Kladde ist in einem anderen Tab schon offen — dort weiterarbeiten oder den anderen Tab schließen.',9000); return;
+  }
   $('lock').classList.add('hidden');
   zuletztAktiv=Date.now();
   clearInterval(lockTimer);
   lockTimer=setInterval(()=>{
     if(Date.now()-zuletztAktiv<=lockMinuten()*60*1000) return;
     if(unterrichtAktiv()&&localStorage.getItem('kladde_lock_unterricht')!=='0') return; // pausiert; Soft-Lock deckt Verlassen
-    sperren();
+    speichern().then(sperrenWennGespeichert);   // erst sichern — ein gescheitertes Speichern darf der Auto-Lock nicht wegwischen
   },30*1000);
-  kursAutowahl(); renderAlles();
+  terminAufHeute(); kursAutowahl(); renderAlles();
   starteAutowahlTick();
   zeigeStartHinweise();
 }
@@ -339,19 +380,30 @@ function entsperrt(){
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'&&vault){
     $('soft-lock').classList.remove('hidden'); // synchron, animationsfrei
+    $('dlg').classList.add('verdeckt');        // ein offener Dialog liegt im Top Layer ÜBER der Abdeckung → im App-Umschalter-Bild (Prüfer 2026-09-29)
     speichern();
-    if(localStorage.getItem('kladde_lock_sofort')==='1') speicherKette.then(sperren);
+    if(localStorage.getItem('kladde_lock_sofort')==='1') speicherKette.then(sperrenWennGespeichert);
   } else if(document.visibilityState==='visible'&&vault){
-    $('soft-lock').classList.add('hidden');
-    kursAutowahl(); // Rückkehr in die App: Block könnte gewechselt haben (Handwahl hält bis Blockwechsel)
-    if(aktView==='heute') renderHeute();
+    $('soft-lock').classList.add('hidden'); $('dlg').classList.remove('verdeckt');
+    // Rückkehr in die App: Block könnte gewechselt haben (Handwahl hält bis Blockwechsel) — bei Wechsel JEDE Ansicht neu
+    terminAufHeute();
+    if(!editorAktiv&&kursAutowahl()){ terminDatum=heuteIso(); terminNachtrag=false; renderAlles(); const k=kurs(); if(k) toast('→ '+k.name+' · '+k.fach); }
+    else renderAlles();   // auch ohne Kurswechsel: ein neuer Tag muss überall ankommen
   }
 });
 window.addEventListener('pagehide',()=>{ if(vault) speichern(); });
-$('btn-lock').addEventListener('click',()=>{ speichern().then(sperren); });
+$('btn-lock').addEventListener('click',()=>{ speichern().then(sperrenWennGespeichert); });
+function sperrenWennGespeichert(){
+  if(speicherFehler){ toast('⚠ Nicht gesperrt: das letzte Speichern ist fehlgeschlagen ('+speicherFehler.message+'). Sonst gingen die Einträge seitdem verloren.',10000); return; }
+  sperren();
+}
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverKursId=null, terminDatum=heuteIso(), aktiverSchueler=null, undoStack=[];
+// Nachtrag (bewusst gewählter Termin) ≠ veraltetes „heute": ohne diesen Merker gingen nach einer Nacht im Speicher
+// alle Stempel auf gestern, und ein Nachtrag überlebte den automatischen Kurswechsel (Prüfer 2026-09-29)
+let terminNachtrag=false;
+function terminAufHeute(){ if(!terminNachtrag) terminDatum=heuteIso(); }
 function heuteIso(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function kurs(){ return vault?.stamm.kurse.find(k=>k.id===aktiverKursId)||null; }
 function kursSchueler(k){ return (vault.stamm.schueler[k.id]||[]).filter(s=>!s.inaktiv); } // Deaktivierte (Tombstone) bleiben im Stamm, aber aus allen Listen/Plänen
@@ -362,15 +414,32 @@ function addEvent(typ,schuelerNr,extra={}){
   const k=kurs();
   if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return null; } // P3.3
   const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
+  // Direkt entschuldigt/unentschuldigt an einem Tag mit offenem ∅ = Klärung dieses ∅ — sonst blieb es offen stehen
+  // (Klärungsliste, Kurs-Badge, Kurzbericht „1× ungeklärt“ UND „1× entschuldigt“; Prüfer 2026-09-29)
+  if((typ==='fehlt_e'||typ==='fehlt_u')&&!e.stornoVon){
+    const o=wirksameEvents(vault.events).find(x=>x.typ==='fehlt_o'&&x.kursId===e.kursId&&x.schuelerNr===schuelerNr&&x.datum===e.datum);
+    if(o) e.stornoVon=o.id;
+  }
+  // Ein Zeichen je Stunde (Zero 2026-09-29): die neue Bewertung ersetzt die bisherige, ↶ bringt sie zurück (logic/verdichtung)
+  const ers=ersetzungFuer(vault.events,e);
+  if(ers){
+    for(const a of ers.still) vault.events.push(stornoEreignis(a));
+    e.stornoVon=ers.ersetzt.id;
+    if(ers.notiz) e.notiz=ers.notiz;
+  }
   vault.events.push(e);
   undoStack.push(e); if(undoStack.length>50) undoStack.shift();
   speichern();
-  zeigeUndo(e);
+  zeigeUndo(e,ers?ers.ersetzt:null);
   return e;
 }
+function stornoEreignis(e){ return {id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id}; }
 function stornoVon(e){
-  const s={id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id};
-  vault.events.push(s); speichern();
+  // Archiv ist schreibgeschützt — auch für Rücknahmen (vorher: addEvent schützte, ↶/„Irrtum" nicht · Prüfer 2026-09-29)
+  const k=vault.stamm.kurse.find(x=>x.id===e.kursId);
+  if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return false; }
+  vault.events.push(stornoEreignis(e)); speichern();
+  return true;
 }
 const TYP_LABEL={'+':'＋','o':'o','-':'−',mat:'Material',ipad_fehlt:'iPad fehlt',ipad_leer:'iPad leer',lernzeit:'Lernzeit/HA',ha:'HA',fehlt_o:'abwesend',fehlt_e:'fehlt (e)',fehlt_u:'fehlt (u)',versp:'zu spät',notiz:'Notiz',note:'Note',quartalsnote:'Quartalsnote',verweigert:'verweigert (6)'};
 // Kompaktes Symbol eines Eintrags (für die entfernbaren Heute-Chips in der Aktionsbar)
@@ -386,10 +455,17 @@ function chipZeig(ikon,text,onTap){
   chip._t2=setTimeout(()=>{ chip.classList.add('hidden'); chip.classList.remove('weg'); },6050);
   chip.onclick=()=>{ clearTimeout(chip._t1); clearTimeout(chip._t2); chip.classList.remove('weg'); onTap(); };
 }
-function zeigeUndo(e){
+function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):(TYP_LABEL[e.typ]||e.typ); }
+function zeigeUndo(e,ersetzt){
   const s=schuelerVonNr(e.schuelerNr);
-  chipZeig('rueck',(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ),
-    ()=>{ stornoVon(e); toast('Rückgängig: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); zeigeRedo(e); });
+  // Ersetzen sichtbar machen (Mechanik erklärt sich selbst): „o → ＋“ — ein Tap bringt das alte Zeichen zurück
+  chipZeig('rueck',(s?s.vorname:'Nr '+e.schuelerNr)+': '+(ersetzt?eintragLabel(ersetzt)+' → ':'')+eintragLabel(e),
+    ()=>{ stornoVon(e); toast('Rückgängig: '+eintragLabel(e)+wiederDa(e)); renderAlles(); zeigeRedo(e); });   // alle Ansichten — Deck/Schüler blieben sonst veraltet
+}
+// Nach einer Rücknahme: was das zurückgenommene Event ersetzt oder geklärt hatte, gilt wieder („— wieder o“)
+function wiederDa(e){
+  const w=e.stornoVon?wirksameEvents(vault.events).find(x=>x.id===e.stornoVon):null;
+  return w?' — wieder '+eintragLabel(w):'';
 }
 // Storniertes Original mit einem Tap wieder einbuchen — append-only bleibt gewahrt (kein Löschen,
 // der Storno bleibt im Log; addEvent stempelt id/ts frisch, alle Sachfelder reisen mit).
@@ -400,7 +476,7 @@ function bucheErneut(e){
 function zeigeRedo(e){
   const s=schuelerVonNr(e.schuelerNr);
   chipZeig('wieder',(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ)+' wiederherstellen',
-    ()=>{ bucheErneut(e); toast('Wiederhergestellt: '+(TYP_LABEL[e.typ]||e.typ)); renderHeute(); });
+    ()=>{ bucheErneut(e); toast('Wiederhergestellt: '+(TYP_LABEL[e.typ]||e.typ)); renderAlles(); });
 }
 function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.nr===nr):null; }
 
@@ -480,7 +556,10 @@ let autowahlInfo=null;   // {kursId, blockNr, startSek, endeSek, quelle} — fü
 const HANDWAHL_KEY='kladde_handwahl';
 function handwahlLesen(){ try{ const h=JSON.parse(localStorage.getItem(HANDWAHL_KEY)||'null'); return h&&h.datum===heuteIso()?h:null; }catch{ return null; } }
 function handwahlSetzen(h){ if(h) localStorage.setItem(HANDWAHL_KEY,JSON.stringify(h)); else localStorage.removeItem(HANDWAHL_KEY); }
-function kursAutowahl(){
+// true = Kurs oder Teilgruppe haben gewechselt → die AKTIVE Ansicht muss neu gezeichnet werden. Sonst bucht eine
+// stehen gebliebene Deck-Karte oder Schülerliste nach dem Aufwachen in den neuen Kurs (Prüfer 2026-09-29).
+function kursAutowahl(){ const vk=aktiverKursId, vg=aktiveTeilgruppe; kursAutowahlKern(); return aktiverKursId!==vk||aktiveTeilgruppe!==vg; }
+function kursAutowahlKern(){
   if(!vault) return;
   const jetzt=new Date();
   const zm=(vault.stamm.zeitmodelle||[])[0];
@@ -489,7 +568,7 @@ function kursAutowahl(){
   if(hand&&!vault.stamm.kurse.some(k=>k.id===hand.kursId&&k.status!=='archiviert')){ handwahlSetzen(null); hand=null; }   // Kurs weg/archiviert → Handwahl gegenstandslos
   const handAnwenden=(bisSek)=>{ aktiverKursId=hand.kursId; aktiveTeilgruppe=hand.teilgruppe||null; $('kurs-slot').textContent=' · von Hand'+(bisSek!=null?' · bis '+formatZeit(bisSek):'')+(hand.teilgruppe?' · Gr. '+hand.teilgruppe:''); };
   if(zm){
-    const t=kursZurZeit(jetzt,{zeitmodell:zm,wochenplan:vault.stamm.wochenplan||[],ausnahmen:vault.stamm.ausnahmeSlots||[]});
+    const t=kursZurZeit(jetzt,{zeitmodell:zm,wochenplan:wochenplanAktiv(),ausnahmen:vault.stamm.ausnahmeSlots||[]});
     if(t){
       const wtag=((jetzt.getDay()+6)%7)+1;
       const heuteIsoStr=heuteIso();
@@ -524,15 +603,17 @@ function ersterKursId(){
   return w?w.id:null;
 }
 function kursIstArchiviert(id){ const k=vault.stamm.kurse.find(x=>x.id===id); return k&&k.status==='archiviert'; }
+// Wochenplan ohne Slots archivierter Kurse — der Schuljahreswechsel hängt die neuen Slots HINTER die alten, und
+// slotFuerBlock nimmt den ersten Treffer: ohne Filter wählte die Autowahl den Vorjahreskurs (Prüfer 2026-09-29).
+// Nur zum LESEN; der Wochenplan-Assistent bearbeitet weiter den vollständigen Plan (Archiv-Rückholung behält ihre Slots).
+function wochenplanAktiv(){ return (vault.stamm.wochenplan||[]).filter(w=>!w.kursId||!kursIstArchiviert(w.kursId)); }
 // 60-s-Tick (P2.5): nur bei sichtbarer Heute-Ansicht, nie über offene Dialoge hinweg
 let autowahlTick=null;
 function starteAutowahlTick(){
   clearInterval(autowahlTick);
   autowahlTick=setInterval(()=>{
-    if(!vault||document.visibilityState!=='visible'||aktView!=='heute'||$('dlg').open) return;
-    const vorher=aktiverKursId;
-    kursAutowahl();
-    if(aktiverKursId!==vorher){ mitUebergang(renderHeute); const k=kurs(); toast('→ '+(k?k.name+' · '+k.fach:'')); }
+    if(!vault||document.visibilityState!=='visible'||aktView!=='heute'||$('dlg').open||editorAktiv) return;   // nie im Sitzplan-Editor: Ziehen schriebe sonst in das Raster des neuen Kurses
+    if(kursAutowahl()){ terminDatum=heuteIso(); terminNachtrag=false; mitUebergang(renderHeute); const k=kurs(); toast('→ '+(k?k.name+' · '+k.fach:'')); }   // Kurswechsel beendet einen Nachtrag
   },60000);
 }
 let aktiveTeilgruppe=null;
@@ -555,7 +636,7 @@ $('kurs-chip').addEventListener('click',()=>{
       const zmA=(vault.stamm.zeitmodelle||[])[0];
       const jetzt=new Date(), wtJetzt=((jetzt.getDay()+6)%7)+1;
       if(zmA&&wtJetzt<=5){
-        const planJetzt=kursZurZeit(jetzt,{zeitmodell:zmA,wochenplan:vault.stamm.wochenplan||[],ausnahmen:[]}); // Plan OHNE Ausnahmen — welcher Block wäre dran?
+        const planJetzt=kursZurZeit(jetzt,{zeitmodell:zmA,wochenplan:wochenplanAktiv(),ausnahmen:[]}); // Plan OHNE Ausnahmen — welcher Block wäre dran?
         if(planJetzt){
           const heuteD=heuteIso();
           const a=ausnahmeFuer(heuteD,planJetzt.blockNr);
@@ -585,10 +666,12 @@ $('kurs-chip').addEventListener('click',()=>{
 });
 function oeffneDatum(){
   dlgZeigen('<h3>Termin wählen</h3><p class="u-leise u-fs14">Für Nacharbeit — Einträge gehen auf diesen Termin.</p>'+
-    '<input type="date" id="datum-in" value="'+terminDatum+'"><div class="btn-reihe"><button class="btn" data-ok>Übernehmen</button><button class="btn still" data-heute>Heute</button></div>',
+    '<input type="date" id="datum-in" value="'+terminDatum+'" max="'+heuteIso()+'"><div class="btn-reihe"><button class="btn" data-ok>Übernehmen</button><button class="btn still" data-heute>Heute</button></div>',
     el=>{
-      el.querySelector('[data-ok]').onclick=()=>{ terminDatum=el.querySelector('#datum-in').value||heuteIso(); dlgZu(); mitUebergang(renderHeute); };
-      el.querySelector('[data-heute]').onclick=()=>{ terminDatum=heuteIso(); dlgZu(); mitUebergang(renderHeute); };
+      el.querySelector('[data-ok]').onclick=()=>{ const d=el.querySelector('#datum-in').value||heuteIso();
+        if(d>heuteIso()){ toast('Nachtrag geht nur in die Vergangenheit'); return; }
+        terminDatum=d; terminNachtrag=d!==heuteIso(); dlgZu(); mitUebergang(renderHeute); };
+      el.querySelector('[data-heute]').onclick=()=>{ terminDatum=heuteIso(); terminNachtrag=false; dlgZu(); mitUebergang(renderHeute); };
     });
 }
 $('btn-beamer').addEventListener('click',()=>setzeBeamer(!beamerModus));
@@ -736,7 +819,7 @@ function datumStreifen(){
     (istHeute?'':'<span class="nachtrag-hinweis">Einträge gehen auf diesen Termin</span>')+chips+
     '<span class="rechts">'+
     (istHeute?'':'<button data-heute class="ds-txt">↩ Heute</button>')+
-    '<button data-zufall class="ds-icon" title="Zufällig – bevorzugt wer noch selten dran war">'+SVG_DS.zufall+'</button>'+
+    '<button data-zufall class="ds-icon" title="Zufällig – wer heute noch nichts hat, kommt eher dran; mit ＋ oder ⭐ selten">'+SVG_DS.zufall+'</button>'+
     '<button data-legende class="ds-icon" title="Symbol-Legende">'+SVG_DS.legende+'</button>'+
     '<button data-sitzplan class="ds-icon" title="Sitzplan bearbeiten">'+SVG_DS.sitzplan+'</button>'+
     '<button data-datum class="ds-icon" title="Anderer Termin (Nachtrag)">'+SVG_DS.datum+'</button></span>';
@@ -744,23 +827,45 @@ function datumStreifen(){
   el.querySelector('[data-zufall]').onclick=zufallsSchueler;
   el.querySelector('[data-legende]').onclick=zeigeLegende;
   el.querySelector('[data-sitzplan]').onclick=()=>{ if(aktiverKursId) sitzplanEditor(aktiverKursId); };
-  el.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{ aktiveTeilgruppe=b.dataset.tg||null; mitUebergang(renderHeute); });
-  const bh=el.querySelector('[data-heute]'); if(bh) bh.onclick=()=>{ terminDatum=heute; mitUebergang(renderHeute); };
+  // Gruppen-Chip = Handwahl (hält bis zum Blockwechsel) — sonst setzte der 60-s-Takt die Gruppe still zurück (Prüfer 2026-09-29)
+  el.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{ aktiveTeilgruppe=b.dataset.tg||null;
+    handwahlSetzen({kursId:aktiverKursId,teilgruppe:aktiveTeilgruppe,datum:heuteIso(),blockNr:autowahlInfo?.blockNr??null}); mitUebergang(renderHeute); });
+  const bh=el.querySelector('[data-heute]'); if(bh) bh.onclick=()=>{ terminDatum=heute; terminNachtrag=false; mitUebergang(renderHeute); };
 }
+// Zufall mit kurzem Lichtlauf (Zero 2026-09-29): der Rahmen springt über ein paar Kacheln, wird langsamer und
+// bleibt beim Gezogenen stehen (≈ 0,6 s). Die Wahl steht VOR dem Lauf fest — der Lauf ist nur Bühne.
+let zufallLaeuft=false;
 function zufallsSchueler(){
+  if(zufallLaeuft) return;
   const k=kurs(); if(!k) return;
   const alle=sichtbareSchueler(k); if(!alle.length) return;
   const info=new Map(alle.map(s=>[s.nr,standAmTermin(s.nr,terminDatum)]));
   const anwesend=alle.filter(s=>!info.get(s.nr).fehlt);      // Fehlende raus
   const pool=anwesend.length?anwesend:alle;
-  // Gewicht ∝ 1/(1+heutige Einträge): wer noch selten dran war, kommt eher (getestet: logic/auswahl.mjs)
-  const s=gewichteteWahl(pool,ss=>{ const st=info.get(ss.nr); return zufallsGewicht(anzahlBewertungen(st)); });
+  // Gewicht ∝ 1/(1+heutige Bewertungen), wer heute schon ＋ oder ⭐ hat, noch seltener (getestet: logic/auswahl.mjs)
+  const s=gewichteteWahl(pool,ss=>{ const st=info.get(ss.nr); return zufallsGewicht(anzahlBewertungen(st),st.plus>st.minus||st.best); });
   if(!s) return;
-  aktiverSchueler=s.nr;
-  renderHeute();
-  const kachel=$('plan').querySelector('.kachel[data-nr="'+s.nr+'"]');
-  if(kachel) kachel.scrollIntoView({block:'center',behavior:'smooth'});
-  toast('Zufall: '+anzeigeVorname(s)+' '+anzeigeNachname(s));
+  const kachelVon=nr=>$('plan').querySelector('.kachel[data-nr="'+nr+'"]');
+  const landen=()=>{
+    aktiverSchueler=s.nr;
+    renderHeute();
+    const kachel=kachelVon(s.nr);
+    if(kachel){ kachel.scrollIntoView({block:'nearest',behavior:'smooth'}); kachel.classList.add('zufall-treffer'); }
+    toast('Zufall: '+anzeigeVorname(s)+' '+anzeigeNachname(s));
+  };
+  const andere=pool.filter(x=>x.nr!==s.nr&&kachelVon(x.nr));   // nur Kacheln, die wirklich im Plan stehen
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||!andere.length){ landen(); return; }
+  const takte=[60,70,85,105,130,165];   // wird langsamer
+  zufallLaeuft=true; let vorher=null, i=0;
+  const schritt=()=>{
+    $('plan').querySelectorAll('.kachel.zufall-lauf').forEach(x=>x.classList.remove('zufall-lauf'));
+    if(i>=takte.length){ zufallLaeuft=false; landen(); return; }
+    const wahl=andere.length>1?andere.filter(x=>x.nr!==vorher):andere;
+    vorher=wahl[Math.floor(Math.random()*wahl.length)].nr;
+    kachelVon(vorher)?.classList.add('zufall-lauf');   // nach einem Neuzeichnen (Takt) frisch gesucht
+    setTimeout(schritt,takte[i++]);
+  };
+  schritt();
 }
 // Marken eines Tagesstands als mk-Chips — EINE Quelle für Kachel, Zeitstrahl und Legende
 // EINE Marken-Quelle als Daten [{cls,text}] — markenHtml (HTML-String, Bestand) und markenEl (el(), Termin-Matrix) driften nie
@@ -841,7 +946,8 @@ function renderHeute(){
   const ohnePlatz=[...sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr)),...ohneGruppe];
   if(ohnePlatz.length&&!editorAktiv){  // im Editor zeigt die Namen-Schiene dieselben Schüler — Panel wäre doppelt (Tag-Simulation L5)
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
-    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+(aktiveTeilgruppe&&!s.gruppe?' · ohne Gruppe':'')+'</button>').join('');
+    // Beamer: wie die Kacheln — abgekürzte Namen, kein LB an der Wand (Prüfer 2026-09-29)
+    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(anzeigeVorname(s))+' '+esc(anzeigeNachname(s))+(s.lb&&!beamerModus?' · LB':'')+(aktiveTeilgruppe&&!s.gruppe?' · ohne Gruppe':'')+'</button>').join('');
     liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>{ const nr=Number(b.dataset.nr); if(stempelTyp) stempleKachel(nr); else schuelerBlatt(nr); });  // Stempel gilt auch ohne Sitzplatz (Tag-Simulation L1)
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
@@ -888,7 +994,7 @@ function entferneLetzten(nr){
   const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
   if(!evs.length){ toast('nichts zu entfernen'); return; }
   const letzte=evs.reduce((a,e)=>String(e.ts)>String(a.ts)?e:a);
-  stornoVon(letzte); toast('entfernt: '+(TYP_LABEL[letzte.typ]||letzte.typ)); renderHeute(); zeigeRedo(letzte);
+  stornoVon(letzte); toast('entfernt: '+eintragLabel(letzte)+wiederDa(letzte)); renderHeute(); zeigeRedo(letzte);
 }
 // v1.1.0 · Verweigerung: anwesend, aber keine/verweigerte Leistung → zählt als 6 (Sek II 0 P),
 // termingewichtet (logic/verdichtung). Kurznotiz gekoppelt — dokumentiert den Grund (bei einer 6 ratsam).
@@ -896,11 +1002,11 @@ function verweigerungDialog(s){
   if(!s) return;
   const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. Mitarbeit verweigert, Aufgabe nicht bearbeitet'});
   dlgZeigenEl(
-    el('h3',{},iconEl('verweigert'),' Verweigerung · '+esc(s.vorname)),
+    el('h3',{},iconEl('verweigert'),' Verweigerung · '+s.vorname),
     el('p',{class:'u-hinweis'},'Zählt für diese Stunde als 6 (Sek II: 0 P), termingewichtet. Kurznotiz zur Begründung:'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ addEvent('verweigert',s.nr,{notiz:ta.value.trim()}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+esc(s.vorname)); renderHeute(); pulseKachel(s.nr); }},'Eintragen (6)'),
+      el('button',{class:'btn',onclick:()=>{ addEvent('verweigert',s.nr,{notiz:ta.value.trim()}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+s.vorname); renderHeute(); pulseKachel(s.nr); }},'Eintragen (6)'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
@@ -912,12 +1018,13 @@ function bestleistungDialog(s){
   const sek2=bewertProfil(kurs())==='sek2';
   const wert=sek2?'15':'1', label=sek2?'15 P':'Note 1';
   const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. herausragender Beitrag, eigenständige Lösung vorgestellt'});
+  // Note zuletzt buchen: der ↶-Chip nimmt dann den ⭐ zurück, nicht die Notiz
   dlgZeigenEl(
-    el('h3',{},iconEl('best'),' Besondere Leistung · '+esc(s.vorname)),
+    el('h3',{},iconEl('best'),' Besondere Leistung · '+s.vorname),
     el('p',{class:'u-hinweis'},'Trägt '+label+' als direkte Note ein. Kurznotiz zur Begründung (empfohlen):'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ addEvent('note',s.nr,{wert,best:true}); const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); dlgZu(); toast('Besondere Leistung: '+label+' · '+esc(s.vorname)); renderHeute(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
+      el('button',{class:'btn',onclick:()=>{ const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); addEvent('note',s.nr,{wert,best:true}); dlgZu(); toast('Besondere Leistung: '+label+' · '+s.vorname); renderHeute(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
@@ -980,17 +1087,17 @@ function verspDialog(s){ if(!s) return;
     if(min>=1 && min<=90){ vorschlag=String(min); hinweis='<p class="u-hinweis">Nach Stundenplan: '+min+' min (Block ab '+formatZeit(autowahlInfo.startSek)+') — anpassbar.</p>'; }
   }
   dlgZeigen('<h3>Verspätung · '+esc(s.vorname)+'</h3>'+hinweis+'<input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="90" value="'+vorschlag+'"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(esc(s.vorname)+': '+m+' min zu spät'); renderHeute(); } dlgZu(); }; setTimeout(()=>{const mi=d.querySelector('#min-in'); mi.focus(); mi.select();},60); });
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(s.vorname+': '+m+' min zu spät'); renderHeute(); } dlgZu(); }; setTimeout(()=>{const mi=d.querySelector('#min-in'); mi.focus(); mi.select();},60); });
 }
 function notizDialog(s){ if(!s) return;
   dlgZeigen('<h3>Notiz · '+esc(s.vorname)+'</h3><textarea id="notiz-in" rows="3" class="u-textarea u-fs16"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt){ addEvent('notiz',s.nr,{notiz:txt}); toast('Notiz gespeichert · '+esc(s.vorname)); renderHeute(); } dlgZu(); }; setTimeout(()=>d.querySelector('#notiz-in').focus(),60); });
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt){ addEvent('notiz',s.nr,{notiz:txt}); toast('Notiz gespeichert · '+s.vorname); renderHeute(); if(aktView==='schueler') renderSchueler(); } dlgZu(); }; setTimeout(()=>d.querySelector('#notiz-in').focus(),60); });
 }
 function noteDialog(s){ if(!s) return;
   const k=kurs(); const sek2=bewertProfil(k)==='sek2';
   const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
   dlgZeigen('<h3>Direkte Note · '+esc(s.vorname)+'</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); toast('Note eingetragen · '+esc(s.vorname)); renderHeute(); dlgZu(); }; });
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); toast('Note eingetragen · '+s.vorname); renderHeute(); dlgZu(); }; });
 }
 function zeigeMehrAktionen(s){
   const fehlt=standAmTermin(s.nr,terminDatum).fehlt;
@@ -1025,47 +1132,71 @@ function zeigeMehrAktionen(s){
 // Detail-Blatt vom Sitzplan aus (Master-Detail · „Schüler genauer betrachten" ohne Heute zu verlassen)
 function schuelerBlatt(nr){
   const k=kurs(); const s=schuelerVonNr(nr); if(!k||!s) return;
+  // Beamer: das Blatt zeigt Vorschlag, Fehlzeiten, LB und Notizen — nie an die Wand (Prüfer 2026-09-29; die Schüler-Ansicht sperrt schon)
+  if(beamerModus){ toast('Projektion aktiv — Details erst nach dem Beamer-Modus'); return; }
   const v=verdichte(vault.events.filter(e=>e.kursId===k.id),nr,{profil:bewertProfil(k),lb:s.lb});
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</h3>'+schuelerDetailHtml(s,k,v)+
     '<div class="btn-reihe"><button class="btn still" data-akt>＋ Eintrag hinzufügen …</button><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
+      verdrahteDetail(el);   // Zeitstrahl-Tage, Balkenbreiten — fehlten hier (Tap tat nichts, Balken leer); Storno/Quartal unten überschrieben
       el.querySelector('[data-akt]').onclick=()=>{ dlgZu(); zeigeMehrAktionen(s); };
-      el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e){ stornoVon(e); toast('storniert'); dlgZu(); renderHeute(); schuelerBlatt(nr); } });
+      el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e&&stornoVon(e)){ toast('storniert'+wiederDa(e)); dlgZu(); renderHeute(); schuelerBlatt(nr); } });
       el.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); dlgZu(); setzeQuartalsnote(s,v.vorschlag); });
     });
 }
 function zeigeLegende(){
-  // Anatomie-Beispiel = ECHTE kachelHtml-Ausgabe (eine Quelle der Wahrheit — Legende driftet nie vom Plan)
-  const demo=kachelHtml({nr:0,vorname:'Anna',name:'Anders',lb:true},
-    {plus:2,neutral:0,minus:0,fehlt:null,note:'2',mat:true,ipad:false,lernzeit:false,notiz:true,versp:1,verweigert:false},0,0);
-  const mk=(cls,t)=>'<span class="mk '+cls+'">'+t+'</span>';
+  // Anatomie-Beispiel und Marken = ECHTE kachelHtml/markenHtml-Ausgabe (eine Quelle der Wahrheit — Legende driftet nie vom Plan).
+  // Neu 2026-09-29 (Zero: „Symbol-Legende ist veraltet"): gegliedert wie die Stempel-Leiste, je Zeile Stempel → Marke → Bedeutung,
+  // ein Zeichen je Stunde, Notenwerte der Kurve, Leiste über dem Sitzplan.
+  const sek2=bewertProfil(kurs())==='sek2';
+  const wert=(note,p)=>sek2?p+' P':note;
+  const demo=kachelHtml({nr:0,vorname:'Anna',name:'Anders',lb:true},{...leererStand(),plus:1,mat:1,notiz:1,versp:5},0,0);
+  const marke=teil=>markenHtml({...leererStand(),...teil});
+  const stempel=inhalt=>'<span class="lg-stempel">'+inhalt+'</span>';
+  const zeile3=(st,teil,txt)=>'<div class="lg-zeile drei">'+stempel(st)+'<span class="lg-sym">'+(teil?marke(teil):'')+'</span><span>'+txt+'</span></div>';
   const zeile=(sym,txt)=>'<div class="lg-zeile"><span class="lg-sym">'+sym+'</span><span>'+txt+'</span></div>';
   const kopf=t=>'<div class="tag-kopf">'+t+'</div>';
+  const hinweis=t=>'<p class="lg-hinweis">'+t+'</p>';
   dlgZeigen('<h3>Legende</h3><div class="legende">'+
     '<div class="lg-kachel">'+demo+
       '<div class="lg-anatomie">'+
       '<div>oben <b>Vorname</b> + LB-Badge, darunter der Nachname</div>'+
-      '<div>unten alle <b>Marken</b> des heutigen Tages</div>'+
-      '<div><b>Kachelfarbe</b> = Tagesstand (hier: überwiegend ＋)</div></div></div>'+
-    kopf('Tagesstand — Kachelfarbe')+
-    zeile('<span class="lg-swatch plus"></span>','überwiegend Plus')+
-    zeile('<span class="lg-swatch minus"></span>','überwiegend Minus')+
-    zeile('<span class="lg-swatch"></span>','neutral oder noch kein Eintrag')+
-    kopf('Bewertung')+
-    zeile(mk('p','＋2')+' '+mk('m','−'),'Plus / Minus — Zahl = wie oft heute')+
-    zeile(mk('o','o'),'neutrale Meldung')+
-    zeile(mk('sym',iconHtml('note')),'direkte Note')+
-    zeile(mk('sym',iconHtml('best')),'besondere Leistung — Bestnote mit Begründung')+
-    zeile(mk('verw',iconHtml('verweigert')),'Verweigerung — zählt als 6 (Sek II: 0 P)')+
-    kopf('Organisatorisches')+
-    zeile(mk('sym',iconHtml('material')),'Material vergessen')+
-    zeile(mk('sym',iconHtml('ipad')),'iPad fehlt / leer')+
-    zeile(mk('sym',iconHtml('lernzeit')),'Lernzeit / Hausaufgabe nicht erledigt')+
-    zeile(mk('sym',iconHtml('notiz')),'Notiz vorhanden')+
-    zeile(mk('sym',iconHtml('versp')),'Verspätung (Minuten)')+
+      '<div>unten die <b>Marken</b> der Stunde</div>'+
+      '<div><b>Kachelfarbe</b> = Bewertung der Stunde (hier ＋)</div>'+
+      '<div>Stempel links wählen, dann Kacheln antippen</div></div></div>'+
+    '<div class="lg-zeile drei lg-spalten"><span>Stempel</span><span>Kachel</span><span>Bedeutung</span></div>'+
+    kopf('Bewertung — ein Zeichen je Stunde')+
+    zeile3('＋',{plus:1},'positiv — '+wert('1−','13'))+
+    zeile3('o',{neutral:1},'neutral — '+wert('3','8'))+
+    zeile3('−',{minus:1},'negativ — '+wert('5+','3'))+
+    zeile3(iconHtml('best'),{note:'1',best:true},'besondere Leistung — '+wert('1','15')+', mit Begründung')+
+    zeile3(iconHtml('verweigert'),{verweigert:1},'Verweigerung — '+wert('6','0')+', mit Begründung')+
+    zeile3(iconHtml('note'),{note:'2'},'direkte Note, frei gewählt')+
+    hinweis('Ein neues Zeichen ersetzt das alte derselben Stunde, ↶ holt es zurück. Notizen, Fehlzeiten und Organisatorisches bleiben stehen. '+
+      'Die Werte gelten, wenn alle Stunden so aussehen — gemischt liegt der Vorschlag dazwischen.')+
     kopf('Anwesenheit')+
-    zeile(mk('abw','abw'),'abwesend — Klärung offen (Wiedervorlage)')+
-    zeile(mk('e','e')+' '+mk('u','u'),'entschuldigt / unentschuldigt gefehlt')+
+    zeile3(iconHtml('abwesend'),{fehlt:'o'},'abwesend — Klärung offen (Reiter Schüler)')+
+    zeile3(iconHtml('entsch'),{fehlt:'e'},'entschuldigt gefehlt')+
+    zeile3(iconHtml('unentsch'),{fehlt:'u'},'unentschuldigt gefehlt — zählt als '+wert('6','0'))+
+    zeile3(iconHtml('versp'),{versp:5},'zu spät (Minuten)')+
+    hinweis('Wer fehlt, wird nicht bewertet — erst ⌫, dann bewerten.')+
+    kopf('Organisation')+
+    zeile3(iconHtml('ipad'),{ipad:1},'iPad fehlt / leer')+
+    zeile3(iconHtml('material'),{mat:1},'Material vergessen')+
+    zeile3(iconHtml('lernzeit'),{lernzeit:1},'Lernzeit / Hausaufgabe nicht erledigt')+
+    zeile3(iconHtml('notiz'),{notiz:1},'Notiz')+
+    kopf('Korrektur')+
+    zeile3(iconHtml('entfernen'),null,'letzten Eintrag der Stunde entfernen — ein ersetztes Zeichen kommt zurück')+
+    kopf('Kachelfarbe')+
+    zeile('<span class="lg-swatch plus"></span>','＋')+
+    zeile('<span class="lg-swatch minus"></span>','−')+
+    zeile('<span class="lg-swatch fehlt"></span>','fehlt')+
+    zeile('<span class="lg-swatch"></span>','sonst (o, Note, ⭐, ⊘ oder noch nichts)')+
+    kopf('Leiste über dem Sitzplan')+
+    zeile(SVG_DS.zufall,'Zufall — wer noch nichts hat, kommt eher dran; mit ＋ oder ⭐ selten')+
+    zeile(SVG_DS.sitzplan,'Sitzplan bearbeiten')+
+    zeile(SVG_DS.datum,'anderer Termin (Nachtrag)')+
+    zeile('<b>Erfasst</b>','Anwesende mit Zeichen — voll heißt: Stunde komplett')+
     kopf('Sonderfälle')+
     zeile('<span class="chip chip-info">LB</span>','zieldifferent — Bewertung möglich (Konferenz-Grundlage), nur kein Noten-Vorschlag')+
     zeile(iconHtml('auge'),'Beamer-Modus (oben rechts) versteckt alle Bewertungen für die Projektion')+
@@ -1084,10 +1215,13 @@ function baueDeckListe(){
   if(deckNurOhne){ const idx=tagesStandIndex(terminDatum); liste=liste.filter(s=>anzahlBewertungen(idx.get(s.nr))===0); }
   return liste;
 }
+function deckBasis(k){ if(!k) return ''; const nrs=sichtbareSchueler(k).map(s=>s.nr).join(',');   // zuerst: kann aktiveTeilgruppe zurücksetzen
+  return (aktiveTeilgruppe||'')+'|'+nrs; }
 function mischeArray(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function neuesDeck(mischen){
   const k=kurs(); let liste=baueDeckListe(); if(mischen) liste=mischeArray(liste);
   liste._kurs=k?k.id:null; liste._datum=terminDatum; liste._nurOhne=deckNurOhne;
+  liste._basis=deckBasis(k);   // Teilgruppe + aktive Teilnehmer: ändert sich das, baut sich die Runde neu (Prüfer 2026-09-29)
   deckListe=liste; deckIdx=0; deckVerlauf=[];
   deckRundeStart=new Date().toISOString();   // Marke fuer Buchungen, die nicht per Swipe entstehen
 }
@@ -1104,7 +1238,7 @@ function renderDeck(){
   // „nur ohne Eintrag" hängt an den Bewertungen: wer inzwischen im Sitzplan bewertet wurde, fällt aus
   // einer noch nicht begonnenen Runde heraus (eine laufende Runde behält ihre Karten und ihren Platz).
   const frischeNurOhne=deckNurOhne&&deckIdx===0&&!deckVerlauf.length;
-  if(!deckListe.length||deckListe._kurs!==k.id||deckListe._datum!==terminDatum||deckListe._nurOhne!==deckNurOhne||frischeNurOhne) neuesDeck(false);
+  if(!deckListe.length||deckListe._kurs!==k.id||deckListe._datum!==terminDatum||deckListe._nurOhne!==deckNurOhne||deckListe._basis!==deckBasis(k)||frischeNurOhne) neuesDeck(false);
   zeigeDeckKarte();
 }
 function zeigeDeckKarte(){
@@ -1164,6 +1298,10 @@ function ergaenzeVerlaufAusEvents(){
 }
 function renderDeckVerlauf(){
   const box=$('deck-verlauf'); if(!box) return;
+  // Zurückgenommene Buchungen (Undo-Chip, ⌫, Verlauf-↶) nicht weiter als gültig zeigen — sonst stornierte eine
+  // spätere Korrektur das schon stornierte Event, und das neue blieb stehen (Prüfer 2026-09-29)
+  const wirksam=new Set(wirksameEvents(vault.events).map(e=>e.id));
+  for(const v of deckVerlauf) if(v.evId&&!wirksam.has(v.evId)){ v.evId=null; v.typ=null; v.fremd=false; }
   ergaenzeVerlaufAusEvents();
   // NICHT mehr ein-/ausblenden: das Feld hielt bis zur ersten Buchung keinen Platz und schob
   // die Karte danach zur Seite (Zero am Gerät 2026-08-30). Leer steht jetzt ein ruhiger Hinweis.
@@ -1177,11 +1315,24 @@ function renderDeckVerlauf(){
 }
 function deckKorrektur(v){
   const setze=typ=>{
+    if(typ&&!bewertGuard(v.nr)){ dlgZu(); return; }   // Abwesende nicht bewerten — der Guard galt hier bisher nicht
     if(v.evId){ const alt=vault.events.find(x=>x.id===v.evId); if(alt) stornoVon(alt); }
     if(typ){ const e=addEvent(typ,v.nr); v.evId=e?e.id:null; v.typ=e?typ:null; }
     else { v.evId=null; v.typ=null; }
+    v.fremd=false;
     dlgZu(); renderDeckVerlauf(); zeigeDeckKarte(); toast(v.name+': '+(typ?DECK_SYMBOL[typ]:'Eintrag entfernt'));
   };
+  // Zeilen aus dem Mehr-Menü (Notiz, Note, abwesend …) nur zeigen und entfernen, nie durch ＋/o/− ERSETZEN —
+  // sonst verschwand z. B. eine Abwesenheit still hinter einem ＋ (Prüfer 2026-09-29)
+  if(v.fremd){
+    const alt=vault.events.find(x=>x.id===v.evId);
+    dlgZeigenEl(el('h3',{},v.name),
+      el('p',{class:'u-hinweis'},'Eintrag aus dem Mehr-Menü: '+(alt?(TYP_LABEL[alt.typ]||alt.typ):'—')+'. Bewerten geht über die Karte.'),
+      el('div',{class:'btn-reihe'},
+        ...(v.evId?[el('button',{class:'btn gefahr',onclick:()=>setze(null)},'Eintrag entfernen')]:[]),
+        el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+    return;
+  }
   const wahl=typ=>el('button',{class:'btn'+(v.typ===typ?'':' still'),onclick:()=>setze(typ)},DECK_SYMBOL[typ]);
   dlgZeigenEl(
     el('h3',{},v.name+' korrigieren'),
@@ -1193,6 +1344,8 @@ function deckKorrektur(v){
 }
 function deckAktion(aktion){
   if(busy||deckIdx>=deckListe.length) return;
+  // Zweites Netz: gehört die Runde nicht mehr zum aktiven Kurs, wird nichts gebucht (sonst ＋ unter fremder Nr)
+  if(deckListe._kurs!==aktiverKursId){ neuesDeck(false); zeigeDeckKarte(); toast('Kurs gewechselt — neue Runde'); return; }
   const s=deckListe[deckIdx];
   if(aktion==='notiz'){ zeigeMehrAktionen(s); return; }
   // Der Bewertungs-Guard galt bisher nur fuer den Stempelpfad (stempleKachel). Das Deck baut
@@ -1227,7 +1380,8 @@ document.querySelectorAll('[data-deck]').forEach(b=>b.addEventListener('click',(
 (function deckSwipe(){
   const karte=$('deck-karte');
   let start=null;
-  karte.addEventListener('pointerdown',e=>{ start=[e.clientX,e.clientY]; try{karte.setPointerCapture(e.pointerId);}catch{} });
+  // Knöpfe auf der Karte (End-Karte „Fehlende durchgehen") nicht als Wisch-Start: die Pointer-Capture lenkte ihren Klick auf die Karte um
+  karte.addEventListener('pointerdown',e=>{ if(e.target.closest('button')) return; start=[e.clientX,e.clientY]; try{karte.setPointerCapture(e.pointerId);}catch{} });
   const ende=e=>{
     if(!start) return;
     const dx=e.clientX-start[0], dy=e.clientY-start[1]; start=null;
@@ -1248,7 +1402,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ═══ SCHÜLER · Verdichtung + Inline-Detail-Akkordeon (kein Popup) ═══ */
-let offenerSchueler=null, zeitraumFilter=null, schuelerSuche='', schuelerFilter=null, sListeScroll=0;
+let offenerSchueler=null, offeneZeile=null, zeitraumFilter=null, schuelerSuche='', schuelerFilter=null, sListeScroll=0;
 let schuelerAnsicht='liste', schuelerSort='nr';   // Zero 2026-09-02: Modi Liste·Noten·Termine·Fehlzeiten · Sortierung Nr·Name·Vorschlag·Anlass
 function aktivesSchuljahr(){ return (vault.stamm.schuljahre||[]).find(j=>j.id===vault.stamm.aktivesSchuljahrId)||null; }
 function renderSchueler(){
@@ -1267,29 +1421,26 @@ function renderSchueler(){
   if(schuelerAnsicht!=='liste'){ renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL); return; }
   const heute=heuteIso();
   const offeneO=wirksameEvents(kursEvents).filter(e=>e.typ==='fehlt_o').sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
-  let html=modusChipsHtml()+'<div class="s-suche"><input id="s-suche" type="text" placeholder="Schüler suchen …" aria-label="Schüler suchen" autocomplete="off" enterkeyhint="search" value="'+esc(schuelerSuche)+'"></div>';
-  // Zeitraum-Wähler (Quartalsansicht) — ein Tap statt Datumsgrenzen tippen
-  if(sj&&sj.zeitraeume&&sj.zeitraeume.length){
-    html+='<div class="zr-leiste"><button class="zr-chip'+(!zr?' an':'')+'" aria-pressed="'+(!zr)+'" data-zr="">Gesamt</button>'+
-      sj.zeitraeume.map(z=>'<button class="zr-chip'+(zr&&zr.id===z.id?' an':'')+'" aria-pressed="'+!!(zr&&zr.id===z.id)+'" data-zr="'+z.id+'">'+esc(kurzL(z.label))+'</button>').join('')+'</div>';
-  }
-  // Stille Nacharbeits-Filter (C3): Offen / ohne Vorschlag / gesetzt — hidden-Filter, kein Re-Render
-  html+='<div class="zr-leiste s-filter">'+[['offen','Offen'],['ohnev','ohne Vorschlag'],['gesetzt','gesetzt'],['lb','LB'],['ohneheute','heute ohne Eintrag'],['runter','Verlauf ↓']]
-    .map(([id,lab])=>'<button class="zr-chip'+(schuelerFilter===id?' an':'')+'" aria-pressed="'+(schuelerFilter===id)+'" data-sf="'+id+'">'+lab+'</button>').join('')+'</div>';
-  // Sortierung (Punkt 3): Nr (Mappen-Reihenfolge) · Name · Vorschlag (beste zuerst) · Anlass (Handlungsbedarf zuerst)
-  html+='<div class="zr-leiste s-sort"><span class="u-hinweis">Sortieren</span>'+[['nr','Nr'],['name','Name'],['vorschlag','Vorschlag'],['anlass','Anlass']]
-    .map(([id,lab])=>'<button class="zr-chip'+(schuelerSort===id?' an':'')+'" aria-pressed="'+(schuelerSort===id)+'" data-ss="'+id+'">'+lab+'</button>').join('')+'</div>';
-  // Klärungsliste (P3.5 Phase 2): offene Abwesenheiten klären — ausgeschrieben, Alter in Tagen (C3)
-  if(offeneO.length){
-    html+='<div class="panel"><h2>Offene Fehlzeiten ('+offeneO.length+')</h2>'+
-      offeneO.map(e=>{ const s=kursSchueler(k).find(x=>x.nr===e.schuelerNr);
-        const tageOffen=Math.floor((new Date(heute)-new Date(e.datum))/86400000);
-        const alt=tageOffen>7;
-        return '<div class="klaer-zeile'+(alt?' alt':'')+'"><span>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+' · '+datumLabel(e.datum)+(alt?' · '+tageOffen+' Tage offen':'')+'</span>'+
-          '<span class="klaer-btns"><button class="btn still u-btn-klein" data-klaer="e" data-o="'+e.id+'">Entsch.</button>'+
-          '<button class="btn still u-btn-klein" data-klaer="u" data-o="'+e.id+'">Unentsch.</button>'+
-          '<button class="btn still u-btn-klein" data-klaer="irrtum" data-o="'+e.id+'">Irrtum</button></span></div>'; }).join('')+'</div>';
-  }
+  // Kopf (Zero 2026-09-29): Ansicht + EINE Zeile Suche · Zeitraum · Filter · Sortierung statt fünf Chip-Reihen —
+  // native select öffnet am iPad den System-Wähler; aktiver Zeitraum/Filter bekommt den Goldrand (Liste ist eingeschränkt)
+  const optionen=(liste,wahl)=>liste.map(([id,lab])=>'<option value="'+id+'"'+(wahl===id?' selected':'')+'>'+esc(lab)+'</option>').join('');
+  const zrListe=sj&&sj.zeitraeume&&sj.zeitraeume.length?[['','Gesamt'],...sj.zeitraeume.map(z=>[z.id,z.label])]:null;
+  let html=modusChipsHtml()+'<div class="s-kopf">'+
+    '<input id="s-suche" class="s-such-feld" type="text" placeholder="Schüler suchen …" aria-label="Schüler suchen" autocomplete="off" enterkeyhint="search" value="'+esc(schuelerSuche)+'">'+
+    (zrListe?'<select id="s-zr" class="s-wahl'+(zr?' an':'')+'" aria-label="Zeitraum">'+optionen(zrListe,zr?zr.id:'')+'</select>':'')+
+    '<select id="s-filter" class="s-wahl'+(schuelerFilter?' an':'')+'" aria-label="Filter">'+optionen(S_FILTER,schuelerFilter||'')+'</select>'+
+    '<select id="s-sort" class="s-wahl" aria-label="Sortierung">'+optionen(S_SORT,schuelerSort)+'</select></div>';
+  // Klärungsliste (P3.5 Phase 2) als rechte Spalte wie die Stempel-Rail (Zero 2026-09-29) — die Liste beginnt oben
+  const klaerZeilen=offeneO.map(e=>{ const s=kursSchueler(k).find(x=>x.nr===e.schuelerNr);
+    const tageOffen=Math.floor((new Date(heute)-new Date(e.datum))/86400000);
+    const alt=tageOffen>7;
+    return '<div class="klaer-zeile'+(alt?' alt':'')+'"><span class="klaer-wer"><b>'+esc(s?s.vorname+' '+s.name:'Nr '+e.schuelerNr)+'</b><small>'+datumLabel(e.datum)+(alt?' · '+tageOffen+' Tage offen':'')+'</small></span>'+
+      '<span class="klaer-btns"><button class="btn still u-btn-klein" data-klaer="e" data-o="'+e.id+'">Entsch.</button>'+
+      '<button class="btn still u-btn-klein" data-klaer="u" data-o="'+e.id+'">Unentsch.</button>'+
+      '<button class="btn still u-btn-klein" data-klaer="irrtum" data-o="'+e.id+'">Irrtum</button></span></div>'; }).join('');
+  const seite='<aside class="s-seite" aria-label="Offene Fehlzeiten"><div class="rail-karte"><div class="rail-titel">Offene Fehlzeiten ('+offeneO.length+')</div>'+
+    (klaerZeilen||'<p class="u-hinweis">Keine offenen Fehlzeiten.</p>')+'</div></aside>';
+  html='<div class="s-layout"><div class="s-haupt">'+html;
   html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(zr?zr.label:'Verdichtung')+'</h2><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p>'+
     '<div class="btn-reihe"><button class="btn still u-btn-klein" data-kopiere title="Nr + Note in die Zwischenablage — in die Excel-Klassenmappe einfügen">'+iconHtml('kopieren')+' '+esc(zr?kurzL(zr.label):'Gesamt')+'-Vorschläge für Excel kopieren</button></div>';
   // Terminliste des Kurses für den „seit N Terminen kein Eintrag"-Anlass (C3)
@@ -1319,7 +1470,7 @@ function renderSchueler(){
     const entscheidung=qnEv?'<span class="qn-fest" title="gesetzte Quartalsnote">'+esc(String(qnEv.wert))+' <small>gesetzt</small></span>'+
         (abw!=null&&abw>=1?'<small class="s-abw" title="weicht mindestens eine Stufe vom Vorschlag ab">'+iconHtml('warnung')+' V '+esc(v.vorschlag.label)+'</small>':'')
       :(v.vorschlag?'<span class="s-vorschlag"><small>Vorschlag</small> '+esc(v.vorschlag.label)+'</span>':'—');
-    html+='<div class="s-block" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'" data-flags="'+flags.join(' ')+'"><button type="button" class="s-item" data-nr="'+s.nr+'">'+
+    html+='<div class="s-block" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'" data-flags="'+flags.join(' ')+'"><button type="button" class="s-item" data-nr="'+s.nr+'" aria-expanded="false">'+
       '<span class="u-minw104"><b>'+esc(s.vorname)+'</b> <small class="u-leise">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</span>'+
       '<span class="u-flex1">'+(anlass?'<small class="s-anlass'+(anlassWarn?' warn':'')+'">'+anlass+'</small>':'')+'</span>'+
       '<span class="u-wert-rechts">'+entscheidung+'</span>'+
@@ -1328,10 +1479,10 @@ function renderSchueler(){
   // Sammeln (Punkt 5): alle offenen Vorschläge des Quartals in einem Zug — mit Prüfliste, nie still
   const sammelbar=zr&&/^q[1-4]$/.test(zr.id)?daten.filter(d=>!d.qnEv&&d.v.vorschlag&&!d.s.lb):[];
   if(sammelbar.length) html+='<div class="btn-reihe"><button class="btn still u-btn-klein" data-sammeln>Alle '+sammelbar.length+' offenen Vorschläge als '+esc(kurzL(zr.label))+'-Note übernehmen…</button></div>';
-  html+='</div>';
+  html+='</div></div>'+seite+'</div>';
   wrap.innerHTML=html;
   verdrahteModus(wrap);
-  wrap.querySelectorAll('[data-ss]').forEach(b=>b.onclick=()=>{ schuelerSort=b.dataset.ss; mitUebergang(renderSchueler); });
+  $('s-sort').onchange=e=>{ schuelerSort=e.target.value; mitUebergang(renderSchueler); };
   const bsam=wrap.querySelector('[data-sammeln]'); if(bsam) bsam.onclick=()=>quartalsnotenSammeln(k,zr,sammelbar);
   // Schüler-Suche + Nacharbeits-Filter: Live-Filter per hidden-Klasse (kein Re-Render → Fokus bleibt, iPad-Tastatur zu-fest)
   const filterS=()=>{ const q=schuelerSuche.trim().toLowerCase();
@@ -1341,19 +1492,15 @@ function renderSchueler(){
       b.classList.toggle('hidden', !(passtQ&&passtF));
     }); };
   const suche=$('s-suche'); if(suche){ suche.oninput=e=>{ schuelerSuche=e.target.value; filterS(); }; filterS(); }
-  wrap.querySelectorAll('[data-sf]').forEach(b=>b.onclick=()=>{
-    schuelerFilter=(schuelerFilter===b.dataset.sf)?null:b.dataset.sf;
-    wrap.querySelectorAll('[data-sf]').forEach(x=>{ const an=x.dataset.sf===schuelerFilter; x.classList.toggle('an',an); x.setAttribute('aria-pressed',String(an)); });
-    filterS();
-  });
-  wrap.querySelectorAll('[data-zr]').forEach(b=>b.onclick=()=>{ const id=b.dataset.zr; zeitraumFilter=id&&sj?sj.zeitraeume.find(z=>z.id===id):null; offenerSchueler=null; mitUebergang(renderSchueler); });
-  wrap.querySelectorAll('[data-klaer]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
-    const o=vault.events.find(x=>x.id===b.dataset.o); if(!o) return;
-    const art=b.dataset.klaer;
+  $('s-filter').onchange=e=>{ schuelerFilter=e.target.value||null; e.target.classList.toggle('an',!!schuelerFilter); filterS(); };
+  const zrSel=$('s-zr'); if(zrSel) zrSel.onchange=e=>{ const id=e.target.value; zeitraumFilter=id&&sj?sj.zeitraeume.find(z=>z.id===id):null; offenerSchueler=null; mitUebergang(renderSchueler); };
+  // Klärung — aus der Seitenspalte UND aus der aufgeklappten Zeile (eine Funktion, zwei Orte)
+  const klaerKlick=(oId,art)=>{
+    const o=vault.events.find(x=>x.id===oId); if(!o) return;
     const sName=(kursSchueler(k).find(x=>x.nr===o.schuelerNr)||{}).vorname||('Nr '+o.schuelerNr);
     // Klärung = Storno des fehlt_o + neues fehlt_e/fehlt_u am ORIGINALDATUM (Merge-fest, verdichte löst jüngste-ts)
     const klaere=()=>{ addEvent(art==='e'?'fehlt_e':'fehlt_u',o.schuelerNr,{datum:o.datum,stornoVon:o.id}); toast('Geklärt: '+(art==='e'?'entschuldigt':'unentschuldigt')+' ('+datumLabel(o.datum)+')'); renderSchueler(); };
-    if(art==='irrtum'){ stornoVon(o); toast('Irrtum — Abwesenheit entfernt'); zeigeRedo(o); renderSchueler(); }
+    if(art==='irrtum'){ if(stornoVon(o)){ toast('Irrtum — Abwesenheit entfernt'); zeigeRedo(o); renderSchueler(); } }
     else if(art==='u'){
       // Unentschuldigt ist folgenreich (NRW §48) → kurze Bestätigung mit Name + Datum (C3)
       dlgZeigenEl(el('h3',{},'Unentschuldigt?'),
@@ -1363,14 +1510,76 @@ function renderSchueler(){
           el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
     }
     else klaere();
+  };
+  wrap.querySelectorAll('[data-klaer]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); klaerKlick(b.dataset.o,b.dataset.klaer); });
+  // Zeile antippen klappt sie auf (Zero 2026-09-29: „Dropdown bei Schülerklick") — immer nur eine offen;
+  // die Vollseite bleibt hinter „ganze Seite ›" für Verlauf, Zeitstrahl und Kurzbericht
+  const zu=(block,sofort)=>{
+    const auf=block.querySelector('.s-auf'); block.classList.remove('offen');
+    block.querySelector('.s-item').setAttribute('aria-expanded','false');
+    if(!auf) return;
+    if(sofort){ auf.remove(); return; }
+    let weg=false; const entferne=()=>{ if(!weg){ weg=true; auf.remove(); } };
+    auf.addEventListener('transitionend',entferne,{once:true}); setTimeout(entferne,320);  // Rückfall ohne transitionend (reduced motion)
+  };
+  const auf=(block,animiert)=>{
+    const s=schuelerVonNr(Number(block.querySelector('.s-item').dataset.nr)); if(!s) return;
+    const flaeche=el('div',{class:'s-auf'},el('div',{class:'s-auf-innen'},schuelerAufklapp(k,s,kursEvents,vOpt,offeneO,klaerKlick)));
+    block.append(flaeche);
+    if(animiert) void flaeche.offsetHeight;   // 0fr erst messen lassen, dann auf 1fr — sonst springt es ohne Übergang
+    block.classList.add('offen'); block.querySelector('.s-item').setAttribute('aria-expanded','true');
+  };
+  wrap.querySelectorAll('.s-item').forEach(b=>b.onclick=()=>{
+    const block=b.closest('.s-block'), nr=Number(b.dataset.nr);
+    if(offeneZeile===nr){ offeneZeile=null; zu(block,false); return; }
+    // die bisher offene Zeile sofort schließen und den Scroll so nachführen, dass die angetippte Zeile unter dem Finger bleibt
+    const alt=offeneZeile!=null?wrap.querySelector('.s-item[data-nr="'+offeneZeile+'"]'):null;
+    if(alt){ const vorher=b.getBoundingClientRect().top; zu(alt.closest('.s-block'),true);
+      const m=document.querySelector('main'); if(m) m.scrollTop+=b.getBoundingClientRect().top-vorher; }
+    offeneZeile=nr; auf(block,true);
   });
-  wrap.querySelectorAll('.s-item').forEach(el=>el.onclick=()=>{
-    const nr=Number(el.dataset.nr);
-    if(offenerSchueler!==nr) sListeScroll=(document.querySelector('main')||{}).scrollTop||0;  // Rückkehr-Anker (C3)
-    offenerSchueler=(offenerSchueler===nr?null:nr); mitUebergang(renderSchueler);
-  });
+  if(offeneZeile!=null){ const b=wrap.querySelector('.s-item[data-nr="'+offeneZeile+'"]'); if(b) auf(b.closest('.s-block'),false); else offeneZeile=null; }
   const bkv=wrap.querySelector('[data-kopiere]'); if(bkv) bkv.onclick=kopiereVorschlaege;
-  verdrahteDetail(wrap);
+}
+// Inhalt der aufgeklappten Zeile (Zero 2026-09-29: „Kompakt + ganze Seite ›") — el()-gebaut (CSP), erst beim Öffnen:
+// Bilanz ＋/o/− · Q1–Q4 zum Antippen · offene Fehlzeiten mit Klärung · letzte Einträge · Notiz · ganze Seite
+function schuelerAufklapp(k,s,kursEvents,vOpt,offeneO,klaerKlick){
+  const v=verdichte(kursEvents,s.nr,{...vOpt,lb:s.lb});
+  const sum=Math.max(1,v.nPlus+v.nNull+v.nMinus);
+  const teil=(cls,n)=>{ const d=el('span',{class:cls}); d.style.width=(100*n/sum)+'%'; return d; };  // CSSOM statt style-Attribut (CSP)
+  const bilanz=el('div',{class:'s-auf-zeile'},
+    el('span',{class:'balken'},teil('bal-p',v.nPlus),teil('bal-o',v.nNull),teil('bal-m',v.nMinus)),
+    el('span',{class:'s-auf-zahl'},v.nPlus+'⁺ '+v.nNull+'° '+v.nMinus+'⁻'),
+    el('span',{class:'u-leise'},'Beteiligung '+v.beteiligtTermine+' / '+v.kursTermine+' Termine · Verlauf '+v.pfeil));
+  const sj=aktivesSchuljahr(); const qn=quartalsnotenVon(kursEvents,s.nr);
+  const zellen=['q1','q2','q3','q4'].map(id=>{
+    const z=sj&&sj.zeitraeume?sj.zeitraeume.find(x=>x.id===id):null;
+    const ev=qn[QN_KEY[id]];
+    const vz=z?verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis}):null;
+    return el('button',{class:'qn-zelle klein'+(ev?'':' offen'),type:'button',onclick:()=>{
+        if(!z){ toast('Kein Schuljahres-Zeitraum definiert'); return; }
+        setzeQuartalsnote(s,(vz&&vz.vorschlag)||{wert:null,label:'—'},z,{fixiert:true}); }},
+      el('span',{class:'qn-label'},id.toUpperCase()),
+      el('span',{class:'qn-note'},ev?String(ev.wert):'—'),
+      el('span',{class:'qn-sub'},vz&&vz.vorschlag?'Vorschlag '+vz.vorschlag.label:(s.lb?'LB':'—')));
+  });
+  const knopf=(txt,fn)=>el('button',{class:'btn still u-btn-klein',type:'button',onclick:fn},txt);
+  const fehl=offeneO.filter(e=>e.schuelerNr===s.nr).map(o=>el('div',{class:'klaer-zeile'},
+    el('span',{},'Fehlzeit '+datumLabel(o.datum)),
+    el('span',{class:'klaer-btns'},knopf('Entsch.',()=>klaerKlick(o.id,'e')),knopf('Unentsch.',()=>klaerKlick(o.id,'u')),knopf('Irrtum',()=>klaerKlick(o.id,'irrtum')))));
+  const evs=wirksameEvents(kursEvents).filter(e=>e.schuelerNr===s.nr&&e.datum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
+  const tage=[...new Set(evs.map(e=>e.datum))].sort().reverse().slice(0,5);
+  const zuletzt=tage.map(t=>datumLabel(t)+' '+[...new Set(evs.filter(e=>e.datum===t).map(e=>TYP_LABEL[e.typ]||e.typ))].join(' + ')).join(' · ');
+  return el('div',{class:'s-auf-inhalt'},
+    bilanz,
+    el('div',{class:'qn-grid klein'},...zellen),
+    ...fehl,
+    el('div',{class:'s-auf-zuletzt'},tage.length?'Zuletzt: '+zuletzt:'Noch keine Einträge.'),
+    el('div',{class:'btn-reihe s-auf-aktionen'},
+      knopf('✎ Notiz',()=>notizDialog(s)),
+      el('button',{class:'btn still',type:'button',onclick:()=>{
+        sListeScroll=(document.querySelector('main')||{}).scrollTop||0;  // Rückkehr-Anker (C3)
+        offenerSchueler=s.nr; mitUebergang(renderSchueler); }},'ganze Seite ›')));
 }
 // P4.5 · „Vorschläge kopieren": Nr⇥Vorschlag[⇥F-Summen] in die Zwischenablage (kein Datei-Export).
 // Der Mensch fügt in die Excel-Klassenmappe ein — Excel bleibt die Noten-Zentrale (User-Entscheid „Beides").
@@ -1420,7 +1629,7 @@ function quartalsnotenSammeln(k,zr,liste){
   const haken=new Map(liste.map(d=>[d.s.nr,true]));
   const zeilen=liste.map(d=>{
     const cb=el('input',{type:'checkbox',class:'u-check',checked:'checked',onchange:e=>haken.set(d.s.nr,e.target.checked)});
-    return el('div',{class:'zeile'},el('span',{},cb,' ',d.s.vorname+' '+d.s.name),el('span',{class:'wert'},d.v.vorschlag.label));
+    return el('label',{class:'zeile'},el('span',{},cb,' ',d.s.vorname+' '+d.s.name),el('span',{class:'wert'},d.v.vorschlag.label));   // ganze Zeile = Ziel (Checkbox 22 px)
   });
   dlgZeigenEl(el('h3',{},zr.label+' · Vorschläge übernehmen'),
     el('p',{class:'u-hinweis'},'Jede angehakte Zeile wird als Quartalsnote gesetzt — genau wie im Einzeldialog, änderbar bleibt sie. Haken weg = bleibt offen.'),
@@ -1429,14 +1638,18 @@ function quartalsnotenSammeln(k,zr,liste){
       el('button',{class:'btn',onclick:()=>{
         let n=0;
         for(const d of liste){ if(!haken.get(d.s.nr)) continue;
-          const wert=sek2?String(d.v.vorschlag.wert):(wertZuLabel(d.v.vorschlag.wert)||'3');
-          addEvent('quartalsnote',d.s.nr,{hj,quartal,wert,zeitraumId:zr.id}); n++; }
+          const wert=sek2?String(d.v.vorschlag.wert):wertZuLabel(d.v.vorschlag.wert);
+          if(!wert) continue;   // nie still eine Ersatznote (vorher '3') — ohne Label bleibt die Zeile offen
+          if(addEvent('quartalsnote',d.s.nr,{hj,quartal,wert,zeitraumId:zr.id})) n++; }   // nur echte Buchungen zählen (Archiv-Guard)
         dlgZu(); toast(n+' Quartalsnoten gesetzt ('+zr.label+')'); renderSchueler();
       }},'Setzen'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
 }
 /* ═══ Übersichts-Tabellen (Zero 2026-09-02 · Punkte 1·2·6·7·9): Noten · Termine · Fehlzeiten — el()-gebaut, druckbar ═══ */
 const SCHUELER_MODI=[['liste','Liste'],['noten','Noten'],['termine','Termine'],['fehlzeiten','Fehlzeiten']];
+// Nacharbeits-Filter (C3) und Sortierung (Punkt 3) — seit 2026-09-29 als Auswahllisten im Listenkopf
+const S_FILTER=[['','Alle Schüler'],['offen','Offene Fehlzeiten'],['ohnev','ohne Vorschlag'],['gesetzt','Note gesetzt'],['lb','nur LB'],['ohneheute','heute ohne Eintrag'],['runter','Verlauf ↓']];
+const S_SORT=[['nr','nach Nr'],['name','nach Name'],['vorschlag','nach Vorschlag'],['anlass','nach Anlass']];
 function modusChipsHtml(){ return '<div class="zr-leiste s-modus">'+SCHUELER_MODI.map(([id,lab])=>'<button class="zr-chip'+(schuelerAnsicht===id?' an':'')+'" aria-pressed="'+(schuelerAnsicht===id)+'" data-sm="'+id+'">'+lab+'</button>').join('')+'</div>'; }
 function modusChipsEl(){ return el('div',{class:'zr-leiste s-modus'},...SCHUELER_MODI.map(([id,lab])=>el('button',{class:'zr-chip'+(schuelerAnsicht===id?' an':''),'aria-pressed':String(schuelerAnsicht===id),dataset:{sm:id}},lab))); }
 function verdrahteModus(wrap){ wrap.querySelectorAll('[data-sm]').forEach(b=>b.onclick=()=>{ schuelerAnsicht=b.dataset.sm; offenerSchueler=null; mitUebergang(renderSchueler); }); }
@@ -1642,7 +1855,7 @@ function verdrahteDetail(wrap){
   // dynamische Balken-Breiten via CSSOM (CSP: Inline-Style-Attribute in HTML-Strings sind verboten)
   wrap.querySelectorAll('.balken [data-w]').forEach(d=>{ d.style.width=d.dataset.w+'%'; });
   // ↶-Storno im Verlauf bietet sofort den Gegenweg an (C3 — nutzt den C2-Redo-Chip, der fixed über allen Views liegt)
-  wrap.querySelectorAll('.ev-storno').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const ev=vault.events.find(x=>x.id===b.dataset.storno); if(ev){ stornoVon(ev); toast('storniert'); zeigeRedo(ev); renderSchueler(); } });
+  wrap.querySelectorAll('.ev-storno').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const ev=vault.events.find(x=>x.id===b.dataset.storno); if(ev&&stornoVon(ev)){ toast('storniert'+wiederDa(ev)); zeigeRedo(ev); renderSchueler(); } });
   wrap.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const s=schuelerVonNr(Number(b.dataset.quartal)); const kk=kurs(); const zr=zeitraumFilter; const v=verdichte(vault.events.filter(x=>x.kursId===kk.id),s.nr,{profil:bewertProfil(kk),lb:s.lb,von:zr?zr.von:'',bis:zr?zr.bis:'9999-12-31'}); setzeQuartalsnote(s,v.vorschlag,zr); });
 }
 // quartalsnote-Event trägt Zeitraum-Kontext — bleibt IMMER 'quartalsnote', NIE 'note'
@@ -1652,7 +1865,11 @@ function verdrahteDetail(wrap){
 function setzeQuartalsnote(s,vorschlag,zeitraum,{fixiert=false}={}){
   const k=kurs(); const sek2=bewertProfil(k)==='sek2';
   const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
-  const vorwahl=sek2?String(vorschlag.wert):(wertZuLabel(vorschlag.wert)||'3');
+  // Ohne Vorschlag KEINE stille Vorwahl — vorher stand Sek II dann auf 15 P (String(null) traf keine Option), Sek I auf 3
+  const ohneVorschlag=!vorschlag||vorschlag.wert==null;
+  const vorwahl=ohneVorschlag?'':(sek2?String(vorschlag.wert):(wertZuLabel(vorschlag.wert)||''));
+  // Ohne Zeitraum (Gesamt-Ansicht, Detail-Blatt) das Quartal von heute vorbelegen — vorher stand der Dialog immer auf Q1
+  if(!zeitraum){ const sj=aktivesSchuljahr(), h=heuteIso(); zeitraum=((sj&&sj.zeitraeume)||[]).find(z=>/^q[1-4]$/.test(z.id)&&z.von<=h&&h<=z.bis)||null; }
   const zrHinweis=zeitraum?' <small class="u-leise">('+esc(zeitraum.label)+')</small>':'';
   const fixe=fixiert&&zeitraum;
   const zeitraumZeilen=fixe
@@ -1664,13 +1881,14 @@ function setzeQuartalsnote(s,vorschlag,zeitraum,{fixiert=false}={}){
     '<div class="zeile"><span>HJ</span><select id="q-hj"><option value="1">1. HJ</option><option value="2">2. HJ</option></select></div>'+
     '<div class="zeile"><span>Quartal</span><select id="q-q"><option value="1">Q1</option><option value="2">Q2</option></select></div>'+
     '</div>'+
-    '<div class="zeile"><span>Note</span><select id="q-note">'+optionen.map(o=>'<option'+(o===vorwahl?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+    '<div class="zeile"><span>Note</span><select id="q-note">'+(vorwahl?'':'<option value="" selected>— wählen —</option>')+optionen.map(o=>'<option'+(o===vorwahl?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
     '<div class="btn-reihe"><button class="btn" data-ok>Setzen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{
       // Zeitraum → HJ/Quartal vorbelegen (Excel-Slot-Mapping), bleibt editierbar
       if(zeitraum){ const q=zeitraum.id; const hj=/q[34]|hj2/.test(q)?'2':'1'; el.querySelector('#q-hj').value=hj; if(/q1|q3/.test(q)) el.querySelector('#q-q').value='1'; else if(/q2|q4/.test(q)) el.querySelector('#q-q').value='2'; }
       const anders=el.querySelector('#q-anders'); if(anders) anders.onclick=()=>{ el.querySelector('#q-hjq').classList.remove('hidden'); anders.disabled=true; };
       el.querySelector('[data-ok]').onclick=()=>{
+        if(!el.querySelector('#q-note').value){ toast('Bitte eine Note wählen'); return; }
         addEvent('quartalsnote',s.nr,{hj:Number(el.querySelector('#q-hj').value),quartal:Number(el.querySelector('#q-q').value),wert:el.querySelector('#q-note').value,zeitraumId:zeitraum?zeitraum.id:null});
         toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu(); if(aktView==='schueler') renderSchueler();
       };
@@ -1711,7 +1929,10 @@ function kursAnlegenDialog(){
         const profil=el.querySelector('#kn-profil').value;
         const k={id:slugId(name+'-'+fach+'-'+jahr),name,fach,schuljahr:jahr,lehrkraft:'',profil,slot:'m1'};
         const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
-        if(idx>=0) vault.stamm.kurse[idx]=k; else vault.stamm.kurse.push(k);
+        // Gibt es den Kurs schon, NIE still ersetzen (Tombstones, Gruppen, Sitzplan, Einträge hingen sonst an neuen Kindern) —
+        // wie beim Mappen-Import in den Listen-Abgleich (Prüfer 2026-09-29)
+        if(idx>=0){ dlgZu(); listenAbgleichDialog(vault.stamm.kurse[idx],geparst.schueler).then(ok=>{ if(ok){ toast('Liste abgeglichen: '+name); renderKurse(); } }); return; }
+        vault.stamm.kurse.push(k);
         vault.stamm.schueler[k.id]=geparst.schueler;
         stammMutiert(); speichern();
         aktiverKursId=k.id; aktualisiereKursChip();
@@ -1804,7 +2025,8 @@ function kursWizard(){
     const k={id:slugId(name+'-'+fach+'-'+jahr),name,fach,schuljahr:jahr,schuljahrId:aid,lehrkraft:'',profil:w.profil,slot:'m1',status:'aktiv'};
     if(w.profil==='sek2') k.notenmodus=w.notenmodus;
     const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
-    if(idx>=0) vault.stamm.kurse[idx]=k; else vault.stamm.kurse.push(k);
+    if(idx>=0){ dlgZu(); listenAbgleichDialog(vault.stamm.kurse[idx],w.geparst.schueler).then(ok=>{ if(ok){ toast('Liste abgeglichen: '+name); renderKurse(); } }); return; }   // wie oben: nie still ersetzen
+    vault.stamm.kurse.push(k);
     vault.stamm.schueler[k.id]=w.geparst.schueler;
     if(sitz==='alpha') vault.stamm.sitzplaene[k.id]={grid:alphaGrid(w.geparst.schueler)};
     else if(sitz==='leer') vault.stamm.sitzplaene[k.id]={grid:{}};
@@ -1838,6 +2060,7 @@ function profilLabel(k){
 // Verwalten liegt auf dem ⋯-Knopf der Karte (kursDetailSheet).
 function oeffneKurs(id){
   aktiverKursId=id; aktualisiereKursChip();
+  handwahlSetzen({kursId:id,teilgruppe:null,datum:heuteIso(),blockNr:autowahlInfo?.blockNr??null});   // Kurskarte = Handwahl, sonst drehte der Takt binnen 60 s zurück
   aktView='heute';
   document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute'));
   aktiverSchueler=null; stempelAus();
@@ -1967,6 +2190,10 @@ function kursDetailSheet(id){
     const nmSel=el('select',{onchange:e=>{
       const neu=e.target.value;
       if(neu===(k.notenmodus||'punkte')) return;
+      // Direkte Noten (📊/⭐) sind in der alten Einheit gebucht und wären danach unlesbar — das Log ist append-only,
+      // Umrechnen hieße Storno + Neubuchung jeder Note. Darum sperren, solange es welche gibt (Prüfer 2026-09-29).
+      const nNoten=wirksameEvents(vault.events).filter(x=>x.kursId===k.id&&x.typ==='note').length;
+      if(nNoten){ e.target.value=k.notenmodus||'punkte'; toast('Wechsel nicht möglich: '+nNoten+' direkte Note'+(nNoten>1?'n':'')+' in der alten Einheit — erst stornieren',5000); return; }
       const label=neu==='drittel'?'Drittelnoten':'Punkte 0–15';
       dlgZeigenEl(
         el('h3',{},'Noten-Eingabe wechseln?'),
@@ -1980,22 +2207,24 @@ function kursDetailSheet(id){
     zeilen.push(el('div',{class:'zeile'},el('span',{},'Sek II · Noten-Eingabe'),el('span',{},nmSel)));
   }
   const haCb=el('input',{type:'checkbox',class:'u-check',...(p.ha?{checked:'checked'}:{}),onchange:e=>{ vault.stamm.kursprofile[k.id]={...(vault.stamm.kursprofile[k.id]||{}),ha:e.target.checked}; stammMutiert(); speichern(); }});
-  zeilen.push(el('div',{class:'zeile'},el('span',{},'HA-Typ aktiv (SekI-Schule: aus)'),el('span',{},haCb)));
+  zeilen.push(el('label',{class:'zeile'},el('span',{},'HA-Typ aktiv (SekI-Schule: aus)'),el('span',{},haCb)));
   dlgZeigenEl(
     el('h3',{},k.name+' · '+k.fach),
     el('p',{class:'u-hinweis'},profilLabel(k)+' · '+anz+' Schüler'),
     ...zeilen,
+    // Knöpfe nach Aufgabe gruppiert; „Archivieren" als Gefahr abgesetzt, weit weg von „Fertig" (Zero 2026-09-29)
+    el('div',{class:'tag-kopf kd-kopf'},'Klasse'),
     el('div',{class:'btn-reihe'},
       el('button',{class:'btn still',onclick:()=>{ dlgZu(); schuelerPflegeDialog(k.id); }},'Teilnehmer'),
-      el('button',{class:'btn still',onclick:()=>{ dlgZu(); sitzplanEditor(k.id); }},'Sitzplan bearbeiten')),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); sitzplanEditor(k.id); }},'Sitzplan bearbeiten'),
+      el('button',{class:'btn still',onclick:()=>{ dlgZu(); gruppenEditor(k.id); }},'Halbgruppen')),
+    el('div',{class:'tag-kopf kd-kopf'},'Weitere'),
     el('div',{class:'btn-reihe'},
       el('button',{class:'btn still',onclick:()=>{ dlgZu(); slotsEditor(k.id); }},'Stundenplan-Slots'),
-      el('button',{class:'btn still',onclick:()=>{ dlgZu(); gruppenEditor(k.id); }},'Halbgruppen')),
-    el('div',{class:'btn-reihe'},
       el('button',{class:'btn still',onclick:()=>{ dlgZu(); kursDuplizierenDialog(k.id); }},'Duplizieren (anderes Fach)…')),
-    el('div',{class:'btn-reihe'},
+    el('div',{class:'btn-reihe kd-fuss'},
       el('button',{class:'btn gefahr',onclick:()=>{ dlgZu(); archiviereKurs(k.id); }},'Archivieren'),
-      el('button',{class:'btn still',onclick:()=>{ dlgZu(); renderKurse(); }},'Fertig')));
+      el('button',{class:'btn',onclick:()=>{ dlgZu(); renderKurse(); }},'Fertig')));
 }
 // Quartals-Grenzen (Zero 2026-09-02): die Zeiträume kamen bisher nur aus standardZeitraeume() und waren nirgends
 // änderbar. Vier Quartale sind die Eingabe; die Halbjahre folgen daraus (HJ1 = Q1-Anfang … Q2-Ende, HJ2 analog),
@@ -2056,10 +2285,11 @@ function kursDuplizierenDialog(id){
 // Liste aus Mappe AKTUALISIEREN (Punkt 12): Abgleich über die Nr zeigen, dann anwenden — nie still ersetzen.
 // → Promise<boolean> (true = übernommen), damit der Stapel-Import mehrere Kurse nacheinander abfragen kann.
 function listenAbgleichDialog(k,neu){
-  return new Promise(res=>{
+  return new Promise(resRoh=>{
+    const res=aufloesenBeiClose(resRoh,false);   // X/Escape = Abbrechen
     const alt=vault.stamm.schueler[k.id]||[];
     const ab=listenAbgleich(alt,neu);
-    if(!(ab.neue.length+ab.entfernt.length+ab.reaktiviert.length+ab.geaendert.length)){ toast(k.name+': Liste unverändert ('+ab.gleich+' Schüler)'); res(false); return; }
+    if(!(ab.neue.length+ab.entfernt.length+ab.reaktiviert.length+ab.geaendert.length+ab.nrBelegt.length)){ toast(k.name+': Liste unverändert ('+ab.gleich+' Schüler)'); res(false); return; }
     const hatEv=nr=>vault.events.some(e=>e.kursId===k.id&&e.schuelerNr===nr&&e.typ!=='storno');
     const block=(titel,arr,fmt)=>arr.length?[el('div',{class:'tag-kopf'},titel+' ('+arr.length+')'),...arr.slice(0,40).map(x=>el('div',{class:'zeile'},el('span',{},fmt(x))))]:[];
     dlgZeigenEl(el('h3',{},'Liste aktualisieren · '+k.name),
@@ -2068,7 +2298,8 @@ function listenAbgleichDialog(k,neu){
         ...block('Neu',ab.neue,s=>'Nr '+s.nr+' · '+s.vorname+' '+s.name+(s.lb?' · LB':'')),
         ...block('Geändert',ab.geaendert,g=>'Nr '+g.nr+' · '+g.alt.vorname+' '+g.alt.name+' → '+g.neu.vorname+' '+g.neu.name+(!!g.alt.lb!==!!g.neu.lb?(g.neu.lb?' · LB':' · LB weg'):'')),
         ...block('Nicht mehr in der Mappe',ab.entfernt,s=>'Nr '+s.nr+' · '+s.vorname+' '+s.name+(hatEv(s.nr)?' → wird deaktiviert (hat Einträge)':' → wird entfernt')),
-        ...block('Wieder in der Mappe',ab.reaktiviert,s=>'Nr '+s.nr+' · '+s.vorname+' '+s.name+' → wieder aktiv')),
+        ...block('Wieder in der Mappe',ab.reaktiviert,s=>'Nr '+s.nr+' · '+s.vorname+' '+s.name+' → wieder aktiv'),
+        ...block('⚠ Nr schon belegt (anderes Kind)',ab.nrBelegt,g=>'Nr '+g.nr+' · '+g.neu.vorname+' '+g.neu.name+' — die Nr gehört '+g.alt.vorname+' '+g.alt.name+' (inaktiv, mit Einträgen) → nicht übernommen, bitte in der Mappe prüfen')),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:()=>{
           vault.stamm.schueler[k.id]=wendeAbgleichAn(alt,ab,hatEv);
@@ -2158,7 +2389,7 @@ function schuelerPflegeDialog(kursId){
       el('h3',{},'Bearbeiten · Nr '+s.nr),
       el('p',{class:'u-hinweis'},'Nr '+s.nr+' bleibt — Bewertungen, Sitzplan und Excel-Zeile bleiben gebunden.'),
       el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
-      el('div',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
+      el('label',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:()=>{
           const vorname=vnIn.value.trim(), name=nnIn.value.trim();
@@ -2206,7 +2437,7 @@ function schuelerPflegeDialog(kursId){
       el('div',{class:'tag-gruppe'},
         el('div',{class:'tag-kopf'},'Hinzufügen'),
         el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
-        el('div',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
+        el('label',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
         ...(grIn?[el('div',{class:'zeile'},el('span',{},'Halbgruppe'),grIn)]:[]),
         el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:hinzu},'＋ Hinzufügen'))),
       el('div',{class:'btn-reihe'},el('button',{class:'btn still',onclick:()=>{ dlgZu(); renderKurse(); }},'Fertig')));
@@ -2242,7 +2473,7 @@ function schuljahrAssistent(){
   }
   function s2(){ // Altes Jahr
     dlgZeigenEl(kopf('Altes Jahr'),
-      el('p',{},esc(alt.label)+' wird archiviert (schreibgeschützt erhalten). Du findest es unter „Archiv".'),
+      el('p',{},alt.label+' wird archiviert (schreibgeschützt erhalten). Du findest es unter „Archiv".'),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn still',onclick:()=>{ schritt=1; s1(); }},'← Zurück'),
         el('button',{class:'btn',onclick:()=>{ schritt=3; s3(); }},'Weiter: Kurse')));
@@ -2255,7 +2486,7 @@ function schuljahrAssistent(){
       const liste=el('input',{type:'checkbox',class:'u-check',...(w.liste?{checked:'checked'}:{}),onchange:e=>w.liste=e.target.checked});
       const plan=el('input',{type:'checkbox',class:'u-check',...(w.plan?{checked:'checked'}:{}),onchange:e=>w.plan=e.target.checked});
       return el('div',{class:'panel'},
-        el('div',{class:'zeile'},el('span',{},nehmen,' ',esc(k.name)+' · '+esc(k.fach)),el('span',{},'→ ',nameIn)),
+        el('div',{class:'zeile'},el('span',{},nehmen,' ',k.name+' · '+k.fach),el('span',{},'→ ',nameIn)),
         el('div',{class:'zeile'},el('span',{class:'u-hinweis'},'Schülerliste'),el('span',{},liste)),
         el('div',{class:'zeile'},el('span',{class:'u-hinweis'},'Sitzplan + Wochenplan'),el('span',{},plan)));
     });
@@ -2400,7 +2631,7 @@ function sitzplanEditor(kursId){
     const vergeben=new Set(Object.values(sp().grid));
     const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
     rail.replaceChildren(...(frei.length
-      ? frei.map(s=>el('div',{class:'sp-chip',dataset:{nr:String(s.nr)}},esc(s.vorname)+' '+esc(s.name)))
+      ? frei.map(s=>el('div',{class:'sp-chip',dataset:{nr:String(s.nr)}},s.vorname+' '+s.name))
       : [el('span',{class:'u-hinweis'},'alle platziert ✓')]));
   }
   renderRail();
@@ -2596,7 +2827,7 @@ function schultagAb(startIso,richtung){ // nächster/voriger Mo–Fr-Tag (Wochen
 // „Zurück zum Plan" kehrt auf das im Blatt gewählte Datum zurück (der Rückweg IST der Datums-Sprung).
 function ausnahmeBlatt(wt,blockNr,datumVorbelegt){
   const zm=(vault.stamm.zeitmodelle||[])[0]; if(!zm) return;
-  const planText=wochenplanZellText(vault.stamm.wochenplan||[],wt,blockNr);
+  const planText=wochenplanZellText(wochenplanAktiv(),wt,blockNr);
   const datumIn=el('input',{type:'date',value:datumVorbelegt||naechstesDatumFuerWt(wt)});
   const status=el('div',{class:'sp-ergebnis'});
   const aktionen=el('div',{});
@@ -2607,7 +2838,7 @@ function ausnahmeBlatt(wt,blockNr,datumVorbelegt){
     const falschTag=wtVonDatum!==wt;
     const a=ausnahmeFuer(d,blockNr);
     // Nur BELEGTE Stunden können ausfallen (Zero 2026-09-02: der Tages-Entfall trug auch freie Stunden als „entfällt" ein)
-    const kontextOhne={wochenplan:vault.stamm.wochenplan||[],ausnahmen:[],zeitmodell:zm};
+    const kontextOhne={wochenplan:wochenplanAktiv(),ausnahmen:[],zeitmodell:zm};
     const geplant=geplanteBlockNrn(d,wt,resolveBloecke(zm,wt,d),kontextOhne);
     const dieserGeplant=geplant.includes(blockNr);
     // Stunde tauschen (Punkt 17): zwei Blöcke desselben Tages tauschen ihre Kurse — als zwei Vertretungen mit Grund „tausch"
@@ -2621,16 +2852,16 @@ function ausnahmeBlatt(wt,blockNr,datumVorbelegt){
     aktionen.replaceChildren(
       el('div',{class:'btn-reihe'},
         ...(dieserGeplant
-          ?[el('button',{class:'btn gefahr',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,null,'entfall'); toast('Std. '+blockLabel(zm,blockNr,datumIn.value)+' am '+datumLabel(datumIn.value)+' fällt aus'); kursAutowahl(); zeige(); }},'Fällt aus')]
+          ?[el('button',{class:'btn gefahr',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,null,'entfall'); toast('Std. '+blockLabel(zm,blockNr,datumIn.value)+' am '+datumLabel(datumIn.value)+' fällt aus'); if(kursAutowahl()) renderAlles(); zeige(); }},'Fällt aus')]
           :[el('span',{class:'u-hinweis u-selfcenter'},'Laut Plan frei — nichts, was ausfallen könnte.')]),
-        ...(a?[el('button',{class:'btn still',onclick:()=>{ entferneAusnahme(datumIn.value,blockNr); toast('Ausnahme entfernt — es gilt der Plan'); kursAutowahl(); zeige(); }},'Ausnahme entfernen')]:[])),
+        ...(a?[el('button',{class:'btn still',onclick:()=>{ entferneAusnahme(datumIn.value,blockNr); toast('Ausnahme entfernt — es gilt der Plan'); if(kursAutowahl()) renderAlles(); zeige(); }},'Ausnahme entfernen')]:[])),
       el('div',{class:'zeile'},el('span',{},'Vertretung'),el('span',{},kursSel,' ',
-        el('button',{class:'btn still u-btn-klein',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,kursSel.value,'vertretung'); toast('Vertretung gesetzt'); kursAutowahl(); zeige(); }},'Setzen'))),
+        el('button',{class:'btn still u-btn-klein',onclick:()=>{ setzeAusnahme(datumIn.value,blockNr,kursSel.value,'vertretung'); toast('Vertretung gesetzt'); if(kursAutowahl()) renderAlles(); zeige(); }},'Setzen'))),
       ...(tauschKandidaten.length?[el('div',{class:'zeile'},el('span',{},'Tauschen mit'),el('span',{},tauschSel,' ',
         el('button',{class:'btn still u-btn-klein',onclick:()=>{
           const andere=Number(tauschSel.value); const s2=slotFuerBlock(d,wt,andere,kontextOhne);
           setzeAusnahme(d,blockNr,s2.kursId,'tausch'); setzeAusnahme(d,andere,meinPlan.kursId,'tausch');
-          toast('Getauscht: Std. '+blockLabel(zm,blockNr,d)+' ↔ Std. '+blockLabel(zm,andere,d)); kursAutowahl(); zeige();
+          toast('Getauscht: Std. '+blockLabel(zm,blockNr,d)+' ↔ Std. '+blockLabel(zm,andere,d)); if(kursAutowahl()) renderAlles(); zeige();
         }},'Tauschen')))]:[]),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn still',onclick:()=>{
@@ -2638,7 +2869,7 @@ function ausnahmeBlatt(wt,blockNr,datumVorbelegt){
           if(alleEntfall){ for(const b of resolveBloecke(zm,wt,d2)) entferneAusnahme(d2,b.blockNr); toast('Tages-Entfall zurückgenommen'); }
           else if(!geplant.length){ toast('Laut Plan ist an diesem Tag nichts — kein Entfall nötig'); }
           else { for(const nr of geplant) setzeAusnahme(d2,nr,null,'entfall'); toast(datumLabel(d2)+' fällt komplett aus ('+geplant.length+' Std.)'); }   // datumLabel trägt den Wochentag schon („Mo Mo" war ein Vorbestand)
-          kursAutowahl(); zeige();
+          if(kursAutowahl()) renderAlles(); zeige();
         }},alleEntfall?'Tages-Entfall zurücknehmen':'Ganzer Tag fällt aus')));
   };
   datumIn.addEventListener('change',zeige);
@@ -2658,7 +2889,7 @@ let ansichtWoche=null;   // 'A' | 'B' | 'beide' — Wochenfilter der Stundenplan
 function stundenplanAnsicht(ansichtDatum){
   const zm=(vault.stamm.zeitmodelle||[])[0];
   if(!zm){ stundenplanAssistent(); return; }
-  const plan=vault.stamm.wochenplan||[];
+  const plan=wochenplanAktiv();
   const heute=heuteIso();
   const heuteWt=((new Date().getDay()+6)%7)+1;
   // Tagesblick-Datum: gewünschtes Datum, Wochenende rollt auf den nächsten Schultag
@@ -2730,7 +2961,7 @@ function stundenplanAnsicht(ansichtDatum){
       const kName=a.kursId?((vault.stamm.kurse.find(k=>k.id===a.kursId)||{}).name||a.kursId):null;
       ausnBox.append(el('div',{class:'zeile'},
         el('span',{},datumLabel(a.datum)+a.datum.slice(0,4)+' · Std. '+blockLabel(zm,a.blockNr,a.datum)+' — '+(kName?(a.grund==='tausch'?'Tausch: ':'Vertretung: ')+kName:'fällt aus')),
-        el('span',{},el('button',{class:'btn still u-btn-klein',title:'Ausnahme entfernen',onclick:()=>{ entferneAusnahme(a.datum,a.blockNr); kursAutowahl(); stundenplanAnsicht(); }},'✕'))));
+        el('span',{},el('button',{class:'btn still u-btn-klein',title:'Ausnahme entfernen',onclick:()=>{ entferneAusnahme(a.datum,a.blockNr); if(kursAutowahl()) renderAlles(); stundenplanAnsicht(); }},'✕'))));
     }
     if(ausn.length>8) ausnBox.append(el('p',{class:'u-hinweis'},'… und '+(ausn.length-8)+' weitere'));
   }
@@ -3125,8 +3356,8 @@ function renderMehr(){
     '<div class="mehr-spalte">'+
     '<div class="panel"><h2>Sicherheit</h2>'+
     '<div class="zeile"><span>Automatisch sperren nach</span><span><select id="sec-lockmin">'+[5,10,15,30].map(m=>'<option value="'+m+'"'+(lockMinuten()===m?' selected':'')+'>'+m+' min</option>').join('')+'</select></span></div>'+
-    '<div class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' class="u-check"></span></div>'+
-    '<div class="zeile"><span>Während des Unterrichts nicht sperren</span><span><input type="checkbox" id="sec-unterricht"'+(localStorage.getItem('kladde_lock_unterricht')!=='0'?' checked':'')+' class="u-check"></span></div>'+
+    '<label class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' class="u-check"></span></label>'+
+    '<label class="zeile"><span>Während des Unterrichts nicht sperren</span><span><input type="checkbox" id="sec-unterricht"'+(localStorage.getItem('kladde_lock_unterricht')!=='0'?' checked':'')+' class="u-check"></span></label>'+
     '<div class="zeile"><span>Fingerabdruck / Face ID</span><span id="sec-bio">…</span></div>'+
     '<div class="btn-reihe"><button class="btn still" id="sec-pass">Passphrase ändern…</button></div></div>'+
     '<div class="panel"><h2>Sichern & Übertragen</h2>'+
@@ -3182,6 +3413,7 @@ function renderMehr(){
 }
 async function aktuellerContainerBlob(){
   await speichern();
+  if(speicherFehler) throw new Error('Speichern fehlgeschlagen — die Datei hätte einen alten Stand');
   return idbGet('vault');
 }
 function exportiereContainer(){
@@ -3223,10 +3455,18 @@ async function exportiereContainerJetzt(){
 async function importiereContainer(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
   const pin=pinRam||await passphraseAbfragen('Passphrase für den Import'); if(!pin) return;
+  const bytes=new Uint8Array(await f.arrayBuffer());
   let fremd;
   try {
-    fremd=(await decodeContainerAuto(new Uint8Array(await f.arrayBuffer()),pin)).daten; pinRam=pin;
-  } catch(err){ toast('⚠ Import: '+err.message+' (gleiche Passphrase auf beiden Geräten?)',5000); return; }
+    fremd=(await decodeContainerAuto(bytes,pin)).daten; pinRam=pin;
+  } catch{
+    // Container eines Geräts mit ANDERER Passphrase: einmal nach deren Passphrase fragen — vorher endete der Import nur mit
+    // „gleiche Passphrase auf beiden Geräten?“. Die fremde Passphrase wird NICHT als eigene gemerkt (pinRam bleibt).
+    const fremdPin=await passphraseAbfragen('Passphrase dieses Containers','Mit deiner Passphrase ließ sich die Datei nicht öffnen. Stammt sie von einem Gerät mit anderer Passphrase, gib diese hier ein. Deine eigene bleibt unverändert.');
+    if(!fremdPin) return;
+    try { fremd=(await decodeContainerAuto(bytes,fremdPin)).daten; }
+    catch(err){ toast('⚠ Import: '+err.message,5000); return; }
+  }
   if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren (neu laden).',6000); return; }
   // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
   const eigeneIds=new Set(vault.events.map(x=>x.id));
@@ -3238,8 +3478,10 @@ async function importiereContainer(e){
     '<div class="zeile"><span>Kurse</span><span class="wert">'+(fremd.stamm?.kurse?.length||0)+'</span></div>'+
     '<div class="zeile"><span>Ereignisse</span><span class="wert">'+(fremd.events?.length||0)+' · davon '+neue+' neu</span></div>'+
     (dry.konflikte.length
-      ?'<p class="u-warn13">'+iconHtml('warnung')+' '+esc(dry.konflikte[0])+'</p>'
+      ?dry.konflikte.slice(0,5).map(t=>'<p class="u-warn13">'+iconHtml('warnung')+' '+esc(t)+'</p>').join('')+(dry.konflikte.length>5?'<p class="u-hinweis">… und '+(dry.konflikte.length-5)+' weitere</p>':'')
       :'<p class="u-hinweis">Keine Stammdaten-Konflikte.</p>')+
+    // Sicherer Import (Zero 2026-09-29): was nur im anderen Stand stand, wird ergänzt — vorher ging es still verloren
+    (dry.hinweise&&dry.hinweise.length?'<p class="u-hinweis">Ergänzt aus dem anderen Stand: '+esc(dry.hinweise.slice(0,4).join(' · '))+(dry.hinweise.length>4?' · … ('+dry.hinweise.length+')':'')+'</p>':'')+
     '<div class="btn-reihe"><button class="btn" data-ok>Importieren und mergen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=async()=>{
       dlgZu();

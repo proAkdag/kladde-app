@@ -1,9 +1,13 @@
 // kladde/logic/auswahl · gewichtete Zufallswahl (P4.5 · faires „wer ist dran?")
 // Wer heute/im Zeitraum weniger dran war, wird wahrscheinlicher gezogen: Gewicht ∝ 1/(1+Einträge).
+// Wer heute schon ＋ oder ⭐ hat, kommt noch seltener (Zero 2026-09-29) — o/−/⊘ bekommen eher eine neue Chance.
 // Der Zufall ist injizierbar (zufall=() => [0,1)) — dadurch ist die Ziehung Node-testbar,
 // obwohl sie im Betrieb Math.random nutzt (Werks-Codex: gemessen, nicht geglaubt).
 
-export function zufallsGewicht(anzahlEintraege) {
+export const GEWICHT_GUT = 0.2;   // ein Fünftel von „noch nichts“, weniger als die Hälfte von „o/−“ (0,5)
+
+export function zufallsGewicht(anzahlEintraege, gut = false) {
+  if (gut) return GEWICHT_GUT;
   return 1 / (1 + Math.max(0, anzahlEintraege || 0));
 }
 

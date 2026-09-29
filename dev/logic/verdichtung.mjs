@@ -20,9 +20,37 @@ const SOMI_TYPEN = new Set(['+', 'o', '-']);
 const TERMIN_TYPEN = new Set(['+', 'o', '-', 'note', 'mat', 'ipad_fehlt', 'ipad_leer',
   'lernzeit', 'fehlt_e', 'fehlt_u', 'fehlt_o', 'versp', 'notiz', 'ha', 'verweigert']);
 
+// Eine Rücknahme (typ 'storno') hebt auch die Wirkung auf, die das zurückgenommene Event selbst hatte:
+// Wer eine Klärung (fehlt_e mit stornoVon → fehlt_o) rückgängig macht, bekommt die offene Fehlzeit zurück —
+// vorher war sie danach ganz verschwunden (Prüfer 2026-09-29). Klärungs-Ketten (u → e) bleiben, wie sie sind.
+// Gleiche Regel in export_mappe.py wirksame_events (Brücke) — beide ändern sich nur zusammen.
 function wirksameEvents(events) {
-  const storniert = new Set(events.filter(e => e.stornoVon).map(e => e.stornoVon));
+  const zurueck = new Set(events.filter(e => e.typ === 'storno' && e.stornoVon).map(e => e.stornoVon));
+  const storniert = new Set(events.filter(e => e.stornoVon && !zurueck.has(e.id)).map(e => e.stornoVon));
   return events.filter(e => !storniert.has(e.id));
+}
+
+// Ein Zeichen je Stunde (Zero 2026-09-29: „ich vergebe nicht 2 mal +“): ＋/o/−, direkte Note (📊, ⭐) und ⊘
+// schließen sich an einem Termin aus. Die neue Bewertung trägt stornoVon auf die bisherige — die Rücknahme-Regel
+// oben bringt sie beim Rückgängig zurück, die Brücke rechnet ohne Änderung mit. Notiz, Fehlzeit, Material usw. bleiben.
+const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
+// Was beim Einbuchen von `neu` mit den bisherigen Bewertungen desselben Termins geschieht (null = nichts):
+//   ersetzt → die jüngste, auf sie zeigt neu.stornoVon (↶ bringt sie zurück)
+//   still   → ältere Doppelte (frühere Versionen, zwei Geräte), bekommen je einen Storno
+//   notiz   → Begründungen reisen mit (⊘ trägt seine Notiz im Event), Notizen bleiben unberührt
+function ersetzungFuer(events, neu) {
+  if (!BEWERTUNG_TYPEN.has(neu.typ) || neu.stornoVon) return null;
+  const alt = wirksameEvents(events)
+    .filter(e => BEWERTUNG_TYPEN.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu))
+    .sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+  if (!alt.length) return null;
+  const ersetzt = alt.pop();
+  let notiz = neu.notiz ? String(neu.notiz).trim() : '';   // „includes“: ein ↷ Wiederherstellen bringt den Text schon mit
+  for (const a of [ersetzt, ...alt]) {
+    const t = a.notiz ? String(a.notiz).trim() : '';
+    if (t && !notiz.includes(t)) notiz = notiz ? notiz + ' · ' + t : t;
+  }
+  return { ersetzt, still: alt, notiz };
 }
 
 function terminVon(e) {
@@ -53,7 +81,10 @@ function verdichte(kursEvents, schuelerNr, opt) {
     wirksam.filter(e => TERMIN_TYPEN.has(e.typ)).map(terminVon));
   const meine = wirksam.filter(e => e.schuelerNr === schuelerNr);
   const somi = meine.filter(e => SOMI_TYPEN.has(e.typ));
-  const direkte = meine.filter(e => e.typ === 'note');
+  // Direkte Noten, die im Notenmodus des Kurses nicht lesbar sind (Punkte ↔ Drittel nach einem Wechsel, Importe),
+  // werden übersprungen statt die ganze Auswertung abzubrechen (Prüfer 2026-09-29: Liste und Vollseite warfen).
+  const lesbar = e => { try { noteAlsWert(e.wert, profil); return true; } catch { return false; } };
+  const direkte = meine.filter(e => e.typ === 'note' && lesbar(e));
   const beteiligt = new Set(
     meine.filter(e => SOMI_TYPEN.has(e.typ) || e.typ === 'note').map(terminVon));
 
@@ -198,4 +229,4 @@ function notenAbstand(gesetzt, vorschlagWert, profil) {
   return profil === 'sek2' ? Math.abs(g - vorschlagWert) / 3 : Math.abs(g - vorschlagWert);
 }
 
-export { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
+export { verdichte, wirksameEvents, ersetzungFuer, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
