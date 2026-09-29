@@ -1,8 +1,11 @@
 // kladde/logic/verdichtung · Bilanz + Tendenz + sichtbarer Notenvorschlag (Criterion 11)
 // Regel v1 (Plan-Dok, im UI als Text zeigbar — kein Black-Box-Score):
 //   score = (n⁺ − n⁻) / max(1, n⁺ + n° + n⁻)   ∈ [−1, +1]
-//   SekI:  Ereignis-Note = 3 − 2·score, auf Drittel gerundet, geklemmt [1,6]
-//   SekII: Ereignis-Punkte = 9 + 6·score, ganzzahlig, geklemmt [0,15]
+//   SekI:  Ereignis-Note = 3 − 5/3·score, auf Drittel gerundet, geklemmt [1,6]
+//   SekII: Ereignis-Punkte = 8 + 5·score, ganzzahlig, geklemmt [0,15]
+//   Zero 2026-09-29: nur ＋ → 1− bzw. 13 P · nur o → 3 bzw. 8 P · nur − → 5+ bzw. 3 P. Die Ränder
+//   1/15 P und 6/0 P gehören ⭐ (direkte Note) und ⊘ (Verweigerung). Beide Kurven sind dieselbe:
+//   Punkte = 17 − 3·Note (NRW-Tabelle: 1− = 13, 3 = 8, 5+ = 3).
 //   direkte note-Events: TERMINGEWICHTET — jede Note wiegt einen Termin (Zero-Entscheid 2026-07-10;
 //   schwer gewichtete Einzelleistungen wie Referate leben in der Excel-Mappe, nicht hier)
 //   Aktivitätsquote = beteiligte Termine / Kurstermine
@@ -112,12 +115,12 @@ function verdichte(kursEvents, schuelerNr, opt) {
   let vorschlag = null;
   if (!lb && (somi.length > 0 || direkte.length > 0 || sechsWirkt)) {
     if (profil === 'sek2') {
-      const ereignis = somi.length ? 9 + 6 * bilanz.score : null;
+      const ereignis = somi.length ? 8 + 5 * bilanz.score : null;
       const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek2'), 0) / direkte.length : null;
       const p = klemmePunkte(misch(ereignis, 0, mittel));
       vorschlag = { wert: p, label: String(p) + ' P' };
     } else {
-      const ereignis = somi.length ? 3 - 2 * bilanz.score : null;
+      const ereignis = somi.length ? 3 - 5 / 3 * bilanz.score : null;
       const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek1'), 0) / direkte.length : null;
       const w = rundeAufDrittel(misch(ereignis, 6, mittel));
       vorschlag = { wert: w, label: wertZuLabel(w) };
@@ -140,8 +143,8 @@ function verdichte(kursEvents, schuelerNr, opt) {
 function regelText(profil, nSechs = 0) {
   const basis = 'score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen wie ein Termin';
   const kopf = profil === 'sek2'
-    ? 'Punkte-Vorschlag = 9 + 6·score (0–15) · '
-    : 'Noten-Vorschlag = 3 − 2·score (Drittelnoten) · ';
+    ? 'Punkte-Vorschlag = 8 + 5·score (＋ bis 13 P, − bis 3 P) · '
+    : 'Noten-Vorschlag = 3 − 5/3·score (＋ bis 1−, − bis 5+) · ';
   const sechsHinweis = nSechs > 0
     ? ' · ' + nSechs + ' Stunde' + (nSechs > 1 ? 'n' : '') + ' ohne bewertbare Leistung (unentsch./verweigert) als ' + (profil === 'sek2' ? '0 P' : '6') + ' termingewichtet'
     : '';

@@ -1,23 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.9.1.1788379122';
-import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.9.1.1788379122';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.9.1.1788379122';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.9.1.1788379122';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.9.1.1788379122';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.9.1.1788379122';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.9.1.1788379122';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.9.1.1788379122';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.9.1.1788379122';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.9.1.1788379122';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.9.1.1788379122';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.9.1.1788379122';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.9.1.1788379122';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.9.1.1788379122';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.9.1.1788379122';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.9.1.1788379122';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.9.1.1788379122';
-const APP_VERSION = '1.9.1';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.9.2.1790715860';
+import { verdichte, wirksameEvents, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.9.2.1790715860';
+import { mergeContainerDaten } from '../logic/merge.mjs?v=1.9.2.1790715860';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.9.2.1790715860';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.9.2.1790715860';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.9.2.1790715860';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.9.2.1790715860';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.9.2.1790715860';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.9.2.1790715860';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.9.2.1790715860';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.9.2.1790715860';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.9.2.1790715860';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.9.2.1790715860';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.9.2.1790715860';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.9.2.1790715860';
+import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.9.2.1790715860';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.9.2.1790715860';
+const APP_VERSION = '1.9.2';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -426,6 +426,10 @@ function reduziereStand(evs){
   }
   return st;
 }
+// Bewertungen eines Tages-Stands: ＋/o/−, Note (📊 und ⭐ schreiben `note`) und ⊘ — dieselben Typen wie
+// BEWERTUNGS_TYPEN. EINE Quelle für Erfasst-Zähler, Deck-Filter, End-Karte und Zufallsgewicht
+// (Zero 2026-09-29: ⭐ und ⊘ galten dort nicht als Bewertung, die Kinder blieben im Deck).
+function anzahlBewertungen(st){ return st?st.plus+st.neutral+st.minus+(st.note!=null?1:0)+st.verweigert:0; }
 function standAmTermin(nr,datum){
   return reduziereStand(wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===datum));
 }
@@ -750,7 +754,7 @@ function zufallsSchueler(){
   const anwesend=alle.filter(s=>!info.get(s.nr).fehlt);      // Fehlende raus
   const pool=anwesend.length?anwesend:alle;
   // Gewicht ∝ 1/(1+heutige Einträge): wer noch selten dran war, kommt eher (getestet: logic/auswahl.mjs)
-  const s=gewichteteWahl(pool,ss=>{ const st=info.get(ss.nr); return zufallsGewicht(st.plus+st.neutral+st.minus+(st.note!=null?1:0)); });
+  const s=gewichteteWahl(pool,ss=>{ const st=info.get(ss.nr); return zufallsGewicht(anzahlBewertungen(st)); });
   if(!s) return;
   aktiverSchueler=s.nr;
   renderHeute();
@@ -831,10 +835,13 @@ function renderHeute(){
     html+='</div>';
   }
   plan.innerHTML=html;
-  const ohnePlatz=sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr));
+  // In einer Halbgruppen-Stunde fiele, wer (noch) keiner Gruppe angehört, aus jeder Ansicht heraus — etwa ein
+  // gerade hinzugefügter Schüler. Er steht hier mit „ohne Gruppe" und zählt nicht in n/m der Gruppe (Zero 2026-09-29).
+  const ohneGruppe=aktiveTeilgruppe?kursSchueler(k).filter(s=>!s.gruppe):[];
+  const ohnePlatz=[...sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr)),...ohneGruppe];
   if(ohnePlatz.length&&!editorAktiv){  // im Editor zeigt die Namen-Schiene dieselben Schüler — Panel wäre doppelt (Tag-Simulation L5)
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
-    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</button>').join('');
+    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+(aktiveTeilgruppe&&!s.gruppe?' · ohne Gruppe':'')+'</button>').join('');
     liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>{ const nr=Number(b.dataset.nr); if(stempelTyp) stempleKachel(nr); else schuelerBlatt(nr); });  // Stempel gilt auch ohne Sitzplatz (Tag-Simulation L1)
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
@@ -949,7 +956,7 @@ function renderRail(){
   if(k){ const idx=tagesStandIndex(terminDatum); const sicht=sichtbareSchueler(k);
     const da=sicht.filter(s=>!(idx.get(s.nr)||{}).fehlt);  // Abwesende nicht im Nenner: „komplett" = alle ANWESENDEN erfasst (Tag-Simulation L2)
     total=da.length;
-    erfasst=da.filter(s=>{const st=idx.get(s.nr);return st&&(st.plus+st.neutral+st.minus)>0;}).length; }
+    erfasst=da.filter(s=>anzahlBewertungen(idx.get(s.nr))>0).length; }
   const fill=el('div',{}); fill.style.width=(total?Math.round(erfasst/total*100):0)+'%';
   const komplett=total>0&&erfasst===total;  // alle erfasst → grünes „Stunde komplett"-Signal
   const erfasstKarte=el('div',{class:'rail-karte erfasst-karte'+(komplett?' komplett':'')},
@@ -1074,7 +1081,7 @@ function baueDeckListe(){
   // Abwesende (fehlt_o/e/u) nie im Deck — kein Bewerten von Fehlenden
   const abw=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum&&(e.typ==='fehlt_o'||e.typ==='fehlt_e'||e.typ==='fehlt_u')).map(e=>e.schuelerNr));
   let liste=sichtbareSchueler(k).filter(s=>!abw.has(s.nr));
-  if(deckNurOhne){ const idx=tagesStandIndex(terminDatum); liste=liste.filter(s=>{const st=idx.get(s.nr);return !st||(st.plus+st.neutral+st.minus)===0;}); }
+  if(deckNurOhne){ const idx=tagesStandIndex(terminDatum); liste=liste.filter(s=>anzahlBewertungen(idx.get(s.nr))===0); }
   return liste;
 }
 function mischeArray(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
@@ -1094,7 +1101,10 @@ function renderDeck(){
   const k=kurs();
   renderDeckOptionen();
   if(!k){ $('deck-karte').innerHTML='<span class="sub">Kein Kurs gewählt.</span>'; $('deck-fortschritt').textContent=''; return; }
-  if(!deckListe.length||deckListe._kurs!==k.id||deckListe._datum!==terminDatum||deckListe._nurOhne!==deckNurOhne) neuesDeck(false);
+  // „nur ohne Eintrag" hängt an den Bewertungen: wer inzwischen im Sitzplan bewertet wurde, fällt aus
+  // einer noch nicht begonnenen Runde heraus (eine laufende Runde behält ihre Karten und ihren Platz).
+  const frischeNurOhne=deckNurOhne&&deckIdx===0&&!deckVerlauf.length;
+  if(!deckListe.length||deckListe._kurs!==k.id||deckListe._datum!==terminDatum||deckListe._nurOhne!==deckNurOhne||frischeNurOhne) neuesDeck(false);
   zeigeDeckKarte();
 }
 function zeigeDeckKarte(){
@@ -1104,12 +1114,12 @@ function zeigeDeckKarte(){
   // 146 ms -> 7 ms je Deck-Runde, Faktor 21; die Funktion gab es laengst, sie wurde hier nur
   // nicht benutzt). Derselbe Index traegt unten die End-Karte und die Abwesenheits-Anzeige.
   const idxNow=tagesStandIndex(terminDatum);
-  const erfasst=deckListe.filter(s=>{const st=idxNow.get(s.nr);return !!st&&st.plus+st.neutral+st.minus>0;}).length;
+  const erfasst=deckListe.filter(s=>anzahlBewertungen(idxNow.get(s.nr))>0).length;
   const balken='<div class="deck-bar"><div data-w="'+(total?100*erfasst/total:0)+'"></div></div>';
   const setzeBalken=()=>{ const d=$('deck-fortschritt').querySelector('[data-w]'); if(d) d.style.width=d.dataset.w+'%'; }; // CSSOM (CSP)
   if(deckIdx>=total){
     // End-Karte: „Fehlende durchgehen" — noch nicht erfasste Anwesende in ein Nur-Ohne-Deck (P4.4)
-    const fehlend=deckListe.filter(s=>{const st=idxNow.get(s.nr);return !st||(st.plus+st.neutral+st.minus)===0;}).length;
+    const fehlend=deckListe.filter(s=>anzahlBewertungen(idxNow.get(s.nr))===0).length;
     // Grenzfall leeres Deck freundlich erklären statt „0 Karten durch" (Tag-Simulation B1)
     const leerText=deckNurOhne?'Alle Anwesenden sind heute schon erfasst.':'Keine Schüler im Deck — heute alle abwesend.';
     karte.innerHTML='<span class="gross">'+(fehlend?iconHtml('erneut'):'✓')+'</span><span class="sub">'+
@@ -2176,13 +2186,16 @@ function schuelerPflegeDialog(kursId){
     const vnIn=el('input',{type:'text',placeholder:'Vorname',class:'u-w130'});
     const nnIn=el('input',{type:'text',placeholder:'Nachname',class:'u-w130'});
     const lbIn=el('input',{type:'checkbox',class:'u-check'});
+    // Hat der Kurs Halbgruppen, fragt das Hinzufügen gleich nach der Gruppe (sonst fehlt das Kind in jeder Gruppenstunde)
+    const gruppen=[...new Set(alle().map(s=>s.gruppe).filter(Boolean))].sort();
+    const grIn=gruppen.length?el('select',{},el('option',{value:''},'ohne'),...gruppen.map(g=>el('option',{value:g},g))):null;
     const hinzu=()=>{
       const vorname=vnIn.value.trim(), name=nnIn.value.trim();
       if(!vorname&&!name){ toast('Name fehlt'); return; }
       const list=vault.stamm.schueler[k.id]=vault.stamm.schueler[k.id]||[];
       const nr=freieNr();
       if(nr===null){ toast('Keine freie Nr mehr — alle '+MAX_SCHUELER+' sind vergeben oder reserviert'); return; }
-      list.push({nr,name,vorname,lb:lbIn.checked}); list.sort((a,b)=>a.nr-b.nr);
+      list.push({nr,name,vorname,lb:lbIn.checked,...(grIn&&grIn.value?{gruppe:grIn.value}:{})}); list.sort((a,b)=>a.nr-b.nr);
       stammMutiert(); speichern(); toast('Hinzugefügt: '+(vorname||name)); zeige();
     };
     dlgZeigenEl(
@@ -2194,6 +2207,7 @@ function schuelerPflegeDialog(kursId){
         el('div',{class:'tag-kopf'},'Hinzufügen'),
         el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
         el('div',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
+        ...(grIn?[el('div',{class:'zeile'},el('span',{},'Halbgruppe'),grIn)]:[]),
         el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:hinzu},'＋ Hinzufügen'))),
       el('div',{class:'btn-reihe'},el('button',{class:'btn still',onclick:()=>{ dlgZu(); renderKurse(); }},'Fertig')));
   };
