@@ -15,6 +15,59 @@ function mergeEvents(eventsA, eventsB) {
     a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
 
+// ── Lösch-Markierungen (Prüfer 2026-09-29: „Endgültig löschen“ war nicht endgültig) ──
+// stamm.geloescht = { [kursId]: { am, wieder? } }. „Endgültig löschen“ setzt `am`; legt man später einen Kurs mit derselben
+// id neu an (dieselbe Mappe noch einmal), setzt stammMutiert → hebeLoeschungAuf `wieder`. Beim Merge gilt je Feld der
+// jüngste Zeitpunkt beider Geräte. Ohne Markierung holte der sichere Import (ergaenzeAusVerlierer) einen gelöschten Kurs
+// aus dem älteren Stand des zweiten Geräts zurück, und die Event-Union brachte alle seine Einträge mit.
+function istGeloescht(l) {
+  return Boolean(l && l.am && !(l.wieder && String(l.wieder) > String(l.am)));
+}
+function vereinigeLoeschungen(a, b) {
+  const out = {};
+  for (const [id, x] of [...Object.entries(a || {}), ...Object.entries(b || {})]) {
+    const c = out[id];
+    if (!c) { out[id] = { ...x }; continue; }
+    if (String(x.am || '') > String(c.am || '')) c.am = x.am;
+    if (x.wieder && String(x.wieder) > String(c.wieder || '')) c.wieder = x.wieder;
+  }
+  return out;
+}
+// Ein Kurs, der (wieder) im Stamm steht, obwohl er als gelöscht markiert ist, wurde neu angelegt → Markierung aufheben.
+function hebeLoeschungAuf(stamm, jetzt) {
+  for (const k of stamm.kurse || []) {
+    const l = stamm.geloescht && stamm.geloescht[k.id];
+    if (istGeloescht(l)) l.wieder = jetzt;
+  }
+}
+// Entfernt gelöschte Kurse samt Liste, Sitzplan, Profil, Stundenplan-Slots und Einträgen — auf Kopien, nie in place
+// (die Import-Vorschau rechnet auf dem lebenden Tresor). Einträge eines neu angelegten Kurses bleiben, sofern sie
+// jünger sind als die Löschung.
+function wendeLoeschungenAn(stamm, events, loesch) {
+  const ids = Object.keys(loesch || {});
+  if (!ids.length) return { stamm, events, hinweise: [] };
+  const s = { ...stamm, geloescht: loesch };
+  const weg = new Set(ids.filter(id => istGeloescht(loesch[id])));
+  const hinweise = [];
+  if (weg.size) {
+    s.kurse = (stamm.kurse || []).filter(k => !weg.has(k.id));
+    for (const feld of ['schueler', 'sitzplaene', 'kursprofile']) {
+      if (!stamm[feld]) continue;
+      s[feld] = { ...stamm[feld] };
+      for (const id of weg) delete s[feld][id];
+    }
+    if (Array.isArray(stamm.wochenplan)) s.wochenplan = stamm.wochenplan.filter(w => !weg.has(w.kursId));
+  }
+  const vorher = events.length;
+  const ev = events.filter(e => {
+    const l = loesch[e.kursId];
+    if (!l) return true;
+    return !weg.has(e.kursId) && String(e.ts) > String(l.am);
+  });
+  if (ev.length < vorher) hinweise.push((vorher - ev.length) + ' Einträge gelöschter Kurse nicht zurückgeholt');
+  return { stamm: s, events: ev, hinweise };
+}
+
 function inhaltGleich(a, b) {
   const { rev: _ra, ts: _ta, geraet: _ga, ...restA } = a;
   const { rev: _rb, ts: _tb, geraet: _gb, ...restB } = b;
@@ -26,14 +79,14 @@ function inhaltGleich(a, b) {
 // zurück). Aber Kurse und Schüler, die NUR im anderen Stand stehen, gingen bisher still verloren, und ihre Events
 // hingen verwaist im Log (Prüfer 2026-09-29: neuer Schüler Nr 29 auf dem iPad, drei Sitzplan-Züge am PC → weg).
 // Sie werden jetzt ergänzt und gemeldet. Gleiche Nr mit anderem Namen = Konflikt (Basis behält, Meldung sichtbar).
-function ergaenzeAusVerlierer(sieger, verlierer) {
+function ergaenzeAusVerlierer(sieger, verlierer, loesch) {
   const hinweise = [], konflikte = [];
   if (!verlierer) return { stamm: sieger, hinweise, konflikte };
   const s = JSON.parse(JSON.stringify(sieger));
   s.kurse = s.kurse || []; s.schueler = s.schueler || {};
   const basisKurse = new Map(s.kurse.map(k => [k.id, k]));
   for (const k of verlierer.kurse || []) {
-    if (basisKurse.has(k.id)) continue;
+    if (basisKurse.has(k.id) || istGeloescht((loesch || {})[k.id])) continue;   // gelöscht bleibt gelöscht
     s.kurse.push(k);
     s.schueler[k.id] = (verlierer.schueler || {})[k.id] || [];
     for (const feld of ['sitzplaene', 'kursprofile']) {
@@ -60,17 +113,17 @@ function ergaenzeAusVerlierer(sieger, verlierer) {
   return { stamm: s, hinweise, konflikte };
 }
 
-function mergeStammdaten(a, b) {
+function mergeStammdaten(a, b, loesch) {
   if (!a) return { ergebnis: b, konflikt: null, verworfen: null, hinweise: [], konflikte: [] };
   if (!b) return { ergebnis: a, konflikt: null, verworfen: null, hinweise: [], konflikte: [] };
   if (a.rev !== b.rev) {
     const [sieger, verlierer] = a.rev > b.rev ? [a, b] : [b, a];
-    const erg = ergaenzeAusVerlierer(sieger, verlierer);
+    const erg = ergaenzeAusVerlierer(sieger, verlierer, loesch);
     return { ergebnis: erg.stamm, konflikt: null, verworfen: verlierer, hinweise: erg.hinweise, konflikte: erg.konflikte };
   }
   if (inhaltGleich(a, b)) return { ergebnis: a, konflikt: null, verworfen: null, hinweise: [], konflikte: [] };
   const [sieger, verlierer] = String(a.ts) >= String(b.ts) ? [a, b] : [b, a];
-  const erg = ergaenzeAusVerlierer(sieger, verlierer);
+  const erg = ergaenzeAusVerlierer(sieger, verlierer, loesch);
   return {
     ergebnis: erg.stamm,
     verworfen: verlierer,
@@ -84,19 +137,22 @@ function mergeStammdaten(a, b) {
 
 function mergeContainerDaten(a, b) {
   const konflikte = [];
-  const stamm = mergeStammdaten(a.stamm, b.stamm);
+  const loesch = vereinigeLoeschungen(a.stamm && a.stamm.geloescht, b.stamm && b.stamm.geloescht);
+  const stamm = mergeStammdaten(a.stamm, b.stamm, loesch);
   konflikte.push(...(stamm.konflikte || []));   // Namens-Konflikte zuerst — die Vorschau zeigt den ersten
   if (stamm.konflikt) konflikte.push(stamm.konflikt);
+  const events = mergeEvents(a.events || [], b.events || []);
+  const rein = stamm.ergebnis ? wendeLoeschungenAn(stamm.ergebnis, events, loesch) : { stamm: stamm.ergebnis, events, hinweise: [] };
   return {
     daten: {
       schema: a.schema || b.schema || 'kladde/v1',
-      stamm: stamm.ergebnis,
-      events: mergeEvents(a.events || [], b.events || []),
+      stamm: rein.stamm,
+      events: rein.events,
     },
     verworfen: stamm.verworfen,
     konflikte,
-    hinweise: stamm.hinweise || [],
+    hinweise: [...(stamm.hinweise || []), ...rein.hinweise],
   };
 }
 
-export { mergeEvents, mergeStammdaten, mergeContainerDaten };
+export { mergeEvents, mergeStammdaten, mergeContainerDaten, istGeloescht, hebeLoeschungAuf };
