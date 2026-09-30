@@ -1,24 +1,25 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.10.1.1790723780';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.10.1.1790723780';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.10.1.1790723780';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.10.1.1790723780';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.10.1.1790723780';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.10.1.1790723780';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.10.1.1790723780';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.10.1.1790723780';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.10.1.1790723780';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.10.1.1790723780';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.10.1.1790723780';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.10.1.1790723780';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.10.1.1790723780';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.10.1.1790723780';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.10.1.1790723780';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.10.1.1790723780';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.10.1.1790723780';
-const APP_VERSION = '1.10.1';
-const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.0.1790799342';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.0.1790799342';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.0.1790799342';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.0.1790799342';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.0.1790799342';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.0.1790799342';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.0.1790799342';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.0.1790799342';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.0.1790799342';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.0.1790799342';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.0.1790799342';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.0.1790799342';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.0.1790799342';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.0.1790799342';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.0.1790799342';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.0.1790799342';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.0.1790799342';
+const APP_VERSION = '1.11.0';
+// Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden
+const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : /Android/.test(navigator.userAgent) ? 'handy' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
 // Wurzel = Zeros Produktiv-Kladde (echte Namen — Claude betritt sie NICHT mehr).
@@ -747,7 +748,8 @@ function dlgBreit(){ $('dlg').classList.add('breit'); }
 /* ═══ VIEWS / TABS (replaceState-only — Edge-Swipe-Doktrin) ═══ */
 let aktView='heute';
 const VIEW_TITEL={heute:['Heute','Sitzplan · live erfassen'],deck:['Deck','Klasse zügig durchgehen'],schueler:['Schüler','Verläufe, Notizen & Details'],kurse:['Kurse','Klassen verwalten'],mehr:['Mehr','Einstellungen & Sicherung']};
-function setzeViewTitel(v){ const t=VIEW_TITEL[v]||['','']; $('view-titel').textContent=t[0]; $('view-sub').textContent=t[1]; }
+function setzeViewTitel(v){ const t=VIEW_TITEL[v]||['','']; $('view-titel').textContent=t[0]; $('view-sub').textContent=t[1];
+  document.body.dataset.ansicht=v; }   // Handy-CSS: Toast/Undo über der Stempel-Leiste nur in „Heute“ (Klasse statt :has — Safari 26)
 document.getElementById('hauptnav').addEventListener('click',e=>{
   const b=e.target.closest('button[data-view]'); if(!b||b.dataset.view===aktView) return;
   aktView=b.dataset.view;
@@ -946,6 +948,14 @@ function renderHeute(){
     html+='</div>';
   }
   plan.innerHTML=html;
+  // Handy (v1.11.0, Zero 2026-09-30 „Hochkant“): nur die belegten Spalten zeigen, damit die Kacheln die Breite füllen.
+  // `aussen` und `--sp-n` wirken allein im CSS-Block unter 600 px — das iPad behält sein 12er-Raster.
+  if(!editorAktiv){
+    const spalten=Object.keys(grid).map(key=>Number(key.split(',')[1]));
+    const von=spalten.length?Math.min(...spalten):0, bis=spalten.length?Math.max(...spalten):SPALTEN-1;
+    plan.style.setProperty('--sp-n',String(bis-von+1));
+    plan.querySelectorAll('.kachel').forEach(x=>{ const c=Number(x.dataset.c); if(c<von||c>bis) x.classList.add('aussen'); });
+  }
   // In einer Halbgruppen-Stunde fiele, wer (noch) keiner Gruppe angehört, aus jeder Ansicht heraus — etwa ein
   // gerade hinzugefügter Schüler. Er steht hier mit „ohne Gruppe" und zählt nicht in n/m der Gruppe (Zero 2026-09-29).
   const ohneGruppe=aktiveTeilgruppe?kursSchueler(k).filter(s=>!s.gruppe):[];
@@ -1004,7 +1014,8 @@ function entferneLetzten(nr){
 }
 // v1.1.0 · Verweigerung: anwesend, aber keine/verweigerte Leistung → zählt als 6 (Sek II 0 P),
 // termingewichtet (logic/verdichtung). Kurznotiz gekoppelt — dokumentiert den Grund (bei einer 6 ratsam).
-function verweigerungDialog(s){
+// opt (v1.11.0, Tag bewerten aus dem Verlauf): {datum} bucht auf diesen Tag statt auf den Termin, {danach} zeichnet neu statt „Heute“
+function verweigerungDialog(s,opt={}){
   if(!s) return;
   const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. Mitarbeit verweigert, Aufgabe nicht bearbeitet'});
   dlgZeigenEl(
@@ -1012,14 +1023,14 @@ function verweigerungDialog(s){
     el('p',{class:'u-hinweis'},'Zählt für diese Stunde als 6 (Sek II: 0 P), termingewichtet. Kurznotiz zur Begründung:'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ addEvent('verweigert',s.nr,{notiz:ta.value.trim()}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+s.vorname); renderHeute(); pulseKachel(s.nr); }},'Eintragen (6)'),
+      el('button',{class:'btn',onclick:()=>{ addEvent('verweigert',s.nr,{notiz:ta.value.trim(),...tagFeld(opt)}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+s.vorname); (opt.danach||renderHeute)(); pulseKachel(s.nr); }},'Eintragen (6)'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
 // v1.3 · Besondere Leistung (Zero 2026-07-09): Gegenstück zur Verweigerung — trägt automatisch die
 // Bestnote als direkte note ein (Sek I: 1 · Sek II: 15 P, bestehender note-Pfad, keine Logik-Änderung)
 // + optionale gekoppelte Notiz zur Begründung. Kachel zeigt danach 📊 (+ ✎ bei Notiz).
-function bestleistungDialog(s){
+function bestleistungDialog(s,opt={}){
   if(!s) return;
   const sek2=bewertProfil(kurs())==='sek2';
   const wert=sek2?'15':'1', label=sek2?'15 P':'Note 1';
@@ -1030,7 +1041,7 @@ function bestleistungDialog(s){
     el('p',{class:'u-hinweis'},'Trägt '+label+' als direkte Note ein. Kurznotiz zur Begründung (empfohlen):'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt}); addEvent('note',s.nr,{wert,best:true}); dlgZu(); toast('Besondere Leistung: '+label+' · '+s.vorname); renderHeute(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
+      el('button',{class:'btn',onclick:()=>{ const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt,...tagFeld(opt)}); addEvent('note',s.nr,{wert,best:true,...tagFeld(opt)}); dlgZu(); toast('Besondere Leistung: '+label+' · '+s.vorname); (opt.danach||renderHeute)(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
@@ -1099,11 +1110,40 @@ function notizDialog(s){ if(!s) return;
   dlgZeigen('<h3>Notiz · '+esc(s.vorname)+'</h3><textarea id="notiz-in" rows="3" class="u-textarea u-fs16"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt){ addEvent('notiz',s.nr,{notiz:txt}); toast('Notiz gespeichert · '+s.vorname); renderHeute(); if(aktView==='schueler') renderSchueler(); } dlgZu(); }; setTimeout(()=>d.querySelector('#notiz-in').focus(),60); });
 }
-function noteDialog(s){ if(!s) return;
+function noteDialog(s,opt={}){ if(!s) return;
   const k=kurs(); const sek2=bewertProfil(k)==='sek2';
   const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
   dlgZeigen('<h3>Direkte Note · '+esc(s.vorname)+'</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value}); toast('Note eingetragen · '+s.vorname); renderHeute(); dlgZu(); }; });
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value,...tagFeld(opt)}); toast('Note eingetragen · '+s.vorname); dlgZu(); (opt.danach||renderHeute)(); }; });
+}
+function tagFeld(opt){ return opt&&opt.datum?{datum:opt.datum}:{}; }
+// Bewertung an einem Tag aus dem Verlauf setzen (Zero 2026-09-30: „Noten für einen Tag ändern“ · ganze Seite und Detail-Blatt).
+// Dieselbe Regel wie der Stempel: ein Zeichen je Stunde, das neue ersetzt das alte (addEvent → ersetzungFuer), ↶ holt es zurück.
+// Wer an dem Tag fehlte, wird nicht bewertet — wie bewertGuard im Sitzplan, nur für diesen Tag statt für den Termin.
+const TAG_BEWERTUNGEN=[['+','＋','plus'],['o','o',''],['-','−','minus'],['note','note',''],['bestleistung','best','best'],['verweigert','verweigert','verw']];  // [typ, Zeichen oder Icon-Name, Rail-Klasse]
+// Reihe unter den Einträgen eines Tages; das jetzt gültige Zeichen leuchtet wie der scharfe Stempel
+function tagBewertenHtml(nr,tag,tagEvents){
+  const bew=tagEvents.filter(e=>BEWERTUNGS_TYPEN.has(e.typ)).reduce((a,e)=>!a||String(e.ts)>String(a.ts)?e:a,null);
+  const jetzt=bew?(bew.typ==='note'&&bew.best?'bestleistung':bew.typ):null;
+  return '<div class="tag-bewerten"><div class="u-hinweis">Bewertung dieses Tages — ein neues Zeichen ersetzt das alte</div><div class="tag-bewerten-btns">'+
+    TAG_BEWERTUNGEN.map(([typ,z,cls])=>'<button class="rail-btn'+(cls?' '+cls:'')+(jetzt===typ?' an':'')+'" data-tagbewerten="'+typ+'" data-nr="'+nr+'" data-tag="'+tag+'" aria-pressed="'+(jetzt===typ)+'" aria-label="'+RAIL_TITEL[typ]+'" title="'+RAIL_TITEL[typ]+'">'+
+      (typ==='+'||typ==='o'||typ==='-'?z:iconHtml(z))+'</button>').join('')+'</div></div>';
+}
+function tagBewerten(nr,tag,typ,danach){
+  const s=schuelerVonNr(nr); if(!s) return;
+  const st=standAmTermin(nr,tag);
+  if(st.fehlt){ toast(s.vorname+' fehlte an diesem Tag — '+(FEHLT_WORT[st.fehlt]||st.fehlt)+'. Erst die Abwesenheit zurücknehmen (↶), dann bewerten.',3200); return; }
+  const opt={datum:tag,danach};
+  if(typ==='verweigert') return verweigerungDialog(s,opt);
+  if(typ==='bestleistung') return bestleistungDialog(s,opt);
+  if(typ==='note') return noteDialog(s,opt);
+  addEvent(typ,nr,{datum:tag}); danach();
+}
+// Nach dem Neuzeichnen denselben Tag wieder aufklappen und in den sichtbaren Teil des Zeitstrahls holen
+function oeffneTag(wurzel,tag){
+  const b=wurzel&&wurzel.querySelector('.zs-tag[data-tag="'+tag+'"]'); if(!b) return;
+  b.click(); b.scrollIntoView({block:'nearest',inline:'center'});
+  setTimeout(()=>b.scrollIntoView({block:'nearest',inline:'center'}),0);   // nach verdrahteDetail, das den Strahl ans neueste Ende schiebt
 }
 function zeigeMehrAktionen(s){
   const fehlt=standAmTermin(s.nr,terminDatum).fehlt;
@@ -1144,7 +1184,7 @@ function schuelerBlatt(nr){
   dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' · LB':'')+'</h3>'+schuelerDetailHtml(s,k,v)+
     '<div class="btn-reihe"><button class="btn still" data-akt>＋ Eintrag hinzufügen …</button><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
-      verdrahteDetail(el);   // Zeitstrahl-Tage, Balkenbreiten — fehlten hier (Tap tat nichts, Balken leer); Storno/Quartal unten überschrieben
+      verdrahteDetail(el,tag=>{ dlgZu(); renderHeute(); schuelerBlatt(nr); oeffneTag($('dlg'),tag); });   // Zeitstrahl-Tage, Balkenbreiten — fehlten hier (Tap tat nichts, Balken leer); Storno/Quartal unten überschrieben
       el.querySelector('[data-akt]').onclick=()=>{ dlgZu(); zeigeMehrAktionen(s); };
       el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e&&stornoVon(e)){ toast('storniert'+wiederDa(e)); dlgZu(); renderHeute(); schuelerBlatt(nr); } });
       el.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); dlgZu(); setzeQuartalsnote(s,v.vorschlag); });
@@ -1804,7 +1844,7 @@ function renderSchuelerSeite(wrap,k,s,kursEvents){
     const vz=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis});
     setzeQuartalsnote(s,vz.vorschlag||{wert:null,label:'—'},z,{fixiert:true});  // Q-Zellen-Tap setzt GENAU dieses Quartal (C3)
   });
-  verdrahteDetail(wrap);
+  verdrahteDetail(wrap,tag=>{ renderSchueler(); oeffneTag($('view-schueler'),tag); });
 }
 function schuelerDetailHtml(s,k,v){
   const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr)).filter(e=>e.typ!=='storno'); // Storno-Buchungen nicht im Verlauf zeigen
@@ -1824,7 +1864,7 @@ function schuelerDetailHtml(s,k,v){
     const st=reduziereStand(proTag[t]);
     strahl+='<button class="zs-tag" data-tag="'+t+'"><span class="zs-datum">'+datumLabel(t)+'</span><span class="zs-marken">'+markenHtml(st)+'</span></button>';
     details+='<div class="tag-detail-inhalt" data-tag="'+t+'"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
-      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(evZeile).join('')+'</div>';
+      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(evZeile).join('')+tagBewertenHtml(s.nr,t,proTag[t])+'</div>';
   }
   // Gegenwartszeile (C3): der Verlauf beginnt mit dem jüngsten Stand, nicht mit einer Suchaufgabe
   const letzterTag=tage[tage.length-1];
@@ -1852,7 +1892,10 @@ function schuelerDetailHtml(s,k,v){
     (notizListe?'<div class="tag-kopf u-kopf-leise">Notizen ('+notizen.length+')</div><div class="notiz-liste">'+notizListe+'</div>':'')+
     '</div>';
 }
-function verdrahteDetail(wrap){
+function verdrahteDetail(wrap,danach){
+  // Tag bewerten (v1.11.0): danach(tag) zeichnet die Ansicht neu und klappt denselben Tag wieder auf
+  if(danach) wrap.querySelectorAll('[data-tagbewerten]').forEach(b=>b.onclick=e=>{ e.stopPropagation();
+    const tag=b.dataset.tag; tagBewerten(Number(b.dataset.nr),tag,b.dataset.tagbewerten,()=>danach(tag)); });
   // Zeitstrahl: Tag antippen → Einträge des Tages darunter (nur einer offen); initial ans neueste Ende scrollen
   wrap.querySelectorAll('.zs-tag').forEach(b=>b.onclick=()=>{
     const t=b.dataset.tag, war=b.classList.contains('an');
