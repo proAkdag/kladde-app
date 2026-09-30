@@ -948,3 +948,65 @@
   }
   #plan .kachel.zufall-treffer { animation: kladde-treffer .5s cubic-bezier(.2,0,0,1); }
 }
+
+/* ── v1.11.0 · Tag bewerten im Verlauf (Zero 2026-09-30: „Noten für einen Tag ändern“) — ganze Seite + Detail-Blatt ── */
+@layer views {
+  .tag-bewerten { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--kante); }
+  .tag-bewerten-btns { display: flex; gap: 6px; margin-top: 6px; }
+  .tag-bewerten-btns .rail-btn { max-width: 64px; }
+}
+
+/* ══ v1.11.0 · Handy hochkant (Zero 2026-09-30: „Hochkant“, Handy und iPad parallel) ══════════════════════
+   Nur unter 600 px Breite — das iPad 8 (810/1080) bleibt unberührt. Navigation wird Leiste unten, die Stempel
+   stehen fest darüber (Stempel und Sitzplan zugleich im Bild), der Sitzplan zeigt nur die belegten Spalten
+   (`aussen`/`--sp-n` aus renderHeute) und füllt die Breite. Plan: ~/.claude/plans/kladde-handy.md */
+@layer views {
+  @media (max-width: 599px) {
+    :root { --nav-h: 58px; --unten: calc(var(--nav-h) + env(safe-area-inset-bottom)); --stempel-h: 140px; }
+    main { padding: 12px 12px calc(var(--unten) + 16px); }
+    /* Navigation unten, Beschriftung unter dem Symbol */
+    .sidebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; width: auto; height: var(--unten);
+      flex-direction: row; gap: 0; padding: 0 4px env(safe-area-inset-bottom);
+      border-right: none; border-top: 1px solid var(--kante); }
+    .marke { display: none; }
+    #hauptnav { flex: 1; flex-direction: row; gap: 0; }
+    #hauptnav button { flex: 1 1 0; flex-direction: column; justify-content: center; gap: 3px; min-height: var(--nav-h);
+      padding: 6px 0 4px; border-left: none; border-top: 3px solid transparent; border-radius: 0; font-size: 11px; }
+    #hauptnav button.aktiv { background: transparent; border-top-color: var(--band); }
+    .nav-label { display: block; }
+    /* Kopf: Ansichtsname steht schon in der Navigation — Titel nur für Screenreader (behält den Fokus beim Wechsel) */
+    header.app { gap: 6px; padding: calc(env(safe-area-inset-top) + 8px) 12px 8px; }
+    .kopf-titel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    #kurs-chip { flex: 0 1 auto; min-width: 0; padding: 6px 10px; gap: 8px; max-width: none; }
+    header.app .icon-btn { flex: none; }
+    #banner .btn { min-height: 44px; }
+    #banner .banner-zu { min-width: 44px; min-height: 44px; }
+    /* Heute: Plan-Spalte über die volle Breite (vorher schrumpfte sie auf den 600-px-Plan und `main` scrollte seitlich) */
+    .heute-grid { flex-direction: column; align-items: stretch; gap: 10px; }
+    #view-heute { padding-bottom: var(--stempel-h); }
+    .datum-streifen { flex-wrap: wrap; row-gap: 8px; padding: 8px 10px; }
+    .datum-streifen .tg-chip { min-width: 44px; }
+    #plan:not(.editor) { min-width: 0; align-items: stretch; }
+    #plan:not(.editor) .plan-reihe { grid-template-columns: repeat(var(--sp-n, 12), minmax(0, 1fr)); }
+    #plan:not(.editor) .kachel.aussen { display: none; }
+    /* Stempel als feste Leiste über der Navigation: „Erfasst“ als Zeile, darunter 2 × 8 Stempel (⌫ doppelt breit).
+       Nur #rail — `.rail-karte` trägt auch die Fehlzeiten-Spalte der Schüler-Ansicht. `top: auto` hebt das sticky-`top: 0` auf. */
+    #rail { position: fixed; top: auto; left: 0; right: 0; bottom: var(--unten); z-index: 25; width: auto;
+      flex-direction: column; gap: 6px; padding: 8px 12px; background: var(--grund); border-top: 1px solid var(--kante); }
+    #rail .rail-karte { padding: 0; border: none; border-radius: 0; background: transparent; }
+    #rail .erfasst-karte { min-height: 0; flex-direction: row; align-items: center; gap: 12px; }
+    #rail .erfasst-karte .rail-bar { flex: 1; }
+    #rail .rail-karte:not(.erfasst-karte) { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+    #rail :is(.rail-sektion, .rail-gruppe) { display: contents; }
+    #rail .rail-mini { display: none; }
+    #rail .rail-btn.breit { grid-column: span 2; width: auto; }
+    /* Sitzplan-Editor: seine Namen-Leiste liegt über der Navigation, die Stempel ruhen */
+    body.sp-edit #rail { display: none; }
+    body.sp-edit #view-heute { padding-bottom: 0; }
+    .sp-editor-bar { bottom: calc(var(--unten) + 4px); }
+    body.sp-edit main { padding-bottom: calc(var(--unten) + 100px); }
+    /* Rückmeldungen über den Leisten */
+    #toast, #undo-chip { bottom: calc(var(--unten) + var(--stempel-h) + 10px); }
+    body[data-ansicht]:not([data-ansicht="heute"]) :is(#toast, #undo-chip) { bottom: calc(var(--unten) + 12px); }
+  }
+}
