@@ -202,7 +202,7 @@
   #plan.editor .kachel .marken { display: none; }
   /* TAFEL-Linie unten am Sitzplan (Orientierung „vorne" · Gerüst §1) — nur wenn ein Plan sichtbar ist */
   .tafel { display: none; }
-  #plan-wrap:has(#plan:not(.hidden):not(:empty)) .tafel {
+  #plan-wrap:has(#plan:not(.hidden):not(:empty):not(.liste)) .tafel {   /* .liste: Handy-Liste hat kein „vorne“ */
     display: flex; align-items: center; gap: 12px; margin-top: 10px;
     font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--leise);
   }
@@ -1008,6 +1008,21 @@
     /* höchstens 88 px je Kachel — bei zwei, drei belegten Spalten würden sie sonst handtellergroß (Prüfer 2026-09-30) */
     #plan:not(.editor) .plan-reihe { grid-template-columns: repeat(var(--sp-n, 12), minmax(0, 88px)); justify-content: center; }
     #plan:not(.editor) .kachel.aussen { display: none; }
+    /* Liste statt Sitzplan (Zero 2026-10-01): zwei Spalten „Vorname N.“, Tagesmarken rechts — Farben und Marken erbt die Zeile
+       von der Kachel. scroll-margin: der Zufall rollt die gezogene Zeile über die feste Stempel-Leiste, nicht darunter. */
+    #erfass-umschalter { display: flex; gap: 8px; }
+    #erfass-umschalter.unten { margin-top: 14px; }
+    #erfass-umschalter:not(.unten) { margin-bottom: 6px; }
+    #erfass-umschalter .seg { flex: 1; display: flex; border: 1px solid var(--kante); border-radius: 10px; overflow: hidden; }
+    #erfass-umschalter button { flex: 1; min-height: 44px; border: 0; background: var(--karte); color: var(--leise); font: inherit; font-size: 14px; cursor: pointer; }
+    #erfass-umschalter button[aria-pressed="true"] { background: var(--karte2); color: var(--text); font-weight: 700; box-shadow: inset 0 -3px 0 var(--band); }
+    #plan .erfass-liste { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    #plan .kachel.listen-zeile { aspect-ratio: auto; min-height: 48px; flex-direction: row; align-items: center; gap: 4px;
+      padding: 0 8px; border-radius: 10px; font-size: 15px; scroll-margin-bottom: calc(var(--unten) + var(--stempel-h) + 8px); }
+    /* Das Kürzel des Nachnamens („Mü.“) unterscheidet gleiche Vornamen — es bleibt ganz, gekürzt wird der Vorname (Prüfer 2026-10-01) */
+    #plan .kachel.listen-zeile .vn { flex: 0 1 auto; min-width: 0; }
+    #plan .kachel.listen-zeile .nn { flex: none; margin-right: auto; padding: 0; font-size: 15px; }
+    #plan .kachel.listen-zeile .marken { flex: none; margin: 0; padding: 0; min-height: 0; flex-wrap: nowrap; }
     /* Stempel als feste Leiste über der Navigation: „Erfasst“ als Zeile, darunter 2 × 8 Stempel (⌫ doppelt breit).
        Nur #rail — `.rail-karte` trägt auch die Fehlzeiten-Spalte der Schüler-Ansicht. `top: auto` hebt das sticky-`top: 0` auf. */
     #rail { position: fixed; top: auto; left: 0; right: 0; bottom: var(--unten); z-index: 25; width: auto;
