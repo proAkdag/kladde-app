@@ -1,25 +1,27 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.1.1790801856';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.1.1790801856';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.1.1790801856';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.1.1790801856';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.1.1790801856';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.1.1790801856';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.1.1790801856';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.1.1790801856';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.1.1790801856';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.1.1790801856';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.1.1790801856';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.1.1790801856';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.1.1790801856';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.1.1790801856';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.1.1790801856';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.1.1790801856';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.1.1790801856';
-const APP_VERSION = '1.11.1';
-// Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden
-const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : /Android/.test(navigator.userAgent) ? 'handy' : 'pc';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.2.1790804622';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.2.1790804622';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.2.1790804622';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.2.1790804622';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.2.1790804622';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.2.1790804622';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.2.1790804622';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.2.1790804622';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.2.1790804622';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.2.1790804622';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.2.1790804622';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.2.1790804622';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.2.1790804622';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.2.1790804622';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.2.1790804622';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.2.1790804622';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.2.1790804622';
+const APP_VERSION = '1.11.2';
+// Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
+// iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
+const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
+  : /Android/.test(navigator.userAgent) ? 'handy' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
 // Wurzel = Zeros Produktiv-Kladde (echte Namen — Claude betritt sie NICHT mehr).
