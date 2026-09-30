@@ -871,8 +871,9 @@
   /* Dialog = Rahmen (fixiert) + .dlg-inhalt (scrollt). Der X-Knopf liegt außerhalb des Scrollbereichs und bleibt stehen. */
   #dlg[open] { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
   .dlg-inhalt { overflow: auto; padding: 16px; min-height: 0; }
-  .dlg-inhalt > h3:first-child, .dlg-inhalt > .sp-kopf:first-child { padding-right: 46px; }
-  .dlg-x { position: absolute; top: 8px; right: 8px; z-index: 3; width: 40px; height: 40px; border-radius: 10px;
+  .dlg-inhalt > h3:first-child, .dlg-inhalt > .sp-kopf:first-child { padding-right: 50px; }
+  /* 44 px wie alle Ziele (v1.11.3, Zero 2026-09-30 nach Codex-Prüfbericht: vorher 40) */
+  .dlg-x { position: absolute; top: 8px; right: 8px; z-index: 3; width: 44px; height: 44px; border-radius: 10px;
     border: 1px solid var(--kante); background: var(--karte2); color: var(--leise); display: grid; place-items: center; cursor: pointer; padding: 0; }
   .dlg-x .ico { width: 18px; height: 18px; }
   #lock-bio { min-width: 220px; }
@@ -948,6 +949,20 @@
     100% { transform: scale(1);    box-shadow: 0 0 0 16px color-mix(in oklab, var(--band) 0%, transparent); }
   }
   #plan .kachel.zufall-treffer { animation: kladde-treffer .5s cubic-bezier(.2,0,0,1); }
+}
+
+/* ── v1.11.3 · Schüler-Ansicht entlastet (Zero 2026-09-30 nach Codex-Prüfbericht): leere Fehlzeiten als Zeile, Regel aufklappbar ── */
+@layer views {
+  .s-fz-leer { margin: 0 0 10px; }
+  .s-regel { margin: 2px 0 8px; }
+  .s-regel > summary { cursor: pointer; font-size: 13px; color: var(--leise); min-height: 44px; display: flex; align-items: center; }
+  .s-regel > summary:focus-visible { outline: 2px solid var(--band); outline-offset: 2px; border-radius: 6px; }
+  .s-regel[open] > summary { color: var(--text); }
+  /* Pfeil zeigt, dass es aufgeht (display:flex nimmt der summary ihr Dreieck) — wie .s-item .pfeil */
+  .s-regel > summary::before { content: '›'; display: inline-block; width: 14px; margin-right: 6px; font-size: 16px; transition: transform .18s ease-out; }
+  .s-regel[open] > summary::before { transform: rotate(90deg); }
+  .s-regel > summary::-webkit-details-marker { display: none; }
+  .s-regel .u-regelzeile { margin-top: 0; }
 }
 
 /* ── v1.11.0 · Tag bewerten im Verlauf (Zero 2026-09-30: „Noten für einen Tag ändern“) — ganze Seite + Detail-Blatt ── */

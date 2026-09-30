@@ -1,23 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.2';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.2';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.2';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.2';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.2';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.2';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.2';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.2';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.2';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.2';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.2';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.2';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.2';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.2';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.2';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.2';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.2';
-const APP_VERSION = '1.11.2';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.3';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.3';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.3';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.3';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.3';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.3';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.3';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.3';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.3';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.3';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.3';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.3';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.3';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.3';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.3';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.3';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.3';
+const APP_VERSION = '1.11.3';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -1502,10 +1502,12 @@ function renderSchueler(){
       '<span class="klaer-btns"><button class="btn still u-btn-klein" data-klaer="e" data-o="'+e.id+'">Entsch.</button>'+
       '<button class="btn still u-btn-klein" data-klaer="u" data-o="'+e.id+'">Unentsch.</button>'+
       '<button class="btn still u-btn-klein" data-klaer="irrtum" data-o="'+e.id+'">Irrtum</button></span></div>'; }).join('');
-  const seite='<aside class="s-seite" aria-label="Offene Fehlzeiten"><div class="rail-karte"><div class="rail-titel">Offene Fehlzeiten ('+offeneO.length+')</div>'+
-    (klaerZeilen||'<p class="u-hinweis">Keine offenen Fehlzeiten.</p>')+'</div></aside>';
-  html='<div class="s-layout"><div class="s-haupt">'+html;
-  html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(zr?zr.label:'Verdichtung')+'</h2><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p>'+
+  // Keine offenen Fehlzeiten: eine Zeile über der Liste statt einer leeren Karte (Zero 2026-09-30, Codex-Prüfbericht)
+  const seite=offeneO.length?'<aside class="s-seite" aria-label="Offene Fehlzeiten"><div class="rail-karte"><div class="rail-titel">Offene Fehlzeiten ('+offeneO.length+')</div>'+
+    klaerZeilen+'</div></aside>':'';
+  html='<div class="s-layout"><div class="s-haupt">'+(offeneO.length?'':'<p class="s-fz-leer u-hinweis">Keine offenen Fehlzeiten.</p>')+html;
+  // Rechenregel aufklappbar — sichtbar bleibt der Vorschlag in der Liste (Zero 2026-09-30, Codex-Prüfbericht)
+  html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(zr?zr.label:'Verdichtung')+'</h2><details class="s-regel"><summary>Wie entsteht der Vorschlag?</summary><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p></details>'+
     '<div class="btn-reihe"><button class="btn still u-btn-klein" data-kopiere title="Nr + Note in die Zwischenablage — in die Excel-Klassenmappe einfügen">'+iconHtml('kopieren')+' '+esc(zr?kurzL(zr.label):'Gesamt')+'-Vorschläge für Excel kopieren</button></div>';
   // Terminliste des Kurses für den „seit N Terminen kein Eintrag"-Anlass (C3)
   const alleTermine=[...new Set(wirksameEvents(kursEvents).filter(istTerminEintrag).map(e=>e.datum))].sort();
