@@ -1,23 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.0.1790799342';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.0.1790799342';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.0.1790799342';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.0.1790799342';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.0.1790799342';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.0.1790799342';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.0.1790799342';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.0.1790799342';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.0.1790799342';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.0.1790799342';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.0.1790799342';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.0.1790799342';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.0.1790799342';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.0.1790799342';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.0.1790799342';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.0.1790799342';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.0.1790799342';
-const APP_VERSION = '1.11.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.1.1790801856';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.1.1790801856';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.1.1790801856';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.1.1790801856';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.1.1790801856';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.1.1790801856';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.1.1790801856';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.1.1790801856';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.1.1790801856';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.1.1790801856';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.1.1790801856';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.1.1790801856';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.1.1790801856';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.1.1790801856';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.1.1790801856';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.1.1790801856';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.1.1790801856';
+const APP_VERSION = '1.11.1';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : /Android/.test(navigator.userAgent) ? 'handy' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
@@ -733,7 +733,7 @@ function dlgZeigen(html,setup){
   const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().innerHTML=html;
   d.querySelectorAll('[data-schliessen]').forEach(b=>b.onclick=()=>d.close());
   if(setup) setup(d);
-  d.showModal();
+  if(!d.open) d.showModal();   // aus einem offenen Detail-Blatt heraus (Tag bewerten → Note): ältere Engines werfen bei showModal auf offenem Dialog
 }
 function dlgZu(){ $('dlg').close(); }
 // el()-Variante: Dialog aus DOM-Knoten (CSP-sicher, kein innerHTML) — für neue Views (P2.4+)
@@ -749,7 +749,7 @@ function dlgBreit(){ $('dlg').classList.add('breit'); }
 let aktView='heute';
 const VIEW_TITEL={heute:['Heute','Sitzplan · live erfassen'],deck:['Deck','Klasse zügig durchgehen'],schueler:['Schüler','Verläufe, Notizen & Details'],kurse:['Kurse','Klassen verwalten'],mehr:['Mehr','Einstellungen & Sicherung']};
 function setzeViewTitel(v){ const t=VIEW_TITEL[v]||['','']; $('view-titel').textContent=t[0]; $('view-sub').textContent=t[1];
-  document.body.dataset.ansicht=v; }   // Handy-CSS: Toast/Undo über der Stempel-Leiste nur in „Heute“ (Klasse statt :has — Safari 26)
+  document.body.dataset.ansicht=v; }   // Handy-CSS: Toast/Undo auf der Stempel-Leiste nur in „Heute“ (data-Attribut statt :has — Safari 26)
 document.getElementById('hauptnav').addEventListener('click',e=>{
   const b=e.target.closest('button[data-view]'); if(!b||b.dataset.view===aktView) return;
   aktView=b.dataset.view;
@@ -1023,7 +1023,7 @@ function verweigerungDialog(s,opt={}){
     el('p',{class:'u-hinweis'},'Zählt für diese Stunde als 6 (Sek II: 0 P), termingewichtet. Kurznotiz zur Begründung:'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ addEvent('verweigert',s.nr,{notiz:ta.value.trim(),...tagFeld(opt)}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+s.vorname); (opt.danach||renderHeute)(); pulseKachel(s.nr); }},'Eintragen (6)'),
+      el('button',{class:'btn',onclick:()=>{ if(kursGewechselt(opt)) return; addEvent('verweigert',s.nr,{notiz:ta.value.trim(),...tagFeld(opt)}); dlgZu(); toast('Verweigerung notiert (zählt 6) · '+s.vorname); (opt.danach||renderHeute)(); pulseKachel(s.nr); }},'Eintragen (6)'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
@@ -1041,7 +1041,7 @@ function bestleistungDialog(s,opt={}){
     el('p',{class:'u-hinweis'},'Trägt '+label+' als direkte Note ein. Kurznotiz zur Begründung (empfohlen):'),
     ta,
     el('div',{class:'btn-reihe'},
-      el('button',{class:'btn',onclick:()=>{ const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt,...tagFeld(opt)}); addEvent('note',s.nr,{wert,best:true,...tagFeld(opt)}); dlgZu(); toast('Besondere Leistung: '+label+' · '+s.vorname); (opt.danach||renderHeute)(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
+      el('button',{class:'btn',onclick:()=>{ if(kursGewechselt(opt)) return; const txt=ta.value.trim(); if(txt) addEvent('notiz',s.nr,{notiz:txt,...tagFeld(opt)}); addEvent('note',s.nr,{wert,best:true,...tagFeld(opt)}); dlgZu(); toast('Besondere Leistung: '+label+' · '+s.vorname); (opt.danach||renderHeute)(); pulseKachel(s.nr); }},'Eintragen ('+label+')'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   setTimeout(()=>ta.focus(),60);
 }
@@ -1114,26 +1114,40 @@ function noteDialog(s,opt={}){ if(!s) return;
   const k=kurs(); const sek2=bewertProfil(k)==='sek2';
   const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):Object.keys(DRITTELNOTEN);
   dlgZeigen('<h3>Direkte Note · '+esc(s.vorname)+'</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ addEvent('note',s.nr,{wert:d.querySelector('#note-in').value,...tagFeld(opt)}); toast('Note eingetragen · '+s.vorname); dlgZu(); (opt.danach||renderHeute)(); }; });
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ if(kursGewechselt(opt)) return; addEvent('note',s.nr,{wert:d.querySelector('#note-in').value,...tagFeld(opt)}); toast('Note eingetragen · '+s.vorname); dlgZu(); (opt.danach||renderHeute)(); }; });
 }
 function tagFeld(opt){ return opt&&opt.datum?{datum:opt.datum}:{}; }
 // Bewertung an einem Tag aus dem Verlauf setzen (Zero 2026-09-30: „Noten für einen Tag ändern“ · ganze Seite und Detail-Blatt).
 // Dieselbe Regel wie der Stempel: ein Zeichen je Stunde, das neue ersetzt das alte (addEvent → ersetzungFuer), ↶ holt es zurück.
 // Wer an dem Tag fehlte, wird nicht bewertet — wie bewertGuard im Sitzplan, nur für diesen Tag statt für den Termin.
 const TAG_BEWERTUNGEN=[['+','＋','plus'],['o','o',''],['-','−','minus'],['note','note',''],['bestleistung','best','best'],['verweigert','verweigert','verw']];  // [typ, Zeichen oder Icon-Name, Rail-Klasse]
-// Reihe unter den Einträgen eines Tages; das jetzt gültige Zeichen leuchtet wie der scharfe Stempel
-function tagBewertenHtml(nr,tag,tagEvents){
-  const bew=tagEvents.filter(e=>BEWERTUNGS_TYPEN.has(e.typ)).reduce((a,e)=>!a||String(e.ts)>String(a.ts)?e:a,null);
+// Reihe unter den Einträgen eines Tages; das jetzt gültige Zeichen leuchtet wie der scharfe Stempel.
+// sperre = Grund, warum hier nicht bewertet wird (steht sichtbar in der Reihe — ein Toast läge unter dem Detail-Blatt).
+// data-kurs: der Kurs, für den die Reihe gezeichnet wurde (Schutz beim Kurswechsel, siehe verdrahteDetail).
+function tagBewertenHtml(nr,tag,tagEvents,sperre,kursId){
+  const alle=tagEvents.filter(e=>BEWERTUNGS_TYPEN.has(e.typ)).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+  const bew=alle[alle.length-1]||null;
   const jetzt=bew?(bew.typ==='note'&&bew.best?'bestleistung':bew.typ):null;
-  return '<div class="tag-bewerten"><div class="u-hinweis">Bewertung dieses Tages — ein neues Zeichen ersetzt das alte</div><div class="tag-bewerten-btns">'+
-    TAG_BEWERTUNGEN.map(([typ,z,cls])=>'<button class="rail-btn'+(cls?' '+cls:'')+(jetzt===typ?' an':'')+'" data-tagbewerten="'+typ+'" data-nr="'+nr+'" data-tag="'+tag+'" aria-pressed="'+(jetzt===typ)+'" aria-label="'+RAIL_TITEL[typ]+'" title="'+RAIL_TITEL[typ]+'">'+
+  // Alte Tage (vor der Regel vom 29.09.) tragen oft mehrere Zeichen — ein Tipp ersetzt alle (Zero 2026-09-30: „Ersetzen + Hinweis“)
+  const hinweis=alle.length>1?'An diesem Tag stehen '+alle.length+' Zeichen ('+alle.map(eintragLabel).join(' ')+') — ein Tipp ersetzt '+(alle.length===2?'beide':'alle')+'.'
+    :'Bewertung dieses Tages — ein neues Zeichen ersetzt das alte';
+  return '<div class="tag-bewerten"><div class="'+(sperre||alle.length>1?'u-warn13':'u-hinweis')+'">'+esc(sperre||hinweis)+'</div><div class="tag-bewerten-btns">'+
+    TAG_BEWERTUNGEN.map(([typ,z,cls])=>'<button class="rail-btn'+(cls?' '+cls:'')+(jetzt===typ?' an':'')+'" data-tagbewerten="'+typ+'" data-nr="'+nr+'" data-tag="'+tag+'" data-kurs="'+esc(kursId)+'"'+(sperre?' disabled':'')+' aria-pressed="'+(jetzt===typ)+'" aria-label="'+RAIL_TITEL[typ]+'" title="'+RAIL_TITEL[typ]+'">'+
       (typ==='+'||typ==='o'||typ==='-'?z:iconHtml(z))+'</button>').join('')+'</div></div>';
+}
+// Der Kurs kann wechseln, während ein Dialog offen ist (Rückkehr in die App nach Blockwechsel) — dann nichts buchen:
+// dieselbe Nummer ist im neuen Kurs ein anderer Mensch (Prüfer 2026-09-30: Emil 7b → Gustav 8c).
+function kursGewechselt(opt){
+  if(!opt||!opt.kursId||opt.kursId===aktiverKursId) return false;
+  if($('dlg').open) dlgZu();
+  toast('Der Kurs hat inzwischen gewechselt — nichts gebucht. Bitte den Schüler neu öffnen.',4000); renderAlles();
+  return true;
 }
 function tagBewerten(nr,tag,typ,danach){
   const s=schuelerVonNr(nr); if(!s) return;
   const st=standAmTermin(nr,tag);
   if(st.fehlt){ toast(s.vorname+' fehlte an diesem Tag — '+(FEHLT_WORT[st.fehlt]||st.fehlt)+'. Erst die Abwesenheit zurücknehmen (↶), dann bewerten.',3200); return; }
-  const opt={datum:tag,danach};
+  const opt={datum:tag,danach,kursId:aktiverKursId};
   if(typ==='verweigert') return verweigerungDialog(s,opt);
   if(typ==='bestleistung') return bestleistungDialog(s,opt);
   if(typ==='note') return noteDialog(s,opt);
@@ -1143,7 +1157,9 @@ function tagBewerten(nr,tag,typ,danach){
 function oeffneTag(wurzel,tag){
   const b=wurzel&&wurzel.querySelector('.zs-tag[data-tag="'+tag+'"]'); if(!b) return;
   b.click(); b.scrollIntoView({block:'nearest',inline:'center'});
-  setTimeout(()=>b.scrollIntoView({block:'nearest',inline:'center'}),0);   // nach verdrahteDetail, das den Strahl ans neueste Ende schiebt
+  // nach verdrahteDetail, das den Strahl ans neueste Ende schiebt · Tages-Einträge in die Mitte: am unteren Rand läge die
+  // Bewertungs-Reihe unter dem Rückgängig-Chip, und ein zweiter Tipp träfe den Chip (Prüfer 2026-09-30)
+  setTimeout(()=>{ b.scrollIntoView({block:'nearest',inline:'center'}); const d=wurzel.querySelector('.tag-detail-inhalt.an'); if(d) d.scrollIntoView({block:'center',inline:'nearest'}); },0);
 }
 function zeigeMehrAktionen(s){
   const fehlt=standAmTermin(s.nr,terminDatum).fehlt;
@@ -1859,12 +1875,20 @@ function schuelerDetailHtml(s,k,v){
   // Tap expandiert die Einträge des Tages darunter (mit ↶-Storno). Kein Runterscrollen mehr.
   const evZeile=e=>'<div class="ev-zeile"><span>'+(e.best?iconHtml('best')+' ':'')+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
     '<button class="btn still ev-storno u-btn-klein" data-storno="'+e.id+'">'+iconHtml('rueck')+'</button></div>';
+  // Tag bewerten nur an echten Unterrichtstagen des Kurses, nicht in der Zukunft, nicht im Archiv, nicht bei Abwesenheit
+  // (Prüfer 2026-09-30: ein Tag mit nur einer Quartalsnote wurde durch ein ＋ zum neuen Kurstermin und senkte die Beteiligung aller)
+  const terminTage=new Set(wirksameEvents(vault.events.filter(e=>e.kursId===k.id)).filter(istTerminEintrag).map(e=>e.datum));
+  const heute=heuteIso();
+  const sperreFuer=(t,st)=>k.status==='archiviert'?'Archiv-Kurs — schreibgeschützt.'
+    :t>heute?'Der Tag liegt in der Zukunft.'
+    :!terminTage.has(t)?'An diesem Tag hatte der Kurs keinen Unterricht — hier wird nicht bewertet.'
+    :st.fehlt?s.vorname+' fehlte an diesem Tag ('+(FEHLT_WORT[st.fehlt]||st.fehlt)+') — erst die Abwesenheit zurücknehmen (↶), dann bewerten.':'';
   let strahl='', details='';
   for(const t of tage){
     const st=reduziereStand(proTag[t]);
     strahl+='<button class="zs-tag" data-tag="'+t+'"><span class="zs-datum">'+datumLabel(t)+'</span><span class="zs-marken">'+markenHtml(st)+'</span></button>';
     details+='<div class="tag-detail-inhalt" data-tag="'+t+'"><div class="tag-kopf">'+datumLabel(t)+'</div>'+
-      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(evZeile).join('')+tagBewertenHtml(s.nr,t,proTag[t])+'</div>';
+      proTag[t].sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(evZeile).join('')+tagBewertenHtml(s.nr,t,proTag[t],sperreFuer(t,st),k.id)+'</div>';
   }
   // Gegenwartszeile (C3): der Verlauf beginnt mit dem jüngsten Stand, nicht mit einer Suchaufgabe
   const letzterTag=tage[tage.length-1];
@@ -1895,6 +1919,7 @@ function schuelerDetailHtml(s,k,v){
 function verdrahteDetail(wrap,danach){
   // Tag bewerten (v1.11.0): danach(tag) zeichnet die Ansicht neu und klappt denselben Tag wieder auf
   if(danach) wrap.querySelectorAll('[data-tagbewerten]').forEach(b=>b.onclick=e=>{ e.stopPropagation();
+    if(kursGewechselt({kursId:b.dataset.kurs})) return;
     const tag=b.dataset.tag; tagBewerten(Number(b.dataset.nr),tag,b.dataset.tagbewerten,()=>danach(tag)); });
   // Zeitstrahl: Tag antippen → Einträge des Tages darunter (nur einer offen); initial ans neueste Ende scrollen
   wrap.querySelectorAll('.zs-tag').forEach(b=>b.onclick=()=>{

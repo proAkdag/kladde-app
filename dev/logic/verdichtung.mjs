@@ -41,7 +41,8 @@ const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
 // Was beim Einbuchen von `neu` mit den bisherigen Bewertungen desselben Termins geschieht (null = nichts):
 //   ersetzt → die jüngste, auf sie zeigt neu.stornoVon (↶ bringt sie zurück)
 //   still   → ältere Doppelte (frühere Versionen, zwei Geräte), bekommen je einen Storno
-//   notiz   → Begründungen reisen mit (⊘ trägt seine Notiz im Event), Notizen bleiben unberührt
+//   notiz   → Notizen an ersetzten Zeichen reisen mit; die Begründung eines ⊘ NICHT — sie geht mit dem ⊘ und kommt mit ↶
+//             zurück (Zero 2026-09-30: sonst stand „＋ · Mitarbeit verweigert“ im Verlauf und im Kurzbericht). Notiz-Einträge bleiben unberührt.
 function ersetzungFuer(events, neu) {
   if (!BEWERTUNG_TYPEN.has(neu.typ) || neu.stornoVon) return null;
   const alt = wirksameEvents(events)
@@ -51,7 +52,7 @@ function ersetzungFuer(events, neu) {
   const ersetzt = alt.pop();
   let notiz = neu.notiz ? String(neu.notiz).trim() : '';   // „includes“: ein ↷ Wiederherstellen bringt den Text schon mit
   for (const a of [ersetzt, ...alt]) {
-    const t = a.notiz ? String(a.notiz).trim() : '';
+    const t = a.typ !== 'verweigert' && a.notiz ? String(a.notiz).trim() : '';
     if (t && !notiz.includes(t)) notiz = notiz ? notiz + ' · ' + t : t;
   }
   return { ersetzt, still: alt, notiz };
