@@ -107,6 +107,7 @@
     position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 22px);
     background: var(--karte2); border: 1px solid var(--kante); border-radius: 10px; padding: 10px 16px;
     z-index: 60; max-width: 88vw; font-size: 14px; box-shadow: 0 8px 22px rgba(0,0,0,.4);
+    pointer-events: none;   /* reiner Text — schluckte sonst 2,6 s lang Tipps auf alles darunter (Prüfer 2026-09-30) */
   }
   #undo-chip {
     position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 22px); z-index: 40;
@@ -954,6 +955,7 @@
   .tag-bewerten { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--kante); }
   .tag-bewerten-btns { display: flex; gap: 6px; margin-top: 6px; }
   .tag-bewerten-btns .rail-btn { max-width: 64px; }
+  .tag-bewerten-btns .rail-btn:disabled { opacity: .35; cursor: default; }
 }
 
 /* ══ v1.11.0 · Handy hochkant (Zero 2026-09-30: „Hochkant“, Handy und iPad parallel) ══════════════════════
@@ -962,7 +964,8 @@
    (`aussen`/`--sp-n` aus renderHeute) und füllt die Breite. Plan: ~/.claude/plans/kladde-handy.md */
 @layer views {
   @media (max-width: 599px) {
-    :root { --nav-h: 58px; --unten: calc(var(--nav-h) + env(safe-area-inset-bottom)); --stempel-h: 140px; }
+    /* --stempel-h = Höhe der Stempel-Leiste: 6 + 44 (Erfasst) + 4 + 2 × 44 + 4 + 6 = 152 */
+    :root { --nav-h: 58px; --unten: calc(var(--nav-h) + env(safe-area-inset-bottom)); --stempel-h: 152px; }
     main { padding: 12px 12px calc(var(--unten) + 16px); }
     /* Navigation unten, Beschriftung unter dem Symbol */
     .sidebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; width: auto; height: var(--unten);
@@ -987,14 +990,16 @@
     .datum-streifen { flex-wrap: wrap; row-gap: 8px; padding: 8px 10px; }
     .datum-streifen .tg-chip { min-width: 44px; }
     #plan:not(.editor) { min-width: 0; align-items: stretch; }
-    #plan:not(.editor) .plan-reihe { grid-template-columns: repeat(var(--sp-n, 12), minmax(0, 1fr)); }
+    /* höchstens 88 px je Kachel — bei zwei, drei belegten Spalten würden sie sonst handtellergroß (Prüfer 2026-09-30) */
+    #plan:not(.editor) .plan-reihe { grid-template-columns: repeat(var(--sp-n, 12), minmax(0, 88px)); justify-content: center; }
     #plan:not(.editor) .kachel.aussen { display: none; }
     /* Stempel als feste Leiste über der Navigation: „Erfasst“ als Zeile, darunter 2 × 8 Stempel (⌫ doppelt breit).
        Nur #rail — `.rail-karte` trägt auch die Fehlzeiten-Spalte der Schüler-Ansicht. `top: auto` hebt das sticky-`top: 0` auf. */
     #rail { position: fixed; top: auto; left: 0; right: 0; bottom: var(--unten); z-index: 25; width: auto;
-      flex-direction: column; gap: 6px; padding: 8px 12px; background: var(--grund); border-top: 1px solid var(--kante); }
+      flex-direction: column; gap: 4px; padding: 6px 12px; background: var(--grund); border-top: 1px solid var(--kante); }
     #rail .rail-karte { padding: 0; border: none; border-radius: 0; background: transparent; }
-    #rail .erfasst-karte { min-height: 0; flex-direction: row; align-items: center; gap: 12px; }
+    /* Erfasst-Zeile 44 px hoch: auf ihr (nur Anzeige) liegen Rückgängig-Chip und Hinweise, siehe unten */
+    #rail .erfasst-karte { min-height: 44px; flex-direction: row; align-items: center; gap: 12px; }
     #rail .erfasst-karte .rail-bar { flex: 1; }
     #rail .rail-karte:not(.erfasst-karte) { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
     #rail :is(.rail-sektion, .rail-gruppe) { display: contents; }
@@ -1005,8 +1010,10 @@
     body.sp-edit #view-heute { padding-bottom: 0; }
     .sp-editor-bar { bottom: calc(var(--unten) + 4px); }
     body.sp-edit main { padding-bottom: calc(var(--unten) + 100px); }
-    /* Rückmeldungen über den Leisten */
-    #toast, #undo-chip { bottom: calc(var(--unten) + var(--stempel-h) + 10px); }
+    /* Rückmeldungen: in „Heute“ genau auf der Erfasst-Zeile der Stempel-Leiste (Unterkante = 6 + 2 × 44 + 4 + 4 über der
+       Navigation). Darüber lagen Kacheln — ein Tipp auf eine verdeckte Kachel nahm den vorigen Stempel zurück (Prüfer 2026-09-30). */
+    #toast, #undo-chip { bottom: calc(var(--unten) + 102px); }
+    #undo-chip { right: 12px; }
     body[data-ansicht]:not([data-ansicht="heute"]) :is(#toast, #undo-chip) { bottom: calc(var(--unten) + 12px); }
   }
 }
