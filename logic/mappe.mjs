@@ -97,9 +97,46 @@ function deuteZellen(zellen, dateiName = '') {
   };
 }
 
+/**
+ * Prüft eine kurs.json (PC-Werkzeug oder Hand-Edit), bevor sie in den Stamm geht (Prüfer 2026-09-29: bisher
+ * nur schema + kurs geprüft — eine doppelte Nr hätte Einträge zweier Kinder vermischt, eine fehlende id den
+ * Kurs unauffindbar gemacht). Wirft bei allem, was Zuordnungen verfälscht; glättet und meldet den Rest.
+ * Liefert dieselbe Form wie lieseMappe: { schema, kurs, schueler, warnungen }.
+ */
+function pruefeKursDatei(obj) {
+  if (!obj || obj.schema !== SCHEMA || !obj.kurs || typeof obj.kurs !== 'object') throw new Error('kein kladde/v1-Kurs');
+  const warnungen = Array.isArray(obj.warnungen) ? obj.warnungen.map(String) : [];
+  const q = obj.kurs, txt = w => String(w ?? '').trim();
+  const id = txt(q.id);
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)) throw new Error('Kurs-id fehlt oder ist ungültig (' + (id || 'leer') + ')');
+  if (!txt(q.name)) throw new Error('Kursname fehlt');
+  const kurs = { id, name: txt(q.name), fach: txt(q.fach), schuljahr: txt(q.schuljahr), lehrkraft: txt(q.lehrkraft), profil: 'sek1' };
+  if (q.profil === 'sek2') kurs.profil = 'sek2';
+  else if (q.profil !== undefined && q.profil !== 'sek1') warnungen.push(`Profil '${q.profil}' unbekannt — Sek I angenommen`);
+  if (kurs.profil === 'sek2' && (q.notenmodus === 'punkte' || q.notenmodus === 'drittel')) kurs.notenmodus = q.notenmodus;
+  kurs.slot = /^m[1-6]$/.test(q.slot) ? q.slot : 'm1';
+  if (q.slot !== undefined && kurs.slot !== q.slot) warnungen.push(`Slot '${q.slot}' unbekannt — m1 angenommen`);
+
+  if (!Array.isArray(obj.schueler)) throw new Error('Schülerliste fehlt');
+  const schueler = [], nrn = new Set();
+  for (const r of obj.schueler) {
+    const nr = Number(r?.nr);
+    if (!Number.isInteger(nr) || nr < 1 || nr > MAX_SCHUELER) throw new Error(`Schüler-Nr '${r?.nr}' ungültig (1–${MAX_SCHUELER})`);
+    if (nrn.has(nr)) throw new Error(`Nr ${nr} doppelt — die Einträge wären nicht mehr eindeutig zuzuordnen`);
+    nrn.add(nr);
+    const s = { nr, name: txt(r.name), vorname: txt(r.vorname), lb: r.lb === true };
+    if (!s.name && !s.vorname) { warnungen.push(`Nr ${nr} ohne Namen — übersprungen`); continue; }
+    if (r.lb !== undefined && typeof r.lb !== 'boolean') warnungen.push(`Nr ${nr}: LB-Wert '${r.lb}' ist kein ja/nein — nicht als LB übernommen, bitte prüfen`);
+    if (txt(r.gruppe)) s.gruppe = txt(r.gruppe);
+    if (r.inaktiv === true) s.inaktiv = true;
+    schueler.push(s);
+  }
+  return { schema: SCHEMA, kurs, schueler, warnungen };
+}
+
 // Python prueft `in (None, "", 0)` — die 0 faengt eine als Zahl formatierte Leerzelle
 function leer(w) {
   return w === null || w === undefined || w === '' || w === '0' || w === 0;
 }
 
-export { lieseMappe, deuteZellen, xlsxLesbar, SCHEMA, BLATT_LISTE, MAX_SCHUELER, LISTE_DATEN_START, KOPF };
+export { lieseMappe, deuteZellen, pruefeKursDatei, xlsxLesbar, SCHEMA, BLATT_LISTE, MAX_SCHUELER, LISTE_DATEN_START, KOPF };

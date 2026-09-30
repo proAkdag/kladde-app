@@ -1,23 +1,23 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.10.0';
-import { verdichte, wirksameEvents, ersetzungFuer, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.10.0';
-import { mergeContainerDaten } from '../logic/merge.mjs?v=1.10.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.10.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.10.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.10.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.10.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.10.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.10.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.10.0';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.10.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.10.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.10.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.10.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.10.0';
-import { lieseMappe, xlsxLesbar } from '../logic/mappe.mjs?v=1.10.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.10.0';
-const APP_VERSION = '1.10.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.10.1';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.10.1';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.10.1';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.10.1';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.10.1';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.10.1';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.10.1';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.10.1';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.10.1';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.10.1';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.10.1';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.10.1';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.10.1';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.10.1';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.10.1';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.10.1';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.10.1';
+const APP_VERSION = '1.10.1';
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) ? 'ipad' : 'pc';
 const PAGES_KONTEXT = /\.github\.io$/.test(location.hostname);
 // Zwei-Instanzen-Trennung: /dev/ = Claudes Entwicklungs-Kladde (eigene DB, Pseudo-Daten) ·
@@ -33,8 +33,15 @@ if (IST_DEV) {
 
 /* ═══ STORAGE · Vault = KLD1-Container in IndexedDB ═══ */
 const DB_NAME=IST_DEV?'kladde_dev':'kladde_v1'; // getrennte Vaults für Dev- und Produktiv-Instanz
-let db=null, pinRam=null, vault=null;      // vault = entschlüsselter Zustand im RAM · pinRam für Import/Pull/Wechsel
+let db=null, vault=null;                   // vault = entschlüsselter Zustand im RAM
 let dekKey=null, containerKopf=null;        // KLD1 v2: DEK (non-extractable CryptoKey) + wiederverwendbarer Wrap-Kopf
+// Die Passphrase bleibt NICHT im RAM (Prüfer 2026-09-29: sie lag die ganze Sitzung im Klartext) — Import/Pull/Einrichtung
+// fragen sie einmal ab. Für die Start-Hinweise reicht, WIE entsperrt wurde und ob die Passphrase schwach war.
+let anmeldung=null, passSchwach=false;     // 'pass' | 'bio'
+// Sperr-Zähler: eine Aktion, die über ein await hinweg läuft (Passphrase-Wechsel, Import, Pull), prüft danach, ob inzwischen
+// gesperrt wurde — sonst schrieb sie Schlüssel und Tresor in einen gesperrten Zustand zurück (Prüfer 2026-09-29)
+let sperrGen=0;
+const nochOffen=gen=>gen===sperrGen&&vault!==null;
 let migrationsHinweis=false;                // einmaliger Banner nach v1→v2-Migration
 function mitDb(){ return new Promise((res,rej)=>{ if(db) return res(db);
   const req=indexedDB.open(DB_NAME,1);
@@ -65,7 +72,7 @@ function leererVault(){
     stamm:{rev:1,ts:new Date().toISOString(),geraet:GERAET,kurse:[],schueler:{},sitzplaene:{},kursprofile:{},stundenplanSlots:[],zeitmodelle:[],wochenplan:[],ausnahmeSlots:[],einstellungen:{slot:'m1'}},
     events:[]};
 }
-function stammMutiert(){ vault.stamm.rev++; vault.stamm.ts=new Date().toISOString(); vault.stamm.geraet=GERAET; }
+function stammMutiert(){ vault.stamm.rev++; vault.stamm.ts=new Date().toISOString(); vault.stamm.geraet=GERAET; hebeLoeschungAuf(vault.stamm,vault.stamm.ts); }   // Kurs mit gelöschter id neu angelegt → Markierung aufheben (logic/merge)
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 const $=id=>document.getElementById(id);
@@ -174,7 +181,7 @@ async function lockInit(){
       if(pin!==$('pin2').value){ $('lock-fehler').textContent='Passphrasen stimmen nicht überein.'; return; }
       const id=await neueV2Identitaet(pin);
       dekKey=id.dek; containerKopf=id.kopf;
-      pinRam=pin; vault=leererVault();
+      anmeldung='pass'; passSchwach=passStaerke(pin)==='schwach'; vault=leererVault();
       await speichern(); entsperrt();
     } else {
       $('lock-btn').disabled=true; $('lock-fehler').textContent='prüfe… (PBKDF2)';
@@ -191,7 +198,7 @@ async function lockInit(){
           if(!identisch) throw new Error('v1-Sicherung fehlgeschlagen — Migration abgebrochen, Daten unverändert.');
           const id=await neueV2Identitaet(pin);
           dekKey=id.dek; containerKopf=id.kopf;
-          vault=r.daten; pinRam=pin;
+          vault=r.daten; anmeldung='pass'; passSchwach=passStaerke(pin)==='schwach';
           migriereStamm(vault); // Schema kladde/v2 (P2.1) — idempotent
           bereinigeAusnahmen(vault.stamm); // folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
           await speichern(); // erste v2-Schreibung — erst NACH verifiziertem Backup
@@ -199,7 +206,7 @@ async function lockInit(){
           console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
         } else {
           dekKey=r.dek; containerKopf=r.kopf;
-          vault=r.daten; pinRam=pin;
+          vault=r.daten; anmeldung='pass'; passSchwach=passStaerke(pin)==='schwach';
           const migriert=migriereStamm(vault); // Schema-Nachzug (v0.8-Bestand → kladde/v2)
           if(bereinigeAusnahmen(vault.stamm)||migriert) speichern(); // + folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
           console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
@@ -218,7 +225,7 @@ async function lockInit(){
 /* ═══ FINGERABDRUCK / FACE ID · WebAuthn-Passkey mit PRF (Zero 2026-09-02) ═══
    Kryptografie in logic/biometrie.mjs (Node-getestet). Hier nur die WebAuthn-Geste und der Vault-Weg.
    Paket in IndexedDB 'bio': {credId, prfSalt, salt, iv, wrappedDek, angelegt}. Rückweg immer die Passphrase.
-   pinRam bleibt nach Bio-Unlock null — Import/Pull fragen die Passphrase dann einmalig ab (passphraseAbfragen). */
+   Die Passphrase liegt nie im RAM — Import/Pull/Einrichtung fragen sie einmalig ab (passphraseAbfragen). */
 const BIO_RP=()=>({name:'Kladde',id:location.hostname});
 function bioVerfuegbar(){ return !!(window.PublicKeyCredential&&navigator.credentials&&navigator.credentials.get&&window.isSecureContext); }
 // PRF-Geheimwert für eine bestehende Hülle holen (Touch/Face ID) — Nutzergeste nötig
@@ -240,7 +247,7 @@ async function bioEntsperren(bio){
     const key=await importDekKey(dekRoh); dekRoh.fill(0);
     const roh=await idbGet('vault');
     const r=await decodeContainerMitDek(roh,key);
-    dekKey=r.dek; containerKopf=r.kopf; vault=r.daten; pinRam=null;
+    dekKey=r.dek; containerKopf=r.kopf; vault=r.daten; anmeldung='bio'; passSchwach=false;
     const migriert=migriereStamm(vault);
     if(bereinigeAusnahmen(vault.stamm)||migriert) speichern();
     console.log('[kladde] Unlock (Fingerabdruck) in',Math.round(performance.now()-t0),'ms');
@@ -254,12 +261,11 @@ async function bioEntsperren(bio){
 // Einrichtung aus Mehr → Sicherheit. Braucht die Passphrase (DEK-Rohbytes) UND eine Nutzergeste.
 async function bioEinrichten(){
   if(!bioVerfuegbar()){ toast('Dieser Browser kann kein WebAuthn — Fingerabdruck hier nicht möglich',4500); return; }
-  const pin=pinRam||await passphraseAbfragen('Zum Einrichten einmal die Passphrase');
+  const pin=await passphraseAbfragen('Zum Einrichten einmal die Passphrase');
   if(!pin) return;
   try{
     const roh=await idbGet('vault');
     const dekRoh=await dekRohMitPassphrase(roh,pin);
-    pinRam=pin;
     const userId=crypto.getRandomValues(new Uint8Array(16));
     const cred=await navigator.credentials.create({publicKey:{
       rp:BIO_RP(), user:{id:userId,name:'kladde'+(IST_DEV?'-dev':''),displayName:'Kladde'+(IST_DEV?' DEV':'')},
@@ -287,7 +293,7 @@ function passphraseAbfragen(titel,hinweis){
     const res=aufloesenBeiClose(resRoh,null);
     const inp=el('input',{type:'password',autocomplete:'off',class:'u-w170'});
     dlgZeigenEl(el('h3',{},titel||'Passphrase'),
-      el('p',{class:'u-hinweis'},hinweis||'Nach dem Öffnen per Fingerabdruck kennt die Kladde deine Passphrase nicht — für diesen Schritt wird sie einmal gebraucht.'),
+      el('p',{class:'u-hinweis'},hinweis||'Die Kladde behält deine Passphrase nicht im Speicher — für diesen Schritt wird sie einmal gebraucht.'),
       el('div',{class:'zeile'},el('span',{},'Passphrase'),el('span',{},inp)),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:()=>{ const v=inp.value; dlgZu(); res(v||null); }},'Weiter'),
@@ -313,7 +319,7 @@ function sperren(){
   // wurde geschluckt und die Namen-Schiene blieb hinter dem Lock im DOM (Prüfer 2026-09-29). Netz: Leiste immer entfernen.
   if(editorCleanup){ try{ editorCleanup(); }catch(err){ console.error('[kladde] Editor beim Sperren',err); } }
   $('sp-editor-bar')?.remove(); editorAktiv=false; editorCleanup=null; document.body.classList.remove('sp-edit','sp-dragging');
-  vault=null; pinRam=null; dekKey=null; containerKopf=null;
+  sperrGen++; vault=null; dekKey=null; containerKopf=null; anmeldung=null; passSchwach=false;
   if(tabSperreFrei){ tabSperreFrei(); tabSperreFrei=null; }   // anderer Tab darf jetzt entsperren
   aktiverSchueler=null; offenerSchueler=null; offeneZeile=null; deckListe=[]; deckVerlauf=[]; undoStack.length=0;
   stempelAus(); // RAM-Wipe: kein scharfer Stempel/Modus-Rahmen hinter dem Lock
@@ -1444,7 +1450,7 @@ function renderSchueler(){
   html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(zr?zr.label:'Verdichtung')+'</h2><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p>'+
     '<div class="btn-reihe"><button class="btn still u-btn-klein" data-kopiere title="Nr + Note in die Zwischenablage — in die Excel-Klassenmappe einfügen">'+iconHtml('kopieren')+' '+esc(zr?kurzL(zr.label):'Gesamt')+'-Vorschläge für Excel kopieren</button></div>';
   // Terminliste des Kurses für den „seit N Terminen kein Eintrag"-Anlass (C3)
-  const alleTermine=[...new Set(wirksameEvents(kursEvents).filter(e=>e.datum&&e.typ!=='quartalsnote').map(e=>e.datum))].sort();
+  const alleTermine=[...new Set(wirksameEvents(kursEvents).filter(istTerminEintrag).map(e=>e.datum))].sort();
   const heuteNrs=new Set(wirksameEvents(kursEvents).filter(e=>e.datum===heute&&e.typ!=='quartalsnote'&&e.typ!=='storno').map(e=>e.schuelerNr));
   const profil=bewertProfil(k);
   // Erst rechnen, dann sortieren, dann zeichnen (Punkt 3) — die Vorschlagswerte braucht die Sortierung
@@ -1456,7 +1462,7 @@ function renderSchueler(){
     let anlass='', anlassWarn=false;
     if(offenN){ anlass=offenN+' offene Fehlzeit'+(offenN>1?'en':''); anlassWarn=true; }
     else if(alleTermine.length){
-      const mit=new Set(wirksameEvents(kursEvents).filter(e=>e.schuelerNr===s.nr&&e.datum).map(e=>e.datum));
+      const mit=new Set(wirksameEvents(kursEvents).filter(e=>e.schuelerNr===s.nr&&istTerminEintrag(e)).map(e=>e.datum));
       let ohne=0; for(let i=alleTermine.length-1;i>=0&&!mit.has(alleTermine[i]);i--) ohne++;
       if(ohne>=3) anlass='seit '+ohne+' Terminen kein Eintrag';
     }
@@ -1567,7 +1573,7 @@ function schuelerAufklapp(k,s,kursEvents,vOpt,offeneO,klaerKlick){
   const fehl=offeneO.filter(e=>e.schuelerNr===s.nr).map(o=>el('div',{class:'klaer-zeile'},
     el('span',{},'Fehlzeit '+datumLabel(o.datum)),
     el('span',{class:'klaer-btns'},knopf('Entsch.',()=>klaerKlick(o.id,'e')),knopf('Unentsch.',()=>klaerKlick(o.id,'u')),knopf('Irrtum',()=>klaerKlick(o.id,'irrtum')))));
-  const evs=wirksameEvents(kursEvents).filter(e=>e.schuelerNr===s.nr&&e.datum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
+  const evs=wirksameEvents(kursEvents).filter(e=>e.schuelerNr===s.nr&&istTerminEintrag(e));
   const tage=[...new Set(evs.map(e=>e.datum))].sort().reverse().slice(0,5);
   const zuletzt=tage.map(t=>datumLabel(t)+' '+[...new Set(evs.filter(e=>e.datum===t).map(e=>TYP_LABEL[e.typ]||e.typ))].join(' + ')).join(' · ');
   return el('div',{class:'s-auf-inhalt'},
@@ -1599,12 +1605,12 @@ async function kopiereVorschlaege(){
   inZwischenablage(vorschlagsZeilen(rows),'Kopiert ('+rows.length+' Zeilen'+(nFest?' · '+nFest+' gesetzte Quartalsnoten bevorzugt':'')+') — in Excel einfügen','Vorschläge kopieren');
 }
 // Text in die Zwischenablage; ohne Clipboard-Zugriff ein Textfeld zum manuellen Kopieren (eine Stelle für Vorschläge + Kurzbericht)
-async function inZwischenablage(text,toastText,titel){
-  try{ await navigator.clipboard.writeText(text); toast(toastText); }
+async function inZwischenablage(text,toastText,titel,opt={}){
+  try{ await navigator.clipboard.writeText(text); toast(toastText,opt.ms); }
   catch{
     const ta=el('textarea',{class:'u-textarea u-fs14',rows:'10',readonly:'readonly'}); ta.value=text;
     dlgZeigenEl(el('h3',{},titel),
-      el('p',{class:'u-hinweis'},'Markieren und kopieren (Strg/⌘ + C).'),
+      el('p',{class:'u-hinweis'},'Markieren und kopieren (Strg/⌘ + C).'+(opt.hinweis?' '+opt.hinweis:'')),
       ta,
       el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:dlgZu},'Schließen')));
     setTimeout(()=>{ ta.focus(); ta.select(); },60);
@@ -1696,7 +1702,7 @@ function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
     tabelle.append(tb);
     hinweis='Q-Zelle antippen: setzen oder ändern · V = Vorschlag, du entscheidest · HJ zeigt nur den Vorschlag über das Halbjahr, die Halbjahresnote rechnet die Klassenmappe aus Q1/Q2 · Warndreieck = gesetzte Note weicht mindestens eine Stufe vom Vorschlag ab · Jahr = Bilanz-Verlauf von Quartal zu Quartal.';
   } else if(schuelerAnsicht==='termine'){
-    const relevant=e=>e.datum&&e.typ!=='quartalsnote'&&e.typ!=='storno'&&e.datum>=von&&e.datum<=bis;
+    const relevant=e=>istTerminEintrag(e)&&e.datum>=von&&e.datum<=bis;
     const termine=[...new Set(wirksam.filter(relevant).map(e=>e.datum))].sort();
     const idx=new Map();   // datum → nr → events
     for(const e of wirksam){ if(!relevant(e)) continue; let m=idx.get(e.datum); if(!m){ m=new Map(); idx.set(e.datum,m); } if(!m.has(e.schuelerNr)) m.set(e.schuelerNr,[]); m.get(e.schuelerNr).push(e); }
@@ -1788,7 +1794,10 @@ function renderSchuelerSeite(wrap,k,s,kursEvents){
       quartalsnoten:['q1','q2','q3','q4'].filter(id=>qn[QN_KEY[id]]).map(id=>({label:id.toUpperCase(),wert:qn[QN_KEY[id]].wert})),
       notizen:evs.filter(e=>e.notiz&&String(e.notiz).trim()).sort((a,b)=>String(a.datum).localeCompare(String(b.datum))).map(e=>({datum:e.datum,text:e.notiz,typ:e.typ})),
       verspMinuten:evs.filter(e=>e.typ==='versp').reduce((a,e)=>a+(e.minuten||0),0),datumLabel});
-    inZwischenablage(text,'Kurzbericht kopiert · '+s.vorname,'Kurzbericht');
+    // Klartext mit Name und Notizen verlässt hier den Tresor (Prüfer 2026-09-29): sagen, wo er jetzt liegt. Nicht selbst leeren —
+    // beim Wechsel zu Mail sperrt „sofort sperren“ die Kladde, bevor eingefügt ist.
+    const warn='Liegt danach unverschlüsselt in der Zwischenablage (mit Handoff auch auf Mac/iPhone) — nach dem Einfügen etwas anderes kopieren.';
+    inZwischenablage(text,'Kurzbericht kopiert · '+s.vorname+' — '+warn,'Kurzbericht',{ms:7000,hinweis:warn});
   };
   wrap.querySelectorAll('[data-qz]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.qz; const z=sj&&sj.zeitraeume?sj.zeitraeume.find(x=>x.id===id):null; if(!z){ toast('Kein Schuljahres-Zeitraum definiert'); return; }
@@ -1800,7 +1809,9 @@ function renderSchuelerSeite(wrap,k,s,kursEvents){
 function schuelerDetailHtml(s,k,v){
   const evs=wirksameEvents(vault.events.filter(e=>e.kursId===k.id&&e.schuelerNr===s.nr)).filter(e=>e.typ!=='storno'); // Storno-Buchungen nicht im Verlauf zeigen
   const verspSum=evs.filter(e=>e.typ==='versp').reduce((a,e)=>a+(e.minuten||0),0);
-  const fehltU=evs.filter(e=>e.typ==='fehlt_u').length, fehltE=evs.filter(e=>e.typ==='fehlt_e').length;
+  // Je Termin die jüngste Klärung, wie Vorschlag und Tabellen (verdichte) — Einträge zu zählen ergab bei doppeltem
+  // Stempel oder zwei Geräten „1× e 1× u“ für eine Stunde (Prüfer 2026-09-29)
+  const fehltU=v.nFehltU, fehltE=v.nFehltE;
   const proTag={};
   for(const e of evs) (proTag[e.datum]=proTag[e.datum]||[]).push(e);
   const tage=Object.keys(proTag).sort();  // chronologisch: links alt → rechts neu (Zero 2026-07-09)
@@ -2129,7 +2140,7 @@ function renderKurse(){
   // fail-closed je Datei). Gespeichert wird EINMAL am Ende, nicht je Kurs.
   $('file-kurs').onchange=async e=>{
     const dateien=[...e.target.files]; if(!dateien.length) return;
-    const geladen=[], fehler=[], abgleiche=[]; let warnungen=0;
+    const geladen=[], fehler=[], abgleiche=[], warnungen=[];
     if(dateien.some(f=>/\.xlsx$/i.test(f.name))&&!xlsxLesbar()){
       toast('⚠ Dieser Browser kann keine Mappen entpacken — bitte kurs.json vom PC nutzen',5000);
       e.target.value=''; return;
@@ -2138,11 +2149,11 @@ function renderKurse(){
       try {
         // Mappe (.xlsx) wird hier gelesen, kurs.json bleibt der Weg vom PC-Werkzeug —
         // beide Leser muessen dasselbe ergeben, gesichert durch test/mappe.test.mjs
-        const kursJson=/\.xlsx$/i.test(f.name) ? await lieseMappe(f,f.name) : JSON.parse(await f.text());
-        if(kursJson.schema!=='kladde/v1'||!kursJson.kurs) throw new Error('kein kladde/v1-Kurs');
-        const k=kursJson.kurs; k.slot=k.slot||'m1';
+        const roh=/\.xlsx$/i.test(f.name) ? await lieseMappe(f,f.name) : JSON.parse(await f.text());
+        const kursJson=pruefeKursDatei(roh);   // doppelte Nr, fehlende id, fremde Felder → vorher abfangen (logic/mappe)
+        const k=kursJson.kurs;
         const idx=vault.stamm.kurse.findIndex(x=>x.id===k.id);
-        warnungen+=kursJson.warnungen?.length||0;
+        warnungen.push(...kursJson.warnungen.map(w=>k.name+': '+w));
         if(idx>=0){ abgleiche.push({k:vault.stamm.kurse[idx],neu:kursJson.schueler}); continue; }   // Bestand: erst abgleichen, dann anwenden (Punkt 12)
         vault.stamm.kurse.push(k);
         vault.stamm.schueler[k.id]=kursJson.schueler;
@@ -2159,10 +2170,16 @@ function renderKurse(){
     const teile=[];
     if(geladen.length===1) teile.push('Importiert: '+geladen[0].name+' ('+(vault.stamm.schueler[geladen[0].id]||[]).length+' Schüler)');
     else if(geladen.length) teile.push('Importiert: '+geladen.length+' Kurse ('+geladen.map(k=>k.name).join(' · ')+')');
-    if(warnungen) teile.push(warnungen+' Warnung(en)');
-    if(fehler.length) teile.push('⚠ '+fehler.length+' Datei(en) nicht gelesen — '+fehler.join(' | '));
-    if(teile.length) toast(teile.join(' · '),fehler.length?6000:3500);
     e.target.value='';
+    // Warnungen und Fehler als Liste zum Lesen — vorher nur „2 Warnung(en)“ im Toast, der Text (z. B. „LB nicht übernommen“) blieb unsichtbar
+    if(warnungen.length||fehler.length){
+      const liste=(titel,zeilen)=>zeilen.length?[el('div',{class:'tag-kopf'},titel),el('ul',{class:'u-hinweis'},...zeilen.map(z=>el('li',{},z)))]:[];
+      dlgZeigenEl(el('h3',{},'Kurs-Import'),
+        ...(teile.length?[el('p',{},teile.join(' · '))]:[]),
+        ...liste('Nicht gelesen',fehler),
+        ...liste('Bitte prüfen',warnungen),
+        el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:dlgZu},'Verstanden')));
+    } else if(teile.length) toast(teile.join(' · '),3500);
   };
 }
 // Kurs-Detail-Sheet (Studio): Einstellungen (Slot/Noten/HA) + Aktionen aus der Karten-Ansicht.
@@ -2596,6 +2613,14 @@ function loescheKursEndgueltig(id){
       el.querySelector('#del-confirm').oninput=e=>{ el.querySelector('#del-ok').disabled=e.target.value.trim()!==k.name; };
       el.querySelector('#del-export').onclick=()=>{ dlgZu(); exportiereContainer(); };
       el.querySelector('#del-ok').onclick=()=>{
+        // Lösch-Markierung: sonst holt der nächste Import vom zweiten Gerät Kurs und Einträge zurück (logic/merge)
+        vault.stamm.geloescht={...(vault.stamm.geloescht||{}),[id]:{am:new Date().toISOString()}};
+        // Auch die beigelegten verworfenen Stände (bis zu drei ganze Stammdaten-Kopien) tragen Namen und Liste
+        for(const st of vault.verworfeneStaende||[]){
+          st.kurse=(st.kurse||[]).filter(x=>x.id!==id);
+          for(const feld of ['schueler','sitzplaene','kursprofile']) if(st[feld]) delete st[feld][id];
+          if(Array.isArray(st.wochenplan)) st.wochenplan=st.wochenplan.filter(w=>w.kursId!==id);
+        }
         vault.stamm.kurse=vault.stamm.kurse.filter(x=>x.id!==id);
         delete vault.stamm.schueler[id]; delete vault.stamm.sitzplaene[id]; delete vault.stamm.kursprofile[id];
         vault.stamm.wochenplan=(vault.stamm.wochenplan||[]).filter(w=>w.kursId!==id);
@@ -3199,7 +3224,8 @@ function stundenplanAssistent(){
       if(!kurse.length) palette.append(el('span',{class:'u-hinweis'},'Noch keine Kurse — unter „Kurse" anlegen.'));
       grid.classList.toggle('malen',malKurs!==undefined);   // Kurs in der Hand: Touch scrollt nicht, der Finger malt (Punkt 16)
     };
-    const male=(wt,nr)=>{ const i=plan.findIndex(p=>p.wochentag===wt&&p.blockNr===nr); if(i>=0) plan.splice(i,1); if(malKurs!=='FREI') plan.push(neuerSlot(wt,nr,malKurs)); };
+    // Malen belegt „jede Woche“ und räumt damit auch ein A/B-Paar (logic/autowahl setzeSlot)
+    const male=(wt,nr)=>{ plan.splice(0,plan.length,...setzeSlot(plan,wt,nr,'jede',malKurs==='FREI'?null:neuerSlot(wt,nr,malKurs))); };
     // Doppelstunden ziehen (Punkt 16): mit dem Kurs in der Hand über Zellen wischen — jede Zelle einmal je Strich.
     // Listener am Grid (nicht am Dokument): sie sterben mit dem Dialog. Ein reiner Tap bleibt der Klick-Weg.
     let strich=null, strichWar=false;
@@ -3251,29 +3277,30 @@ function stundenplanAssistent(){
   }
 
   function blockDialog(wt,nr,zurueck){
-    const s=plan.find(p=>p.wochentag===wt&&p.blockNr===nr)||{};
+    // Ein Block kann ein A/B-Paar tragen — der Dialog zeigt den Slot der gewählten Woche (Rhythmus umschalten = anderer Slot)
+    const imBlock=plan.filter(p=>p.wochentag===wt&&p.blockNr===nr);
+    const rhVon=p=>(p.rhythmus==='A'||p.rhythmus==='B')?p.rhythmus:'jede';
+    const slotMit=rh=>imBlock.find(p=>rhVon(p)===rh)||(rh!=='jede'&&imBlock.find(p=>rhVon(p)==='jede'))||{};
+    const s=imBlock[0]||{};
     const gewaehlt=s.art?'@'+s.art:(s.kursId||'');
     const kursSel=el('select',{},
       el('option',{value:''},'— frei —'),
       ...sortiereKurse(vault.stamm.kurse).map(k=>el('option',{value:k.id,...(gewaehlt===k.id?{selected:'selected'}:{})},k.name+' · '+k.fach)),
       ...Object.entries(SLOT_ARTEN).map(([art,a])=>el('option',{value:'@'+art,...(gewaehlt==='@'+art?{selected:'selected'}:{})},a.label)));
     const tgSel=el('select',{}, ...['','A','B','C','D'].map(g=>el('option',{value:g,...(s.teilgruppe===g?{selected:'selected'}:{})},g||'alle')));
-    const rhSel=el('select',{}, ...[['jede','jede Woche'],['A','A-Woche'],['B','B-Woche']].map(([v,t])=>el('option',{value:v,...((s.rhythmus||'jede')===v?{selected:'selected'}:{})},t)));
+    const rhSel=el('select',{onchange:()=>{ const t=slotMit(rhSel.value); kursSel.value=t.art?'@'+t.art:(t.kursId||''); tgSel.value=t.teilgruppe||''; }},
+      ...[['jede','jede Woche'],['A','A-Woche'],['B','B-Woche']].map(([v,t])=>el('option',{value:v,...(rhVon(s)===v?{selected:'selected'}:{})},t)));
     dlgZeigenEl(el('h3',{},WT_KURZ[wt]+' · Std. '+blockLabel(zm,nr)),
+      el('div',{class:'zeile'},el('span',{},'Rhythmus'),el('span',{},rhSel)),
       el('div',{class:'zeile'},el('span',{},'Kurs'),el('span',{},kursSel)),
       el('div',{class:'zeile'},el('span',{},'Teilgruppe'),el('span',{},tgSel)),
-      el('div',{class:'zeile'},el('span',{},'Rhythmus'),el('span',{},rhSel)),
+      el('p',{class:'u-hinweis'},'A- und B-Woche dürfen verschiedene Kurse haben: Woche wählen, Kurs setzen, übernehmen — dann die Stunde noch einmal öffnen für die andere Woche.'),
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:()=>{
-          const i=plan.findIndex(p=>p.wochentag===wt&&p.blockNr===nr);
-          if(i>=0) plan.splice(i,1);
-          const wert=kursSel.value;
-          if(wert){
-            const rhythmus=rhSel.value;
-            plan.push({...neuerSlot(wt,nr,wert),teilgruppe:tgSel.value||null,rhythmus});
-            // A/B-Anker abfragen, sobald erster A/B-Slot entsteht und noch keiner gesetzt ist (Lücken-Fix #6)
-            if((rhythmus==='A'||rhythmus==='B')&&!zm.abWochenAnker){ dlgZu(); ankerDialog(()=>{ schritt=2; renderS2(); }); return; }
-          }
+          const wert=kursSel.value, rhythmus=rhSel.value;
+          plan.splice(0,plan.length,...setzeSlot(plan,wt,nr,rhythmus,wert?{...neuerSlot(wt,nr,wert),teilgruppe:tgSel.value||null}:null));
+          // A/B-Anker abfragen, sobald erster A/B-Slot entsteht und noch keiner gesetzt ist (Lücken-Fix #6)
+          if(wert&&(rhythmus==='A'||rhythmus==='B')&&!zm.abWochenAnker){ dlgZu(); ankerDialog(()=>{ schritt=2; renderS2(); }); return; }
           dlgZu(); schritt=2; renderS2();
         }},'Übernehmen'),
         el('button',{class:'btn still',onclick:()=>{ dlgZu(); schritt=2; renderS2(); }},'Abbrechen')));
@@ -3425,7 +3452,12 @@ function exportiereContainer(){
     el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); exportiereContainerJetzt(); }; });
 }
 let exportInSitzung=false; // für Schuljahr-Assistent: „Weiter" erst nach echtem Export
-function merkeExport(){ exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}); }
+function merkeExport(){
+  exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length});
+  // Die v1-Sicherung aus der Umstellung v1→v2 trägt den alten Stand (auch längst gelöschte Kurse) mit der alten Passphrase.
+  // Mit einer v2-Sicherung hat sie ihren Zweck erfüllt (Prüfer 2026-09-29: „Endgültig löschen“ war nicht endgültig).
+  idbDel('vault_v1_backup').catch(()=>{});
+}
 async function exportiereContainerJetzt(){
   let bytes, name;
   try {
@@ -3454,19 +3486,22 @@ async function exportiereContainerJetzt(){
 }
 async function importiereContainer(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
-  const pin=pinRam||await passphraseAbfragen('Passphrase für den Import'); if(!pin) return;
+  const gen=sperrGen;
+  const pin=await passphraseAbfragen('Passphrase für den Import'); if(!pin) return;
   const bytes=new Uint8Array(await f.arrayBuffer());
   let fremd;
   try {
-    fremd=(await decodeContainerAuto(bytes,pin)).daten; pinRam=pin;
+    fremd=(await decodeContainerAuto(bytes,pin)).daten;
   } catch{
     // Container eines Geräts mit ANDERER Passphrase: einmal nach deren Passphrase fragen — vorher endete der Import nur mit
-    // „gleiche Passphrase auf beiden Geräten?“. Die fremde Passphrase wird NICHT als eigene gemerkt (pinRam bleibt).
+    // „gleiche Passphrase auf beiden Geräten?“. Deine eigene Passphrase bleibt unverändert.
+    if(!nochOffen(gen)) return;
     const fremdPin=await passphraseAbfragen('Passphrase dieses Containers','Mit deiner Passphrase ließ sich die Datei nicht öffnen. Stammt sie von einem Gerät mit anderer Passphrase, gib diese hier ein. Deine eigene bleibt unverändert.');
     if(!fremdPin) return;
     try { fremd=(await decodeContainerAuto(bytes,fremdPin)).daten; }
     catch(err){ toast('⚠ Import: '+err.message,5000); return; }
   }
+  if(!nochOffen(gen)) return;   // während PBKDF2 gesperrt → nichts mehr anfassen
   if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren (neu laden).',6000); return; }
   // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
   const eigeneIds=new Set(vault.events.map(x=>x.id));
@@ -3485,6 +3520,7 @@ async function importiereContainer(e){
     '<div class="btn-reihe"><button class="btn" data-ok>Importieren und mergen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=async()=>{
       dlgZu();
+      if(!nochOffen(gen)) return;
       // Verworfener Stand liegt bei (max 3, FIFO) — gerätelokal informativ, überlebt eigene Saves
       if(dry.verworfen){
         (dry.daten.verworfeneStaende=vault.verworfeneStaende||[]).push(dry.verworfen);
@@ -3498,7 +3534,10 @@ async function importiereContainer(e){
 function stammOhneBump(){ /* Merge-Ergebnis behält die Sieger-rev — bewusst kein rev++ */ }
 function passphraseWechselDialog(){
   dlgZeigen('<h3>Passphrase ändern</h3>'+
-    '<p class="u-warn13">Wichtig: auf BEIDEN Geräten ändern — sonst können Import und Heimnetz-Sync den fremden Container nicht mehr öffnen. Bereits exportierte Sicherungen behalten die alte Passphrase.</p>'+
+    '<p class="u-warn13">Wichtig: auf BEIDEN Geräten ändern — sonst können Import und Heimnetz-Sync den fremden Container nicht mehr öffnen.</p>'+
+    // Ehrlich statt beruhigend (Prüfer 2026-09-29, gemessen): der innere Datenschlüssel bleibt gleich. Ihn zu erneuern hat Zero
+    // abgelehnt („nicht nötig“) — dann muss der Text aber sagen, was der Wechsel NICHT leistet.
+    '<p class="u-hinweis">Bereits exportierte Sicherungen öffnen sich weiter mit der alten Passphrase. Der innere Datenschlüssel bleibt derselbe: Wer die alte Passphrase und eine alte Sicherung hat, kann auch künftige Sicherungen öffnen. Der Wechsel schützt also vor dem Weitergeben der neuen, nicht vor einer schon bekannten alten Passphrase.</p>'+
     '<div class="zeile"><span>Aktuelle</span><span><input type="password" id="pw-alt" autocomplete="off" class="u-w170"></span></div>'+
     '<div class="zeile"><span>Neue (min. 10)</span><span><input type="password" id="pw-neu" autocomplete="off" class="u-w170"></span></div>'+
     '<div class="zeile"><span>Wiederholen</span><span><input type="password" id="pw-neu2" autocomplete="off" class="u-w170"></span></div>'+
@@ -3509,12 +3548,14 @@ function passphraseWechselDialog(){
       const feh=el.querySelector('#pw-fehler');
       if(neu.length<10){ feh.textContent='Mindestens 10 Zeichen — besser 12+ oder ein kurzer Satz.'; return; }
       if(neu!==el.querySelector('#pw-neu2').value){ feh.textContent='Passphrasen stimmen nicht überein.'; return; }
+      const gen=sperrGen;
       try{
         await speichern();
         const blob=await idbGet('vault');
-        const g=await wechslePassphrase(blob,alt,neu);   // Millisekunden: nur DEK-Rewrap
+        const g=await wechslePassphrase(blob,alt,neu);   // zweimal PBKDF2 + DEK-Rewrap
+        if(!nochOffen(gen)){ feh.textContent=''; return; }   // inzwischen gesperrt: nichts schreiben, Schlüssel nicht zurück in den RAM
         await idbPut('vault',g.bytes);
-        dekKey=g.dek; containerKopf=g.kopf; pinRam=neu;
+        dekKey=g.dek; containerKopf=g.kopf;
         dlgZu(); toast('Passphrase geändert — denke an das zweite Gerät.',5000);
       }catch(err){ feh.textContent=err.message; }
     }; });
@@ -3535,11 +3576,14 @@ async function syncPull(){
     const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store'});
     if(r.status===404){ toast('Noch kein Container von „'+von+'" auf dem Server'); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const pin=pinRam||await passphraseAbfragen('Passphrase für den Pull'); if(!pin) return;
-    const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pin)).daten; pinRam=pin;
+    const gen=sperrGen;
+    const pin=await passphraseAbfragen('Passphrase für den Pull'); if(!pin) return;
+    const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pin)).daten;
+    if(!nochOffen(gen)) return;
     if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren.',6000); return; }
     const dry=mergeContainerDaten(vault,fremd);
     const anwenden=async()=>{
+      if(!nochOffen(gen)) return;
       if(vault.verworfeneStaende&&!dry.daten.verworfeneStaende) dry.daten.verworfeneStaende=vault.verworfeneStaende;
       vault=dry.daten; await speichern();
       toast('Pull+Merge ok: '+vault.events.length+' Ereignisse'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
@@ -3570,7 +3614,7 @@ async function zeigeStartHinweise(){
     return;
   }
   // Einmaliger, nicht blockierender Hinweis für Bestands-Kurz-PINs (§1.3 — kein Zwang, Zwang erzeugt Post-its)
-  if(pinRam&&passStaerke(pinRam)==='schwach'&&!localStorage.getItem('kladde_pass_hinweis')){
+  if(anmeldung==='pass'&&passSchwach&&!localStorage.getItem('kladde_pass_hinweis')){
     localStorage.setItem('kladde_pass_hinweis','1');
     zeigeBanner('<span>Deine PIN ist kurz — für echte Schülerdaten ist eine Passphrase (12+ Zeichen) empfohlen: Mehr → Sicherheit → Passphrase ändern.</span>');
     return;
@@ -3578,7 +3622,7 @@ async function zeigeStartHinweise(){
   // Fingerabdruck-Einstieg (Zero 2026-09-02): ein Knopf, der erst nach einer Einrichtung erscheint, braucht einen
   // sichtbaren Weg dorthin. Einmalig nach einem Passphrase-Login, wenn das Gerät WebAuthn kann und noch keine Hülle liegt;
   // × merkt sich die Ablehnung dauerhaft (localStorage), „Einrichten" führt direkt in bioEinrichten.
-  if(pinRam&&bioVerfuegbar()&&!localStorage.getItem('kladde_bio_hinweis')&&!(await idbGet('bio'))){
+  if(anmeldung==='pass'&&bioVerfuegbar()&&!localStorage.getItem('kladde_bio_hinweis')&&!(await idbGet('bio'))){
     zeigeBanner('<span>Schneller öffnen: Fingerabdruck / Face ID einrichten — die Passphrase bleibt als Rückweg.</span><button class="btn" data-bio>Einrichten</button>',
       b=>{ b.querySelector('[data-bio]').onclick=()=>{ b.classList.add('hidden'); bioEinrichten(); };
            b.querySelector('[data-zu]').addEventListener('click',()=>localStorage.setItem('kladde_bio_hinweis','1')); });

@@ -94,4 +94,26 @@ function bereinigeAusnahmen(stamm) {
   return true;
 }
 
-export { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, SLOT_ARTEN, KOMMEND_FENSTER_SEK };
+// Einen Block im Wochenplan belegen oder freimachen, für „jede Woche“ oder nur eine A-/B-Woche (Prüfer 2026-09-29: der
+// Assistent ersetzte immer DEN Slot des Blocks — ein Paar „A: Physik · B: Chemie“ ließ sich nicht anlegen, obwohl
+// slotFuerBlock es längst lesen kann). Regeln:
+//   · „jede“ ersetzt alles im Block.
+//   · A (bzw. B) ersetzt A und „jede“; ein „jede“-Slot bleibt dabei für die andere Woche stehen (wird zu B bzw. A).
+//   · slot = null macht frei (mit denselben Regeln).
+// Gibt einen NEUEN Plan zurück. Slot-ids bleiben eindeutig: wp-<Tag>-<Block>[-A|-B].
+function setzeSlot(plan, wochentag, blockNr, rhythmus, slot) {
+  const rh = rhythmus === 'A' || rhythmus === 'B' ? rhythmus : 'jede';
+  const andere = rh === 'A' ? 'B' : 'A';
+  const imBlock = p => p.wochentag === wochentag && p.blockNr === blockNr;
+  const rhVon = p => (p.rhythmus === 'A' || p.rhythmus === 'B') ? p.rhythmus : 'jede';
+  const id = r => 'wp-' + wochentag + '-' + blockNr + (r === 'jede' ? '' : '-' + r);
+  const neu = (plan || []).filter(p => !imBlock(p) || (rh !== 'jede' && rhVon(p) === andere));
+  if (rh !== 'jede') {
+    const jede = (plan || []).find(p => imBlock(p) && rhVon(p) === 'jede');
+    if (jede && !neu.some(p => imBlock(p) && rhVon(p) === andere)) neu.push({ ...jede, id: id(andere), rhythmus: andere });
+  }
+  if (slot) neu.push({ ...slot, wochentag, blockNr, id: id(rh), rhythmus: rh });
+  return neu;
+}
+
+export { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN, KOMMEND_FENSTER_SEK };

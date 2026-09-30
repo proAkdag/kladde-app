@@ -19,6 +19,10 @@ const SOMI_TYPEN = new Set(['+', 'o', '-']);
 // dass Unterricht war (Auflage 7). Aktiv-Quote korrigiert das über den e-Nenner.
 const TERMIN_TYPEN = new Set(['+', 'o', '-', 'note', 'mat', 'ipad_fehlt', 'ipad_leer',
   'lernzeit', 'fehlt_e', 'fehlt_u', 'fehlt_o', 'versp', 'notiz', 'ha', 'verweigert']);
+// EINE Antwort auf „macht dieser Eintrag den Tag zum Termin?“ — für Verdichtung, Termin-Matrix und den Anlass
+// „seit N Terminen kein Eintrag“. Vorher zählte der Anlass Rücknahmen mit: ein versehentliches ∅, wieder entfernt,
+// machte den Tag zum Kurstermin und das Kind zu einem „mit Eintrag“ (Prüfer 2026-09-29). Quartalsnoten sind kein Termin.
+const istTerminEintrag = e => Boolean(e && e.datum && TERMIN_TYPEN.has(e.typ));
 
 // Eine Rücknahme (typ 'storno') hebt auch die Wirkung auf, die das zurückgenommene Event selbst hatte:
 // Wer eine Klärung (fehlt_e mit stornoVon → fehlt_o) rückgängig macht, bekommt die offene Fehlzeit zurück —
@@ -229,4 +233,4 @@ function notenAbstand(gesetzt, vorschlagWert, profil) {
   return profil === 'sek2' ? Math.abs(g - vorschlagWert) / 3 : Math.abs(g - vorschlagWert);
 }
 
-export { verdichte, wirksameEvents, ersetzungFuer, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
+export { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand };
