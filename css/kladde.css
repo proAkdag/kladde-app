@@ -516,7 +516,7 @@
   #beamer-hinweis.hidden { display: none; }
   #beamer-hinweis .btn { margin-left: auto; }
   /* „Nur Sitzplan": Datums-Extras ausblenden — reine Namenskarte an die Wand */
-  body.beamer.nurplan .datum-streifen .rechts,
+  body.beamer.nurplan .datum-streifen .rechts > :not(#btn-beamer),   /* der Augen-Knopf bleibt: er ist der Ausgang (Prüfer 2026-10-01) */
   body.beamer.nurplan .datum-streifen .nachtrag-hinweis { display: none; }
 
   /* Deck-Start-Optionen (P4.4) */
@@ -584,6 +584,8 @@
     padding: calc(env(safe-area-inset-top) + 16px) 12px 14px;
   }
   .marke { display: flex; align-items: center; gap: 11px; padding: 2px 8px 16px; }
+  /* Handy quer (≥ 600 breit, niedrig): die beschriftete Leiste ist höher als das Fenster — scrollen statt abschneiden (Prüfer 2026-10-01) */
+  @media (min-width: 600px) and (max-height: 600px) { .sidebar { overflow-y: auto; } }
   .marke-band { width: 7px; height: 30px; background: var(--band); border-radius: 3px; flex: none; }
   .marke-name { font-family: var(--font-serif); font-size: 22px; font-weight: 500; line-height: 1; }
   .marke-sub { font-size: 10px; color: var(--leise); letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
@@ -595,6 +597,11 @@
   }
   #hauptnav button svg { width: 20px; height: 20px; flex: none; }
   #hauptnav button.aktiv { background: var(--karte2); color: var(--band-text); border-left-color: var(--band); font-weight: 600; }
+  /* Werkzeuge unten links (Zero 2026-10-01): Stundenplan · Tag/Nacht · Sperren · Hilfe — selten gebraucht, darum leise */
+  .nav-unten { margin-top: auto; display: flex; flex-direction: column; gap: 3px; }
+  .nav-werkzeug { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; background: transparent; border: none;
+    color: var(--leise); font-family: inherit; font-size: 13.5px; padding: 8px 12px; border-radius: 10px; cursor: pointer; text-align: left; }
+  .nav-werkzeug svg { width: 20px; height: 20px; flex: none; }
 
   /* ── Header ── */
   header.app {
@@ -617,9 +624,15 @@
   header.app .icon-btn { border-radius: 11px; }
 
   /* ── Heute-Cockpit: Sitzplan + permanente Rail ── */
-  .heute-grid { display: flex; gap: 18px; align-items: flex-start; }
-  .plan-spalte { flex: 1; min-width: 0; }
-  .rail { width: 150px; flex: none; position: sticky; top: 0; align-self: flex-start; display: flex; flex-direction: column; gap: 10px; }
+  /* Raster 2 × 2 (Zero 2026-10-01): oben Leiste | Erfasst in EINER Zeile (gleich hoch, auch wenn die Leiste umbricht),
+     darunter Plan | Stempel auf einer Oberkante */
+  .heute-grid { display: grid; grid-template-columns: minmax(0, 1fr) 150px; column-gap: 18px; row-gap: 10px; align-items: start; }
+  #datum-streifen { grid-column: 1; grid-row: 1; }
+  #erfasst-ort { grid-column: 2; grid-row: 1; align-self: stretch; display: flex; }
+  #erfasst-ort .erfasst-karte { flex: 1; }
+  #erfasst-ort:empty { display: none; }
+  .plan-spalte { grid-column: 1; grid-row: 2; min-width: 0; }
+  .rail { width: auto; grid-column: 2; grid-row: 2; position: sticky; top: 0; display: flex; flex-direction: column; gap: 10px; }
   .rail-karte { background: var(--karte); border: 1px solid var(--kante); border-radius: 14px; padding: 12px; }
   .rail-titel { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); margin: 0 2px 9px; }
   .rail-gruppe { display: flex; gap: 6px; }
@@ -656,16 +669,19 @@
 
   /* <1200 px: Sidebar auf Icon-Rail (Budget iPad 8 quer 1080) */
   @media (max-width: 1199px) {
-    .sidebar { width: 64px; padding-left: 8px; padding-right: 8px; }
-    .marke-txt, .nav-label { display: none; }
+    /* Zero 2026-10-01: links ist Platz — Symbole MIT Beschriftung darunter, Werkzeuge unten */
+    .sidebar { width: 76px; padding-left: 6px; padding-right: 6px; }
+    .marke-txt { display: none; }
+    .nav-label { display: block; font-size: 10.5px; line-height: 1.1; }
     .marke { justify-content: center; padding: 2px 0 14px; }
-    #hauptnav button { justify-content: center; gap: 0; padding: 11px 0; }
+    #hauptnav button, .nav-werkzeug { flex-direction: column; justify-content: center; gap: 3px; padding: 8px 0; text-align: center; }
   }
   /* Rand-Fall sehr schmal (Hochkant): Rail unter den Plan, horizontal */
   @media (max-width: 720px) {
     header.app { padding-left: 16px; padding-right: 16px; }
     main { padding: 14px 16px calc(env(safe-area-inset-bottom) + 20px); }
-    .heute-grid { flex-direction: column; }
+    .heute-grid { grid-template-columns: minmax(0, 1fr); }
+    #datum-streifen, #erfasst-ort, .plan-spalte, .rail { grid-column: 1; grid-row: auto; }
     .rail { width: 100%; position: static; flex-direction: row; flex-wrap: wrap; }
     .rail-karte { flex: 1 1 auto; }
   }
@@ -930,7 +946,8 @@
   .zr-chip { min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; }
   .u-btn-klein { min-height: 44px; }
   .deck-optionen button { min-height: 44px; }
-  .datum-streifen .tg-chip, .sp-tagchips .tg-chip { min-height: 44px; }
+  .datum-streifen .tg-chip, .sp-tagchips .tg-chip { min-height: 44px; min-width: 44px; }
+  .datum-streifen > .ds-txt { min-height: 44px; margin-left: auto; color: var(--text); }   /* Handy: „↩ Heute“ im Streifen (Nachtrag) */
   .datum-streifen button.ds-icon { width: 44px; min-height: 44px; }
   .kk-mehr { width: 44px; height: 44px; top: 6px; right: 6px; }
   .seg button { min-height: 44px; }
@@ -973,6 +990,91 @@
   .tag-bewerten-btns .rail-btn:disabled { opacity: .35; cursor: default; }
 }
 
+/* ══ v1.13.0 · Rahmen verdichtet + „Stunde“ (Zero 2026-10-01, Plan ~/.claude/plans/kladde-untermenues.md) ═══════
+   Heute: keine Kopfleiste am iPad — die Leiste trägt „« ‹ Stunde › »“, rechts Sitzplan | 🎲 | Liste, Sitzplan bearbeiten,
+   Beamer. Stunde = Kurs + Datum in einem Element; ein Tipp öffnet „Stunde wählen“. */
+@layer views {
+  #datum-streifen.datum-streifen { margin-bottom: 0; flex-wrap: wrap; row-gap: 8px; min-height: 62px; }
+  .datum-streifen[hidden] { display: none; }
+  .ds-nav { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .ds-nav button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 10px; min-height: 44px; color: var(--text); cursor: pointer; font: inherit; }
+  .ds-nav button.ds-pfeil { width: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; font-size: 20px; line-height: 1; }
+  .ds-nav button.ds-pfeil.woche { width: 44px; font-size: 17px; color: var(--leise); }
+  .ds-nav button.ds-pfeil:disabled { opacity: .3; cursor: default; }
+  .ds-nav .ds-txt { padding: 0 12px; font-size: 14px; }
+  .ds-nav .stunde-knopf { display: flex; align-items: center; gap: 10px; text-align: left; min-height: 50px; padding: 4px 12px 4px 8px;
+    min-width: 0; max-width: 340px; }
+  .stunde-knopf .kurs-band { height: 32px; }
+  .stunde-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  .stunde-txt b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stunde-txt small { font-size: 12px; color: var(--leise); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stunde-txt small.nachtrag-hinweis { color: var(--warn); }
+  .stunde-pfeil { margin-left: auto; padding-left: 4px; color: var(--leise); font-size: 12px; }
+  .datum-streifen .rechts { align-items: center; }
+  /* Sitzplan | 🎲 | Liste — ein Segment, der Würfel in der Mitte */
+  #erfass-umschalter .seg, #listen-sort { display: flex; border: 1px solid var(--kante); border-radius: 10px; overflow: hidden; }
+  #erfass-umschalter .seg button, #listen-sort button { min-height: 44px; margin: 0; border: 0; border-radius: 0; background: var(--karte); color: var(--leise);
+    font: inherit; font-size: 14px; padding: 0 14px; cursor: pointer; }
+  #erfass-umschalter .seg button[aria-pressed="true"], #listen-sort button[aria-pressed="true"] { background: var(--karte2); color: var(--text); font-weight: 700; box-shadow: inset 0 -3px 0 var(--band); }
+  #erfass-umschalter .wuerfel { width: 50px; padding: 0; display: grid; place-items: center; background: var(--karte2); color: var(--text);
+    border-left: 1px solid var(--kante); border-right: 1px solid var(--kante); }
+  #erfass-umschalter .wuerfel svg { width: 22px; height: 22px; }
+  #listen-sort { margin-bottom: 8px; }
+  #listen-sort button { flex: 1; }
+  /* Liste auch am iPad (Zero 2026-10-01) — so viele Spalten, wie Platz ist */
+  #plan .erfass-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  #plan .kachel.listen-zeile { aspect-ratio: auto; min-height: 52px; flex-direction: row; align-items: center; gap: 6px;
+    padding: 0 10px; border-radius: 10px; font-size: 15px; }
+  #plan .kachel.listen-zeile .vn { flex: 0 1 auto; min-width: 0; }
+  #plan .kachel.listen-zeile .nn { flex: none; margin-right: auto; padding: 0; font-size: 15px; }
+  #plan .kachel.listen-zeile .marken { flex: none; margin: 0; padding: 0; min-height: 0; flex-wrap: nowrap; }
+  #plan.liste { min-width: 0; align-items: stretch; }
+  /* Der gewonnene Platz gehört dem Sitzplan: nur belegte Spalten, Kacheln bis 128 px — aber nie höher, als die Reihen Platz haben */
+  @media (min-width: 600px) {
+    body[data-ansicht="heute"] header.app { display: none; }
+    body[data-ansicht="heute"] main { padding-top: max(18px, calc(env(safe-area-inset-top) + 12px)); }   /* ohne Kopf: Abstand zur Statusleiste wie der Kopf (Inset + 12) */
+    #kopf-stunde, #btn-menue { display: none; }
+    #plan:not(.editor):not(.liste) { min-width: 0; align-items: stretch; gap: 8px;
+      --kachel-max: min(128px, calc((100dvh - 190px) / var(--sp-r, 6) - 8px)); }
+    #plan:not(.editor) .plan-reihe { grid-template-columns: repeat(var(--sp-n, 12), minmax(0, var(--kachel-max))); justify-content: center; gap: 8px; }
+    #plan:not(.editor) .kachel.aussen { display: none; }
+    #plan:not(.editor):not(.liste) .kachel { font-size: 12.5px; }
+  }
+  /* „Stunde wählen“ */
+  .sw-woche { display: flex; gap: 4px; margin: 4px 0 10px; }
+  .sw-tag { flex: 1; min-width: 0; min-height: 52px; border-radius: 10px; background: var(--karte2); border: 1px solid var(--kante); color: var(--text);
+    font: inherit; font-size: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; cursor: pointer; }
+  .sw-tag small { font-size: 11px; color: var(--leise); }
+  .sw-tag.std::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--band); margin-top: 3px; }
+  .sw-tag.an { border-color: var(--band); color: var(--band-text); font-weight: 700; }
+  .sw-tag:disabled { opacity: .3; cursor: default; }
+  .sw-tag.sw-pf { flex: 0 0 44px; background: transparent; color: var(--leise); font-size: 17px; }
+  .sw-kopf { font-size: 14px; color: var(--leise); margin: 0 0 8px; }
+  .sw-kopf b { color: var(--text); }
+  .sw-liste { display: flex; flex-direction: column; gap: 6px; }
+  .sw-stunde { display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 12px; border-radius: 10px; background: var(--karte2);
+    border: 1px solid var(--kante); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+  .sw-stunde.an { border-color: var(--band); }
+  .sw-stunde:disabled { opacity: .55; cursor: default; }
+  .sw-stunde .kurs-band { height: 26px; }
+  .sw-stunde b { font-size: 15px; }
+  .sw-nr { font-size: 12px; color: var(--leise); min-width: 48px; }
+  .sw-zeit { margin-left: auto; font-size: 12px; color: var(--leise); }
+  .sw-badge { margin-left: auto; font-size: 11px; color: var(--band-text); border: 1px solid var(--band); border-radius: 6px; padding: 1px 6px; }
+  .sw-alle { margin-top: 10px; }
+  .sw-alle > summary { cursor: pointer; color: var(--leise); font-size: 13px; min-height: 44px; display: flex; align-items: center; }
+  .sw-alle > summary::before { content: '›'; display: inline-block; width: 14px; margin-right: 6px; font-size: 16px; transition: transform .18s ease-out; }   /* wie .s-regel */
+  .sw-alle[open] > summary::before { transform: rotate(90deg); }
+  .sw-alle > summary::-webkit-details-marker { display: none; }
+  .sw-alle .sw-liste { margin-top: 4px; }
+  .sw-fuss { align-items: center; flex-wrap: wrap; }
+  .sw-datum { min-height: 44px; }
+  /* Handy „⋯“: Werkzeuge als Liste */
+  .menue-zeile { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+  .menue-zeile svg { width: 20px; height: 20px; flex: none; }
+  .menue-zeile.an { border-color: var(--band); color: var(--band-text); }
+}
+
 /* ══ v1.11.0 · Handy hochkant (Zero 2026-09-30: „Hochkant“, Handy und iPad parallel) ══════════════════════
    Nur unter 600 px Breite — das iPad 8 (810/1080) bleibt unberührt. Navigation wird Leiste unten, die Stempel
    stehen fest darüber (Stempel und Sitzplan zugleich im Bild), der Sitzplan zeigt nur die belegten Spalten
@@ -1000,8 +1102,20 @@
     #banner .btn { min-height: 44px; }
     #banner .banner-zu { min-width: 44px; min-height: 44px; }
     /* Heute: Plan-Spalte über die volle Breite (vorher schrumpfte sie auf den 600-px-Plan und `main` scrollte seitlich) */
-    .heute-grid { flex-direction: column; align-items: stretch; gap: 10px; }
-    #view-heute { padding-bottom: var(--stempel-h); }
+    .heute-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    #datum-streifen, #erfasst-ort, .plan-spalte, #rail { grid-column: 1; grid-row: auto; }
+    /* + feste Zeile „Sitzplan | 🎲 | Liste“ (64 px) über den Stempeln */
+    #view-heute { padding-bottom: calc(var(--stempel-h) + 64px); }
+    /* Kopfzeile in „Heute“ (Zero 2026-10-01): ‹ Stunde › ⋯ — Kurs-Chip nur in den anderen Ansichten; Werkzeuge hinter ⋯ */
+    .nav-unten { display: none; }
+    body[data-ansicht="heute"] :is(#kurs-chip, header.app .spacer) { display: none; }
+    body:not([data-ansicht="heute"]) #kopf-stunde { display: none; }
+    #kopf-stunde { flex: 1; min-width: 0; display: flex; }
+    #kopf-stunde .ds-nav { flex: 1; min-width: 0; }
+    #kopf-stunde .ds-nav .stunde-knopf { flex: 1; max-width: none; }
+    #kopf-stunde .ds-nav .woche { display: none; }
+    header.app #btn-menue { flex: none; }
+    #datum-streifen.datum-streifen { min-height: 0; }
     .datum-streifen { flex-wrap: wrap; row-gap: 8px; padding: 8px 10px; }
     .datum-streifen .tg-chip { min-width: 44px; }
     #plan:not(.editor) { min-width: 0; align-items: stretch; }
@@ -1010,19 +1124,15 @@
     #plan:not(.editor) .kachel.aussen { display: none; }
     /* Liste statt Sitzplan (Zero 2026-10-01): zwei Spalten „Vorname N.“, Tagesmarken rechts — Farben und Marken erbt die Zeile
        von der Kachel. scroll-margin: der Zufall rollt die gezogene Zeile über die feste Stempel-Leiste, nicht darunter. */
-    #erfass-umschalter { display: flex; gap: 8px; }
-    #erfass-umschalter.unten { margin-top: 14px; }
-    #erfass-umschalter:not(.unten) { margin-bottom: 6px; }
-    #erfass-umschalter .seg { flex: 1; display: flex; border: 1px solid var(--kante); border-radius: 10px; overflow: hidden; }
-    #erfass-umschalter button { flex: 1; min-height: 44px; border: 0; background: var(--karte); color: var(--leise); font: inherit; font-size: 14px; cursor: pointer; }
-    #erfass-umschalter button[aria-pressed="true"] { background: var(--karte2); color: var(--text); font-weight: 700; box-shadow: inset 0 -3px 0 var(--band); }
-    #plan .erfass-liste { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-    #plan .kachel.listen-zeile { aspect-ratio: auto; min-height: 48px; flex-direction: row; align-items: center; gap: 4px;
-      padding: 0 8px; border-radius: 10px; font-size: 15px; scroll-margin-bottom: calc(var(--unten) + var(--stempel-h) + 8px); }
-    /* Das Kürzel des Nachnamens („Mü.“) unterscheidet gleiche Vornamen — es bleibt ganz, gekürzt wird der Vorname (Prüfer 2026-10-01) */
-    #plan .kachel.listen-zeile .vn { flex: 0 1 auto; min-width: 0; }
-    #plan .kachel.listen-zeile .nn { flex: none; margin-right: auto; padding: 0; font-size: 15px; }
-    #plan .kachel.listen-zeile .marken { flex: none; margin: 0; padding: 0; min-height: 0; flex-wrap: nowrap; }
+    /* „Sitzplan | 🎲 | Liste“ als feste Zeile direkt über den Stempeln — in Sitzplan und Liste an derselben Stelle (Zero 2026-10-01) */
+    #erfass-umschalter { position: fixed; left: 0; right: 0; bottom: calc(var(--unten) + var(--stempel-h)); z-index: 25;
+      padding: 8px 12px; background: var(--grund); }
+    #erfass-umschalter .seg button { flex: 1; min-height: 48px; font-size: 15px; }
+    #erfass-umschalter .seg .wuerfel { flex: 0 0 64px; }
+    #plan .erfass-liste { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    /* Das Kürzel des Nachnamens („Mü.“) unterscheidet gleiche Vornamen — es bleibt ganz, gekürzt wird der Vorname (Prüfer 2026-10-01).
+       scroll-margin: der Zufall rollt die gezogene Zeile über Stempel UND Umschalter-Zeile, nicht darunter. */
+    #plan .kachel.listen-zeile { min-height: 48px; gap: 4px; padding: 0 8px; scroll-margin-bottom: calc(var(--unten) + var(--stempel-h) + 72px); }
     /* Stempel als feste Leiste über der Navigation: „Erfasst“ als Zeile, darunter 2 × 8 Stempel (⌫ doppelt breit).
        Nur #rail — `.rail-karte` trägt auch die Fehlzeiten-Spalte der Schüler-Ansicht. `top: auto` hebt das sticky-`top: 0` auf. */
     #rail { position: fixed; top: auto; left: 0; right: 0; bottom: var(--unten); z-index: 25; width: auto;

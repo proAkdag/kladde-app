@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.12.1">
+<link rel="stylesheet" href="./css/kladde.css?v=1.13.0">
 </head>
 <body>
 
@@ -78,6 +78,13 @@
         <span class="nav-label">Mehr</span>
       </button>
     </nav>
+    <!-- Werkzeuge unten links (Zero 2026-10-01: Rahmen verdichten, „Dark-Mode-Umschalter hat einen Platz, den er nicht verdient“) -->
+    <div class="nav-unten">
+      <button class="nav-werkzeug" id="btn-plan" title="Stundenplan" aria-label="Stundenplan"></button>
+      <button class="nav-werkzeug" id="btn-theme" title="Tag / Nacht"></button>
+      <button class="nav-werkzeug" id="btn-lock" title="Sperren" aria-label="Sperren"></button>
+      <button class="nav-werkzeug" id="btn-hilfe" title="Hilfe zu dieser Ansicht" aria-label="Hilfe"></button>
+    </div>
   </aside>
 
   <div class="hauptspalte">
@@ -88,22 +95,22 @@
       </div>
       <div class="spacer"></div>
       <button id="kurs-chip"><span class="kurs-band"></span><span class="kurs-txt"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></span></button>
-      <button class="icon-btn" id="btn-plan" title="Stundenplan" aria-label="Stundenplan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="3.5" y="4.5" width="17" height="15" rx="2"></rect><path d="M3.5 9.5h17"></path><path d="M9.2 9.5v10"></path><path d="M14.9 9.5v10"></path></svg></button>
-      <button class="icon-btn" id="btn-theme" title="Tag / Nacht"></button>
-      <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken"></button>
-      <button class="icon-btn" id="btn-lock" title="Sperren"></button>
+      <div id="kopf-stunde"></div>
+      <button class="icon-btn" id="btn-menue" title="Mehr Werkzeuge" aria-label="Mehr Werkzeuge"></button>
     </header>
 
     <div id="banner" class="hidden"></div>
-    <div id="beamer-hinweis" class="hidden"><span>Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
+    <div id="beamer-hinweis" class="hidden"><span>Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button><button class="btn still u-btn-klein" id="beamer-aus">Beenden</button></div>
 
     <main>
       <section id="view-heute">
+        <!-- Raster 2 × 2 (Zero 2026-10-01): Leiste | Erfasst gleich hoch, darunter Plan | Stempel auf einer Oberkante -->
         <div class="heute-grid">
+          <div id="datum-streifen"></div>
+          <div id="erfasst-ort"></div>
           <div class="plan-spalte">
-            <div id="datum-streifen"></div>
             <div id="plan-wrap"><div id="plan"></div><div class="tafel" aria-hidden="true"><span>Tafel</span></div></div>
-            <p id="heute-leer" class="hidden u-leise">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
+            <p id="heute-leer" class="hidden u-leise">Noch kein aktiver Kurs — unter „Kurse“ anlegen oder importieren.</p>
           </div>
           <aside id="rail" class="rail"></aside>
         </div>
@@ -139,6 +146,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.12.1"></script>
+<script type="module" src="./js/app.mjs?v=1.13.0"></script>
 </body>
 </html>
