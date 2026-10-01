@@ -1,23 +1,24 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.11.3';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.11.3';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.11.3';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.11.3';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.11.3';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.11.3';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.11.3';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.11.3';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.11.3';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.11.3';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.11.3';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.11.3';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.11.3';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.11.3';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.11.3';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.11.3';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.11.3';
-const APP_VERSION = '1.11.3';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.12.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.12.0';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.12.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.12.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.12.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.12.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.12.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.12.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.12.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.12.0';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.12.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.12.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.12.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.12.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.12.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.12.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.12.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.12.0';
+const APP_VERSION = '1.12.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -331,6 +332,7 @@ function sperren(){
   // Views leeren — der Lock verdeckt nur visuell; Find-in-Page/Screenreader läsen die Namen sonst weiter
   $('plan').replaceChildren(); $('datum-streifen').replaceChildren(); $('rail').replaceChildren();
   const op=$('ohne-platz'); if(op) op.remove();
+  $('erfass-umschalter')?.remove(); $('plan').classList.remove('liste');   // Handy-Liste: hinter dem Lock keine bedienbaren Knöpfe
   $('deck-karte').replaceChildren(); $('deck-fortschritt').textContent='';
   $('deck-optionen').replaceChildren(); $('deck-verlauf').replaceChildren();   // nur leeren — versteckt blieb „Diese Runde“ bis zum Neuladen weg (Prüfer 2026-09-29)
   ['schueler','kurse','mehr'].forEach(v=>$('view-'+v).replaceChildren());
@@ -798,6 +800,11 @@ const stempelCooldown=new Set();   // ~80 ms je Kachel (Alex-Auflage): kein Dopp
 function beamerKurz(){ return beamerModus && localStorage.getItem('kladde_beamer_kurz')==='1'; }
 function anzeigeVorname(s){ return beamerKurz()?(s.vorname?s.vorname[0]+'.':''):s.vorname; }
 function anzeigeNachname(s){ return beamerKurz()?(s.name?s.name[0]+'.':''):s.name; }
+// Liste statt Sitzplan (Zero 2026-10-01: „B mit der option nach vornamen zu sortieren“): nur am Handy, Wahl je Gerät.
+// Die Zeilen tragen `kachel schueler` + data-nr — Stempel, leere Hand, Zufall und Puls laufen über dieselben Wege wie die Kacheln.
+const HANDY=matchMedia('(max-width: 599px)');
+function erfassWahl(){ return localStorage.getItem('kladde_erfassung')==='liste'?'liste':'sitzplan'; }
+function listenSortierung(){ return localStorage.getItem('kladde_listen_sort')==='vorname'?'vorname':'nachname'; }
 function sichtbareSchueler(k){
   const liste=kursSchueler(k);
   if(aktiveTeilgruppe){
@@ -897,7 +904,7 @@ function markenListe(st){
 }
 function markenHtml(st){ return markenListe(st).map(x=>'<span class="mk '+x.cls+'">'+(x.ikon?iconHtml(x.ikon):x.text)+'</span>').join(''); }
 function markenEl(st){ return markenListe(st).map(x=>el('span',{class:'mk '+x.cls},x.ikon?iconEl(x.ikon):x.text)); }
-function kachelHtml(s,st,r,c){
+function kachelKlassen(s,st){
   let cls='kachel schueler';
   if(aktiverSchueler===s.nr) cls+=' gewaehlt';
   if(!beamerModus){
@@ -905,15 +912,45 @@ function kachelHtml(s,st,r,c){
     else if(st.plus>st.minus) cls+=' netto-plus';
     else if(st.minus>st.plus) cls+=' netto-minus';
   }
+  return cls;
+}
+function kachelHtml(s,st,r,c){
+  const cls=kachelKlassen(s,st);
   const marken=markenHtml(st);
   return '<div class="'+cls+'" data-nr="'+s.nr+'" data-r="'+r+'" data-c="'+c+'">'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
     '<span class="nn">'+esc(anzeigeNachname(s))+'</span>'+
     '<div class="marken">'+marken+'</div></div>';
 }
+function listenZeile(s,e,st){
+  return el('div',{class:kachelKlassen(s,st)+' listen-zeile',dataset:{nr:String(s.nr)}},
+    el('span',{class:'vn'},e.vorname),el('span',{class:'nn'},e.kurz),s.lb?el('span',{class:'lb-badge'},'LB'):null,
+    el('span',{class:'marken'},...markenEl(st)));
+}
+// Umschalter „Sitzplan | Liste“ (+ „Nachname | Vorname“) — per JS, damit index.html für ein altes app.mjs gleich bleibt.
+// Im Sitzplan steht er UNTER dem Plan: darüber kostete er bei 800 px Höhe die fünfte Kachelreihe (P2 gemessen); in der Liste oben.
+function erfassUmschalter(zeigen,listeAktiv){
+  let u=$('erfass-umschalter');
+  if(!zeigen){ if(u) u.remove(); return; }
+  if(!u) u=el('div',{id:'erfass-umschalter'});
+  if(listeAktiv) $('plan-wrap').before(u); else $('plan-wrap').parentElement.append(u);
+  u.classList.toggle('unten',!listeAktiv);
+  // Neuzeichnen ersetzt die Knöpfe — den Fokus auf den gedrückten zurücksetzen (Tastatur/Screenreader, Prüfer 2026-10-01)
+  const knopf=(schluessel,wert,text,an)=>{ const feld=schluessel==='kladde_erfassung'?'erfassung':'sort';
+    return el('button',{type:'button','aria-pressed':String(an),dataset:{[feld]:wert},
+      onclick:e=>{ const hatteFokus=document.activeElement===e.currentTarget; localStorage.setItem(schluessel,wert); renderHeute();
+        if(hatteFokus) $('erfass-umschalter')?.querySelector('[data-'+feld+'="'+wert+'"]')?.focus(); }},text); };
+  const sort=listenSortierung();
+  u.replaceChildren(
+    el('div',{class:'seg',role:'group','aria-label':'Erfassen als'},knopf('kladde_erfassung','sitzplan','Sitzplan',!listeAktiv),knopf('kladde_erfassung','liste','Liste',listeAktiv)),
+    ...(listeAktiv?[el('div',{class:'seg',role:'group','aria-label':'Sortieren nach'},knopf('kladde_listen_sort','nachname','Nachname',sort==='nachname'),knopf('kladde_listen_sort','vorname','Vorname',sort==='vorname'))]:[]));
+}
 function renderHeute(){
   const k=kurs(); const plan=$('plan');
   plan.classList.toggle('editor',editorAktiv);
+  const listeAktiv=!!k&&HANDY.matches&&!editorAktiv&&erfassWahl()==='liste';
+  erfassUmschalter(!!k&&HANDY.matches&&!editorAktiv,listeAktiv);
+  plan.classList.toggle('liste',listeAktiv);
   if(!k){ datumStreifen(); renderRail(); $('heute-leer').classList.remove('hidden'); plan.innerHTML=''; return; }
   $('heute-leer').classList.add('hidden');
   const idx=tagesStandIndex(terminDatum);
@@ -922,7 +959,16 @@ function renderHeute(){
   const spDaten=vault.stamm.sitzplaene[k.id]||{};
   const grid=spDaten.grid||{};
   const luecken=new Set(spDaten.luecken||[]);   // bewusst leere Reihen (Gang) — überleben das Kompaktieren (Zero 2026-09-02)
-  plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv);
+  plan.classList.toggle('hidden',Object.keys(grid).length===0&&!editorAktiv&&!listeAktiv);
+  // In einer Halbgruppen-Stunde fiele, wer (noch) keiner Gruppe angehört, aus jeder Ansicht heraus — etwa ein
+  // gerade hinzugefügter Schüler. Er steht hier mit „ohne Gruppe" und zählt nicht in n/m der Gruppe (Zero 2026-09-29).
+  const ohneGruppe=aktiveTeilgruppe?kursSchueler(k).filter(s=>!s.gruppe):[];
+  if(listeAktiv){   // Liste: alle sichtbaren Schüler, also braucht nur „ohne Gruppe" das Zusatz-Panel
+    const nachNr=new Map(sichtSchueler.map(s=>[s.nr,s]));
+    const eintraege=listenEintraege(sichtSchueler.map(s=>({nr:s.nr,vorname:anzeigeVorname(s),nachname:anzeigeNachname(s)})),listenSortierung());
+    plan.replaceChildren(el('div',{class:'erfass-liste'},...eintraege.map(e=>listenZeile(nachNr.get(e.nr),e,idx.get(e.nr)||leererStand()))));
+    ohnePlatzPanel(ohneGruppe); return;
+  }
   const sichtbar=new Set(sichtSchueler.map(s=>s.nr));
   const SPALTEN=12;
   const belegteReihen=[...new Set(Object.keys(grid).map(key=>Number(key.split(',')[0])))].sort((a,b)=>a-b);
@@ -958,10 +1004,9 @@ function renderHeute(){
     plan.style.setProperty('--sp-n',String(bis-von+1));
     plan.querySelectorAll('.kachel').forEach(x=>{ const c=Number(x.dataset.c); if(c<von||c>bis) x.classList.add('aussen'); });
   }
-  // In einer Halbgruppen-Stunde fiele, wer (noch) keiner Gruppe angehört, aus jeder Ansicht heraus — etwa ein
-  // gerade hinzugefügter Schüler. Er steht hier mit „ohne Gruppe" und zählt nicht in n/m der Gruppe (Zero 2026-09-29).
-  const ohneGruppe=aktiveTeilgruppe?kursSchueler(k).filter(s=>!s.gruppe):[];
-  const ohnePlatz=[...sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr)),...ohneGruppe];
+  ohnePlatzPanel([...sichtSchueler.filter(s=>!Object.values(grid).includes(s.nr)),...ohneGruppe]);
+}
+function ohnePlatzPanel(ohnePlatz){
   if(ohnePlatz.length&&!editorAktiv){  // im Editor zeigt die Namen-Schiene dieselben Schüler — Panel wäre doppelt (Tag-Simulation L5)
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
     // Beamer: wie die Kacheln — abgekürzte Namen, kein LB an der Wand (Prüfer 2026-09-29)
@@ -977,6 +1022,7 @@ $('plan').addEventListener('pointerup',e=>{
   if(busy) return;
   schuelerBlatt(nr);   // leere Hand = anschauen (Detail-Blatt · Master-Detail)
 });
+HANDY.addEventListener('change',()=>{ if(vault) renderHeute(); });   // über 600 px gedreht: Sitzplan statt Liste und zurück
 // P4.5 · Serien-Stempel: eine Kachel bekommt den scharfen Stempel. Pro Kachel ~80 ms Sperre,
 // damit ein Wischen nicht doppelt zählt — aber verschiedene Kacheln bleiben frei (kein globaler Lock).
 // Fehlende sind nicht bewertbar (Zero-Feldtest 2026-07-10): keine ＋/o/−, keine direkte Note,
