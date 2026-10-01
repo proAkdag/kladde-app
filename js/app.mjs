@@ -1,24 +1,24 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.12.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.12.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.12.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.12.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.12.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.12.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.12.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.12.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.12.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.12.0';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.12.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.12.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.12.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.12.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.12.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.12.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.12.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.12.0';
-const APP_VERSION = '1.12.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.12.1';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.12.1';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.12.1';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.12.1';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.12.1';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.12.1';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.12.1';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.12.1';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.12.1';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.12.1';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.12.1';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.12.1';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.12.1';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.12.1';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.12.1';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.12.1';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.12.1';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.12.1';
+const APP_VERSION = '1.12.1';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -1014,9 +1014,13 @@ function ohnePlatzPanel(ohnePlatz){
     liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>{ const nr=Number(b.dataset.nr); if(stempelTyp) stempleKachel(nr); else schuelerBlatt(nr); });  // Stempel gilt auch ohne Sitzplatz (Tag-Simulation L1)
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
+let planTipp=null;   // wo der Finger aufsetzte — Wischen ist kein Antippen, öffnet kein Blatt und stempelt nicht (Zero 2026-10-01)
+$('plan').addEventListener('pointerdown',e=>{ planTipp={x:e.clientX,y:e.clientY}; });
 $('plan').addEventListener('pointerup',e=>{
+  const t=planTipp; planTipp=null;
   const kachel=e.target.closest('.kachel.schueler'); if(!kachel) return;
   if(editorAktiv||$('plan').classList.contains('editor')) return;
+  if(t&&Math.hypot(e.clientX-t.x,e.clientY-t.y)>=8) return;   // gewischt, nicht getippt (Schwelle wie im Editor)
   const nr=Number(kachel.dataset.nr);
   if(stempelTyp){ stempleKachel(nr); return; }   // Stempel scharf: direkt setzen, kein Dialog
   if(busy) return;
@@ -2780,7 +2784,7 @@ function sitzplanEditor(kursId){
   renderRail();
 
   // ── Pointer-Drag (Touch + Maus; HTML5-DnD ist auf iPad-Safari tot) ──
-  let drag=null, justDragged=false;
+  let drag=null, justDragged=false, tipp=null;   // tipp: wo der Finger aufsetzte — Wischen ist kein Antippen (Zero 2026-10-01: iPad öffnete beim Scrollen den Platz-Dialog)
   function zielReset(){ plan.querySelectorAll('.kachel.ziel, .reihe-plus.ziel').forEach(z=>z.classList.remove('ziel')); trash.classList.remove('ziel'); }
   function onMove(e){
     if(!drag) return;
@@ -2835,14 +2839,18 @@ function sitzplanEditor(kursId){
     }
   }
   const railDown=e=>{ const c=e.target.closest('.sp-chip'); if(!c) return; e.preventDefault(); drag={nr:Number(c.dataset.nr),vonKey:null,moving:false,ghost:null,x0:e.clientX,y0:e.clientY}; };
-  const planDown=e=>{ const kach=e.target.closest('.kachel.schueler'); if(!kach) return; drag={nr:Number(kach.dataset.nr),vonKey:keyOf(kach),moving:false,ghost:null,x0:e.clientX,y0:e.clientY}; };
+  const planDown=e=>{ const kach=e.target.closest('.kachel'); if(!kach) return; tipp={x:e.clientX,y:e.clientY};
+    if(!kach.classList.contains('schueler')) return;
+    drag={nr:Number(kach.dataset.nr),vonKey:keyOf(kach),moving:false,ghost:null,x0:e.clientX,y0:e.clientY}; };
   const planTap=e=>{
+    const t=tipp; tipp=null;
     if(justDragged||(drag&&drag.moving)) return;
     const kach=e.target.closest('.kachel'); if(!kach) return;
     const key=keyOf(kach); if(sp().grid[key]) return; // gesetzt → nur Drag (kein Lösch-Tap mehr)
+    if(t&&Math.hypot(e.clientX-t.x,e.clientY-t.y)>=8) return;   // gewischt, nicht getippt (Schwelle wie beim Ziehen)
     e.stopPropagation(); picker(key);
   };
-  const onCancel=()=>{ if(drag&&drag.ghost) drag.ghost.remove(); drag=null; document.body.classList.remove('sp-dragging'); zielReset(); };
+  const onCancel=()=>{ tipp=null; if(drag&&drag.ghost) drag.ghost.remove(); drag=null; document.body.classList.remove('sp-dragging'); zielReset(); };
   const plusClick=e=>{ const p=e.target.closest('.reihe-plus'); if(p){ e.stopPropagation(); reiheEinfuegen(Number(p.dataset.vor)); return; }
     const l=e.target.closest('.luecke-btn'); if(l){ e.stopPropagation(); toggleLuecke(Number(l.dataset.luecke)); } };
   rail.addEventListener('pointerdown',railDown);
