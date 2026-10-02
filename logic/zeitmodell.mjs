@@ -69,7 +69,7 @@ function istAWoche(datumIso, anker) {
 }
 
 // Ferien & Feiertage (Zero 2026-09-02, Punkt 15): zm.ferien = [{von,bis,name}] (ISO-Datum, inklusiv).
-// → Eintrag oder null. Autowahl sagt dann „frei", der Tagesblick schreibt den Namen.
+// → Eintrag oder null. Autowahl sagt dann „frei", der Stundenplan schreibt den Namen.
 function istFerien(zm, datumIso) {
   return (zm?.ferien || []).find(f => f.von <= datumIso && datumIso <= f.bis) || null;
 }

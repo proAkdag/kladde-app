@@ -199,6 +199,11 @@
   body.beamer #deck-karte.weg-minus { animation-name: kladde-karte-weiter; }
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
   #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
+  /* Leere Tische (Zero 2026-10-02): blass und gestrichelt; im Unterricht antippbar wie ein leeres Feld, im Editor in der Bandfarbe */
+  #plan .kachel.tisch { border: 1.5px dashed var(--kante); background: color-mix(in oklab, var(--karte) 40%, transparent); cursor: pointer;
+    display: grid; place-content: center; color: var(--leise); font-size: 10px; }   /* place-content: die Grundregel setzt justify-content: flex-start (gemessen 02.10.) */
+  #plan .kachel.tisch::after { content: "frei"; }
+  #plan.editor .kachel.tisch { border-color: var(--band); background: color-mix(in oklab, var(--band) 8%, transparent); }
   #plan.editor .kachel .marken { display: none; }
   /* TAFEL-Linie unten am Sitzplan (Orientierung „vorne" · Gerüst §1) — nur wenn ein Plan sichtbar ist */
   .tafel { display: none; }
@@ -255,11 +260,7 @@
   .s-detail .tag-kopf { color: var(--band-text); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
   .s-detail .ev-zeile { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--kante); font-size: 14px; }
   .balken { min-width: 60px; }
-  /* ── Gruppen-Editor: Direktbuttons ── */
-  .gr-zeile { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--kante); }
-  .gr-zeile:first-child { border-top: none; }
-  .gr-name { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .gr-btns { display: flex; gap: 4px; }
+  /* ── Halbgruppen-Knöpfe (Kurs-Seite) ── */
   .gr-b { background: var(--karte2); border: 1px solid var(--kante); border-radius: 7px; min-width: 38px; min-height: 40px; cursor: pointer; font-weight: 700; color: inherit; }
   .gr-b.an { background: var(--band); color: var(--auf-band); border-color: var(--band); }
   /* ── Lock ── */
@@ -466,25 +467,9 @@
   .sp-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 6px; min-height: 40px; font-size: 11px; padding: 2px; cursor: pointer; color: inherit; overflow: hidden; }
   .sp-zelle.belegt { border-color: var(--f, var(--band)); color: var(--f, var(--band));
     background: color-mix(in oklab, var(--f, var(--band)) 13%, var(--karte2)); }
-  /* Stundenplan-ANSICHT (S256d): Lesen + Heute/Jetzt-Orientierung · Zellen öffnen das Ausnahme-Blatt (S257) */
-  .sp-zelle.sp-lese { display: grid; place-items: center; text-align: center; }
+  /* Reiter „Woche“ (Scheibe 2): heutiger Tag im Kopf, laufende Stunde grün umrandet. Tagesblick und Ausnahme-Blatt sind seit 2026-10-02 weg. */
   .sp-th.sp-heute { color: var(--band-text); font-weight: 700; }
   .sp-zelle.sp-jetzt { outline: 2px solid var(--gut); outline-offset: -1px; }
-  /* Tagesblick (S257b): ein konkreter Schultag mit Zeiten, Ausfällen, Vertretung, Kurztag, A/B */
-  .sp-tagblick { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
-  .sp-tag-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .sp-tag-kopf .tg-chip { min-width: 40px; }
-  .sp-tag-titel { flex: 1; text-align: center; font-weight: 700; font-size: 14px; }
-  .sp-tag-zeile { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px;
-    background: none; border: none; border-top: 1px solid var(--kante); padding: 6px 4px;
-    font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 8px; }
-  .sp-tag-zeile:first-of-type { border-top: none; }
-  .sp-tz-std { flex: 0 0 52px; color: var(--leise); font-size: 12.5px; }
-  .sp-tz-zeit { flex: 0 0 92px; font-variant-numeric: tabular-nums; font-size: 13px; }
-  .sp-tz-kurs { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sp-tz-kurs.sp-entf { text-decoration: line-through; color: var(--leise); font-weight: 400; }
-  .sp-tz-badge { flex: none; font-size: 11px; font-weight: 700; border: 1px solid var(--band); color: var(--band-text); border-radius: 10px; padding: 1px 8px; }
-  .sp-tz-badge.fehl { border-color: var(--fehl); color: var(--fehl); }
   .sp-ergebnis { margin: 10px 0; font-size: 16px; text-align: center; }
 }
 
@@ -564,6 +549,47 @@
   body.sp-edit #plan.editor .kachel.schueler { touch-action: none; cursor: grab; }
   #plan .kachel.ziel { outline: 2px solid var(--band); outline-offset: -2px; }
   body.sp-dragging, body.sp-dragging * { cursor: grabbing !important; }
+  /* Stempel „Tisch“: scharf wischt der Finger über die Plätze, statt zu scrollen */
+  .sp-tisch { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+  .sp-tisch[aria-pressed="true"] { border-color: var(--band); color: var(--band-text); background: color-mix(in oklab, var(--band) 16%, var(--karte2)); }
+  .sp-tisch-ico { width: 16px; height: 12px; border: 1.5px dashed currentColor; border-radius: 3px; }
+  body.sp-tisch-scharf #plan.editor .kachel { touch-action: none; }
+  /* Handy: „Tisch“ nur als Symbol, ohne „Nicht platziert:“ — sonst blieben der Namen-Schiene 72 px (Prüfer 02.10., B3) */
+  @media (max-width: 599px) { .sp-rail-label, .sp-tisch-text { display: none; } .sp-tisch { min-width: 44px; justify-content: center; padding: 0 12px; } }
+  .tisch-wahl { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tisch-wahl .btn { min-height: 44px; }
+  .sp-pdf-bild { display: block; width: 100%; height: auto; border: 1px solid var(--kante); border-radius: 8px; -webkit-touch-callout: default; }
+  /* Schülerblatt A (Zero 2026-10-02): „Diese Stunde“ oben, ein Tipp bucht; Note/zu spät/Notiz/⭐/⊘ klappen im Blatt auf */
+  .sb-unter { margin: -4px 0 10px; }
+  .sb-stunde { margin: 0 0 14px; }
+  .sb-kopf { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 8px; color: var(--band-text); font-size: 13px; }
+  .sb-griffe, .sb-wahl { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sb-griff, .sb-wahl .btn { min-height: 44px; min-width: 44px; }
+  .sb-griff[aria-pressed="true"], .sb-griff[aria-expanded="true"], .sb-wahl .btn.vorschlag { border-color: var(--band); color: var(--band-text); }
+  .sb-feld { display: grid; gap: 8px; margin-top: 10px; padding: 10px; border: 1px solid var(--band); border-radius: 10px; }
+  .sb-feld .u-hinweis { margin: 0; }
+  .sb-min { width: 90px; min-height: 44px; }
+  .sb-warn { margin: 8px 0 0; }
+  .sb-warn:empty { display: none; }
+  /* Kurs-Seite (Zero 2026-10-02, Variante A): eine Seite statt des „⋯“-Blatts; Gruppenknöpfe und Farbtupfer ≥ 44 px */
+  .ks { display: grid; gap: 14px; max-width: 860px; }
+  .ks-zurueck { justify-self: start; min-height: 44px; }
+  .ks-titel { display: flex; align-items: center; gap: 10px; margin: 0; }
+  .ks-titel .kurs-band { height: 32px; }
+  .ks-unter { margin: -8px 0 0; }
+  .ks-panel h2 { margin-top: 0; }
+  .ks-liste { display: grid; }
+  .ks-zeile { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--kante); }
+  .ks-zeile:first-child { border-top: none; }
+  .ks-name { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .ks-gruppen { display: flex; gap: 4px; }
+  .ks .gr-b, .ks-stift { min-width: 44px; min-height: 44px; }
+  .ks-stift { padding: 0; }
+  .ks .farbtupf { width: 44px; height: 44px; min-height: 44px; }
+  .ks-erkl { margin: 0; }
+  .ks-inaktiv summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--leise); }
+  @media (max-width: 599px) { .ks-zeile { flex-wrap: wrap; } .ks-name { flex-basis: 100%; } }
+  .tisch-wahl-kopf { margin: 12px 0 4px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--leise); }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -939,9 +965,6 @@
   .deck-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 460px; margin: 12px auto 0; }
   .deck-btns .btn { min-height: 72px; font-size: 28px; border-radius: 16px; }
   .deck-btns [data-deck="skip"] { grid-column: 1 / -1; min-height: 52px; font-size: 16px; }
-  /* Kurs-Menü „⋯": Gruppen + Gefahr abgesetzt */
-  .kd-kopf { margin-top: 14px; }
-  .kd-fuss { justify-content: space-between; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--kante); }
   /* Touch-Ziele ≥ 44 px (gemessen vorher: Chips 31, Klär-Knöpfe 32, Deck-Optionen 40) */
   .zr-chip { min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; }
   .u-btn-klein { min-height: 44px; }
@@ -1069,6 +1092,53 @@
   .sw-alle .sw-liste { margin-top: 4px; }
   .sw-fuss { align-items: center; flex-wrap: wrap; }
   .sw-datum { min-height: 44px; }
+  /* „Stunde“ mit den Reitern Tag | Woche (Scheibe 2, Zero 2026-10-02: Variante C „Ein Ort“) */
+  .sw-kopfzeile { display: flex; align-items: center; gap: 12px; padding-right: 52px; margin-bottom: 10px; }
+  .sw-kopfzeile h3 { margin: 0; }
+  .sw-reiter { display: inline-flex; margin-left: auto; border: 1px solid var(--kante); border-radius: 10px; overflow: hidden; }
+  .sw-reiter button { min-height: 44px; min-width: 76px; padding: 0 16px; background: transparent; border: 0; color: var(--leise); font: inherit; font-size: 14px; cursor: pointer; }
+  .sw-reiter button.an { background: var(--karte2); color: var(--text); font-weight: 700; box-shadow: inset 0 -2px 0 var(--band); }
+  .sw-tipp { font-size: 12.5px; color: var(--leise); margin: -4px 0 8px; }
+  .sw-zeile { display: flex; gap: 6px; }
+  .sw-zeile > .sw-stunde { flex: 1; min-width: 0; }
+  .sw-mehr { flex: 0 0 50px; min-height: 50px; border-radius: 10px; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise);
+    font: inherit; font-size: 18px; cursor: pointer; }
+  .sw-zeile.offen > .sw-stunde, .sw-zeile.offen > .sw-mehr { border-color: var(--band); }
+  .sw-stunde.entf b { text-decoration: line-through; color: var(--leise); font-weight: 400; }
+  .sw-badge.fehl { border-color: var(--fehl); color: var(--fehl); }
+  .sw-aktion { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; border: 1px solid var(--band); border-radius: 10px; }
+  .sw-aktion .btn { flex: 1 1 220px; }
+  .sw-aktion .sw-hinweis, .sp-c-feld .sw-hinweis { flex-basis: 100%; margin: 0; }
+  .sw-meldung { margin: -4px 0 10px; font-size: 13px; color: var(--band-text); }
+  .sw-meldung:empty { display: none; }
+  .kurz-gesperrt { pointer-events: none; }   /* Gegenknopf nach einem Ausfall-Griff ~0,4 s (Doppeltipp, Prüfer 2026-10-02) */
+  /* Reiter „Woche“: eine konkrete Woche mit Datum, daneben (Handy: darunter) das Feld der gewählten Stunde */
+  .sp-c { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 16px; align-items: start; }
+  .sp-c-kopf { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .sp-c-pf { flex: 0 0 44px; height: 44px; border-radius: 10px; background: var(--karte2); border: 1px solid var(--kante); color: var(--text); font: inherit; font-size: 20px; cursor: pointer; }
+  .sp-c-titel { display: flex; flex-direction: column; line-height: 1.25; }
+  .sp-c-titel small { color: var(--leise); font-size: 12px; }
+  .sp-c-heute { margin-left: auto; min-height: 44px; }
+  .breit .sp-c-woche { grid-template-columns: 56px repeat(5, minmax(0, 1fr)); gap: 5px; min-width: 0; }
+  .sp-c-th { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+  .sp-c-th small { font-size: 11px; }
+  .sp-c-th .sp-c-kurz { color: var(--band-text); font-size: 10.5px; }
+  .sp-c-name { overflow-wrap: anywhere; }   /* „Klassenstd.“ in schmalen Zellen (Handy, iPad hochkant) */
+  .breit .sp-zelle.sp-c { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    text-align: center; font: inherit; font-size: 13px; padding: 4px; }
+  .sp-zelle.sp-c small { font-size: 10.5px; }
+  .sp-zelle.sp-c.entf { opacity: .75; }
+  .sp-zelle.sp-c.entf .sp-c-name { text-decoration: line-through; }
+  .sp-zelle.sp-c.an { box-shadow: 0 0 0 2px var(--band-text); }
+  .sp-c-leer { cursor: default; background: transparent; border-style: dashed; opacity: .45; }
+  .sp-c-leer.ferien { display: grid; place-items: center; font-size: 11px; color: var(--leise); opacity: 1; border: none; }
+  .sp-c-feld { background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .sp-c-feld .btn { width: 100%; }
+  .sp-c-feld .btn:disabled { opacity: .4; cursor: default; }   /* „öffnen“ an ausgefallener oder künftiger Stunde */
+  .sp-c-feld .u-hinweis { margin: 0; }
+  .sp-c-bearb { margin-left: auto; }
+  @media (max-width: 760px) { .sp-c { grid-template-columns: 1fr; } }
+  @media (max-width: 599px) { .breit .sp-c-woche { grid-template-columns: 40px repeat(5, minmax(0, 1fr)); gap: 4px; } .breit .sp-zelle.sp-c { font-size: 12px; padding: 3px 2px; } }
   /* Handy „⋯“: Werkzeuge als Liste */
   .menue-zeile { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
   .menue-zeile svg { width: 20px; height: 20px; flex: none; }

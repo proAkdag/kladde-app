@@ -49,7 +49,7 @@ function listenAbgleich(alt, neu) {
 }
 
 // Wendet den Abgleich an — rein, liefert die neue Liste. Entfernte MIT Einträgen werden
-// Tombstone (inaktiv, Nr bleibt reserviert), ohne Einträge echt entfernt (wie im Teilnehmer-Dialog).
+// Tombstone (inaktiv, Nr bleibt reserviert), ohne Einträge echt entfernt (wie „Aus dem Kurs nehmen“ auf der Kurs-Seite).
 // Gruppen und sonstige Felder der Bestandsschüler bleiben erhalten.
 function wendeAbgleichAn(alt, ab, hatEvents) {
   const list = (alt || []).map(s => ({ ...s }));

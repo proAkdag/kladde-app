@@ -18,16 +18,28 @@ function tagPlus(iso, n) {
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 
-// stundenAm(datum, {zeitmodell, wochenplan, ausnahmen}) → [{blockNr, startSek, endeSek, kursId, teilgruppe, quelle[, art]}]
-// Alle Stunden des Tages in Block-Reihenfolge; Entfall fällt heraus, Klassen-/Reservestunde (kursId null, art) bleibt.
-function stundenAm(datumIso, kontext) {
+// tagesStunden(datum, {zeitmodell, wochenplan, ausnahmen}) → [{blockNr, startSek, endeSek, kursId, teilgruppe, quelle[, art]}]
+// Alle Stunden des Tages in Block-Reihenfolge, AUCH die ausgefallenen: quelle 'entfall' mit Kurs und Gruppe des Plans —
+// der Stundenplan zeigt sie durchgestrichen und nimmt sie zurück (Scheibe 2, Zero 02.10.). Ein Entfall auf einer laut
+// Plan freien Stunde fällt weg (dort fällt nichts aus). Klassen-/Reservestunde (kursId null, art) bleibt.
+function tagesStunden(datumIso, kontext) {
   const zm = kontext && kontext.zeitmodell;
   if (!zm) return [];
   const wt = wochentagVon(datumIso);
   if (wt > 5 || istFerien(zm, datumIso)) return [];
-  return resolveBloecke(zm, wt, datumIso)
-    .map(b => { const s = slotFuerBlock(datumIso, wt, b.blockNr, kontext); return s && !s.entfall ? { ...b, ...s } : null; })
-    .filter(Boolean);
+  const ohneAusnahmen = { ...kontext, ausnahmen: [] };
+  return resolveBloecke(zm, wt, datumIso).map(b => {
+    const s = slotFuerBlock(datumIso, wt, b.blockNr, kontext);
+    if (!s) return null;
+    if (!s.entfall) return { ...b, ...s };
+    const p = slotFuerBlock(datumIso, wt, b.blockNr, ohneAusnahmen);
+    return p ? { ...b, ...p, quelle: 'entfall' } : null;
+  }).filter(Boolean);
+}
+
+// stundenAm(datum, kontext) → die Stunden, die stattfinden (Entfall fällt heraus) — Grundlage von ‹ › und „Stunde wählen“
+function stundenAm(datumIso, kontext) {
+  return tagesStunden(datumIso, kontext).filter(s => s.quelle !== 'entfall');
 }
 
 // stundeDesKurses(kursId, datum, kontext) → erste Stunde des Kurses an diesem Tag oder null
@@ -35,17 +47,36 @@ function stundeDesKurses(kursId, datumIso, kontext) {
   return stundenAm(datumIso, kontext).find(s => s.kursId === kursId) || null;
 }
 
+// kursTag(kursId, datum, kontext) → Stunde des Kurses laut Plan; sonst an einem Tag mit Einträgen (kontext.eintragsTage: Set der
+// Daten) {blockNr: null, teilgruppe: null, quelle: 'eintraege'}; sonst null. Planwechsel (Zero 02.10.): Der Assistent ersetzt den
+// Plan ohne „gilt ab“ — ‹ › rechnete rückwärts mit dem neuen Plan und übersprang Tage, an denen unterrichtet wurde.
+function kursTag(kursId, datumIso, kontext) {
+  const st = stundeDesKurses(kursId, datumIso, kontext);
+  if (st) return st;
+  return kontext && kontext.eintragsTage && kontext.eintragsTage.has(datumIso) ? { blockNr: null, teilgruppe: null, quelle: 'eintraege' } : null;
+}
+
 // naechsteStunde(kursId, datum, richtung ±1, kontext, bis?) → {datum, blockNr, teilgruppe} | null
 // Sucht ab dem Nachbartag; `bis` (heute) wird nie überschritten — Nachtrag geht nur in die Vergangenheit.
 // teilgruppe: Halbgruppe der Zielstunde (null = ganzer Kurs) — sonst zeigte ‹ › die Gruppe des Ausgangstags (Prüfer 2026-10-01)
+// Hält auch an Tagen mit Einträgen (kursTag), dort ohne Block.
 function naechsteStunde(kursId, datumIso, richtung, kontext, bis = null) {
   for (let i = 1; i <= MAX_TAGE; i++) {
     const d = tagPlus(datumIso, richtung * i);
     if (bis && d > bis) return null;
-    const st = stundeDesKurses(kursId, d, kontext);
+    const st = kursTag(kursId, d, kontext);
     if (st) return { datum: d, blockNr: st.blockNr, teilgruppe: st.teilgruppe || null };
   }
   return null;
 }
 
-export { stundenAm, stundeDesKurses, naechsteStunde, tagPlus, wochentagVon };
+// kalenderwoche(datum) → ISO-Kalenderwoche (der Donnerstag der Woche entscheidet das Jahr) — Kopf des Reiters „Woche“
+function kalenderwoche(datumIso) {
+  const [y, m, d] = datumIso.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() + 3 - ((t.getUTCDay() + 6) % 7));
+  const j = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((t - j) / 86400000 - 3 + ((j.getUTCDay() + 6) % 7)) / 7);
+}
+
+export { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon };
