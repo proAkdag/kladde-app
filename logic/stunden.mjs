@@ -5,7 +5,7 @@
 // INVARIANTE (wie autowahl.mjs): Der Plan steuert nur die Navigation — Termine entstehen aus Events.
 
 import { resolveBloecke, istFerien } from './zeitmodell.mjs';
-import { slotFuerBlock } from './autowahl.mjs';
+import { slotFuerBlock, KOMMEND_FENSTER_SEK } from './autowahl.mjs';
 
 const MAX_TAGE = 120;   // reicht über Sommerferien (≤ 6,5 Wochen) hinweg
 
@@ -70,6 +70,45 @@ function naechsteStunde(kursId, datumIso, richtung, kontext, bis = null) {
   return null;
 }
 
+// ── Welche Stunde betrifft eine Buchung? (v1.17.1 Blockmodell, Zero 03.10.: „Alles zusammen nach dem Blockmodell“)
+// Ein Termin bleibt der Tag; die Stunde ist nur für Verspätung und ∅ eine eigene Größe (Doppelstunde: „Dazuzählen, wenn es ein späterer
+// Block ist“). Eine Buchung gehört zu einer EIGENEN Stunde des Kurses (Plan, Vertretung) oder zu dem Block, für den der Kurs jetzt von Hand
+// gewählt wurde (Zero 03.10. ~16:3x: „Nur wenn jetzt gewählt“). Ein fremder laufender Block zählt nie: vorher buchte ⏰ nach einer Freistunde,
+// im Deck über das Stundenende hinaus oder nach einer abgelaufenen Wahl Minuten eines fremden Blocks dazu (Prüfer 03.10., zweite Runde 🔴 1).
+function ortszeit(jetzt) {
+  const iso = jetzt.getFullYear() + '-' + String(jetzt.getMonth() + 1).padStart(2, '0') + '-' + String(jetzt.getDate()).padStart(2, '0');
+  return { iso, sek: jetzt.getHours() * 3600 + jetzt.getMinutes() * 60 + jetzt.getSeconds() };
+}
+function schulBloecke(datumIso, kontext) {
+  const zm = kontext && kontext.zeitmodell;
+  if (!zm) return [];
+  const wt = wochentagVon(datumIso);
+  return wt > 5 || istFerien(zm, datumIso) ? [] : resolveBloecke(zm, wt, datumIso);
+}
+// stundeFuerBuchung(kontext, {jetzt, termin, kursId, gewaehlt, handBlock}) → {blockNr, startSek, endeSek, laeuft} | null
+//   gewaehlt  = Block der in „Stunde wählen“ gewählten Stunde. Sie hält bis zur nächsten Wahl, „Heute“/‹ › oder einem Kurswechsel (Zero: „Wahl hält“).
+//   handBlock = Block, für den der Kurs heute über „Alle Kurse“ oder die Kurskarte von Hand gewählt wurde — zählt wie eine eigene Stunde.
+//   1. gewählte Stunde → sie · 2. Nachtrag ohne Wahl → null (Tagesregel, wie Prod)
+//   3. heute: die laufende oder gerade beendete eigene Stunde (Doppelstunde: die Korrektur in der Pause bleibt in Block 2); sonst die eigene,
+//      die in ≤ 10 min beginnt (Anwesenheit vor dem Gong); sonst die zuletzt begonnene eigene; sonst die erste eigene des Tages; sonst null
+// laeuft = der Block läuft jetzt (nur dann gibt es einen Minutenvorschlag).
+function stundeFuerBuchung(kontext, { jetzt, termin, kursId, gewaehlt = null, handBlock = null }) {
+  const { iso, sek } = ortszeit(jetzt);
+  const heute = termin === iso;
+  const mit = b => ({ blockNr: b.blockNr, startSek: b.startSek ?? null, endeSek: b.endeSek ?? null,
+    laeuft: heute && b.startSek != null && b.startSek <= sek && sek <= b.endeSek });
+  if (gewaehlt != null) return mit(schulBloecke(termin, kontext).find(b => b.blockNr === gewaehlt) || { blockNr: gewaehlt });
+  if (!heute) return null;
+  const bl = schulBloecke(iso, kontext), wt = wochentagVon(iso);
+  const eigen = b => { if (b.blockNr === handBlock) return true; const s = slotFuerBlock(iso, wt, b.blockNr, kontext); return !!s && !s.entfall && s.kursId === kursId; };
+  const eigene = bl.filter(eigen);
+  const begonnen = bl.filter(b => b.startSek <= sek).pop();   // der laufende oder gerade beendete Block
+  const b = (begonnen && eigene.includes(begonnen) && begonnen) ||
+    eigene.find(x => x.startSek > sek && x.startSek - sek <= KOMMEND_FENSTER_SEK) ||
+    eigene.filter(x => x.startSek <= sek).pop() || eigene[0];
+  return b ? mit(b) : null;
+}
+
 // kalenderwoche(datum) → ISO-Kalenderwoche (der Donnerstag der Woche entscheidet das Jahr) — Kopf des Reiters „Woche“
 function kalenderwoche(datumIso) {
   const [y, m, d] = datumIso.split('-').map(Number);
@@ -79,4 +118,4 @@ function kalenderwoche(datumIso) {
   return 1 + Math.round(((t - j) / 86400000 - 3 + ((j.getUTCDay() + 6) % 7)) / 7);
 }
 
-export { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon };
+export { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung };

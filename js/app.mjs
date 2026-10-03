@@ -1,27 +1,27 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.17.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.17.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.17.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.17.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.17.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.17.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.17.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.17.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.17.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.17.0';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.17.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.17.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.17.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.17.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.17.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.17.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.17.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.17.0';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon } from '../logic/stunden.mjs?v=1.17.0';
-import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.17.0';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.17.0';
-const APP_VERSION = '1.17.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.17.1';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.17.1';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.17.1';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.17.1';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.17.1';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.17.1';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.17.1';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.17.1';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.17.1';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.17.1';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.17.1';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.17.1';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.17.1';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.17.1';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.17.1';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.17.1';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.17.1';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.17.1';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung } from '../logic/stunden.mjs?v=1.17.1';
+import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.17.1';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.17.1';
+const APP_VERSION = '1.17.1';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -426,7 +426,9 @@ let aktiverKursId=null, terminDatum=heuteIso(), aktiverSchueler=null, undoStack=
 // Nachtrag (bewusst gewählter Termin) ≠ veraltetes „heute": ohne diesen Merker gingen nach einer Nacht im Speicher
 // alle Stempel auf gestern, und ein Nachtrag überlebte den automatischen Kurswechsel (Prüfer 2026-09-29)
 let terminNachtrag=false;
-// Nur Anzeige: welche der Stunden des Tages die „Stunde“ nennt (zwei Stunden desselben Kurses an einem Tag bleiben EIN Termin)
+// Die in „Stunde wählen“ gewählte Stunde: Kopf und — für ⏰ und ∅ — die Stunde der Buchung (buchungsStunde). Zwei Stunden desselben Kurses
+// an einem Tag bleiben EIN Termin. Die Wahl hält bis zur nächsten Wahl, „Heute“/‹ › (setzeTermin) oder einem Kurswechsel (Zero 03.10.: „Wahl hält“);
+// Blättern wählt keine Stunde — im Nachtrag gilt dann die Tagesregel wie in Prod (Prüfer 03.10., zweite Runde 🟡 2)
 let anzeigeBlock=null;
 function terminAufHeute(){ if(!terminNachtrag) terminDatum=heuteIso(); }
 function heuteIso(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -439,13 +441,20 @@ function addEvent(typ,schuelerNr,extra={}){
   const k=kurs();
   if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return null; } // P3.3
   const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
+  // ⏰ und ∅ tragen ihre Stunde (v1.17.1 Blockmodell): Doppelstunde (Zero 03.10.: „Dazuzählen, wenn es ein späterer Block ist“), und ⏰ nimmt
+  // das ∅ derselben Stunde zurück (Zero: „⏰ nimmt ∅ zurück“) — beides regelt ersetzungFuer unten. Die Stunde kommt frisch aus der Uhr
+  // (buchungsStunde), nicht aus der Autowahl: dort galt in der Pause schon der nächste Block (Prüfer 03.10. 🔴 1)
+  if((typ==='versp'||typ==='fehlt_o')&&e.blockNr==null){ const st=buchungsStunde(e.datum); if(st) e.blockNr=st.blockNr; }
   // Direkt entschuldigt/unentschuldigt an einem Tag mit offenem ∅ = Klärung dieses ∅ — sonst blieb es offen stehen
-  // (Klärungsliste, Kurs-Badge, Kurzbericht „1× ungeklärt“ UND „1× entschuldigt“; Prüfer 2026-09-29)
+  // (Klärungsliste, Kurs-Badge, Kurzbericht „1× ungeklärt“ UND „1× entschuldigt“; Prüfer 2026-09-29). Hat ⏰ das ∅ schon ersetzt („kommt
+  // doch“), klärt e/u es mit — sonst stünde es nach einem ↶ der Verspätung neben dem e (Prüfer 03.10. 🟢 7)
   if((typ==='fehlt_e'||typ==='fehlt_u')&&!e.stornoVon){
-    const o=wirksameEvents(vault.events).find(x=>x.typ==='fehlt_o'&&x.kursId===e.kursId&&x.schuelerNr===schuelerNr&&x.datum===e.datum);
+    const w=wirksameEvents(vault.events), gleich=x=>x.typ==='fehlt_o'&&x.kursId===e.kursId&&x.schuelerNr===schuelerNr&&x.datum===e.datum;
+    const o=w.find(gleich)||vault.events.find(x=>gleich(x)&&w.some(v=>v.typ==='versp'&&v.stornoVon===x.id));
     if(o) e.stornoVon=o.id;
   }
-  // Ein Zeichen je Stunde (Zero 2026-09-29): die neue Bewertung ersetzt die bisherige, ↶ bringt sie zurück (logic/verdichtung)
+  // Ein Zeichen je Stunde (Zero 2026-09-29): die neue Bewertung ersetzt die bisherige, ↶ bringt sie zurück (logic/verdichtung). Ebenso je Stunde
+  // ⏰ und ∅: eine neue Verspätung ersetzt die bisherige oder das ∅ („kommt doch“), ein ∅ ersetzt die Verspätung
   const ers=ersetzungFuer(vault.events,e);
   if(ers){
     for(const a of ers.still) vault.events.push(stornoEreignis(a));
@@ -845,13 +854,13 @@ function kursImPlan(k){ return !!planKontext().zeitmodell&&wochenplanAktiv().som
 // Planwechsel (Zero 02.10.): Tage mit Einträgen des Kurses zählen wie Plan-Tage — ein neuer Plan kennt die alten Tage nicht
 function eintragsTage(kursId){ return new Set(wirksameEvents(vault.events).filter(e=>e.kursId===kursId&&istTerminEintrag(e)).map(e=>e.datum)); }
 function kursKontext(k){ return {...planKontext(),eintragsTage:eintragsTage(k.id)}; }
-// Tag für den aktiven Kurs zeigen: Termin + angezeigte Stunde + Halbgruppe der Plan-Stunde (null = ganzer Kurs).
-// Heute gilt die laufende Stunde der Autowahl, sonst die übergebene (Prüfer 2026-10-01: Gruppe und „Std.“ stimmten nicht).
-// Heute folgt die Anzeige der laufenden Stunde (anzeigeBlock null), sonst bliebe bei einer Doppelstunde „Std. 1“ stehen.
+// Tag für den aktiven Kurs zeigen: Termin + Halbgruppe der Plan-Stunde (null = ganzer Kurs). Heute gilt die Gruppe der laufenden Stunde der
+// Autowahl, sonst die übergebene (Prüfer 2026-10-01: Gruppe und „Std.“ stimmten nicht). Eine Stunde wählt das Blättern nicht (setzeTermin): der
+// Kopf nennt heute die Stunde der Buchung, im Nachtrag die erste des Tages (angezeigteStunde).
 // renderAlles: „Stunde wählen“ gibt es auch in Deck und Schüler — eine stehen gebliebene Deck-Karte buchte sonst aufs neue Datum (N3)
 function zeigeTag(datum,st){
   const k=kurs(), heute=datum===heuteIso(); if(heute&&k&&autowahlInfo?.kursId===k.id) st=autowahlInfo;
-  setzeTermin(datum); anzeigeBlock=heute?null:st?.blockNr??null;
+  setzeTermin(datum);
   const g=st&&k?gueltigeGruppe(k.id,st.teilgruppe):aktiveTeilgruppe;
   if(g!==aktiveTeilgruppe) gruppeWaehlen(g);
   mitUebergang(renderAlles);
@@ -877,12 +886,12 @@ function springeWoche(richtung){
   if(ziel>heuteIso()){ toast('Nachtrag geht nur in die Vergangenheit'); return; }
   geheZuTag(ziel);
 }
-// Die Stunde, die „Stunde“ nennt: die gewählte, heute die laufende, sonst die erste des Kurses an dem Tag
+// Die Stunde, die „Stunde“ nennt: die Stunde der Buchungen (buchungsStunde — gewählt, laufend, in der Pause die gerade beendete), im Nachtrag
+// ohne Wahl die erste des Kurses an dem Tag. Kopf und Buchung zeigen so dieselbe Stunde (Prüfer 03.10. 🟡 3: Kopf „Std. 1“, gebucht auf 6)
 function angezeigteStunde(k){
   const ctx=planKontext(); if(!ctx.zeitmodell) return null;
-  const alle=stundenAm(terminDatum,ctx).filter(s=>s.kursId===k.id);
-  const block=anzeigeBlock??(terminDatum===heuteIso()&&autowahlInfo?.kursId===k.id?autowahlInfo.blockNr:null);
-  return alle.find(s=>s.blockNr===block)||alle[0]||null;
+  const alle=stundenAm(terminDatum,ctx).filter(s=>s.kursId===k.id), st=k.id===aktiverKursId?buchungsStunde():null;
+  return (st&&(alle.find(s=>s.blockNr===st.blockNr)||(st.startSek!=null?st:null)))||alle[0]||null;
 }
 function stundeUntertitel(k){
   const zm=planKontext().zeitmodell, st=angezeigteStunde(k);
@@ -1023,7 +1032,8 @@ function stundeWaehlen(start,reiter='tag'){
       // offen, wenn es nichts anderes zu wählen gibt (kein Plan, kein Unterricht) · archivierte Kurse nie (die Handwahl verwürfe sie)
       el('details',{class:'sw-alle',...(!zm||!stunden.length||ohnePlan?{open:''}:{})},el('summary',{},'Alle Kurse'),
         el('div',{class:'sw-liste'},...sortiereKurse(vault.stamm.kurse.filter(x=>x.status!=='archiviert')).map(kx=>{ const st=stundeDesKurses(kx.id,t,ctx);   // hat er an dem Tag eine Plan-Stunde: deren Gruppe
-          const z=el('button',{type:'button',class:'sw-stunde',dataset:{kurs:kx.id},onclick:()=>oeffneStunde(kx.id,t,st?.teilgruppe??null,st?.blockNr??null)},
+          // die Zeile öffnet den Kurs, keine bestimmte Stunde: heute ist er damit „jetzt gewählt“ (Zero 03.10.), im Nachtrag gilt die Tagesregel
+          const z=el('button',{type:'button',class:'sw-stunde',dataset:{kurs:kx.id},onclick:()=>oeffneStunde(kx.id,t,st?.teilgruppe??null,null)},
           el('span',{class:'kurs-band'}),el('b',{},kx.name+' · '+kx.fach)); faerbe(z,kx); return z; }))),
       el('div',{class:'btn-reihe sw-fuss'},datumFeld,
         // hat der Kurs heute keine Stunde: im Dialog auf heute blättern statt ihn neu zu öffnen (sähe aus wie „nichts passiert“, N4)
@@ -1107,13 +1117,15 @@ function stundenplanAnsicht(){
   if(!(vault.stamm.zeitmodelle||[])[0]){ stundenplanAssistent(); return; }
   stundeWaehlen(terminDatum,'woche');
 }
-// Eine Stunde öffnen = Kurs von Hand wählen (hält bis zum Blockwechsel, wie „Kurs wählen“) + Termin setzen
+// Eine Stunde öffnen = Kurs von Hand wählen (hält bis zum Blockwechsel, wie „Kurs wählen“) + Termin setzen. Nur „Alle Kurse“ für heute heißt
+// „ich unterrichte den Kurs jetzt“: dann gehört der Block der Handwahl zu seinen Stunden. Wer eine bestimmte Stunde oder einen anderen Tag
+// öffnet, trägt nach (nurStunde) — der laufende Block bleibt fremd (Zero 03.10. ~16:3x: „Nur wenn jetzt gewählt“).
 // Erst Autowahl (frische Blocknummer — sonst bände die Handwahl an einen vergangenen Block und fiele sofort), dann Handwahl,
 // Termin erst NACH der Prüfung, dass der Kurs wirklich übernommen ist (Prüfer 2026-10-01: sonst Kurs Y auf dem Datum von X).
 function oeffneStunde(kursId,datum,teilgruppe,blockNr){
   if(editorAktiv){ toast('Erst den Sitzplan-Editor mit „Fertig“ schließen'); return; }
   kursAutowahl();
-  handwahlSetzen({kursId,teilgruppe:gueltigeGruppe(kursId,teilgruppe),datum:heuteIso(),blockNr:autowahlInfo?.blockNr??null});
+  handwahlSetzen({kursId,teilgruppe:gueltigeGruppe(kursId,teilgruppe),datum:heuteIso(),blockNr:autowahlInfo?.blockNr??null,...(blockNr!=null||datum!==heuteIso()?{nurStunde:true}:{})});
   kursAutowahl(); dlgZu();
   if(aktiverKursId!==kursId){ toast('Dieser Kurs lässt sich nicht öffnen'); mitUebergang(renderAlles); return; }
   setzeTermin(datum); anzeigeBlock=blockNr??null; mitUebergang(renderAlles);
@@ -1455,16 +1467,29 @@ function pulseKachel(nr){
 }
 // Per-Schüler-Dialoge aus dem Stempelfluss (⏰/✎/📊) und aus „Tag bewerten“. Note und Minuten sind seit Scheibe 5 (Zero 03.10.: „A · Kompaktes
 // Notengitter“) dieselben Gitter wie im Schülerblatt: ein Tipp bucht, kein Auswahlfeld und kein „Eintragen“.
-// Vorschlag aus dem Stundenplan: jetzt − Blockbeginn (nur heute + laufender Block; sonst null) — Stempel-Dialog und Schülerblatt
-function verspVorschlag(){
-  if(terminDatum!==heuteIso()||!autowahlInfo||autowahlInfo.startSek==null) return null;
-  const now=new Date(), min=Math.round((now.getHours()*3600+now.getMinutes()*60+now.getSeconds()-autowahlInfo.startSek)/60);
+// Die Stunde, die eine Buchung betrifft (logic/stunden stundeFuerBuchung): die gewählte, sonst eine eigene Stunde des Kurses — die laufende, in
+// der Pause die gerade beendete — oder der Block, für den er jetzt von Hand gewählt wurde. EINE Quelle für Block, Minutenvorschlag und Kopf
+// (Prüfer 03.10. 🔴 1, 🟡 2/3; zweite Runde 🔴 1). Frisch bei jedem Aufruf: das Deck hat keinen Takt.
+function buchungsStunde(datum=terminDatum){
+  const h=handwahlLesen();
+  return stundeFuerBuchung(planKontext(),{jetzt:new Date(),termin:datum,kursId:aktiverKursId,gewaehlt:datum===terminDatum?anzeigeBlock:null,
+    handBlock:h&&h.kursId===aktiverKursId&&!h.nurStunde?h.blockNr??null:null});
+}
+// Ein Dialog bucht auf die Stunde, die er beim Öffnen zeigt; war da keine bestimmbar, bestimmt addEvent sie beim Buchen (Prüfer 🟢 7)
+const stundeFeld=st=>st&&st.blockNr!=null?{blockNr:st.blockNr}:{};
+// Vorschlag aus dem Stundenplan: jetzt − Beginn der Stunde, nur wenn sie gerade läuft (sonst null: Nachtrag, Pause, gewählte frühere Stunde)
+function verspVorschlag(st=buchungsStunde()){
+  if(!st||!st.laeuft) return null;
+  const now=new Date(), min=Math.round((now.getHours()*3600+now.getMinutes()*60+now.getSeconds()-st.startSek)/60);
   return min>=1&&min<=90?min:null;
 }
-// Die wirksamen Verspätungen dieses Schülers am Termin — meist eine; mehrere nur aus Altbestand oder von zwei Geräten. Ein neuer Wert
-// ersetzt sie alle: addEvent → ersetzungFuer („eine Verspätung je Termin“, logic/verdichtung; Prüfer 03.10. 🔴 1/🟡 2)
-function verspAmTermin(nr){
-  const l=wirksameEvents(vault.events).filter(e=>e.typ==='versp'&&e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum);
+// Ein offenes ∅ dieses Schülers in dieser Stunde: dann nimmt ⏰ es zurück („kommt doch“), auch mit denselben Minuten (Prüfer 03.10. 🟢 8)
+const offenesO=(nr,st)=>wirksameEvents(vault.events).some(e=>e.typ==='fehlt_o'&&e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&(e.blockNr==null||st?.blockNr==null||e.blockNr===st.blockNr));
+// Die wirksamen Verspätungen dieses Schülers in dieser Stunde (tag=true: am ganzen Tag) — meist eine; mehrere nur aus Altbestand oder von zwei
+// Geräten. Ein neuer Wert ersetzt die der Stunde: addEvent → ersetzungFuer (logic/verdichtung; Prüfer 03.10. 🔴 1/🟡 2; Doppelstunde Zero 03.10.)
+function verspAmTermin(nr,tag=false,st=buchungsStunde()){
+  const b=st?.blockNr??null;
+  const l=wirksameEvents(vault.events).filter(e=>e.typ==='versp'&&e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&(tag||e.blockNr==null||b==null||e.blockNr===b));
   return l.length?{minuten:l.reduce((s,e)=>s+(Number(e.minuten)||0),0),teile:l.map(e=>Number(e.minuten)||0)}:null;
 }
 const verspText=a=>'Gebucht: '+a.minuten+' min'+(a.teile.length>1?' ('+a.teile.join(' + ')+')':'')+'. Andere Minuten antippen — ersetzt.';
@@ -1472,15 +1497,16 @@ const verspText=a=>'Gebucht: '+a.minuten+' min'+(a.teile.length>1?' ('+a.teile.j
 // wenn nötig“): der erste Tipp bucht die Minuten seit Blockbeginn, ein zweiter Tipp auf denselben Schüler öffnet die Minuten zum Anpassen.
 // Ohne laufenden Block (Nachtrag, Pause) gibt es nichts zu rechnen — dann gleich die Minuten.
 function verspStempel(s){ if(!s) return;
-  const vor=verspVorschlag();
-  if(verspAmTermin(s.nr)||!vor) return verspDialog(s);
-  if(addEvent('versp',s.nr,{minuten:vor})){ toast(vor+' min zu spät · '+s.vorname+' — nochmal antippen zum Ändern',4000); renderHeute(); pulseKachel(s.nr); }
+  const st=buchungsStunde(), vor=verspVorschlag(st);
+  if(verspAmTermin(s.nr,false,st)||!vor) return verspDialog(s,st);
+  const heute=verspAmTermin(s.nr,true,st), doch=offenesO(s.nr,st), e=addEvent('versp',s.nr,{minuten:vor,...stundeFeld(st)});   // eine Verspätung eines früheren Blocks bleibt, die neue kommt dazu
+  if(e){ toast((doch?'kommt doch: ':'')+vor+' min zu spät · '+s.vorname+(heute?' · zusammen heute '+(heute.minuten+vor)+' min':'')+' — nochmal antippen zum Ändern',4000); renderHeute(); pulseKachel(s.nr); }
 }
-function verspDialog(s){ if(!s) return;
-  const opt={kursId:aktiverKursId}, alt=verspAmTermin(s.nr), vor=verspVorschlag(), jetzt=alt?alt.minuten:null;
-  const buche=m=>{ if(kursGewechselt(opt)) return;
-    if(m===jetzt) toast('unverändert: '+m+' min · '+s.vorname);
-    else if(addEvent('versp',s.nr,{minuten:m})) toast(m+' min zu spät · '+s.vorname);   // ersetzt eine gebuchte (ersetzungFuer)
+function verspDialog(s,st=buchungsStunde()){ if(!s) return;
+  const opt={kursId:aktiverKursId}, alt=verspAmTermin(s.nr,false,st), vor=verspVorschlag(st), jetzt=alt?alt.minuten:null;
+  const buche=m=>{ if(kursGewechselt(opt)) return; const doch=offenesO(s.nr,st);
+    if(m===jetzt&&!doch) toast('unverändert: '+m+' min · '+s.vorname);
+    else if(addEvent('versp',s.nr,{minuten:m,...stundeFeld(st)})) toast((doch?'kommt doch: ':'')+m+' min zu spät · '+s.vorname);   // ersetzt die Verspätung oder das ∅ der Stunde (ersetzungFuer)
     dlgZu(); renderHeute(); pulseKachel(s.nr); };
   const ein=el('input',{type:'text',inputmode:'numeric',class:'sb-min',placeholder:'andere','aria-label':'andere Minuten',maxlength:'2'});
   const warn=el('p',{class:'u-warn13 sb-warn',role:'status'});
@@ -1598,9 +1624,10 @@ function schuelerBlatt(nr,{danach}={}){
     const wahl=(werte,beschr,fn,vorn)=>el('div',{class:'sb-wahl'},...werte.map(w=>el('button',{type:'button',class:'btn still'+(w===vorn?' vorschlag':''),dataset:{sbWahl:String(w)},onclick:()=>fn(w)},beschr(w))));
     const textFeld=(hinweis,platzhalter,knopf,fn)=>{ const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:platzhalter});
       return [el('p',{class:'u-hinweis'},hinweis),ta,el('div',{class:'btn-reihe'},el('button',{type:'button',class:'btn',dataset:{sbOk:offen},onclick:()=>fn(ta.value.trim())},knopf))]; };
-    const bestWert=sek2?'15':'1', bestLabel=sek2?'15 P':'Note 1', vor=verspVorschlag();
-    const altV=verspAmTermin(nr), jetztV=altV?altV.minuten:null;
-    const versp=m=>{ if(m===jetztV){ dlgZu(); toast('unverändert: '+m+' min · '+s.vorname); return; } buche([['versp',{minuten:m}]],m+' min zu spät'); };   // ersetzt (ersetzungFuer), nie addiert
+    const st=buchungsStunde(), doch=fehlt==='o'&&offenesO(nr,st), bestWert=sek2?'15':'1', bestLabel=sek2?'15 P':'Note 1', vor=verspVorschlag(st);
+    const altV=verspAmTermin(nr,false,st), jetztV=altV?altV.minuten:null;
+    const versp=m=>{ if(m===jetztV&&!doch){ dlgZu(); toast('unverändert: '+m+' min · '+s.vorname); return; }
+      buche([['versp',{minuten:m,...stundeFeld(st)}]],(doch?'kommt doch: ':'')+m+' min zu spät'); };   // ersetzt die Verspätung oder das ∅ der Stunde, nie addiert
     const minEin=el('input',{type:'text',inputmode:'numeric',class:'sb-min',placeholder:'andere','aria-label':'andere Minuten',maxlength:'2'});
     const feld=offen==='note'?[el('p',{class:'u-hinweis'},'Note antippen — gebucht. ↶ nimmt sie zurück.'),
         wahl(sek2?Array.from({length:16},(_,i)=>String(15-i)):NOTEN_DRITTEL,w=>sek2?w+' P':w,w=>buche([['note',{wert:w}]],'Note '+(sek2?w+' P':w)))]
@@ -1615,7 +1642,7 @@ function schuelerBlatt(nr,{danach}={}){
         t=>buche([['verweigert',{notiz:t}]],'Verweigerung notiert (zählt 6)'))
       :null;
     stunde.replaceChildren(
-      el('div',{class:'sb-kopf'},el('b',{},'Diese Stunde'),fehlt?el('span',{class:'u-warn13'},'fehlt · '+(FEHLT_WORT[fehlt]||fehlt)+' — keine Bewertung; ⌫ im Plan nimmt die Abwesenheit zurück'):null),
+      el('div',{class:'sb-kopf'},el('b',{},'Diese Stunde'),fehlt?el('span',{class:'u-warn13'},'fehlt · '+(FEHLT_WORT[fehlt]||fehlt)+' — keine Bewertung; '+(doch?'„zu spät“ (kommt doch) oder ':'')+'⌫ im Plan nimmt die Abwesenheit zurück'):null),
       el('div',{class:'sb-griffe'},...griffe),...(feld?[el('div',{class:'sb-feld'},...feld)]:[]),warn);
     const f=fokus&&stunde.querySelector(fokus); if(f) f.focus({preventScroll:true});
     const ta=stunde.querySelector('.sb-feld textarea'); if(ta) ta.focus();
@@ -1664,7 +1691,7 @@ function zeigeLegende(){
     zeile3(iconHtml('abwesend'),{fehlt:'o'},'abwesend — Klärung offen (Reiter Schüler)')+
     zeile3(iconHtml('entsch'),{fehlt:'e'},'entschuldigt gefehlt')+
     zeile3(iconHtml('unentsch'),{fehlt:'u'},'unentschuldigt gefehlt — zählt als '+wert('6','0'))+
-    zeile3(iconHtml('versp'),{versp:5},'zu spät — der erste Tipp bucht die Minuten seit Stundenbeginn, ein zweiter Tipp ändert sie')+
+    zeile3(iconHtml('versp'),{versp:5},'zu spät — der erste Tipp bucht die Minuten seit Stundenbeginn, ein zweiter Tipp ändert sie. In einer späteren Stunde des Tages zählt eine neue dazu; auf ein ∅ derselben Stunde heißt es „kommt doch“')+
     hinweis('Wer fehlt, wird nicht bewertet — erst ⌫, dann bewerten.')+
     kopf('Organisation')+
     zeile3(iconHtml('ipad'),{ipad:1},'iPad fehlt / leer')+
@@ -1731,6 +1758,7 @@ function renderDeck(){
 function zeigeDeckKarte(){
   const karte=$('deck-karte');
   const total=deckListe.length;
+  $('view-deck').classList.toggle('deck-ende',deckIdx>=total);   // End-Karte: Knöpfe und Wischhilfe täten nichts (Prüfer 03.10. 🟢 11)
   // EIN Indexlauf statt eines vollen Event-Durchlaufs je Schueler (gemessen bei 7.624 Events:
   // 146 ms -> 7 ms je Deck-Runde, Faktor 21; die Funktion gab es laengst, sie wurde hier nur
   // nicht benutzt). Derselbe Index traegt unten die End-Karte und die Abwesenheits-Anzeige.

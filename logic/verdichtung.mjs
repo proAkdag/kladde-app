@@ -46,15 +46,27 @@ const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
 // Eine Verspätung je Termin (Scheibe 5, Zero 03.10.: „die zeit anzupassen wenn nötig“): eine neue ersetzt die bisherigen nach derselben
 // Regel — so addieren weder ein ↷ Wiederherstellen noch zwei Geräte noch Altbestand die Minuten (Prüfer 03.10., 🔴 1/🟡 2). Die Brücke
 // braucht keine eigene Regel: sie liest die gebuchten Stornos (export_mappe.py wirksame_events).
-const VERSP_TYPEN = new Set(['versp']);
+// Doppelstunde (Zero 03.10.: „Dazuzählen, wenn es ein späterer Block ist“): Verspätungen verschiedener Blöcke desselben Tages stehen
+// nebeneinander. Fehlt einer Seite der Block (Altbestand, Nachtrag), gilt die Tagesregel — so bleibt der Schutz gegen ↶ + ↷.
+// Anwesenheit je Stunde (v1.17.1, Zero 03.10.: „⏰ nimmt ∅ zurück“): ∅ und ⏰ schließen sich in EINER Stunde aus — ⏰ auf ein ∅ ersetzt es
+// („kommt doch“), ∅ auf ein ⏰ ebenso, ↶ bringt das Vorige zurück. Ein ∅ einer anderen Stunde bleibt offen (Prüfer ❓ 5, eigene Festlegung).
+// Vorher klärte addEvent das ∅ mit eigenen Stornos: ↶ verlor dabei die ältere Verspätung, ∅ ⏰ ∅ ⏰ ließ ∅ offen (Prüfer 🟡 4).
+const ANWESEND_TYPEN = new Set(['versp', 'fehlt_o']);
+const gleicherBlock = (a, b) => a.blockNr == null || b.blockNr == null || a.blockNr === b.blockNr;
 function ersetzungFuer(events, neu) {
-  const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : VERSP_TYPEN.has(neu.typ) ? VERSP_TYPEN : null;
+  const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : ANWESEND_TYPEN.has(neu.typ) ? ANWESEND_TYPEN : null;
   if (!art || neu.stornoVon) return null;
-  const alt = wirksameEvents(events)
-    .filter(e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu))
-    .sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-  if (!alt.length) return null;
-  const ersetzt = alt.pop();
+  const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu) && (art !== ANWESEND_TYPEN || gleicherBlock(e, neu));
+  // Ältere Doppelte so lange stornieren, bis nur das Ersetzte bleibt: ein Storno hebt auch die Wirkung des Stornierten auf und brächte
+  // sonst dessen eigenes Ersetztes zurück (zwei Geräte: 5 → 7 neben ∅, ⏰ 8 ergab 13). Ein Wiederkehrer ist immer älter als das Ersetzte.
+  let evs = events, alt = [], ersetzt = null;
+  for (;;) {
+    const jetzt = wirksameEvents(evs).filter(gleich).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+    if (jetzt.length <= 1) { ersetzt = jetzt[0] || null; break; }
+    const weg = jetzt.slice(0, -1);
+    alt = [...alt, ...weg]; evs = [...evs, ...weg.map(a => ({ id: '~' + a.id, typ: 'storno', stornoVon: a.id }))];
+  }
+  if (!ersetzt) return null;
   let notiz = neu.notiz ? String(neu.notiz).trim() : '';   // „includes“: ein ↷ Wiederherstellen bringt den Text schon mit
   for (const a of [ersetzt, ...alt]) {
     const t = a.typ !== 'verweigert' && a.notiz ? String(a.notiz).trim() : '';
