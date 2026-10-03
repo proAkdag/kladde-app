@@ -52,11 +52,16 @@ const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
 // („kommt doch“), ∅ auf ein ⏰ ebenso, ↶ bringt das Vorige zurück. Ein ∅ einer anderen Stunde bleibt offen (Prüfer ❓ 5, eigene Festlegung).
 // Vorher klärte addEvent das ∅ mit eigenen Stornos: ↶ verlor dabei die ältere Verspätung, ∅ ⏰ ∅ ⏰ ließ ∅ offen (Prüfer 🟡 4).
 const ANWESEND_TYPEN = new Set(['versp', 'fehlt_o']);
+// Eine Quartalsnote je Quartal (Scheibe 6, Festlegung des Bauers, Zero 03.10. bestätigt: „Ja, ersetzt“): die neue ersetzt die bisherige desselben Quartals
+// (hj + quartal, nicht der Termin) — so gewinnt sie auch, wenn die Uhr eines Geräts nachgeht; vorher entschied allein der Zeitstempel. ↶ bringt
+// die alte zurück. Die Brücke braucht nichts Eigenes (export_mappe.py quartalsnoten liest wirksame_events).
+const QN_TYPEN = new Set(['quartalsnote']);
 const gleicherBlock = (a, b) => a.blockNr == null || b.blockNr == null || a.blockNr === b.blockNr;
 function ersetzungFuer(events, neu) {
-  const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : ANWESEND_TYPEN.has(neu.typ) ? ANWESEND_TYPEN : null;
+  const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : ANWESEND_TYPEN.has(neu.typ) ? ANWESEND_TYPEN : QN_TYPEN.has(neu.typ) ? QN_TYPEN : null;
   if (!art || neu.stornoVon) return null;
-  const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu) && (art !== ANWESEND_TYPEN || gleicherBlock(e, neu));
+  const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr &&
+    (art === QN_TYPEN ? e.hj === neu.hj && e.quartal === neu.quartal : terminVon(e) === terminVon(neu) && (art !== ANWESEND_TYPEN || gleicherBlock(e, neu)));
   // Ältere Doppelte so lange stornieren, bis nur das Ersetzte bleibt: ein Storno hebt auch die Wirkung des Stornierten auf und brächte
   // sonst dessen eigenes Ersetztes zurück (zwei Geräte: 5 → 7 neben ∅, ⏰ 8 ergab 13). Ein Wiederkehrer ist immer älter als das Ersetzte.
   let evs = events, alt = [], ersetzt = null;

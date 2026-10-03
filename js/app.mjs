@@ -1,27 +1,27 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.17.1';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.17.1';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.17.1';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.17.1';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.17.1';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.17.1';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.17.1';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.17.1';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.17.1';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.17.1';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.17.1';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.17.1';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.17.1';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.17.1';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.17.1';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.17.1';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.17.1';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.17.1';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung } from '../logic/stunden.mjs?v=1.17.1';
-import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.17.1';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.17.1';
-const APP_VERSION = '1.17.1';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.18.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.18.0';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.18.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.18.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.18.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.18.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.18.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.18.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.18.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.18.0';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.18.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.18.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.18.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.18.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.18.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.18.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.18.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.18.0';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung } from '../logic/stunden.mjs?v=1.18.0';
+import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.18.0';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.18.0';
+const APP_VERSION = '1.18.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -438,6 +438,7 @@ function kursSchueler(k){ return (vault.stamm.schueler[k.id]||[]).filter(s=>!s.i
 // auf die getestete 2-Wege-Logik ab — Sek-II-Drittel rechnet wie Sek I (Drittelnoten 1–6).
 function bewertProfil(k){ return (k&&k.profil==='sek2'&&(k.notenmodus||'punkte')!=='drittel')?'sek2':'sek1'; }
 function addEvent(typ,schuelerNr,extra={}){
+  if(dlgKurs&&kursGewechselt({kursId:dlgKurs})) return null;   // offener Dialog eines anderen Kurses: dieselbe Nr ist hier ein anderes Kind (dlgOeffnen)
   const k=kurs();
   if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return null; } // P3.3
   const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
@@ -469,6 +470,7 @@ function addEvent(typ,schuelerNr,extra={}){
 }
 function stornoEreignis(e){ return {id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id}; }
 function stornoVon(e){
+  if(dlgKurs&&kursGewechselt({kursId:dlgKurs})) return false;   // wie addEvent: ein Dialog des alten Kurses nimmt nichts mehr zurück (dlgOeffnen)
   // Archiv ist schreibgeschützt — auch für Rücknahmen (vorher: addEvent schützte, ↶/„Irrtum" nicht · Prüfer 2026-09-29)
   const k=vault.stamm.kurse.find(x=>x.id===e.kursId);
   if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return false; }
@@ -489,9 +491,10 @@ function chipZeig(ikon,text,onTap){
   chip._t2=setTimeout(()=>{ chip.classList.add('hidden'); chip.classList.remove('weg'); },6050);
   chip.onclick=()=>{ clearTimeout(chip._t1); clearTimeout(chip._t2); chip.classList.remove('weg'); onTap(); };
 }
-function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):e.typ==='versp'&&e.minuten?'zu spät '+e.minuten+' min':(TYP_LABEL[e.typ]||e.typ); }
+function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):e.typ==='versp'&&e.minuten?'zu spät '+e.minuten+' min':e.typ==='quartalsnote'&&e.hj&&e.quartal?'Q'+((e.hj-1)*2+e.quartal)+'-Note '+e.wert+(kursSek2(e.kursId)?' P':''):(TYP_LABEL[e.typ]||e.typ); }
 // Was Chip und Meldung zeigen: am Beamer keine Bewertung im Klartext (Prüfer 03.10. 🟡 4; die Regel „Bewertungen … immer verborgen“)
-function sichtLabel(e){ return beamerModus&&BEWERTUNGS_TYPEN.has(e.typ)?'Bewertung':eintragLabel(e); }
+function kursSek2(id){ return bewertProfil(vault&&vault.stamm.kurse.find(x=>x.id===id))==='sek2'; }   // Chip „Q1-Note 11 P“ wie die Meldung (Prüfer 03.10. 🟢 9)
+function sichtLabel(e){ return beamerModus&&(BEWERTUNGS_TYPEN.has(e.typ)||e.typ==='quartalsnote')?'Bewertung':eintragLabel(e); }   // auch keine Quartalsnote (Prüfer 03.10. 🟢 10)
 function zeigeUndo(e,ersetzt){
   const s=schuelerVonNr(e.schuelerNr);
   // Ersetzen sichtbar machen (Mechanik erklärt sich selbst): „o → ＋“ — ein Tap bringt das alte Zeichen zurück
@@ -568,6 +571,7 @@ function setzeBeamer(an){
   document.body.classList.toggle('nurplan',an&&localStorage.getItem('kladde_beamer_nurplan')==='1');
   BTN_BEAMER.classList.toggle('aktiv',an); BTN_BEAMER.setAttribute('aria-pressed',String(an));
   $('beamer-hinweis').classList.toggle('hidden',!an);
+  if(an){ $('undo-chip').classList.add('hidden'); $('toast').classList.add('hidden'); }   // Chip/Meldung von VOR dem Einschalten nennen die Bewertung im Klartext (Prüfer 03.10. 🟢 10)
   renderAlles(); // kurz/nurplan wirken über alle Ansichten (Kachel, Deck, Aktionsbar)
 }
 // Beamer-Optionen-Sheet (§6): Namen abkürzen · Nur Sitzplan — Bewertungen/LB bleiben immer verborgen
@@ -675,7 +679,7 @@ function gueltigeGruppe(kursId,g){ const k=g&&vault.stamm.kurse.find(x=>x.id===k
 // ein offener Sitzplan-Editor schließt vorher, ein Nachtrag endet, die Gruppe des alten Kurses fällt weg (Prüfer B1/B2/N2)
 function kursWechseln(id){
   if(id!==aktiverKursId){ if(editorCleanup) editorCleanup(); setzeTermin(heuteIso()); aktiveTeilgruppe=null; }
-  aktiverKursId=id; aktualisiereKursChip();
+  aktiverKursId=id; aktualisiereKursChip(); if(dlgKurs) dlgKurs=id;   // von Hand gewählt: ein offener Dialog gilt jetzt dem neuen Kurs
 }
 // Halbgruppe von Hand oder aus der Plan-Stunde: als Handwahl am laufenden Block, sonst setzte der 60-s-Takt sie zurück
 function gruppeWaehlen(g){ aktiveTeilgruppe=g||null; handwahlSetzen({kursId:aktiverKursId,teilgruppe:aktiveTeilgruppe,datum:heuteIso(),blockNr:autowahlInfo?.blockNr??null}); }
@@ -754,17 +758,24 @@ function dlgInhalt(){
   if(!i){ i=el('div',{class:'dlg-inhalt'}); d.replaceChildren(el('button',{class:'dlg-x',type:'button','aria-label':'Schließen',title:'Schließen',onclick:()=>d.close()},iconEl('schliessen')),i); }
   return i;
 }
+// Frisch geöffnet (nicht nur neu befüllt): oben anfangen — .dlg-inhalt ist für alle Dialoge dasselbe und behielt die Lage des vorigen
+// (Prüfer 03.10. 🟡 3) — und den Kurs merken, für den der Dialog gilt: addEvent und stornoVon buchen nichts, wenn er inzwischen
+// automatisch gewechselt hat (Zero 03.10.: „An einer Stelle“ — vorher schützte sich jede Buchungsstelle selbst, und drei vergaßen es)
+let dlgKurs=null;
+function dlgOeffnen(d){ if(d.open) return; d.showModal(); dlgInhalt().scrollTop=0; dlgKurs=aktiverKursId; }
+// close kommt erst NACH dem laufenden Handgriff: „dlgZu(); klaere()“ prüft so noch gegen den Kurs des Dialogs
+$('dlg').addEventListener('close',()=>{ if(!$('dlg').open) dlgKurs=null; });
 function dlgZeigen(html,setup){
   const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().innerHTML=html;
   d.querySelectorAll('[data-schliessen]').forEach(b=>b.onclick=()=>d.close());
   if(setup) setup(d);
-  if(!d.open) d.showModal();   // aus einem offenen Detail-Blatt heraus (Tag bewerten → Note): ältere Engines werfen bei showModal auf offenem Dialog
+  dlgOeffnen(d);   // nur wenn zu: aus einem offenen Detail-Blatt heraus (Tag bewerten → Note) werfen ältere Engines bei showModal auf offenem Dialog
 }
 function dlgZu(){ $('dlg').close(); }
 // el()-Variante: Dialog aus DOM-Knoten (CSP-sicher, kein innerHTML) — für neue Views (P2.4+)
 function dlgZeigenEl(...knoten){
   const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().replaceChildren(...knoten);
-  if(!d.open) d.showModal();
+  dlgOeffnen(d);
 }
 // Breiter Dialog (Stundenplan): das Wochen-Grid nutzt die Breite, nicht nur die Höhe (Zero 2026-09-02).
 // Nach dlgZeigen/dlgZeigenEl aufrufen — jeder neue Dialog startet wieder schmal.
@@ -1960,7 +1971,9 @@ function renderSchueler(){
   // Keine offenen Fehlzeiten: eine Zeile über der Liste statt einer leeren Karte (Zero 2026-09-30, Codex-Prüfbericht)
   const seite=offeneO.length?'<aside class="s-seite" aria-label="Offene Fehlzeiten"><div class="rail-karte"><div class="rail-titel">Offene Fehlzeiten ('+offeneO.length+')</div>'+
     klaerZeilen+'</div></aside>':'';
-  html='<div class="s-layout"><div class="s-haupt">'+(offeneO.length?'':'<p class="s-fz-leer u-hinweis">Keine offenen Fehlzeiten.</p>')+html;
+  // Am Handy steht die Klärung als Leiste über der Liste, ein Tipp öffnet das Klärblatt (Scheibe 6, Zero 03.10.: „A · Leiste über der Liste“) —
+  // vorher standen dort alle Klär-Karten vor der Liste. Am iPad bleibt die Spalte, die Leiste zeigt nur das CSS ≤ 900 px.
+  html='<div class="s-layout"><div class="s-haupt">'+(offeneO.length?'<button type="button" class="s-klaer-leiste" data-klaer-leiste aria-haspopup="dialog"><span>'+iconHtml('warnung')+' <b>'+offeneO.length+' offene Fehlzeit'+(offeneO.length>1?'en':'')+'</b></span><span>klären ›</span></button>':'<p class="s-fz-leer u-hinweis">Keine offenen Fehlzeiten.</p>')+html;
   // Rechenregel aufklappbar — sichtbar bleibt der Vorschlag in der Liste (Zero 2026-09-30, Codex-Prüfbericht)
   html+='<div class="panel"><h2>'+esc(k.name)+' · '+esc(zr?zr.label:'Verdichtung')+'</h2><details class="s-regel"><summary>Wie entsteht der Vorschlag?</summary><p class="u-regelzeile">'+esc(regelText(bewertProfil(k)))+'</p></details>'+
     '<div class="btn-reihe"><button class="btn still u-btn-klein" data-kopiere title="Nr + Note in die Zwischenablage — in die Excel-Klassenmappe einfügen">'+iconHtml('kopieren')+' '+esc(zr?kurzL(zr.label):'Gesamt')+'-Vorschläge für Excel kopieren</button></div>';
@@ -2016,23 +2029,44 @@ function renderSchueler(){
   $('s-filter').onchange=e=>{ schuelerFilter=e.target.value||null; e.target.classList.toggle('an',!!schuelerFilter); filterS(); };
   const zrSel=$('s-zr'); if(zrSel) zrSel.onchange=e=>{ const id=e.target.value; zeitraumFilter=id&&sj?sj.zeitraeume.find(z=>z.id===id):null; offenerSchueler=null; mitUebergang(renderSchueler); };
   // Klärung — aus der Seitenspalte UND aus der aufgeklappten Zeile (eine Funktion, zwei Orte)
-  const klaerKlick=(oId,art)=>{
+  const klaerKlick=(oId,art,danach)=>{   // danach(meldung): das Klärblatt zeichnet sich neu (Handy) und nennt dort, was geschah
     const o=vault.events.find(x=>x.id===oId); if(!o) return;
     const sName=(kursSchueler(k).find(x=>x.nr===o.schuelerNr)||{}).vorname||('Nr '+o.schuelerNr);
     // Klärung = Storno des fehlt_o + neues fehlt_e/fehlt_u am ORIGINALDATUM (Merge-fest, verdichte löst jüngste-ts)
-    const klaere=()=>{ addEvent(art==='e'?'fehlt_e':'fehlt_u',o.schuelerNr,{datum:o.datum,stornoVon:o.id}); toast('Geklärt: '+(art==='e'?'entschuldigt':'unentschuldigt')+' ('+datumLabel(o.datum)+')'); renderSchueler(); };
-    if(art==='irrtum'){ if(stornoVon(o)){ toast('Irrtum — Abwesenheit entfernt'); zeigeRedo(o); renderSchueler(); } }
+    // Ohne Buchung (Archiv, Kurswechsel) keine Erfolgsmeldung: der Grund steht frei, ein offenes Blatt schließt (Prüfer 03.10. 🟢 11)
+    const klaere=()=>{ if(!addEvent(art==='e'?'fehlt_e':'fehlt_u',o.schuelerNr,{datum:o.datum,stornoVon:o.id})){ dlgZu(); return; }
+      const m='Geklärt: '+(art==='e'?'entschuldigt':'unentschuldigt')+' ('+datumLabel(o.datum)+')'; toast(m); renderSchueler(); if(danach) danach(m); };
+    if(art==='irrtum'){ if(stornoVon(o)){ const m='Irrtum — Abwesenheit entfernt'; toast(m); zeigeRedo(o); renderSchueler(); if(danach) danach(m); } else dlgZu(); }
     else if(art==='u'){
       // Unentschuldigt ist folgenreich (NRW §48) → kurze Bestätigung mit Name + Datum (C3)
       dlgZeigenEl(el('h3',{},'Unentschuldigt?'),
         el('p',{class:'u-hinweis'},sName+' · '+datumLabel(o.datum)+' als unentschuldigt festschreiben?'),
         el('div',{class:'btn-reihe'},
           el('button',{class:'btn gefahr',onclick:()=>{ dlgZu(); klaere(); }},'Unentschuldigt'),
-          el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+          el('button',{class:'btn still',onclick:()=>{ if(danach) danach(); else dlgZu(); }},'Abbrechen')));
     }
     else klaere();
   };
   wrap.querySelectorAll('[data-klaer]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); klaerKlick(b.dataset.o,b.dataset.klaer); });
+  // Klärblatt (Handy): dieselben Zeilen wie die Spalte am iPad, nach jeder Klärung frisch aus dem Log gezeichnet; ohne offene schließt es.
+  // Meldung und ↶ stehen IM Blatt — Toast und Chip lägen unter dem Dialog (Prüfer 03.10. 🟡 2, wie im Schülerblatt): der Knopf tut, was
+  // der Chip gerade anbietet (↶, nach einem Irrtum ↷), danach nennt das Blatt dessen Meldung
+  let blattZeile=null;   // Tastatur: nach dem Neuzeichnen steht der Fokus auf der Zeile, die nachgerückt ist (Prüfer 03.10. 🟢 8)
+  const klaerBlatt=meldung=>{
+    const offen=wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.typ==='fehlt_o').sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
+    if(!offen.length){ dlgZu(); toast((meldung?meldung+' · ':'')+'keine offenen Fehlzeiten mehr'); return; }
+    const chip=$('undo-chip'), rueck=meldung&&chip.onclick?el('button',{type:'button',class:'btn still u-btn-klein',dataset:{klaerRueck:''},
+      onclick:()=>{ const tap=chip.onclick; blattZeile=null; tap(); klaerBlatt($('toast').textContent); }},...[...chip.childNodes].map(n=>n.cloneNode(true))):null;
+    const knopf=(o,art,txt,i)=>el('button',{type:'button',class:'btn still u-btn-klein',dataset:{klaer:art},onclick:()=>{ blattZeile=i; klaerKlick(o.id,art,klaerBlatt); }},txt);
+    dlgZeigenEl(el('h3',{},'Offene Fehlzeiten ('+offen.length+')'),
+      el('p',{class:'u-hinweis'},'Ein Tipp klärt: entschuldigt, unentschuldigt oder Irrtum (∅ war falsch).'),
+      el('div',{class:'s-seite s-klaer-blatt'},...offen.map((o,i)=>{ const s=kursSchueler(k).find(x=>x.nr===o.schuelerNr), tage=Math.floor((new Date(heuteIso())-new Date(o.datum))/86400000);
+        return el('div',{class:'klaer-zeile'+(tage>7?' alt':'')},el('span',{class:'klaer-wer'},el('b',{},s?s.vorname+' '+s.name:'Nr '+o.schuelerNr),el('small',{},datumLabel(o.datum)+(tage>7?' · '+tage+' Tage offen':''))),
+          el('span',{class:'klaer-btns'},knopf(o,'e','Entsch.',i),knopf(o,'u','Unentsch.',i),knopf(o,'irrtum','Irrtum',i))); })),
+      el('p',{class:'u-hinweis sb-warn klaer-status',role:'status'},...(meldung?[meldung,rueck?' ':null,rueck]:[])));   // am Blattende, unten angeheftet (CSS)
+    if(blattZeile!=null){ const z=$('dlg').querySelectorAll('.klaer-zeile')[Math.min(blattZeile,offen.length-1)], b=z&&z.querySelector('button'); if(b) b.focus(); }
+  };
+  const bkl=wrap.querySelector('[data-klaer-leiste]'); if(bkl) bkl.onclick=()=>{ blattZeile=null; klaerBlatt(); };
   // Zeile antippen klappt sie auf (Zero 2026-09-29: „Dropdown bei Schülerklick") — immer nur eine offen;
   // die Vollseite bleibt hinter „ganze Seite ›" für Verlauf, Zeitstrahl und Kurzbericht
   const zu=(block,sofort)=>{
@@ -2079,7 +2113,7 @@ function schuelerAufklapp(k,s,kursEvents,vOpt,offeneO,klaerKlick){
     const vz=z?verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis}):null;
     return el('button',{class:'qn-zelle klein'+(ev?'':' offen'),type:'button',onclick:()=>{
         if(!z){ toast('Kein Schuljahres-Zeitraum definiert'); return; }
-        setzeQuartalsnote(s,(vz&&vz.vorschlag)||{wert:null,label:'—'},z,{fixiert:true}); }},
+        setzeQuartalsnote(s,(vz&&vz.vorschlag)||{wert:null,label:'—'},z); }},
       el('span',{class:'qn-label'},id.toUpperCase()),
       el('span',{class:'qn-note'},ev?String(ev.wert):'—'),
       el('span',{class:'qn-sub'},vz&&vz.vorschlag?'Vorschlag '+vz.vorschlag.label:(s.lb?'LB':'—')));
@@ -2161,7 +2195,7 @@ function quartalsnotenSammeln(k,zr,liste){
         for(const d of liste){ if(!haken.get(d.s.nr)) continue;
           const wert=sek2?String(d.v.vorschlag.wert):wertZuLabel(d.v.vorschlag.wert);
           if(!wert) continue;   // nie still eine Ersatznote (vorher '3') — ohne Label bleibt die Zeile offen
-          if(addEvent('quartalsnote',d.s.nr,{hj,quartal,wert,zeitraumId:zr.id})) n++; }   // nur echte Buchungen zählen (Archiv-Guard)
+          if(!addEvent('quartalsnote',d.s.nr,{hj,quartal,wert,zeitraumId:zr.id})){ dlgZu(); return; } n++; }   // nichts gebucht (Archiv, Kurswechsel): nicht weiter, die Meldung nennt den Grund
         dlgZu(); toast(n+' Quartalsnoten gesetzt ('+zr.label+')'); renderSchueler();
       }},'Setzen'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
@@ -2174,10 +2208,13 @@ const S_SORT=[['nr','nach Nr'],['name','nach Name'],['vorschlag','nach Vorschlag
 function modusChipsHtml(){ return '<div class="zr-leiste s-modus">'+SCHUELER_MODI.map(([id,lab])=>'<button class="zr-chip'+(schuelerAnsicht===id?' an':'')+'" aria-pressed="'+(schuelerAnsicht===id)+'" data-sm="'+id+'">'+lab+'</button>').join('')+'</div>'; }
 function modusChipsEl(){ return el('div',{class:'zr-leiste s-modus'},...SCHUELER_MODI.map(([id,lab])=>el('button',{class:'zr-chip'+(schuelerAnsicht===id?' an':''),'aria-pressed':String(schuelerAnsicht===id),dataset:{sm:id}},lab))); }
 function verdrahteModus(wrap){ wrap.querySelectorAll('[data-sm]').forEach(b=>b.onclick=()=>{ schuelerAnsicht=b.dataset.sm; offenerSchueler=null; mitUebergang(renderSchueler); }); }
-function zrChipsEl(sj,zr,kurzL){
-  if(!sj||!sj.zeitraeume||!sj.zeitraeume.length) return el('span',{});
-  const chip=(id,lab,an)=>el('button',{class:'zr-chip'+(an?' an':''),'aria-pressed':String(!!an),onclick:()=>{ zeitraumFilter=id?sj.zeitraeume.find(z=>z.id===id):null; mitUebergang(renderSchueler); }},lab);
-  return el('div',{class:'zr-leiste'},chip('','Gesamt',!zr),...sj.zeitraeume.map(z=>chip(z.id,kurzL(z.label),zr&&zr.id===z.id)));
+// Zeitraum der Tabellen als Auswahl wie in der Liste (Scheibe 6, Zero 03.10.: „Als Auswahl wie in der Liste“) — vorher eine zweite Chip-Reihe,
+// die am Handy aus dem Bild lief
+function zrAuswahlEl(sj,zr){
+  if(!sj||!sj.zeitraeume||!sj.zeitraeume.length) return null;
+  const s=el('select',{class:'s-wahl'+(zr?' an':''),'aria-label':'Zeitraum'},el('option',{value:''},'Gesamt'),...sj.zeitraeume.map(z=>el('option',{value:z.id,...(zr&&zr.id===z.id?{selected:''}:{})},z.label)));
+  s.onchange=e=>{ const id=e.target.value; zeitraumFilter=id?sj.zeitraeume.find(z=>z.id===id):null; offenerSchueler=null; mitUebergang(renderSchueler); };
+  return s;
 }
 function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
   const profil=bewertProfil(k);
@@ -2189,7 +2226,7 @@ function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
   const kopf=el('div',{class:'druck-kopf'},el('b',{},k.name+' · '+k.fach),' · '+titel+' · '+(zr?zr.label:'Gesamt')+' · Stand '+datumLabel(heuteIso()));
   const namenBtn=s=>el('button',{class:'ut-name',onclick:()=>{ offenerSchueler=s.nr; mitUebergang(renderSchueler); }},el('b',{},s.vorname),' ',el('small',{class:'u-leise'},s.name),s.lb?el('span',{class:'lb-badge'},'LB'):null);
   const tabelle=el('table',{class:'ut-tabelle'});
-  let hinweis='';
+  let hinweis='', handyListe=null;
   if(schuelerAnsicht==='noten'){
     const zeitr=(sj&&sj.zeitraeume)||[];
     const spalten=['q1','q2','hj1','q3','q4','hj2'].map(id=>zeitr.find(z=>z.id===id)).filter(Boolean);
@@ -2204,9 +2241,9 @@ function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
         const vz=verdichte(kursEvents,s.nr,{profil,lb:s.lb,von:z.von,bis:z.bis});
         const ev=/^q/.test(z.id)?qn[QN_KEY[z.id]]:null;
         if(ev){ const abw=vz.vorschlag?notenAbstand(ev.wert,vz.vorschlag.wert,profil):null;
-          return el('td',{},el('button',{class:'nt-zelle gesetzt',title:'gesetzt · antippen zum Ändern',onclick:()=>setzeQuartalsnote(s,vz.vorschlag||{wert:null,label:'—'},z,{fixiert:true})},String(ev.wert)),
+          return el('td',{},el('button',{class:'nt-zelle gesetzt',title:'gesetzt · antippen zum Ändern',onclick:()=>setzeQuartalsnote(s,vz.vorschlag||{wert:null,label:'—'},z)},String(ev.wert)),
             abw!=null&&abw>=1?el('small',{class:'s-abw',title:'weicht mindestens eine Stufe vom Vorschlag ab'},iconEl('warnung'),' V '+vz.vorschlag.label):null); }
-        if(/^q/.test(z.id)&&!s.lb&&vz.vorschlag) return el('td',{},el('button',{class:'nt-zelle vor',title:'Vorschlag · antippen zum Setzen',onclick:()=>setzeQuartalsnote(s,vz.vorschlag,z,{fixiert:true})},'V '+vz.vorschlag.label));
+        if(/^q/.test(z.id)&&!s.lb&&vz.vorschlag) return el('td',{},el('button',{class:'nt-zelle vor',title:'Vorschlag · antippen zum Setzen',onclick:()=>setzeQuartalsnote(s,vz.vorschlag,z)},'V '+vz.vorschlag.label));
         return el('td',{class:'u-leise'},vz.vorschlag?'V '+vz.vorschlag.label:'—');   // HJ: nur Vorschlag — die Halbjahresnote rechnet die Mappe aus Q1/Q2 (Punkt 11)
       });
       const verlauf=quartalsVerlauf(kursEvents,s.nr,quartale,{profil,lb:s.lb}).filter(e=>e.score!==null).map(e=>e.id.toUpperCase()+(e.pfeil?' '+e.pfeil:'')).join('  ');
@@ -2215,7 +2252,21 @@ function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
         ...zellen,el('td',{class:'u-leise ut-verlauf'},verlauf||'—')));
     }
     tabelle.append(tb);
-    hinweis='Q-Zelle antippen: setzen oder ändern · V = Vorschlag, du entscheidest · HJ zeigt nur den Vorschlag über das Halbjahr, die Halbjahresnote rechnet die Klassenmappe aus Q1/Q2 · Warndreieck = gesetzte Note weicht mindestens eine Stufe vom Vorschlag ab · Jahr = Bilanz-Verlauf von Quartal zu Quartal.';
+    // Am Handy eine Liste mit EINER Notenspalte (Scheibe 6, Zero 03.10.: „B · Liste mit einer Notenspalte“): das gewählte Quartal, sonst das
+    // laufende. Die Tabelle bleibt für iPad und Druck, das CSS zeigt je Breite eins von beiden — vorher war am Handy nur „1. Q“ angeschnitten
+    // Halbjahr gewählt: ein Quartal DIESES Halbjahres (im Oktober beim 2. HJ das Q3) — sonst stand das laufende neben der Bilanz eines anderen (Prüfer 03.10. 🟡 4)
+    const imZr=zr?quartale.filter(q=>q.von>=zr.von&&q.bis<=zr.bis):[];
+    const zq=zr&&/^q/.test(zr.id)?zr:quartalVon(imZr.length?imZr:quartale,heuteIso());
+    if(zq) handyListe=el('div',{class:'s-nliste'},el('div',{class:'s-nkopf'},el('span',{},'Name'),el('span',{},'＋ / o / −'),el('span',{},kurzL(zq.label))),...schueler.map(s=>{
+      const v=verdichte(kursEvents,s.nr,{profil,lb:s.lb,von,bis}), vz=verdichte(kursEvents,s.nr,{profil,lb:s.lb,von:zq.von,bis:zq.bis}), ev=quartalsnotenVon(kursEvents,s.nr)[QN_KEY[zq.id]];
+      const setzen=()=>setzeQuartalsnote(s,vz.vorschlag,zq);
+      const zelle=ev?el('button',{type:'button',class:'nt-zelle gesetzt',onclick:setzen},String(ev.wert)):!s.lb&&vz.vorschlag?el('button',{type:'button',class:'nt-zelle vor',onclick:setzen},'V '+vz.vorschlag.label):!s.lb?el('button',{type:'button',class:'nt-zelle vor','aria-label':'Quartalsnote setzen',onclick:setzen},'—'):el('span',{class:'u-leise'},'—');   // „—“ = noch kein Vorschlag, setzen geht trotzdem (Prüfer 03.10. 🟢 12)
+      return el('div',{class:'s-nzeile'},el('button',{type:'button',class:'ut-name',onclick:()=>{ offenerSchueler=s.nr; mitUebergang(renderSchueler); }},el('small',{class:'u-leise'},s.nr+' '),el('b',{},s.vorname),' ',el('small',{class:'u-leise'},s.name),s.lb?el('span',{class:'lb-badge'},'LB'):null),
+        el('span',{class:'s-nbil'},v.nPlus+' / '+v.nNull+' / '+v.nMinus),zelle); }));
+    const tabHinweis='Q-Zelle antippen: setzen oder ändern · V = Vorschlag, du entscheidest · HJ zeigt nur den Vorschlag über das Halbjahr, die Halbjahresnote rechnet die Klassenmappe aus Q1/Q2 · Warndreieck = gesetzte Note weicht mindestens eine Stufe vom Vorschlag ab · Jahr = Bilanz-Verlauf von Quartal zu Quartal.';
+    // Unter der Handy-Liste ihr eigener Satz — die Liste zeigt weder HJ noch Warndreieck noch Jahr (Prüfer 03.10. 🟢 9); das CSS zeigt je Breite einen
+    hinweis=handyListe?el('div',{},el('p',{class:'u-hinweis ut-nur-tabelle'},tabHinweis),
+      el('p',{class:'u-hinweis s-nur-liste'},'Note antippen: setzen oder ändern · V = Vorschlag, — = noch keiner, du entscheidest · das Quartal der Spalte über „Zeitraum“ wählen.')):tabHinweis;
   } else if(schuelerAnsicht==='termine'){
     const relevant=e=>istTerminEintrag(e)&&e.datum>=von&&e.datum<=bis;
     const termine=[...new Set(wirksam.filter(relevant).map(e=>e.datum))].sort();
@@ -2245,11 +2296,11 @@ function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
     const schwIn=el('input',{type:'number',min:'0',max:'99',value:String(schwelle),class:'u-w72',onchange:e=>{ const n=parseInt(e.target.value,10); vault.stamm.kursprofile[k.id]={...(vault.stamm.kursprofile[k.id]||{}),uSchwelle:isNaN(n)?3:n}; stammMutiert(); speichern(); renderSchueler(); }});
     hinweis=el('div',{class:'zeile'},el('span',{class:'u-hinweis'},iconEl('warnung'),' ab so vielen unentschuldigten Terminen (0 = aus) — gilt für diesen Kurs'),el('span',{},schwIn));
   }
-  wrap.replaceChildren(modusChipsEl(), zrChipsEl(sj,zr,kurzL), kopf,
-    el('div',{class:'btn-reihe ut-aktionen'},
+  wrap.replaceChildren(modusChipsEl(), kopf,
+    el('div',{class:'btn-reihe ut-aktionen'},zrAuswahlEl(sj,zr),
       el('button',{class:'btn still u-btn-klein',onclick:()=>window.print()},iconEl('drucken'),' Drucken'),
       ...(schuelerAnsicht==='noten'?[el('button',{class:'btn still u-btn-klein',onclick:kopiereVorschlaege},iconEl('kopieren'),' Vorschläge für Excel kopieren')]:[])),
-    el('div',{class:'ut-wrap'},tabelle),
+    el('div',{class:'ut-wrap'+(handyListe?' ut-noten':'')},tabelle),...(handyListe?[handyListe]:[]),
     typeof hinweis==='string'?el('p',{class:'u-hinweis'},hinweis):hinweis);
   verdrahteModus(wrap);
 }
@@ -2257,6 +2308,8 @@ function renderSchuelerTabelle(wrap,k,kursEvents,sj,zr,kurzL){
 // Gesetzte quartalsnote-Events waren nach dem Setzen unsichtbar (nur Verlaufszeile).
 // Jetzt: Übersicht Q1–Q4 auf der Schüler-Seite · Liste + „Vorschläge kopieren" bevorzugen die gesetzte Note.
 const QN_KEY={q1:'1-1',q2:'1-2',q3:'2-1',q4:'2-2'};
+// Das Quartal von heute — in den Ferien das zuletzt begonnene, vor dem ersten das erste (Notengitter und Notenliste am Handy, Scheibe 6)
+function quartalVon(qs,h){ return qs.find(z=>z.von<=h&&h<=z.bis)||qs.filter(z=>z.von<=h).pop()||qs[0]||null; }
 function quartalsnotenVon(kursEvents,nr){
   const m={};
   for(const e of wirksameEvents(kursEvents)) if(e.typ==='quartalsnote'&&e.schuelerNr===nr){
@@ -2295,7 +2348,7 @@ function renderSchuelerSeite(wrap,k,s,kursEvents){
     '<div class="sseite-name">'+esc(s.vorname)+' '+esc(s.name)+(s.lb?' <span class="lb-badge">LB</span>':'')+'</div></div>'+
     '<div class="panel"><h2>Quartalsnoten'+(sj?' · '+esc(sj.label):'')+'</h2>'+
     '<div class="qn-grid">'+zellen+'</div>'+
-    '<p class="u-hinweis">Zelle antippen zum Setzen/Ändern — der Zeitraum-Vorschlag ist vorbelegt, du entscheidest. ● in der Liste = gesetzt.</p>'+
+    '<p class="u-hinweis">Zelle antippen zum Setzen/Ändern — der Vorschlag ist umrandet, ein Tipp setzt, du entscheidest. ● in der Liste = gesetzt.</p>'+
     (verlaufTxt?'<p class="u-hinweis">Verlauf über das Jahr: '+esc(verlaufTxt)+'</p>':'')+'</div>'+
     '<div class="panel"><h2>Bilanz · '+esc(zr?zr.label:'Gesamt')+'</h2>'+schuelerDetailHtml(s,k,v)+
     (einordnungTxt?'<p class="u-hinweis">'+esc(einordnungTxt)+'</p>':'')+
@@ -2317,7 +2370,7 @@ function renderSchuelerSeite(wrap,k,s,kursEvents){
   wrap.querySelectorAll('[data-qz]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.qz; const z=sj&&sj.zeitraeume?sj.zeitraeume.find(x=>x.id===id):null; if(!z){ toast('Kein Schuljahres-Zeitraum definiert'); return; }
     const vz=verdichte(kursEvents,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis});
-    setzeQuartalsnote(s,vz.vorschlag||{wert:null,label:'—'},z,{fixiert:true});  // Q-Zellen-Tap setzt GENAU dieses Quartal (C3)
+    setzeQuartalsnote(s,vz.vorschlag||{wert:null,label:'—'},z);  // Q-Zellen-Tap setzt GENAU dieses Quartal (C3)
   });
   verdrahteDetail(wrap,tag=>{ renderSchueler(); oeffneTag($('view-schueler'),tag); });
 }
@@ -2398,39 +2451,31 @@ function verdrahteDetail(wrap,danach){
 }
 // quartalsnote-Event trägt Zeitraum-Kontext — bleibt IMMER 'quartalsnote', NIE 'note'
 // (verbotener Pfad 2: eine Übernahme darf nie in verdichte() zurückfließen).
-// fixiert (C3): der Tap auf eine Q-Zelle setzt GENAU dieses Quartal — der seltene Weg
-// „anderen Zeitraum wählen" bleibt hinter „ändern…" statt als gleichrangige Zweitentscheidung.
-function setzeQuartalsnote(s,vorschlag,zeitraum,{fixiert=false}={}){
-  const k=kurs(); const sek2=bewertProfil(k)==='sek2';
-  const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):NOTEN_DRITTEL;
-  // Ohne Vorschlag KEINE stille Vorwahl — vorher stand Sek II dann auf 15 P (String(null) traf keine Option), Sek I auf 3
-  const ohneVorschlag=!vorschlag||vorschlag.wert==null;
-  const vorwahl=ohneVorschlag?'':(sek2?String(vorschlag.wert):(wertZuLabel(vorschlag.wert)||''));
-  // Ohne Zeitraum (Gesamt-Ansicht, Detail-Blatt) das Quartal von heute vorbelegen — vorher stand der Dialog immer auf Q1
-  if(!zeitraum){ const sj=aktivesSchuljahr(), h=heuteIso(); zeitraum=((sj&&sj.zeitraeume)||[]).find(z=>/^q[1-4]$/.test(z.id)&&z.von<=h&&h<=z.bis)||null; }
-  const zrHinweis=zeitraum?' <small class="u-leise">('+esc(zeitraum.label)+')</small>':'';
-  const fixe=fixiert&&zeitraum;
-  const zeitraumZeilen=fixe
-    ? '<div class="zeile"><span>Zeitraum</span><span><b>'+esc(zeitraum.label)+'</b> <button class="btn still u-btn-klein" id="q-anders" type="button">ändern…</button></span></div>'+
-      '<div id="q-hjq" class="hidden">'
-    : '<div id="q-hjq">';
-  dlgZeigen('<h3>Quartalsnote · '+esc(s.vorname)+zrHinweis+'</h3><p class="u-hinweis">Vorschlag: '+esc(vorschlag.label)+' — du entscheidest.</p>'+
-    zeitraumZeilen+
-    '<div class="zeile"><span>HJ</span><select id="q-hj"><option value="1">1. HJ</option><option value="2">2. HJ</option></select></div>'+
-    '<div class="zeile"><span>Quartal</span><select id="q-q"><option value="1">Q1</option><option value="2">Q2</option></select></div>'+
-    '</div>'+
-    '<div class="zeile"><span>Note</span><select id="q-note">'+(vorwahl?'':'<option value="" selected>— wählen —</option>')+optionen.map(o=>'<option'+(o===vorwahl?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
-    '<div class="btn-reihe"><button class="btn" data-ok>Setzen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    el=>{
-      // Zeitraum → HJ/Quartal vorbelegen (Excel-Slot-Mapping), bleibt editierbar
-      if(zeitraum){ const q=zeitraum.id; const hj=/q[34]|hj2/.test(q)?'2':'1'; el.querySelector('#q-hj').value=hj; if(/q1|q3/.test(q)) el.querySelector('#q-q').value='1'; else if(/q2|q4/.test(q)) el.querySelector('#q-q').value='2'; }
-      const anders=el.querySelector('#q-anders'); if(anders) anders.onclick=()=>{ el.querySelector('#q-hjq').classList.remove('hidden'); anders.disabled=true; };
-      el.querySelector('[data-ok]').onclick=()=>{
-        if(!el.querySelector('#q-note').value){ toast('Bitte eine Note wählen'); return; }
-        addEvent('quartalsnote',s.nr,{hj:Number(el.querySelector('#q-hj').value),quartal:Number(el.querySelector('#q-q').value),wert:el.querySelector('#q-note').value,zeitraumId:zeitraum?zeitraum.id:null});
-        toast('Quartalsnote gesetzt: '+el.querySelector('#q-note').value); dlgZu(); if(aktView==='schueler') renderSchueler();
-      };
-    });
+// Notengitter (Scheibe 6, Zero 03.10.: „A · Notengitter“) wie Stempel und Schülerblatt: oben Q1–Q4 (der übergebene Zeitraum, sonst das laufende
+// Quartal), die gesetzte Note gefüllt, der Vorschlag umrandet — nie vorgewählt. Ein Tipp setzt, Meldung und ↶ folgen (addEvent). Vorher: Auswahl-
+// liste + „Setzen“, das Quartal hinter „ändern…“ und zwei weiteren Auswahllisten. Dieselbe Note noch einmal bucht nichts.
+function setzeQuartalsnote(s,vorschlag,zeitraum){
+  const k=kurs(); if(!k||!s) return;
+  const sek2=bewertProfil(k)==='sek2', sj=aktivesSchuljahr(), qs=((sj&&sj.zeitraeume)||[]).filter(z=>/^q[1-4]$/.test(z.id));
+  if(!qs.length){ toast('Kein Schuljahres-Zeitraum definiert'); return; }
+  let z=(zeitraum&&qs.find(q=>q.id===zeitraum.id))||quartalVon(qs,heuteIso());
+  const opt={kursId:aktiverKursId};   // nach einem Kurswechsel nichts buchen (dieselbe Nr ist dann ein anderes Kind)
+  const zeige=w=>sek2?w+' P':w;
+  const zeichne=()=>{
+    const kev=vault.events.filter(x=>x.kursId===k.id);
+    const v=verdichte(kev,s.nr,{profil:bewertProfil(k),lb:s.lb,von:z.von,bis:z.bis}).vorschlag, ev=quartalsnotenVon(kev,s.nr)[QN_KEY[z.id]];
+    const vor=v?(sek2?String(v.wert):wertZuLabel(v.wert))||null:null, jetzt=ev?String(ev.wert):null, q=Number(z.id.slice(1));
+    const buche=w=>{ if(kursGewechselt(opt)) return;
+      if(w===jetzt){ dlgZu(); toast('unverändert: '+z.id.toUpperCase()+'-Note '+zeige(w)+' · '+s.vorname); return; }
+      if(addEvent('quartalsnote',s.nr,{hj:q>2?2:1,quartal:q%2?1:2,wert:w,zeitraumId:z.id})){ dlgZu(); toast(z.id.toUpperCase()+'-Note '+zeige(w)+' · '+s.vorname); if(aktView==='schueler') renderSchueler(); } else dlgZu(); };   // nichts gebucht: die Meldung liegt frei
+    dlgZeigenEl(el('h3',{},'Quartalsnote · '+s.vorname+' '+s.name),
+      el('div',{class:'zr-leiste qn-wahl',role:'group','aria-label':'Quartal'},...qs.map(x=>el('button',{type:'button',class:'zr-chip'+(x.id===z.id?' an':''),'aria-pressed':String(x.id===z.id),dataset:{qn:x.id},onclick:()=>{ z=x; zeichne(); const b=$('dlg').querySelector('[data-qn="'+x.id+'"]'); if(b) b.focus(); }},x.id.toUpperCase()))),
+      el('section',{class:'sb-stunde'},el('div',{class:'sb-feld ruhig'},
+        el('p',{class:'u-hinweis'},(jetzt?'Gesetzt: '+zeige(jetzt)+' · ':'')+(vor?'Vorschlag: '+zeige(vor):s.lb?'LB, kein Vorschlag':'noch kein Vorschlag')+' — ein Tipp setzt die Note, du entscheidest.'),
+        el('div',{class:'sb-wahl'},...(sek2?Array.from({length:16},(_,i)=>String(15-i)):NOTEN_DRITTEL).map(w=>el('button',{type:'button',class:'btn still'+(w===vor?' vorschlag':'')+(w===jetzt?' gesetzt':''),
+          dataset:{qnNote:w},...(w===jetzt?{'aria-pressed':'true'}:{}),onclick:()=>buche(w)},zeige(w)))))));
+  };
+  zeichne();
 }
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */

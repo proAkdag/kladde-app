@@ -901,12 +901,26 @@
   .nt-zelle { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-width: 44px; min-height: 36px; padding: 4px 8px; cursor: pointer; color: inherit; font: inherit; font-weight: 700; }
   .nt-zelle.vor { color: var(--leise); font-weight: 500; border-style: dashed; }
   .nt-zelle.gesetzt { border-color: var(--band); color: var(--band-text); }
+  /* Noten am Handy: Liste mit einer Notenspalte statt der Tabelle (Scheibe 6, Zero 03.10.: „B · Liste mit einer Notenspalte“) */
+  .s-nliste, .s-nur-liste { display: none; }
+  @media (max-width: 599px) { .ut-wrap.ut-noten, .ut-nur-tabelle { display: none; } .s-nliste { display: grid; background: var(--karte); border: 1px solid var(--kante); border-radius: 12px; } .s-nur-liste { display: block; } }
+  .s-nkopf, .s-nzeile { display: grid; grid-template-columns: 1fr auto 64px; gap: 10px; align-items: center; padding: 0 12px; }
+  .s-nkopf { font-size: 11px; color: var(--leise); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; padding-top: 10px; padding-bottom: 6px; }
+  .s-nzeile { border-top: 1px solid var(--kante); min-height: 52px; }
+  .s-nzeile .ut-name { min-height: 44px; display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .s-nzeile .nt-zelle { min-height: 44px; width: 64px; }
+  .s-nbil { color: var(--leise); font-variant-numeric: tabular-nums; }
+  /* Quartalsnote als Gitter: gesetzte Note gefüllt, Vorschlag umrandet */
+  .sb-wahl .btn.gesetzt { background: var(--band); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
+  .qn-wahl { margin: 4px 0 8px; }
   .ut-verlauf { font-size: 12px; }
   tr.ut-warn td { background: color-mix(in oklab, var(--fehl) 10%, transparent); }
   .sp-woche.malen { touch-action: none; }
 }
 /* Druck (Punkt 9): nur der Inhalt der Ansicht, schwarz auf weiß, ohne Shell — window.print() aus den Tabellen */
 @media print {
+  .s-klaer-leiste, .s-nliste, .s-nur-liste { display: none !important; }
+  .ut-wrap.ut-noten, .ut-nur-tabelle { display: block !important; }
   .sidebar, header.app, .rail, #banner, #beamer-hinweis, #undo-chip, #toast, .zr-leiste, .s-kopf, .s-seite, .btn-reihe, .kurse-fuss, #datum-streifen, .tafel { display: none !important; }
   html, body { height: auto; background: #fff !important; color: #000 !important; }
   .shell, .hauptspalte { display: block; overflow: visible !important; height: auto; }
@@ -973,10 +987,22 @@
   .s-seite .klaer-wer small { color: var(--leise); font-size: 12.5px; }
   .s-seite .klaer-zeile.alt .klaer-wer small { color: var(--warn); }
   .s-seite .klaer-btns .btn { flex: 1 1 0; padding: 2px 6px; }
+  /* Handy: Klärung als Leiste über der Liste, das Blatt öffnet sie (Scheibe 6, Zero 03.10.: „A · Leiste über der Liste“) */
+  .s-klaer-leiste { display: none; width: 100%; min-height: 48px; margin: 0 0 10px; padding: 0 14px; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--karte); color: var(--warn); border: 1px solid var(--warn); border-radius: 12px; font: inherit; font-size: 15px; cursor: pointer; }
+  .s-klaer-leiste .ico { width: 16px; height: 16px; vertical-align: -3px; }
+  .s-klaer-leiste:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; }
   @media (max-width: 900px) {
     .s-layout { flex-direction: column; align-items: stretch; }
-    .s-seite { order: -1; flex: none; position: static; max-height: 40vh; }
+    .s-seite { display: none; }
+    .s-klaer-leiste { display: flex; }
   }
+  .s-seite.s-klaer-blatt { display: block; position: static; max-height: none; overflow: visible; }
+  .s-seite.s-klaer-blatt .klaer-btns .btn { min-height: 44px; }
+  /* Meldung + ↶ im Klärblatt (Prüfer 03.10. 🟡 2): unten am Blattrand angeheftet, auch bei gescrollter Liste — dort, wo sonst Chip und Meldung stehen */
+  .klaer-status { position: sticky; bottom: -16px; margin: 8px -16px -16px; padding: 10px 16px; background: var(--karte); border-top: 1px solid var(--kante); }
+  .dlg-inhalt:has(.klaer-status:not(:empty)) { scroll-padding-bottom: 80px; }
+  .klaer-status .btn { min-height: 44px; }
   /* Kopf: Suche + drei Auswahllisten in einer Zeile */
   .s-kopf { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
   .s-such-feld { flex: 1 1 180px; min-width: 0; min-height: 44px; background: var(--karte); color: var(--text); border: 1px solid var(--kante); border-radius: 12px; padding: 11px 14px; font-size: 16px; }
