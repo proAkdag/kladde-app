@@ -1,27 +1,27 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.15.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.15.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.15.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.15.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.15.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.15.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.15.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.15.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.15.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.15.0';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.15.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.15.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.15.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.15.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.15.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.15.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.15.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.15.0';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon } from '../logic/stunden.mjs?v=1.15.0';
-import { platzVon, setzeAufPlatz, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.15.0';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.15.0';
-const APP_VERSION = '1.15.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.16.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.16.0';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.16.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.16.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.16.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.16.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.16.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.16.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.16.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.16.0';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.16.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.16.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.16.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.16.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.16.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.16.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.16.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.16.0';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon } from '../logic/stunden.mjs?v=1.16.0';
+import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.16.0';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.16.0';
+const APP_VERSION = '1.16.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -64,7 +64,10 @@ let speicherKette=Promise.resolve(); // Write-through seriell (keine Races)
 let speicherFehler=null;
 function speichern(){
   if(!vault||!dekKey||!containerKopf) return speicherKette;
-  const snapshot=JSON.stringify(vault);
+  // Offener Sitzplan-Editor: gespeichert wird der Plan des Kurses, wie „Fertig“ ihn hinterließe — vorlauf verschiebt nur im Speicher
+  // (Prüfer 03.10. B1: Hintergrund + Neuladen ließ den Plan dauerhaft verschoben, beim Abgleich folgte ein falscher Stammdaten-Konflikt)
+  const sp0=editorAktiv?vault.stamm.sitzplaene[aktiverKursId]:null;
+  const snapshot=JSON.stringify(sp0?{...vault,stamm:{...vault.stamm,sitzplaene:{...vault.stamm.sitzplaene,[aktiverKursId]:spKompaktiere(sp0)}}}:vault);
   const key=dekKey, kopf=containerKopf;   // beim Aufruf festhalten — sperren() nullt die Variablen, bevor die Kette läuft
   // v2-Save: reines AES-GCM mit dem DEK — KEIN KDF (gemessen 0,79 ms/Save statt ~1 KDF/Tap)
   speicherKette=speicherKette
@@ -329,7 +332,7 @@ function sperren(){
   // Sitzplan-Editor ZUERST räumen, solange der Tresor noch da ist: danach warf kompaktiere() auf vault=null, der Fehler
   // wurde geschluckt und die Namen-Schiene blieb hinter dem Lock im DOM (Prüfer 2026-09-29). Netz: Leiste immer entfernen.
   if(editorCleanup){ try{ editorCleanup(); }catch(err){ console.error('[kladde] Editor beim Sperren',err); } }
-  $('sp-editor-bar')?.remove(); editorAktiv=false; editorCleanup=null; document.body.classList.remove('sp-edit','sp-dragging');
+  $('sp-editor-bar')?.remove(); document.querySelector('.sp-ohne')?.remove(); editorAktiv=false; editorCleanup=null; document.body.classList.remove('sp-edit','sp-dragging');
   sperrGen++; vault=null; dekKey=null; containerKopf=null; anmeldung=null; passSchwach=false;
   if(tabSperreFrei){ tabSperreFrei(); tabSperreFrei=null; }   // anderer Tab darf jetzt entsperren
   aktiverSchueler=null; offenerSchueler=null; offeneZeile=null; deckListe=[]; deckVerlauf=[]; undoStack.length=0;
@@ -765,6 +768,7 @@ function setzeViewTitel(v){ const t=VIEW_TITEL[v]||['','']; $('view-titel').text
 document.getElementById('hauptnav').addEventListener('click',e=>{
   const b=e.target.closest('button[data-view]'); if(!b) return;
   if(b.dataset.view===aktView){ if(aktView==='kurse'&&kursSeiteId){ kursSeiteId=null; mitUebergang(renderKurse); } return; }   // „Kurse“ auf der Kurs-Seite: zurück zum Raster
+  if(editorCleanup) editorCleanup();   // ein offener Sitzplan-Editor endet wie mit „Fertig“ (Prüfer 03.10. B1: sonst lief er in „Deck“/„Mehr“ weiter)
   kursSeiteId=null;
   aktView=b.dataset.view;
   document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x===b));
@@ -911,7 +915,8 @@ function datumStreifen(){
   const gruppen=[...new Set(kursSchueler(k).map(x=>x.gruppe).filter(Boolean))].sort();
   const chip=(g,text)=>el('button',{type:'button',class:'tg-chip'+((aktiveTeilgruppe||'')===g?' an':''),'aria-pressed':String((aktiveTeilgruppe||'')===g),dataset:{tg:g},
     onclick:()=>{ gruppeWaehlen(g); mitUebergang(renderHeute); }},text);
-  const chips=gruppen.length?[el('span',{class:'tg-chips'},chip('','Alle'),...gruppen.map(g=>chip(g,g)))]:[];
+  // im Sitzplan-Editor keine Gruppen-Chips: er zeigt immer alle Schüler (Zero 02.10. abends, E5)
+  const chips=gruppen.length&&!editorAktiv?[el('span',{class:'tg-chips'},chip('','Alle'),...gruppen.map(g=>chip(g,g)))]:[];
   // Handy: die Stunde sitzt in der Kopfzeile, Sitzplan bearbeiten + Beamer hinter „⋯“ — der Streifen trägt die Gruppen
   // und im Nachtrag „↩ Heute“ (ein Tipp zurück, Plan „fertig heißt“ 4; warnfarbener Rand = Nachtrag sichtbar)
   if(HANDY.matches){ const zurueck=terminDatum!==heuteIso()?[el('span',{class:'nachtrag-hinweis'},'Nachtrag · '+datumLabel(terminDatum)),heuteKnopf()]:[];   // im Kopf wird „Nachtrag“ abgeschnitten
@@ -1222,7 +1227,8 @@ function renderHeute(){
   if(!k){ erfassUmschalter(false,false); datumStreifen(); renderRail(); $('heute-leer').classList.remove('hidden'); plan.innerHTML=''; return; }
   $('heute-leer').classList.add('hidden');
   const idx=tagesStandIndex(terminDatum);
-  const sichtSchueler=sichtbareSchueler(k);
+  // Editor: immer alle Schüler — mit Gruppenfilter stünden die Plätze der anderen Gruppe als leer da (Zero 02.10. abends, E5)
+  const sichtSchueler=editorAktiv?kursSchueler(k):sichtbareSchueler(k);
   datumStreifen(); erfassUmschalter(!editorAktiv,listeAktiv); renderRail();   // Umschalter NACH dem Streifen: am iPad sitzt er darin
   const spDaten=vault.stamm.sitzplaene[k.id]||{};
   const grid=spDaten.grid||{};
@@ -1241,22 +1247,26 @@ function renderHeute(){
   const sichtbar=new Set(sichtSchueler.map(s=>s.nr));
   const SPALTEN=12;
   const belegteReihen=spBelegteReihen(spDaten);   // Reihen mit Schülern oder leeren Tischen
-  // Editor: alle Reihen bis zur letzten belegten + 1 leere „Ghost"-Reihe am Ende (wächst beim Befüllen).
+  // Editor: vorne bleibt vorne — die letzte belegte Reihe steht direkt über der Tafel, leere Reihen stehen hinten (oben), bis 6 zu sehen
+  // sind (Zero 02.10.: „Leerer Sitzplan soll mit 6 Reihen starten“ · „Ich will auch Kinder in die erste Reihe setzen können“). Den Platz
+  // hinten schafft sitzplanEditor beim Öffnen (vorlauf), „Fertig“ kompaktiert. Eine neue erste Reihe entsteht nur durch Ziehen auf die
+  // Zone unter der letzten Reihe.
   // Unterricht: belegte Reihen + markierte Lücken (kompakt — kein unbeabsichtigter Leerraum, TAFEL direkt unter der letzten).
   let reihen;
-  if(editorAktiv){
-    const maxR=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
-    reihen=[]; for(let r=0;r<=maxR+1;r++) reihen.push(r);
-  } else reihen=[...new Set([...belegteReihen,...luecken])].sort((a,b)=>a-b);
+  const minBelegt=belegteReihen.length?belegteReihen[0]:-1, maxBelegt=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
+  if(editorAktiv){ reihen=[]; for(let r=0;r<=Math.max(maxBelegt,5);r++) reihen.push(r); }
+  else reihen=[...new Set([...belegteReihen,...luecken])].sort((a,b)=>a-b);
+  // Editor: Spalten nach Bedarf (Zero 02.10. abends: „Ja“) — leer 8, sonst bis zur letzten belegten Spalte + eine Reserve, höchstens 12
+  let spaltenN=SPALTEN;
+  if(editorAktiv){ const cs=[...Object.keys(grid),...tische].map(key=>Number(key.split(',')[1])); spaltenN=Math.min(SPALTEN,Math.max(8,(cs.length?Math.max(...cs):-1)+2)); }
   let html='';
-  const maxBelegt=belegteReihen.length?belegteReihen[belegteReihen.length-1]:-1;
   for(const r of reihen){
-    // Ghost-„＋": leere Reihe hier einfügen — vor belegten Reihen (oben + zwischen); „unten" deckt die wachsende Ghost-Reihe ab
-    if(editorAktiv && r<=maxBelegt) html+='<button class="reihe-plus" data-vor="'+r+'" title="Leere Reihe hier einfügen">＋</button>';
+    // „＋": leere Reihe hier einfügen — vor der ersten belegten Reihe und zwischen belegten (hinten stehen ohnehin leere Reihen)
+    if(editorAktiv && r>=minBelegt && r<=maxBelegt) html+='<button class="reihe-plus" data-vor="'+r+'" title="Leere Reihe hier einfügen">＋</button>';
     html+='<div class="plan-reihe'+(luecken.has(r)?' luecke':'')+'" data-r="'+r+'">';
-    // Leere Reihe zwischen belegten (nicht die wachsende Ghost-Reihe): „Lücke lassen" macht sie zum festen Gang
-    if(editorAktiv && r<=maxBelegt && !belegteReihen.includes(r)) html+='<button class="luecke-btn" data-luecke="'+r+'" title="'+(luecken.has(r)?'Antippen hebt die Lücke auf':'Reihe bleibt als Gang leer')+'">'+(luecken.has(r)?'✓ Lücke bleibt':'Lücke lassen')+'</button>';
-    for(let c=0;c<SPALTEN;c++){
+    // Leere Reihe zwischen belegten: „Lücke lassen" macht sie zum festen Gang (vor der ersten belegten Reihe gibt es keinen Gang)
+    if(editorAktiv && r>minBelegt && r<maxBelegt && !belegteReihen.includes(r)) html+='<button class="luecke-btn" data-luecke="'+r+'" title="'+(luecken.has(r)?'Antippen hebt die Lücke auf':'Reihe bleibt als Gang leer')+'">'+(luecken.has(r)?'✓ Lücke bleibt':'Lücke lassen')+'</button>';
+    for(let c=0;c<spaltenN;c++){
       const nr=grid[r+','+c];
       const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
       if(s&&sichtbar.has(s.nr)) html+=kachelHtml(s,idx.get(s.nr)||leererStand(),r,c);
@@ -1265,7 +1275,11 @@ function renderHeute(){
     }
     html+='</div>';
   }
+  // Ablagezone für eine neue erste Reihe: nur beim Ziehen sichtbar (CSS), sonst bliebe vor der Tafel wieder eine Lücke — sie setzt
+  // direkt über die Tafel, hinter die letzte angezeigte Reihe (Prüfer 03.10. G1: maxBelegt+1 lag bei kleinen Plänen mitten im Raster)
+  if(editorAktiv&&maxBelegt>=0) html+='<button class="reihe-plus vorne" data-vor="'+(reihen[reihen.length-1]+1)+'" title="Neue erste Reihe" tabindex="-1">＋</button>';
   plan.innerHTML=html;
+  if(editorAktiv){ $('plan-wrap').style.setProperty('--ed-n',String(spaltenN)); plan.style.setProperty('--sp-r',String(reihen.length)); }
   // Nur die belegten Spalten zeigen, damit die Kacheln die Breite füllen — Handy seit v1.11.0, iPad seit 2026-10-01
   // (Zero: der gewonnene Platz gehört dem Sitzplan). `--sp-r` (Reihen) begrenzt am iPad die Kachelgröße auf die Höhe.
   if(!editorAktiv){
@@ -1286,17 +1300,17 @@ function ohnePlatzPanel(ohnePlatz){
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
 // Leerer Tisch im Unterricht (Zero 2026-10-02: „wenn ich auf ein leeren Tisch später tippe will ich immer noch Schüler dort
-// eintragen können. Dann übernimmt der Schüler den Platz“) — sein alter Platz bleibt als leerer Tisch. Tische selbst setzt nur der Editor.
+// eintragen können. Dann übernimmt der Schüler den Platz“) — sein alter Platz wird leer (Zero 02.10. abends: „nichts hinter sich lassen“). Tische selbst setzt nur der Editor.
 function tischWahl(key){
   const k=kurs(); if(!k) return;
   const vergeben=new Set(Object.values((vault.stamm.sitzplaene[k.id]||{}).grid||{}));
   const alle=kursSchueler(k).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')||String(a.vorname).localeCompare(String(b.vorname),'de'));
   const knopf=s=>el('button',{type:'button',class:'btn still',dataset:{tischSetz:String(s.nr)},onclick:()=>{
     vault.stamm.sitzplaene[k.id]=setzeAufPlatz(vault.stamm.sitzplaene[k.id]||{grid:{}},key,s.nr); stammMutiert(); speichern(); dlgZu(); renderHeute();
-    toast(anzeigeVorname(s)+' sitzt jetzt hier'+(vergeben.has(s.nr)?' · der alte Platz bleibt als leerer Tisch':'')); }},anzeigeVorname(s)+' '+anzeigeNachname(s));
+    toast(anzeigeVorname(s)+' sitzt jetzt hier'); }},anzeigeVorname(s)+' '+anzeigeNachname(s));
   const ohne=alle.filter(s=>!vergeben.has(s.nr)), mit=alle.filter(s=>vergeben.has(s.nr));
   dlgZeigenEl(el('h3',{},'Leerer Tisch'),
-    el('p',{class:'u-hinweis'},'Antippen setzt den Schüler hierher. Sein alter Platz bleibt als leerer Tisch stehen.'),
+    el('p',{class:'u-hinweis'},'Antippen setzt den Schüler hierher. Sein alter Platz wird frei.'),
     el('p',{class:'tisch-wahl-kopf'},'Ohne Platz'),ohne.length?el('div',{class:'tisch-wahl'},...ohne.map(knopf)):el('p',{class:'u-hinweis'},'Alle haben einen Platz.'),
     ...(mit.length?[el('p',{class:'tisch-wahl-kopf'},'Umsetzen'),el('div',{class:'tisch-wahl'},...mit.map(knopf))]:[]),
     el('div',{class:'btn-reihe'},el('button',{type:'button',class:'btn still',onclick:dlgZu},'Abbrechen')));
@@ -1670,7 +1684,7 @@ function zeigeLegende(){
 }
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Notiz ↓weiter) ═══ */
-let deckListe=[], deckIdx=0, deckNurOhne=false;
+let deckListe=[], deckIdx=0, deckNurOhne=true;   // Zero 02.10.: „Deck soll standardmäßig mit nur offene Einträge starten“
 let deckRundeStart=null;
 let deckVerlauf=[]; // Buchungen DIESER Deck-Runde [{nr,name,evId,typ}] — mitlaufende, korrigierbare Historie (Zero-Feldtest 2026-07-10)
 function baueDeckListe(){
@@ -3110,7 +3124,8 @@ function loescheKursEndgueltig(id){
 // Sitzplan als PDF (Zero 2026-10-02, Variante P2 + Klarstellung: „die Sitzuordnung soll abgebildet sein - nur in der Spalte mit namen
 // brauche ich die sitzplatznummer usw. nicht“): der Plan wie im Unterricht, Tafel unten, leere Tische gestrichelt; rechts die Namen A–Z
 // mit Schülernummer. Die Kladde zeichnet auf eine Zeichenfläche (A4 quer, 200 dpi) und schreibt die PDF selbst (logic/pdfbild.mjs).
-// Keine LB-Kennung (sensibel, wie am Beamer). Die Nr steht auch klein in der Kachel — sie verbindet Plan und Liste.
+// LB-Schüler tragen ein dezentes ◆ in Kachel und Liste, unten „◆ = LB“ (Zero 02.10. abends, Frage-Dialog: „Dezentes Zeichen ◆“).
+// Die Nr steht auch klein in der Kachel — sie verbindet Plan und Liste.
 function sitzplanPdfZeichnen(k){
   const B=2339, H=1654, cv=document.createElement('canvas'); cv.width=B; cv.height=H;
   const g=cv.getContext('2d'), schrift=getComputedStyle(document.body).fontFamily||'system-ui, sans-serif';
@@ -3138,6 +3153,7 @@ function sitzplanPdfZeichnen(k){
     font(ka*.17,700); text(passe(p.vorname,ka-28),x+14,y+ka*.42,TINTE);
     font(ka*.13); text(passe(p.name,ka-28),x+14,y+ka*.42+ka*.18,LEISE);
     font(ka*.11); text(String(p.nr),x+ka-14,y+ka-16,LEISE,'right');
+    if(p.lb){ font(ka*.12); text('◆',x+ka-14,y+ka*.2,LEISE,'right'); }
   }
   const tafY=planY+nR*ka+(nR-1)*LU+44, tafB=Math.min(breite,900);
   g.beginPath(); g.roundRect(x0+(breite-tafB)/2,tafY,tafB,60,10); g.strokeStyle=LINIE; g.lineWidth=3; g.stroke();
@@ -3147,9 +3163,11 @@ function sitzplanPdfZeichnen(k){
   const zh=Math.min(46,(H-RAND-planY-70)/Math.max(1,a.liste.length)); let y=planY+70;
   font(zh*.42,600); text('Nr.',lx+60,y,LEISE,'right'); text('Name',lx+84,y,LEISE);
   for(const x of a.liste){ y+=zh; font(zh*.56); text(String(x.nr),lx+60,y,LEISE,'right');
-    text(passe(x.name+', '+x.vorname+(x.gruppe?' · Gr. '+x.gruppe:''),LB_LISTE-90),lx+84,y,TINTE);
+    text(passe(x.name+', '+x.vorname+(x.gruppe?' · Gr. '+x.gruppe:''),LB_LISTE-90-(x.lb?zh*.7:0)),lx+84,y,TINTE);
+    if(x.lb) text('◆',lx+LB_LISTE,y,LEISE,'right');
     g.strokeStyle=HAAR; g.lineWidth=1.5; g.beginPath(); g.moveTo(lx,y+zh*.32); g.lineTo(lx+LB_LISTE,y+zh*.32); g.stroke(); }
   font(20); text('Kladde · Sitzplan',RAND,H-40,LEISE);
+  if(a.liste.some(x=>x.lb)) text('◆ = LB',B-RAND,H-40,LEISE,'right');   // Legende nur, wenn jemand das Zeichen trägt
   return cv;
 }
 // Speichern wie die Urkunde (Muster urkundeSpeichern, Skill werkstatt-web-2026): alles synchron bis zum Teilen, damit die Geste trägt.
@@ -3175,41 +3193,66 @@ function sitzplanPdf(k){
 let editorCleanup=null; // Aufräumen des Sitzplan-Editors (auch aus sperren() erreichbar)
 function sitzplanEditor(kursId){
   if(editorCleanup){ try{ editorCleanup(); }catch{} }
-  aktiverKursId=kursId; aktualisiereKursChip();
+  kursWechseln(kursId);   // wie jeder Kurswechsel: ein Nachtrag endet, die Gruppe des alten Kurses fällt weg (Prüfer 03.10. B6)
   aktView='heute';
   document.querySelectorAll('#hauptnav button').forEach(x=>x.classList.toggle('aktiv',x.dataset.view==='heute')); setzeViewTitel('heute');
   ['heute','deck','schueler','kurse','mehr'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!=='heute'));
   editorAktiv=true;
   document.body.classList.add('sp-edit');
+  // Vorne bleibt vorne: hinten so viele leere Reihen auffüllen, dass mindestens 6 zu sehen sind und die letzte belegte Reihe direkt
+  // über der Tafel steht. Nur die Zählung rückt (keine negativen Reihen), „Fertig“ kompaktiert wieder ab 0 (logic/sitzplan.mjs vorlauf).
+  { const s0=vault.stamm.sitzplaene[kursId], br=s0?spBelegteReihen(s0):[], maxR=br.length?br[br.length-1]:-1;
+    if(maxR>=0&&maxR<5) vault.stamm.sitzplaene[kursId]=vorlauf(s0,5-maxR); }
   renderHeute();
+  // Fokus horizontal mittig (Zero 02.10.): am Handy ist das Raster breiter als der Schirm und stand sonst am linken Rand
+  const wrap=$('plan-wrap'); wrap.scrollLeft=Math.max(0,(wrap.scrollWidth-wrap.clientWidth)/2);
   const plan=$('plan');
   const k=kurs();
   const sp=()=>(vault.stamm.sitzplaene[k.id]=vault.stamm.sitzplaene[k.id]||{grid:{}});
   const keyOf=kachel=>kachel.dataset.r+','+kachel.dataset.c;  // explizite Reihe,Platz — Ghost-Zeilen-Layout (nicht mehr DOM-Index)
-  toast('Namen aus der Leiste auf Plätze ziehen · Platz→Platz verschiebt, der alte Platz bleibt als leerer Tisch · in den Mülleimer = entfernen · leeren Platz antippen wählt klassisch · „Tisch“ setzt und nimmt leere Tische',6500);
 
-  // ── Editor-Leiste: Namen-Schiene (noch nicht platziert) + Mülleimer + Fertig ──
+  // ── Liste „Ohne Platz“ (Zero 02.10. abends): A–Z nach Nachname, am iPad als Spalte rechts statt der Stempel-Leiste, am Handy unter
+  // der Tafel (CSS). Einen Namen antippen macht ihn scharf, ein leerer Platz oder Tisch angetippt setzt ihn, dann ist der nächste scharf;
+  // ziehen geht weiter („Weiter auch ziehen können“). Der Hinweis steht hier statt als Toast über der Liste.
   const rail=el('div',{class:'sp-rail'});
+  const ohneKopf=el('div',{class:'sp-ohne-kopf'});
+  const ohne=el('section',{class:'sp-ohne','aria-label':'Ohne Platz'},ohneKopf,
+    el('p',{class:'sp-ohne-hinweis'},'Namen antippen, dann einen Platz · oder halten und ziehen. Im Raster verschiebt oder tauscht Ziehen, der Mülleimer nimmt vom Platz, „Tisch“ setzt leere Tische.'),rail);
+  document.querySelector('#view-heute .heute-grid').append(ohne);
+  // ── Editor-Leiste: Tisch · Mülleimer · Fertig ──
   const trash=el('div',{class:'sp-trash',title:'Zum Entfernen hierher ziehen'},iconEl('papierkorb'));
   // Stempel „Tisch“ (Zero 2026-10-02, Variante A): scharf setzt Antippen oder Wischen leere Tische, ein Tipp auf einen Tisch nimmt ihn weg —
   // der erste Platz eines Strichs entscheidet, ob der Strich setzt oder wegnimmt. Schüler ziehen geht erst wieder ohne Stempel.
-  let tischScharf=false, wisch=null;
+  let tischScharf=false, wisch=null, scharf=null;   // scharf: Nr des Namens, den der nächste Tipp auf einen Platz setzt
   const tischBtn=el('button',{type:'button',class:'btn still sp-tisch','aria-pressed':'false','aria-label':'Tisch-Stempel',title:'Tisch-Stempel: Plätze antippen oder wischen setzt leere Tische, einen Tisch antippen nimmt ihn weg',
-    onclick:()=>{ tischScharf=!tischScharf; tischBtn.setAttribute('aria-pressed',String(tischScharf)); document.body.classList.toggle('sp-tisch-scharf',tischScharf); }},el('span',{class:'sp-tisch-ico','aria-hidden':'true'}),el('span',{class:'sp-tisch-text'},'Tisch'));
-  const bar=el('div',{id:'sp-editor-bar',class:'sp-editor-bar'},
-    el('span',{class:'sp-rail-label'},'Nicht platziert:'), rail, tischBtn, trash,
-    el('button',{class:'btn',onclick:()=>beenden()},'Fertig'));
+    onclick:()=>{ tischScharf=!tischScharf; tischBtn.setAttribute('aria-pressed',String(tischScharf)); document.body.classList.toggle('sp-tisch-scharf',tischScharf);
+      if(tischScharf&&scharf!=null){ scharf=null; renderRail(); } }},el('span',{class:'sp-tisch-ico','aria-hidden':'true'}),el('span',{class:'sp-tisch-text'},'Tisch'));
+  const bar=el('div',{id:'sp-editor-bar',class:'sp-editor-bar'},tischBtn,trash,el('button',{class:'btn',onclick:()=>beenden()},'Fertig'));
   document.body.appendChild(bar);
+  // Am iPad scrollt die Liste in sich und endet über der Leiste, auch wenn ein Banner die Seite nach unten schiebt (Prüfer 03.10. G2)
+  const BREIT=matchMedia('(min-width: 721px)');
+  const passeListe=()=>{ ohne.style.maxHeight=BREIT.matches?Math.max(160,Math.floor(bar.getBoundingClientRect().top-ohne.getBoundingClientRect().top-8))+'px':''; };
+  passeListe(); addEventListener('resize',passeListe);
+  const ohnePlatzAZ=()=>{ const vergeben=new Set(Object.values(sp().grid));
+    return kursSchueler(k).filter(s=>!vergeben.has(s.nr)).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')||String(a.vorname).localeCompare(String(b.vorname),'de')); };
   function renderRail(){
-    const vergeben=new Set(Object.values(sp().grid));
-    const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
+    const frei=ohnePlatzAZ();
+    if(scharf!=null&&!frei.some(s=>s.nr===scharf)) scharf=null;
+    ohneKopf.replaceChildren(el('b',{},'Ohne Platz'),...(frei.length?[el('span',{},String(frei.length))]:[]));
     rail.replaceChildren(...(frei.length
-      ? frei.map(s=>el('div',{class:'sp-chip',dataset:{nr:String(s.nr)}},s.vorname+' '+s.name))
-      : [el('span',{class:'u-hinweis'},'alle platziert ✓')]));
+      ? frei.map(s=>el('div',{class:'sp-chip'+(s.nr===scharf?' an':''),role:'button',tabindex:'0','aria-pressed':String(s.nr===scharf),dataset:{nr:String(s.nr)}},
+          el('b',{},s.vorname),el('small',{},s.name)))
+      : [el('span',{class:'u-hinweis'},'Alle haben einen Platz ✓')]));
   }
+  const schaerfen=nr=>{ scharf=scharf===nr?null:nr;
+    if(scharf!=null&&tischScharf){ tischScharf=false; tischBtn.setAttribute('aria-pressed','false'); document.body.classList.remove('sp-tisch-scharf'); }
+    renderRail(); };
+  const railTaste=e=>{ const c=e.target.closest('.sp-chip'); if(c&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); schaerfen(Number(c.dataset.nr)); } };
+  rail.addEventListener('keydown',railTaste);
   renderRail();
 
   // ── Pointer-Drag (Touch + Maus; HTML5-DnD ist auf iPad-Safari tot) ──
+  const HALTEN_MS=300;   // so lange gehalten, zieht ein Name aus der Liste auch senkrecht (Prüfer 03.10. B5)
   let drag=null, justDragged=false, tipp=null;   // tipp: wo der Finger aufsetzte — Wischen ist kein Antippen (Zero 2026-10-01: iPad öffnete beim Scrollen den Platz-Dialog)
   function zielReset(){ plan.querySelectorAll('.kachel.ziel, .reihe-plus.ziel').forEach(z=>z.classList.remove('ziel')); trash.classList.remove('ziel'); }
   function tischAn(kach){   // ein Platz unter dem Tisch-Stempel; besetzte Plätze bleiben, wie sie sind
@@ -3223,7 +3266,11 @@ function sitzplanEditor(kursId){
     if(wisch){ e.preventDefault(); const t=document.elementFromPoint(e.clientX,e.clientY); tischAn(t&&t.closest('.kachel')); return; }
     if(!drag) return;
     if(!drag.moving){
-      if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<8) return;
+      const dx=e.clientX-drag.x0, dy=e.clientY-drag.y0;
+      if(Math.hypot(dx,dy)<8) return;
+      // aus der Liste: senkrecht scrollt sie bzw. die Seite (touch-action: pan-y) — gezogen wird bei überwiegend waagerechtem Start
+      // oder nach dem Halten (Prüfer 03.10. B5/F1; am Handy steht das Raster über der Liste, dort ist Halten der Weg)
+      if(drag.vonKey==null&&Math.abs(dx)<=Math.abs(dy)&&performance.now()-drag.t0<HALTEN_MS){ drag=null; return; }
       drag.moving=true; document.body.classList.add('sp-dragging');
       const s=schuelerVonNr(drag.nr);
       drag.ghost=el('div',{class:'sp-ghost'}, s?s.vorname+' '+s.name:('Nr '+drag.nr));
@@ -3244,21 +3291,24 @@ function sitzplanEditor(kursId){
     if(wisch){ const w=wisch; wisch=null; if(w.geaendert){ stammMutiert(); speichern(); } return; }   // ein Strich = eine Speicherung
     if(!drag) return;
     const d=drag; drag=null;
-    if(!d.moving) return; // reiner Tap → Plan-Tap-Handler entscheidet
+    if(!d.moving){ if(d.vonKey==null) schaerfen(d.nr); return; }   // Tipp auf einen Namen der Liste: scharf · Tipp im Raster → planTap
     justDragged=true; setTimeout(()=>{ justDragged=false; },0);
-    document.body.classList.remove('sp-dragging');
     if(d.ghost) d.ghost.remove();
+    // erst messen, dann „sp-dragging“ weg: die Ablage vor der Tafel ist nur beim Ziehen sichtbar (gemessen 02.10., P22 V2)
     const t=document.elementFromPoint(e.clientX,e.clientY);
+    document.body.classList.remove('sp-dragging');
     zielReset();
     const g=sp().grid;
     if(t&&t.closest('.sp-trash')){
-      if(d.vonKey){ vault.stamm.sitzplaene[k.id]=vomPlatz(sp(),d.nr); stammMutiert(); speichern(); renderHeute(); renderRail(); toast('entfernt · der Platz bleibt als leerer Tisch'); }
+      // Mülleimer: der Platz wird leer, kein Tisch (Zero 02.10. abends: „Ja“) — „Aus dem Kurs nehmen“ lässt weiter einen Tisch (vomPlatz)
+      if(d.vonKey){ vault.stamm.sitzplaene[k.id]=raeumePlatz(sp(),d.nr); stammMutiert(); speichern(); renderHeute(); renderRail(); toast('vom Platz genommen'); }
       return;
     }
     const plus=t&&t.closest('.reihe-plus');
     if(plus&&plan.contains(plus)){  // Drop auf ＋ zwischen den Reihen → neue Reihe dort, Schüler an der Finger-Spalte (Ghost-Punkt 2)
-      const reihe=plan.querySelector('.plan-reihe'); let c=0;
-      if(reihe){ const rr=reihe.getBoundingClientRect(); c=Math.max(0,Math.min(11,Math.floor((e.clientX-rr.left)/(rr.width/12)))); }
+      // Spalte unter dem Finger aus den Kachel-Rechtecken: die Kacheln stehen mittig in der breiteren Reihe (Prüfer 03.10. B2)
+      const ks=[...(plan.querySelector('.plan-reihe .kachel')?.parentElement.querySelectorAll('.kachel')||[])]; let c=0;
+      if(ks.length){ const i=ks.findIndex(x=>e.clientX<x.getBoundingClientRect().right); c=Number(ks[i<0?ks.length-1:i].dataset.c); }
       reiheEinfuegen(Number(plus.dataset.vor),d.nr,c);
       renderRail(); toast('Neue Reihe');
       return;
@@ -3267,12 +3317,14 @@ function sitzplanEditor(kursId){
     if(kach&&plan.contains(kach)){
       const zielKey=keyOf(kach), belegt=g[zielKey];
       if(String(belegt)===String(d.nr)) return; // auf sich selbst
-      // Platz→Platz: bei belegt tauschen, sonst bleibt der alte Platz als leerer Tisch · Schiene→Platz: bisheriger wandert in die Schiene
+      // Platz→Platz: bei belegt tauschen, sonst wird der alte Platz leer (kein Tisch) · Schiene→Platz: bisheriger wandert in die Schiene
       vault.stamm.sitzplaene[k.id]=setzeAufPlatz(sp(),zielKey,d.nr,{tausch:!!d.vonKey});
       stammMutiert(); speichern(); renderHeute(); renderRail();
     }
   }
-  const railDown=e=>{ const c=e.target.closest('.sp-chip'); if(!c) return; e.preventDefault(); drag={nr:Number(c.dataset.nr),vonKey:null,moving:false,ghost:null,x0:e.clientX,y0:e.clientY}; };
+  const railDown=e=>{ const c=e.target.closest('.sp-chip'); if(!c) return; e.preventDefault(); drag={nr:Number(c.dataset.nr),vonKey:null,moving:false,ghost:null,x0:e.clientX,y0:e.clientY,t0:performance.now()}; };
+  // Nach dem Halten (bzw. sobald gezogen wird) darf der Browser nicht mehr scrollen, sonst bricht pointercancel das Ziehen ab
+  const railTouch=e=>{ if(drag&&drag.vonKey==null&&(drag.moving||performance.now()-drag.t0>=HALTEN_MS)) e.preventDefault(); };
   const planDown=e=>{ const kach=e.target.closest('.kachel'); if(!kach) return; tipp={x:e.clientX,y:e.clientY};
     if(tischScharf){ e.preventDefault(); wisch={an:null,keys:new Set(),geaendert:false}; tischAn(kach); return; }
     if(!kach.classList.contains('schueler')) return;
@@ -3281,14 +3333,24 @@ function sitzplanEditor(kursId){
     const t=tipp; tipp=null;
     if(justDragged||(drag&&drag.moving)||tischScharf) return;   // Tisch-Stempel: schon beim Aufsetzen erledigt
     const kach=e.target.closest('.kachel'); if(!kach) return;
-    const key=keyOf(kach); if(sp().grid[key]) return; // gesetzt → nur Drag (kein Lösch-Tap mehr)
     if(t&&Math.hypot(e.clientX-t.x,e.clientY-t.y)>=8) return;   // gewischt, nicht getippt (Schwelle wie beim Ziehen)
+    const key=keyOf(kach);
+    if(scharf!=null){   // ein scharfer Name: ein leerer Platz oder Tisch nimmt ihn auf, danach ist der nächste A–Z scharf
+      e.stopPropagation();
+      if(sp().grid[key]!=null){ toast('Platz besetzt — zum Tauschen ziehen'); return; }   // nie still verdrängen
+      const liste=ohnePlatzAZ(), i=liste.findIndex(s=>s.nr===scharf), nr=scharf;
+      vault.stamm.sitzplaene[k.id]=setzeAufPlatz(sp(),key,nr); stammMutiert(); speichern();
+      const weiter=liste.slice(i+1).concat(liste.slice(0,Math.max(0,i))).find(s=>s.nr!==nr);
+      scharf=weiter?weiter.nr:null; renderHeute(); renderRail(); return;
+    }
+    if(sp().grid[key]) return; // gesetzt → nur Drag (kein Lösch-Tap mehr)
     e.stopPropagation(); picker(key);
   };
   const onCancel=()=>{ tipp=null; if(wisch&&wisch.geaendert){ stammMutiert(); speichern(); } wisch=null; if(drag&&drag.ghost) drag.ghost.remove(); drag=null; document.body.classList.remove('sp-dragging'); zielReset(); };
   const plusClick=e=>{ const p=e.target.closest('.reihe-plus'); if(p){ e.stopPropagation(); reiheEinfuegen(Number(p.dataset.vor)); return; }
     const l=e.target.closest('.luecke-btn'); if(l){ e.stopPropagation(); toggleLuecke(Number(l.dataset.luecke)); } };
   rail.addEventListener('pointerdown',railDown);
+  rail.addEventListener('touchmove',railTouch,{passive:false});
   plan.addEventListener('click',plusClick);
   plan.addEventListener('pointerdown',planDown);
   plan.addEventListener('pointerup',planTap);
@@ -3297,10 +3359,10 @@ function sitzplanEditor(kursId){
   document.addEventListener('pointercancel',onCancel,true);
 
   function picker(key){
-    const [r,c]=key.split(',').map(Number);
+    // Titel ohne Reihennummer: sie zählte die aufgefüllten Leer-Reihen mit (Prüfer 03.10. G4)
     const vergeben=new Set(Object.values(sp().grid));
     const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
-    dlgZeigen('<h3>Platz '+(r+1)+'/'+(c+1)+'</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
+    dlgZeigen('<h3>Wer sitzt hier?</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
       frei.map(s=>'<option value="'+esc(s.vorname+' '+s.name+' ('+s.nr+')')+'">').join('')+'</datalist>'+
       '<div class="u-scroll30">'+frei.map(s=>'<button class="btn still u-btn-block u-eng" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
       '<div class="btn-reihe"><button class="btn still" data-schliessen>Abbrechen</button></div>',
@@ -3327,7 +3389,8 @@ function sitzplanEditor(kursId){
     kompaktiere();
     editorAktiv=false; editorCleanup=null;
     document.body.classList.remove('sp-edit','sp-dragging','sp-tisch-scharf');
-    rail.removeEventListener('pointerdown',railDown);
+    rail.removeEventListener('pointerdown',railDown); rail.removeEventListener('keydown',railTaste); rail.removeEventListener('touchmove',railTouch,{passive:false});
+    removeEventListener('resize',passeListe);
     plan.removeEventListener('click',plusClick);
     plan.removeEventListener('pointerdown',planDown);
     plan.removeEventListener('pointerup',planTap);
@@ -3335,7 +3398,7 @@ function sitzplanEditor(kursId){
     document.removeEventListener('pointerup',onUp,true);
     document.removeEventListener('pointercancel',onCancel,true);
     if(drag&&drag.ghost) drag.ghost.remove();
-    bar.remove(); zielReset(); renderHeute();
+    bar.remove(); ohne.remove(); zielReset(); renderHeute();
   }
   editorCleanup=beenden;
 }

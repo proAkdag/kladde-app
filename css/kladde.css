@@ -160,6 +160,14 @@
   .plan-reihe { display: grid; grid-template-columns: repeat(12, minmax(46px, 66px)); gap: 4px; }
   /* Ghost-＋ zwischen den Reihen: leise (16px, nur ein kleines ＋), der Streifen IST der Reihenabstand im Editor */
   #plan.editor { gap: 0; }
+  /* Editor (Zero 02.10. abends): Spalten nach Bedarf (--ed-n aus renderHeute), Kacheln so groß, wie Breite und Höhe es hergeben;
+     die Ablagezone vor der Tafel („neue erste Reihe“) ist nur beim Ziehen zu sehen */
+  #plan.editor { align-items: stretch; min-width: calc(var(--ed-n, 12) * 44px + (var(--ed-n, 12) - 1) * 4px);
+    --kachel-ed: min(96px, calc((100dvh - 250px) / var(--sp-r, 6) - 18px)); }
+  #plan.editor .plan-reihe { grid-template-columns: repeat(var(--ed-n, 12), minmax(44px, var(--kachel-ed))); justify-content: center; }
+  @media (max-width: 599px) { #plan.editor { --kachel-ed: 1fr; } }   /* Handy: die Spalten füllen die Breite */
+  #plan.editor .reihe-plus.vorne { visibility: hidden; }
+  body.sp-dragging #plan.editor .reihe-plus.vorne { visibility: visible; }
   .reihe-plus { width: 100%; min-height: 16px; padding: 0; border: 0; background: transparent; color: var(--leise); cursor: pointer; font-size: 11px; line-height: 1; opacity: .25; border-radius: 6px; display: grid; place-items: center; }
   .reihe-plus:hover { opacity: 1; color: var(--band-text); background: var(--karte2); }
   body.sp-dragging .reihe-plus { opacity: .7; background: var(--karte2); }  /* Drop-Zonen beim Ziehen sichtbar — Höhe konstant (kein Ziel-Wandern) */
@@ -212,6 +220,8 @@
     font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--leise);
   }
   .tafel::before, .tafel::after { content: ""; flex: 1; height: 2px; background: var(--kante); border-radius: 2px; }
+  /* Editor: die Tafel so breit wie das Raster (#plan min-width oben), sonst saß die Schrift am Handy in der Mitte des ersten Bildschirms (Zero 02.10.) */
+  #plan-wrap:has(#plan.editor) .tafel { min-width: calc(var(--ed-n, 12) * 44px + (var(--ed-n, 12) - 1) * 4px); }
   /* Aktionsbar entfernt (v2): Tap-ohne-Stempel öffnet das Detail-Blatt; Erfassen läuft über die Rail. */
   /* ── Deck ── */
   #deck-karte {
@@ -532,13 +542,34 @@
   /* Editor: die fixe Bar (~64px) darf die untersten Reihen nicht verdecken — main bekommt Scroll-Puffer (S216-Befund) */
   body.sp-edit main { padding-bottom: calc(env(safe-area-inset-bottom) + 100px); }
   .sp-editor-bar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 10px);
-    display: flex; align-items: center; gap: 8px; z-index: 40;
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px; z-index: 40;
     background: var(--karte); border-top: 1px solid var(--band); padding: 8px 10px; }
-  .sp-rail-label { font-size: 12px; color: var(--leise); flex: 0 0 auto; white-space: nowrap; }
-  .sp-rail { display: flex; gap: 6px; overflow-x: auto; flex: 1; padding: 2px; min-height: 44px; align-items: center; }
-  .sp-chip { flex: 0 0 auto; background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px;
-    padding: 8px 12px; min-height: 40px; font-size: 13px; cursor: grab; white-space: nowrap; touch-action: none;
-    user-select: none; -webkit-user-select: none; }
+  /* Liste „Ohne Platz“ (Zero 02.10. abends): am iPad Spalte rechts statt Stempel-Leiste und „Erfasst“, am Handy unter der Tafel.
+     Name wie auf der Kachel (Vorname groß, Nachname klein); scharf in der Bandfarbe wie der Tisch-Stempel */
+  body.sp-edit #rail, body.sp-edit #erfasst-ort { display: none; }
+  .sp-ohne { background: var(--karte); border: 1px solid var(--kante); border-radius: 14px; padding: 12px; }
+  .sp-ohne-kopf { display: flex; align-items: baseline; gap: 8px; margin: 0 2px 9px; }
+  .sp-ohne-kopf b { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--leise); }
+  .sp-ohne-kopf span { font-size: 12px; color: var(--leise); }
+  .sp-ohne-hinweis { font-size: 11.5px; line-height: 1.4; color: var(--leise); margin: 0 2px 9px; }   /* im Kopf, über den Namen (Prüfer 03.10. B4) */
+  .sp-rail { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sp-chip { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1px; min-height: 44px; min-width: 0;
+    background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; padding: 5px 10px; cursor: grab; overflow: hidden;
+    white-space: nowrap; touch-action: pan-y; user-select: none; -webkit-user-select: none; }   /* senkrecht scrollt, gezogen wird waagerecht oder nach Halten (app.mjs, Prüfer 03.10. B5/F1) */
+  .sp-chip b { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .sp-chip small { font-size: 10.5px; color: var(--leise); max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .sp-chip.an { border-color: var(--band); background: color-mix(in oklab, var(--band) 16%, var(--karte2)); }
+  .sp-chip.an b { color: var(--band-text); }
+  @media (min-width: 721px) {   /* bis 720 px ist das Heute-Raster einspaltig, dort steht die Liste unter der Tafel */
+    /* die Liste sitzt in der rechten Spalte, zählt aber nicht für die Zeilenhöhen (sonst schob eine lange Liste das Raster nach unten, gemessen 02.10.) */
+    body.sp-edit .heute-grid { grid-template-columns: minmax(0, 1fr) 220px; position: relative; }
+    .sp-ohne { position: absolute; top: 0; right: 0; width: 220px; max-height: calc(100dvh - 130px); overflow-y: auto; }
+    .sp-ohne .sp-rail { flex-direction: column; flex-wrap: nowrap; }
+  }
+  @media (max-width: 599px) {
+    .sp-ohne { margin-top: 12px; }
+    .sp-ohne .sp-chip { flex-basis: calc((100% - 12px) / 3); }
+  }
   .sp-trash { flex: 0 0 auto; width: 54px; min-height: 44px; display: grid; place-items: center; font-size: 22px;
     border: 1px dashed var(--kante); border-radius: 10px; }
   .sp-trash.ziel { border-color: var(--fehl); background: rgba(201,111,111,.2); }
@@ -554,8 +585,6 @@
   .sp-tisch[aria-pressed="true"] { border-color: var(--band); color: var(--band-text); background: color-mix(in oklab, var(--band) 16%, var(--karte2)); }
   .sp-tisch-ico { width: 16px; height: 12px; border: 1.5px dashed currentColor; border-radius: 3px; }
   body.sp-tisch-scharf #plan.editor .kachel { touch-action: none; }
-  /* Handy: „Tisch“ nur als Symbol, ohne „Nicht platziert:“ — sonst blieben der Namen-Schiene 72 px (Prüfer 02.10., B3) */
-  @media (max-width: 599px) { .sp-rail-label, .sp-tisch-text { display: none; } .sp-tisch { min-width: 44px; justify-content: center; padding: 0 12px; } }
   .tisch-wahl { display: flex; flex-wrap: wrap; gap: 6px; }
   .tisch-wahl .btn { min-height: 44px; }
   .sp-pdf-bild { display: block; width: 100%; height: auto; border: 1px solid var(--kante); border-radius: 8px; -webkit-touch-callout: default; }
