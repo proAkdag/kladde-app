@@ -1,27 +1,27 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.16.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.16.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.16.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.16.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.16.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.16.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.16.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.16.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.16.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.16.0';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.16.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.16.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.16.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.16.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.16.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.16.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.16.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.16.0';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon } from '../logic/stunden.mjs?v=1.16.0';
-import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.16.0';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.16.0';
-const APP_VERSION = '1.16.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.17.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.17.0';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.17.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.17.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.17.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.17.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.17.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.17.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.17.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.17.0';
+import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.17.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.17.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.17.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.17.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.17.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.17.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.17.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.17.0';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon } from '../logic/stunden.mjs?v=1.17.0';
+import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.17.0';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.17.0';
+const APP_VERSION = '1.17.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -480,17 +480,19 @@ function chipZeig(ikon,text,onTap){
   chip._t2=setTimeout(()=>{ chip.classList.add('hidden'); chip.classList.remove('weg'); },6050);
   chip.onclick=()=>{ clearTimeout(chip._t1); clearTimeout(chip._t2); chip.classList.remove('weg'); onTap(); };
 }
-function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):(TYP_LABEL[e.typ]||e.typ); }
+function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):e.typ==='versp'&&e.minuten?'zu spät '+e.minuten+' min':(TYP_LABEL[e.typ]||e.typ); }
+// Was Chip und Meldung zeigen: am Beamer keine Bewertung im Klartext (Prüfer 03.10. 🟡 4; die Regel „Bewertungen … immer verborgen“)
+function sichtLabel(e){ return beamerModus&&BEWERTUNGS_TYPEN.has(e.typ)?'Bewertung':eintragLabel(e); }
 function zeigeUndo(e,ersetzt){
   const s=schuelerVonNr(e.schuelerNr);
   // Ersetzen sichtbar machen (Mechanik erklärt sich selbst): „o → ＋“ — ein Tap bringt das alte Zeichen zurück
-  chipZeig('rueck',(s?s.vorname:'Nr '+e.schuelerNr)+': '+(ersetzt?eintragLabel(ersetzt)+' → ':'')+eintragLabel(e),
-    ()=>{ stornoVon(e); toast('Rückgängig: '+eintragLabel(e)+wiederDa(e)); renderAlles(); zeigeRedo(e); });   // alle Ansichten — Deck/Schüler blieben sonst veraltet
+  chipZeig('rueck',(s?anzeigeVorname(s):'Nr '+e.schuelerNr)+': '+(ersetzt?sichtLabel(ersetzt)+' → ':'')+sichtLabel(e),
+    ()=>{ stornoVon(e); toast('Rückgängig: '+sichtLabel(e)+wiederDa(e)); renderAlles(); zeigeRedo(e); });   // alle Ansichten — Deck/Schüler blieben sonst veraltet
 }
 // Nach einer Rücknahme: was das zurückgenommene Event ersetzt oder geklärt hatte, gilt wieder („— wieder o“)
 function wiederDa(e){
   const w=e.stornoVon?wirksameEvents(vault.events).find(x=>x.id===e.stornoVon):null;
-  return w?' — wieder '+eintragLabel(w):'';
+  return w?' — wieder '+sichtLabel(w):'';
 }
 // Storniertes Original mit einem Tap wieder einbuchen — append-only bleibt gewahrt (kein Löschen,
 // der Storno bleibt im Log; addEvent stempelt id/ts frisch, alle Sachfelder reisen mit).
@@ -560,19 +562,18 @@ function setzeBeamer(an){
   renderAlles(); // kurz/nurplan wirken über alle Ansichten (Kachel, Deck, Aktionsbar)
 }
 // Beamer-Optionen-Sheet (§6): Namen abkürzen · Nur Sitzplan — Bewertungen/LB bleiben immer verborgen
+// Beamer-Optionen als Schalter (Scheibe 5, Zero 03.10.: „Ja, Schalter“): sie gelten sofort, darum kein „Fertig“ — nur ×
 function beamerOptionenSheet(){
-  const opt=(key,label)=>{
-    const cb=el('input',{type:'checkbox',class:'u-check',...(localStorage.getItem(key)==='1'?{checked:'checked'}:{}),
-      onchange:e=>{ localStorage.setItem(key,e.target.checked?'1':'0');
-        if(beamerModus){ document.body.classList.toggle('nurplan',localStorage.getItem('kladde_beamer_nurplan')==='1'); renderAlles(); } }});
-    return el('div',{class:'zeile'},el('span',{},label),el('span',{},cb));
+  const opt=(key,label,unter)=>{
+    const b=el('button',{type:'button',class:'btn still schalter',role:'switch','aria-checked':String(localStorage.getItem(key)==='1'),'aria-label':label,'aria-describedby':'sw-'+key,dataset:{opt:key},
+      onclick:()=>{ const an=localStorage.getItem(key)!=='1'; localStorage.setItem(key,an?'1':'0'); b.setAttribute('aria-checked',String(an));
+        if(beamerModus){ document.body.classList.toggle('nurplan',localStorage.getItem('kladde_beamer_nurplan')==='1'); renderAlles(); } }},
+      el('span',{class:'schalter-text'},el('b',{},label),el('small',{id:'sw-'+key},unter)),el('span',{class:'schalter-knopf','aria-hidden':'true'}));
+    return b;
   };
-  dlgZeigenEl(
-    el('h3',{},iconEl('auge'),' Projektionsmodus'),
-    el('p',{class:'u-hinweis'},'Bewertungen und LB-Hinweise sind bei aktiver Projektion immer verborgen.'),
-    opt('kladde_beamer_kurz','Namen abkürzen (E. Y.)'),
-    opt('kladde_beamer_nurplan','Nur Sitzplan (Datums-Extras aus)'),
-    el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:dlgZu},'Fertig')));
+  dlgZeigenEl(el('h3',{},iconEl('auge'),' Projektionsmodus'),
+    el('p',{class:'u-hinweis'},'Bewertungen und LB-Hinweise sind bei aktiver Projektion immer verborgen. Änderungen gelten sofort.'),
+    el('div',{class:'schalter-liste'},opt('kladde_beamer_kurz','Namen abkürzen','E. Y. statt Emil Yilmaz'),opt('kladde_beamer_nurplan','Nur der Sitzplan','Datum und Extras ausblenden')));
 }
 
 /* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
@@ -1351,7 +1352,7 @@ function stempleKachel(nr){
   const s=schuelerVonNr(nr);
   if(stempelTyp==='verweigert'){ verweigerungDialog(s); return; }  // 6 mit gekoppelter Kurznotiz
   if(stempelTyp==='bestleistung'){ bestleistungDialog(s); return; } // Gegenstück: Bestnote mit Begründung
-  if(stempelTyp==='versp'){ verspDialog(s); return; }              // Minuten-Abfrage je Schüler
+  if(stempelTyp==='versp'){ verspStempel(s); return; }             // bucht die Minuten seit Blockbeginn, ein zweiter Tipp passt an
   if(stempelTyp==='notiz'){ notizDialog(s); return; }              // Kurznotiz je Schüler
   if(stempelTyp==='note'){ noteDialog(s); return; }                // Notenauswahl je Schüler (Rail-2×2-Feld 📊)
   if(stempelTyp==='entfernen'){ entferneLetzten(nr); pulseKachel(nr); return; } // schnelle Korrektur im Stempelfluss
@@ -1371,6 +1372,7 @@ function entferneLetzten(nr){
 // opt (v1.11.0, Tag bewerten aus dem Verlauf): {datum} bucht auf diesen Tag statt auf den Termin, {danach} zeichnet neu statt „Heute“
 function verweigerungDialog(s,opt={}){
   if(!s) return;
+  opt={kursId:aktiverKursId,...opt};   // auch aus dem Stempel: nach einem Kurswechsel nichts buchen (Prüfer 03.10. 🟡 3)
   const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. Mitarbeit verweigert, Aufgabe nicht bearbeitet'});
   dlgZeigenEl(
     el('h3',{},iconEl('verweigert'),' Verweigerung · '+s.vorname),
@@ -1386,6 +1388,7 @@ function verweigerungDialog(s,opt={}){
 // + optionale gekoppelte Notiz zur Begründung. Kachel zeigt danach 📊 (+ ✎ bei Notiz).
 function bestleistungDialog(s,opt={}){
   if(!s) return;
+  opt={kursId:aktiverKursId,...opt};   // auch aus dem Stempel: nach einem Kurswechsel nichts buchen (Prüfer 03.10. 🟡 3)
   const sek2=bewertProfil(kurs())==='sek2';
   const wert=sek2?'15':'1', label=sek2?'15 P':'Note 1';
   const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:'z. B. herausragender Beitrag, eigenständige Lösung vorgestellt'});
@@ -1450,30 +1453,61 @@ function pulseKachel(nr){
   const k=$('plan').querySelector('.kachel[data-nr="'+nr+'"]'); if(!k) return;
   k.classList.remove('puls'); void k.offsetWidth; k.classList.add('puls'); // Reflow-Re-Trigger (Werft flash_animation)
 }
-// Per-Schüler-Dialoge — aus dem Stempelfluss (⏰/✎) ODER dem „…"-Menü des Decks erreichbar (das Schülerblatt klappt seit 02.10. am Ort auf).
+// Per-Schüler-Dialoge aus dem Stempelfluss (⏰/✎/📊) und aus „Tag bewerten“. Note und Minuten sind seit Scheibe 5 (Zero 03.10.: „A · Kompaktes
+// Notengitter“) dieselben Gitter wie im Schülerblatt: ein Tipp bucht, kein Auswahlfeld und kein „Eintragen“.
 // Vorschlag aus dem Stundenplan: jetzt − Blockbeginn (nur heute + laufender Block; sonst null) — Stempel-Dialog und Schülerblatt
 function verspVorschlag(){
   if(terminDatum!==heuteIso()||!autowahlInfo||autowahlInfo.startSek==null) return null;
   const now=new Date(), min=Math.round((now.getHours()*3600+now.getMinutes()*60+now.getSeconds()-autowahlInfo.startSek)/60);
   return min>=1&&min<=90?min:null;
 }
-function verspDialog(s){ if(!s) return;
-  const min=verspVorschlag(), vorschlag=min?String(min):'';
-  const hinweis=min?'<p class="u-hinweis">Nach Stundenplan: '+min+' min (Block ab '+formatZeit(autowahlInfo.startSek)+') — anpassbar.</p>':'';
-  dlgZeigen('<h3>Verspätung · '+esc(s.vorname)+'</h3>'+hinweis+'<input type="number" id="min-in" inputmode="numeric" placeholder="Minuten" min="1" max="90" value="'+vorschlag+'"><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const m=Number(d.querySelector('#min-in').value)||0; if(m>0){ addEvent('versp',s.nr,{minuten:m}); toast(s.vorname+': '+m+' min zu spät'); renderHeute(); } dlgZu(); }; setTimeout(()=>{const mi=d.querySelector('#min-in'); mi.focus(); mi.select();},60); });
+// Die wirksamen Verspätungen dieses Schülers am Termin — meist eine; mehrere nur aus Altbestand oder von zwei Geräten. Ein neuer Wert
+// ersetzt sie alle: addEvent → ersetzungFuer („eine Verspätung je Termin“, logic/verdichtung; Prüfer 03.10. 🔴 1/🟡 2)
+function verspAmTermin(nr){
+  const l=wirksameEvents(vault.events).filter(e=>e.typ==='versp'&&e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum);
+  return l.length?{minuten:l.reduce((s,e)=>s+(Number(e.minuten)||0),0),teile:l.map(e=>Number(e.minuten)||0)}:null;
 }
-function notizDialog(s){ if(!s) return;
+const verspText=a=>'Gebucht: '+a.minuten+' min'+(a.teile.length>1?' ('+a.teile.join(' + ')+')':'')+'. Andere Minuten antippen — ersetzt.';
+// Verspätung als Stempel (Zero 03.10.: „soll von der uhrzeit selbst berechnet werden als stempel und dann die möglichkeit die zeit anzupassen
+// wenn nötig“): der erste Tipp bucht die Minuten seit Blockbeginn, ein zweiter Tipp auf denselben Schüler öffnet die Minuten zum Anpassen.
+// Ohne laufenden Block (Nachtrag, Pause) gibt es nichts zu rechnen — dann gleich die Minuten.
+function verspStempel(s){ if(!s) return;
+  const vor=verspVorschlag();
+  if(verspAmTermin(s.nr)||!vor) return verspDialog(s);
+  if(addEvent('versp',s.nr,{minuten:vor})){ toast(vor+' min zu spät · '+s.vorname+' — nochmal antippen zum Ändern',4000); renderHeute(); pulseKachel(s.nr); }
+}
+function verspDialog(s){ if(!s) return;
+  const opt={kursId:aktiverKursId}, alt=verspAmTermin(s.nr), vor=verspVorschlag(), jetzt=alt?alt.minuten:null;
+  const buche=m=>{ if(kursGewechselt(opt)) return;
+    if(m===jetzt) toast('unverändert: '+m+' min · '+s.vorname);
+    else if(addEvent('versp',s.nr,{minuten:m})) toast(m+' min zu spät · '+s.vorname);   // ersetzt eine gebuchte (ersetzungFuer)
+    dlgZu(); renderHeute(); pulseKachel(s.nr); };
+  const ein=el('input',{type:'text',inputmode:'numeric',class:'sb-min',placeholder:'andere','aria-label':'andere Minuten',maxlength:'2'});
+  const warn=el('p',{class:'u-warn13 sb-warn',role:'status'});
+  dlgZeigenEl(el('h3',{},'zu spät · '+(beamerModus?anzeigeVorname(s):s.vorname+' '+s.name)),
+    el('section',{class:'sb-stunde'},el('div',{class:'sb-feld ruhig'},
+      el('p',{class:'u-hinweis'},alt?verspText(alt):'Minuten antippen — gebucht.'+(vor?' Nach Stundenplan: '+vor+' min.':'')),
+      el('div',{class:'sb-wahl'},...[...new Set([...(jetzt?[jetzt]:[]),...(vor?[vor]:[]),5,10,15,20,30,45])].map(m=>
+        el('button',{type:'button',class:'btn still'+(m===(jetzt??vor)?' vorschlag':''),dataset:{min:String(m)},onclick:()=>buche(m)},m+' min'))),
+      el('div',{class:'sb-wahl'},ein,el('button',{type:'button',class:'btn still',dataset:{minOk:''},onclick:()=>{ const m=Number(ein.value)||0;
+        if(m>=1&&m<=90) buche(m); else warn.textContent='Bitte 1 bis 90 Minuten eingeben.'; }},'Eintragen'))),warn));
+}
+function notizDialog(s){ if(!s) return; const opt={kursId:aktiverKursId};   // Kurswechsel-Netz (Prüfer 03.10. 🟡 3)
   dlgZeigen('<h3>Notiz · '+esc(s.vorname)+'</h3><textarea id="notiz-in" rows="3" class="u-textarea u-fs16"></textarea><div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ const txt=d.querySelector('#notiz-in').value.trim(); if(txt){ addEvent('notiz',s.nr,{notiz:txt}); toast('Notiz gespeichert · '+s.vorname); renderHeute(); if(aktView==='schueler') renderSchueler(); } dlgZu(); }; setTimeout(()=>d.querySelector('#notiz-in').focus(),60); });
+    d=>{ d.querySelector('[data-ok]').onclick=()=>{ if(kursGewechselt(opt)) return; const txt=d.querySelector('#notiz-in').value.trim(); if(txt){ addEvent('notiz',s.nr,{notiz:txt}); toast('Notiz gespeichert · '+s.vorname); renderHeute(); if(aktView==='schueler') renderSchueler(); } dlgZu(); }; setTimeout(()=>d.querySelector('#notiz-in').focus(),60); });
 }
 // Eingabe-Reihenfolge der Drittelnoten 1+ 1 1− … 6 — Object.keys(DRITTELNOTEN) stellt die ganzen Noten vorn (Zahl-Schlüssel), gesehen 02.10.
 const NOTEN_DRITTEL=[1,2,3,4,5].flatMap(n=>[n+'+',String(n),n+'-']).concat('6');
 function noteDialog(s,opt={}){ if(!s) return;
-  const k=kurs(); const sek2=bewertProfil(k)==='sek2';
-  const optionen=sek2?Array.from({length:16},(_,i)=>String(15-i)):NOTEN_DRITTEL;
-  dlgZeigen('<h3>Direkte Note · '+esc(s.vorname)+'</h3><select id="note-in">'+optionen.map(o=>'<option>'+o+'</option>').join('')+'</select><div class="btn-reihe"><button class="btn" data-ok>Eintragen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    d=>{ d.querySelector('[data-ok]').onclick=()=>{ if(kursGewechselt(opt)) return; addEvent('note',s.nr,{wert:d.querySelector('#note-in').value,...tagFeld(opt)}); toast('Note eingetragen · '+s.vorname); dlgZu(); (opt.danach||renderHeute)(); }; });
+  opt={kursId:aktiverKursId,...opt};   // auch der Stempel bucht nach einem Kurswechsel nicht mehr (dieselbe Nr ist dann ein anderer Mensch)
+  const sek2=bewertProfil(kurs())==='sek2';
+  const buche=w=>{ if(kursGewechselt(opt)) return;
+    if(addEvent('note',s.nr,{wert:w,...tagFeld(opt)})) toast(beamerModus?'Note gebucht · '+anzeigeVorname(s):'Note '+(sek2?w+' P':w)+' · '+s.vorname);   // an der Wand ohne Wert (Prüfer 03.10. 🟡 4)
+    dlgZu(); (opt.danach||renderHeute)(); if(!opt.danach) pulseKachel(s.nr); };
+  dlgZeigenEl(el('h3',{},'Note · '+(beamerModus?anzeigeVorname(s):s.vorname+' '+s.name)),
+    el('section',{class:'sb-stunde'},el('div',{class:'sb-feld ruhig'},el('p',{class:'u-hinweis'},'Note antippen — gebucht. ↶ nimmt sie zurück.'),
+      el('div',{class:'sb-wahl'},...(sek2?Array.from({length:16},(_,i)=>String(15-i)):NOTEN_DRITTEL).map(w=>
+        el('button',{type:'button',class:'btn still',dataset:{note:w},onclick:()=>buche(w)},sek2?w+' P':w))))));
 }
 function tagFeld(opt){ return opt&&opt.datum?{datum:opt.datum}:{}; }
 // Bewertung an einem Tag aus dem Verlauf setzen (Zero 2026-09-30: „Noten für einen Tag ändern“ · ganze Seite und Detail-Blatt).
@@ -1520,42 +1554,13 @@ function oeffneTag(wurzel,tag){
   // Bewertungs-Reihe unter dem Rückgängig-Chip, und ein zweiter Tipp träfe den Chip (Prüfer 2026-09-30)
   setTimeout(()=>{ b.scrollIntoView({block:'nearest',inline:'center'}); const d=wurzel.querySelector('.tag-detail-inhalt.an'); if(d) d.scrollIntoView({block:'center',inline:'nearest'}); },0);
 }
-function zeigeMehrAktionen(s){
-  const fehlt=standAmTermin(s.nr,terminDatum).fehlt;
-  // Bewertungs-Aktionen (⭐/⊘/Note) für Fehlende gar nicht erst anbieten (Zero 2026-07-10)
-  dlgZeigen('<h3>'+esc(s.vorname)+' '+esc(s.name)+'</h3>'+
-    (fehlt?'<p class="u-warn13">Fehlt heute ('+(FEHLT_WORT[fehlt]||fehlt)+') — Bewertung gesperrt. Der ⌫-Stempel entfernt die Abwesenheit.</p>'
-      :'<p class="u-hinweis">Fehlt jetzt: „abwesend" — e/u klärst du später in der Wiedervorlage.</p>')+
-    '<div class="btn-reihe">'+
-    (fehlt?'':'<button class="btn still" data-t="fehlt_o">abwesend</button>'+
-      '<button class="btn still" data-t="bestleistung">'+iconHtml('best')+' bes. Leistung…</button>'+
-      '<button class="btn still" data-t="verweigert">'+iconHtml('verweigert')+' verweigert (6)…</button>')+
-    '<button class="btn still" data-t="versp">zu spät…</button>'+
-    (fehlt?'':'<button class="btn still" data-t="note">Note…</button>')+
-    '<button class="btn still" data-t="notiz">Notiz…</button>'+
-    '<button class="btn still" data-t="lernzeit">Lernzeit/HA</button></div>'+
-    '<div class="btn-reihe"><button class="btn still" data-t="fehlt_e">direkt entschuldigt</button>'+
-    '<button class="btn still" data-t="fehlt_u">direkt unentsch.</button></div>'+
-    '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
-    el=>{
-      el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
-        const t=b.dataset.t; dlgZu();
-        if(t==='versp') verspDialog(s);
-        else if(t==='note') noteDialog(s);
-        else if(t==='notiz') notizDialog(s);
-        else if(t==='verweigert') verweigerungDialog(s);
-        else if(t==='bestleistung') bestleistungDialog(s);
-        else { addEvent(t,s.nr); renderHeute(); }
-      });
-    });
-}
-
 // Schülerblatt vom Sitzplan aus (Scheibe 3, Zero 2026-10-02: Variante A „Ein Blatt, Aktionen oben“). Oben „Diese Stunde“ mit allen
 // Griffen: ein Tipp bucht auf den Termin, das Blatt schließt, ↶ steht bereit. Note und „zu spät“ klappen im Blatt auf (ein Tipp auf
 // Note bzw. Minuten bucht), Notiz, ⭐ und ⊘ mit Textfeld und einem Knopf; immer nur ein Feld offen. Darunter der Rückblick wie bisher.
 // Vorher kostete eine Note drei Ebenen (Blatt → „＋ Eintrag hinzufügen …“ → „Note…“ → Auswahl + „Eintragen“), der Rückblick war dabei weg.
 // Wer fehlt, bekommt keine Bewertungsknöpfe (wie bewertGuard); ein Zeichen je Stunde regelt addEvent (ersetzungFuer).
-function schuelerBlatt(nr){
+// danach: nach einer Buchung (das Deck zeigt dann die nächste Karte, Scheibe 5)
+function schuelerBlatt(nr,{danach}={}){
   const k=kurs(); const s=schuelerVonNr(nr); if(!k||!s) return;
   // Beamer: das Blatt zeigt Vorschlag, Fehlzeiten, LB und Notizen — nie an die Wand (Prüfer 2026-09-29; die Schüler-Ansicht sperrt schon)
   if(beamerModus){ toast('Projektion aktiv — Details erst nach dem Beamer-Modus'); return; }
@@ -1565,14 +1570,14 @@ function schuelerBlatt(nr){
   const stunde=el('section',{class:'sb-stunde','aria-label':'Diese Stunde'});
   // eintraege: [[typ, extra], …] — die letzte Buchung ist die, die ↶ zurücknimmt (beim ⭐ die Note, nicht die Notiz)
   const buche=(eintraege,text)=>{ if(kursGewechselt(opt)) return; for(const [typ,extra] of eintraege) if(!addEvent(typ,nr,extra||{})) return;
-    dlgZu(); toast(text+' · '+s.vorname); renderHeute(); pulseKachel(nr); };
+    dlgZu(); toast(text+' · '+s.vorname); renderHeute(); pulseKachel(nr); if(danach) danach(eintraege[eintraege.length-1][0]); };
   const zeichne=fokus=>{
     const fehlt=standAmTermin(nr,terminDatum).fehlt;
     const bew=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&BEWERTUNGS_TYPEN.has(e.typ))
       .sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).pop();
     const jetzt=bew?(bew.typ==='note'&&bew.best?'bestleistung':bew.typ):null;
     // Meldungen stehen IM Blatt — ein Toast läge unter dem Dialog (Prüfer 02.10., B2); ein schon gebuchtes e/u bucht nicht noch einmal (B8)
-    const warn=el('p',{class:'u-warn13 sb-warn',role:'status'}), schonGebucht=()=>{ warn.textContent='Schon gebucht — ↶ im Plan nimmt es zurück.'; };
+    const warn=el('p',{class:'u-warn13 sb-warn',role:'status'}), schonGebucht=()=>{ warn.textContent='Schon gebucht — ↶ nimmt es zurück.'; };
     const griff=(id,inhalt,fn,{an,auf}={})=>el('button',{type:'button',class:'btn still sb-griff',dataset:{sb:id},
       ...(an!=null?{'aria-pressed':String(!!an)}:{}),...(auf!=null?{'aria-expanded':String(auf)}:{}),onclick:fn},...[].concat(inhalt));
     const klapp=id=>()=>{ offen=offen===id?null:id; zeichne('[data-sb="'+id+'"]'); };
@@ -1594,13 +1599,15 @@ function schuelerBlatt(nr){
     const textFeld=(hinweis,platzhalter,knopf,fn)=>{ const ta=el('textarea',{rows:'2',class:'u-textarea u-fs16',placeholder:platzhalter});
       return [el('p',{class:'u-hinweis'},hinweis),ta,el('div',{class:'btn-reihe'},el('button',{type:'button',class:'btn',dataset:{sbOk:offen},onclick:()=>fn(ta.value.trim())},knopf))]; };
     const bestWert=sek2?'15':'1', bestLabel=sek2?'15 P':'Note 1', vor=verspVorschlag();
+    const altV=verspAmTermin(nr), jetztV=altV?altV.minuten:null;
+    const versp=m=>{ if(m===jetztV){ dlgZu(); toast('unverändert: '+m+' min · '+s.vorname); return; } buche([['versp',{minuten:m}]],m+' min zu spät'); };   // ersetzt (ersetzungFuer), nie addiert
     const minEin=el('input',{type:'text',inputmode:'numeric',class:'sb-min',placeholder:'andere','aria-label':'andere Minuten',maxlength:'2'});
-    const feld=offen==='note'?[el('p',{class:'u-hinweis'},'Note antippen — gebucht. ↶ im Plan nimmt sie zurück.'),
+    const feld=offen==='note'?[el('p',{class:'u-hinweis'},'Note antippen — gebucht. ↶ nimmt sie zurück.'),
         wahl(sek2?Array.from({length:16},(_,i)=>String(15-i)):NOTEN_DRITTEL,w=>sek2?w+' P':w,w=>buche([['note',{wert:w}]],'Note '+(sek2?w+' P':w)))]
-      :offen==='versp'?[el('p',{class:'u-hinweis'},'Minuten antippen — gebucht.'+(vor?' Nach Stundenplan: '+vor+' min.':'')),
-        wahl([...new Set([...(vor?[vor]:[]),5,10,15,20,30,45])],m=>m+' min',m=>buche([['versp',{minuten:m}]],m+' min zu spät'),vor),
+      :offen==='versp'?[el('p',{class:'u-hinweis'},altV?verspText(altV):'Minuten antippen — gebucht.'+(vor?' Nach Stundenplan: '+vor+' min.':'')),
+        wahl([...new Set([...(jetztV?[jetztV]:[]),...(vor?[vor]:[]),5,10,15,20,30,45])],m=>m+' min',m=>versp(m),jetztV??vor),
         el('div',{class:'sb-wahl'},minEin,el('button',{type:'button',class:'btn still',dataset:{sbMinOk:''},onclick:()=>{ const m=Number(minEin.value)||0;
-          if(m>=1&&m<=90) buche([['versp',{minuten:m}]],m+' min zu spät'); else warn.textContent='Bitte 1 bis 90 Minuten eingeben.'; }},'Eintragen'))]
+          if(m>=1&&m<=90) versp(m); else warn.textContent='Bitte 1 bis 90 Minuten eingeben.'; }},'Eintragen'))]
       :offen==='notiz'?textFeld('Notiz zu dieser Stunde:','Notiz','Notiz speichern',t=>{ if(t) buche([['notiz',{notiz:t}]],'Notiz gespeichert'); else warn.textContent='Die Notiz ist leer.'; })
       :offen==='best'?textFeld('Trägt '+bestLabel+' als direkte Note ein. Begründung (empfohlen):','z. B. herausragender Beitrag','Eintragen ('+bestLabel+')',
         t=>buche([...(t?[['notiz',{notiz:t}]]:[]),['note',{wert:bestWert,best:true}]],'Besondere Leistung: '+bestLabel))
@@ -1618,8 +1625,8 @@ function schuelerBlatt(nr){
     '<div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>',
     el=>{
       el.querySelector('.sb-ort').replaceWith(stunde); zeichne();
-      verdrahteDetail(el,tag=>{ dlgZu(); renderHeute(); schuelerBlatt(nr); oeffneTag($('dlg'),tag); });   // Zeitstrahl-Tage, Balkenbreiten — fehlten hier (Tap tat nichts, Balken leer); Storno/Quartal unten überschrieben
-      el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e&&stornoVon(e)){ toast('storniert'+wiederDa(e)); dlgZu(); renderHeute(); schuelerBlatt(nr); } });
+      verdrahteDetail(el,tag=>{ dlgZu(); renderHeute(); schuelerBlatt(nr,{danach}); oeffneTag($('dlg'),tag); });   // Zeitstrahl-Tage, Balkenbreiten — fehlten hier (Tap tat nichts, Balken leer); Storno/Quartal unten überschrieben
+      el.querySelectorAll('.ev-storno').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const e=vault.events.find(x=>x.id===b.dataset.storno); if(e&&stornoVon(e)){ toast('storniert'+wiederDa(e)); dlgZu(); renderHeute(); schuelerBlatt(nr,{danach}); } });
       el.querySelectorAll('[data-quartal]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); dlgZu(); setzeQuartalsnote(s,v.vorschlag); });
     });
 }
@@ -1657,7 +1664,7 @@ function zeigeLegende(){
     zeile3(iconHtml('abwesend'),{fehlt:'o'},'abwesend — Klärung offen (Reiter Schüler)')+
     zeile3(iconHtml('entsch'),{fehlt:'e'},'entschuldigt gefehlt')+
     zeile3(iconHtml('unentsch'),{fehlt:'u'},'unentschuldigt gefehlt — zählt als '+wert('6','0'))+
-    zeile3(iconHtml('versp'),{versp:5},'zu spät (Minuten)')+
+    zeile3(iconHtml('versp'),{versp:5},'zu spät — der erste Tipp bucht die Minuten seit Stundenbeginn, ein zweiter Tipp ändert sie')+
     hinweis('Wer fehlt, wird nicht bewertet — erst ⌫, dann bewerten.')+
     kopf('Organisation')+
     zeile3(iconHtml('ipad'),{ipad:1},'iPad fehlt / leer')+
@@ -1683,7 +1690,7 @@ function zeigeLegende(){
     '</div><div class="btn-reihe"><button class="btn still" data-schliessen>Schließen</button></div>');
 }
 
-/* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Notiz ↓weiter) ═══ */
+/* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Schülerblatt ↓weiter) ═══ */
 let deckListe=[], deckIdx=0, deckNurOhne=true;   // Zero 02.10.: „Deck soll standardmäßig mit nur offene Einträge starten“
 let deckRundeStart=null;
 let deckVerlauf=[]; // Buchungen DIESER Deck-Runde [{nr,name,evId,typ}] — mitlaufende, korrigierbare Historie (Zero-Feldtest 2026-07-10)
@@ -1759,7 +1766,8 @@ function zeigeDeckKarte(){
 // Mitlaufende Runden-Historie (Zero-Feldtest): jede Buchung als Zeile, Tap → korrigieren.
 // Nur UI-Log — die Wahrheit sind die Events (Korrektur = storno + neu, append-only).
 const DECK_SYMBOL={'+':'＋','o':'o','-':'−'};
-// „Diese Runde" zeigte nur, was per Swipe/Knopf gebucht wurde — was aus dem Mehr-Menue kam
+const DECK_WEITER=new Set(['+','o','-','note','verweigert','fehlt_o','fehlt_e','fehlt_u']);   // nach diesen Buchungen aus dem Schülerblatt kommt die nächste Karte
+// „Diese Runde" zeigte nur, was per Swipe/Knopf gebucht wurde — was außerhalb der Karte kam (bis 03.10. das Mehr-Menü, heute Schülerblatt und Stempel)
 // (Notiz, Note, zu spaet …), fehlte und liess sich dort folglich nicht antippen. Nachtragen
 // statt Umbau: alles, was seit Rundenbeginn fuer einen Schueler DIESES Decks entstand.
 // Bewertungen tragen ihr Symbol, alles andere ein Stift — der Tap fuehrt in dieselbe Korrektur.
@@ -1802,12 +1810,12 @@ function deckKorrektur(v){
     v.fremd=false;
     dlgZu(); renderDeckVerlauf(); zeigeDeckKarte(); toast(v.name+': '+(typ?DECK_SYMBOL[typ]:'Eintrag entfernt'));
   };
-  // Zeilen aus dem Mehr-Menü (Notiz, Note, abwesend …) nur zeigen und entfernen, nie durch ＋/o/− ERSETZEN —
+  // Zeilen aus dem Schülerblatt (Notiz, Note, abwesend …; bis 03.10. das „Mehr-Menü“) nur zeigen und entfernen, nie durch ＋/o/− ERSETZEN —
   // sonst verschwand z. B. eine Abwesenheit still hinter einem ＋ (Prüfer 2026-09-29)
   if(v.fremd){
     const alt=vault.events.find(x=>x.id===v.evId);
     dlgZeigenEl(el('h3',{},v.name),
-      el('p',{class:'u-hinweis'},'Eintrag aus dem Mehr-Menü: '+(alt?(TYP_LABEL[alt.typ]||alt.typ):'—')+'. Bewerten geht über die Karte.'),
+      el('p',{class:'u-hinweis'},'Eintrag außerhalb der Karte: '+(alt?(TYP_LABEL[alt.typ]||alt.typ):'—')+'. Bewerten geht über die Karte.'),
       el('div',{class:'btn-reihe'},
         ...(v.evId?[el('button',{class:'btn gefahr',onclick:()=>setze(null)},'Eintrag entfernen')]:[]),
         el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
@@ -1828,7 +1836,9 @@ function deckAktion(aktion){
   if(deckListe._kurs!==aktiverKursId){ neuesDeck(false); zeigeDeckKarte(); toast('Kurs gewechselt — neue Runde'); return; }
   if(deckListe._datum!==terminDatum){ neuesDeck(false); zeigeDeckKarte(); toast('Datum gewechselt — neue Runde'); return; }   // „Stunde wählen“ geht auch im Deck (Prüfer N3)
   const s=deckListe[deckIdx];
-  if(aktion==='notiz'){ zeigeMehrAktionen(s); return; }
+  // ↑ öffnet das Schülerblatt (Scheibe 5, Zero 03.10.: „A · Schülerblatt“). Weiter geht es nach einer Bewertung oder Abwesenheit; nach Notiz,
+  // „zu spät“ oder Lernzeit bleibt die Karte für − o + stehen (Prüfer 03.10. ❓ 8)
+  if(aktion==='notiz'){ schuelerBlatt(s.nr,{danach:typ=>{ if(aktView!=='deck'||deckListe[deckIdx]!==s) return; if(DECK_WEITER.has(typ)) deckAktion('skip'); else { zeigeDeckKarte(); renderDeckVerlauf(); } }}); return; }
   // Der Bewertungs-Guard galt bisher nur fuer den Stempelpfad (stempleKachel). Das Deck baut
   // seine Liste zwar ohne Abwesende, prueft aber NICHT nach: wer waehrend der laufenden Runde
   // als abwesend gestempelt wird (kurzer Wechsel nach „Heute"), blieb im Stapel und liess sich
@@ -1874,7 +1884,7 @@ document.querySelectorAll('[data-deck]').forEach(b=>b.addEventListener('click',(
   karte.addEventListener('pointerup',ende);
   document.addEventListener('pointercancel',()=>{start=null;},{capture:true}); // Härtungs-Regel 1
 })();
-// PC-Pfeiltasten fürs Deck (P4.4): ← − · → + · ↑ Notiz · ↓ weiter — nur in der Deck-Ansicht, nie über Dialog
+// PC-Pfeiltasten fürs Deck (P4.4): ← − · → + · ↑ Schülerblatt (Scheibe 5) · ↓ weiter — nur in der Deck-Ansicht, nie über Dialog
 document.addEventListener('keydown',e=>{
   if(aktView!=='deck'||!vault||$('dlg').open) return;
   const a={ArrowLeft:'-',ArrowRight:'+',ArrowUp:'notiz',ArrowDown:'skip'}[e.key];

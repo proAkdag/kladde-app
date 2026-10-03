@@ -43,10 +43,15 @@ const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
 //   still   → ältere Doppelte (frühere Versionen, zwei Geräte), bekommen je einen Storno
 //   notiz   → Notizen an ersetzten Zeichen reisen mit; die Begründung eines ⊘ NICHT — sie geht mit dem ⊘ und kommt mit ↶
 //             zurück (Zero 2026-09-30: sonst stand „＋ · Mitarbeit verweigert“ im Verlauf und im Kurzbericht). Notiz-Einträge bleiben unberührt.
+// Eine Verspätung je Termin (Scheibe 5, Zero 03.10.: „die zeit anzupassen wenn nötig“): eine neue ersetzt die bisherigen nach derselben
+// Regel — so addieren weder ein ↷ Wiederherstellen noch zwei Geräte noch Altbestand die Minuten (Prüfer 03.10., 🔴 1/🟡 2). Die Brücke
+// braucht keine eigene Regel: sie liest die gebuchten Stornos (export_mappe.py wirksame_events).
+const VERSP_TYPEN = new Set(['versp']);
 function ersetzungFuer(events, neu) {
-  if (!BEWERTUNG_TYPEN.has(neu.typ) || neu.stornoVon) return null;
+  const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : VERSP_TYPEN.has(neu.typ) ? VERSP_TYPEN : null;
+  if (!art || neu.stornoVon) return null;
   const alt = wirksameEvents(events)
-    .filter(e => BEWERTUNG_TYPEN.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu))
+    .filter(e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu))
     .sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
   if (!alt.length) return null;
   const ersetzt = alt.pop();
