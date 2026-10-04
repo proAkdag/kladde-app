@@ -1,27 +1,27 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.18.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.18.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.18.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.18.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.18.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.18.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.18.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.18.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.18.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.18.0';
-import { entferneNachrueckend, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.18.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.18.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.18.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.18.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.18.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.18.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.18.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.18.0';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung } from '../logic/stunden.mjs?v=1.18.0';
-import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.18.0';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.18.0';
-const APP_VERSION = '1.18.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.19.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.19.0';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.19.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey, leseHeader } from '../logic/container.mjs?v=1.19.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.19.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.19.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.19.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.19.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.19.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=1.19.0';
+import { entferneNachrueckend, fremdeKinder, listenAbgleich, wendeAbgleichAn } from '../logic/teilnehmer.mjs?v=1.19.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=1.19.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.19.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=1.19.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.19.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar } from '../logic/mappe.mjs?v=1.19.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.19.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=1.19.0';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung } from '../logic/stunden.mjs?v=1.19.0';
+import { platzVon, setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, alsTische, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.19.0';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.19.0';
+const APP_VERSION = '1.19.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -2735,7 +2735,7 @@ function renderKurse(){
         geladen.push(k);
       } catch(err){ fehler.push(f.name+': '+err.message); }
     }
-    for(const a of abgleiche){ if(await listenAbgleichDialog(a.k,a.neu)) geladen.push(a.k); }   // nacheinander, jeder Kurs sein Blatt
+    for(const a of abgleiche){ if(!vault) break; if(await listenAbgleichDialog(a.k,a.neu)) geladen.push(a.k); }   // nacheinander, jeder Kurs sein Blatt; gesperrt → Schluss (Prüfer 04.10. K4-b)
     if(geladen.length){
       stammMutiert(); speichern();
       kursWechseln(geladen[geladen.length-1].id);
@@ -2929,8 +2929,19 @@ function listenAbgleichDialog(k,neu){
     if(!(ab.neue.length+ab.entfernt.length+ab.reaktiviert.length+ab.geaendert.length+ab.nrBelegt.length)){ toast(k.name+': Liste unverändert ('+ab.gleich+' Schüler)'); res(false); return; }
     const hatEv=nr=>vault.events.some(e=>e.kursId===k.id&&e.schuelerNr===nr&&e.typ!=='storno');
     const block=(titel,arr,fmt)=>arr.length?[el('div',{class:'tag-kopf'},titel+' ('+arr.length+')'),...arr.slice(0,40).map(x=>el('div',{class:'zeile'},el('span',{},fmt(x))))]:[];
+    // Sofort-Schutz (Zero 04.10.): steht an Nrn MIT Einträgen ein anderes Kind (Mappe verschoben: eingeschoben oder nachgerückt),
+    // wird nichts übernommen — „Übernehmen“ hängte sonst Einträge, Sitzplatz und Halbgruppe still an dieses Kind (fremdeKinder)
+    const fremd=fremdeKinder(ab,hatEv,alt);
+    if(fremd.length){
+      dlgZeigenEl(el('h3',{},'Liste aktualisieren · '+k.name),
+        el('p',{class:'u-warn13'},iconEl('warnung'),' Die Mappe passt nicht zur Kladde: An '+(fremd.length===1?'einer Nummer':fremd.length+' Nummern')+' mit Einträgen steht ein anderes Kind. Übernehmen würde ihm fremde Einträge geben, deshalb wird nichts übernommen.'),
+        el('div',{class:'u-scroll58'},...block('Anderes Kind an einer Nr mit Einträgen',fremd,g=>'Nr '+g.nr+' · Einträge von '+g.alt.vorname+' '+g.alt.name+' · in der Mappe: '+g.neu.vorname+' '+g.neu.name)),
+        el('p',{class:'u-hinweis'},'In der Mappe Neuzugänge unten anhängen und bei Abgängen Name und Vorname leeren (die Zeile bleibt stehen), dann behält jedes Kind seine Nr. Einen echten Namenswechsel änderst du unter Kurse → ⋯ → ✎ am Namen.'),
+        el('div',{class:'btn-reihe'},el('button',{class:'btn still',onclick:()=>{ dlgZu(); res(false); }},'Schließen')));
+      return;
+    }
     dlgZeigenEl(el('h3',{},'Liste aktualisieren · '+k.name),
-      el('p',{class:'u-hinweis'},'Die Mappe wird über die Nr mit dem Bestand abgeglichen. Sitzplan, Halbgruppen und Einträge bleiben. '+ab.gleich+' Schüler unverändert.'),
+      el('p',{class:'u-hinweis'},'Die Mappe wird über die Nr mit dem Bestand abgeglichen. Einträge, Sitzplatz und Halbgruppe hängen an der Nr. '+ab.gleich+' Schüler unverändert.'),
       el('div',{class:'u-scroll58'},
         ...block('Neu',ab.neue,s=>'Nr '+s.nr+' · '+s.vorname+' '+s.name+(s.lb?' · LB':'')),
         ...block('Geändert',ab.geaendert,g=>'Nr '+g.nr+' · '+g.alt.vorname+' '+g.alt.name+' → '+g.neu.vorname+' '+g.neu.name+(!!g.alt.lb!==!!g.neu.lb?(g.neu.lb?' · LB':' · LB weg'):'')),
@@ -3059,10 +3070,10 @@ function schuljahrAssistent(){
 
   function s1(){ // Sicherung erzwingen
     dlgZeigenEl(kopf('Sicherung'),
-      el('p',{},'Bevor du das neue Schuljahr startest, sichere die aktuelle Kladde. „Weiter" wird erst nach einem Export frei.'),
+      el('p',{},'Bevor du das neue Schuljahr startest, sichere die aktuelle Kladde. „Weiter" wird erst nach einer Sicherung frei.'),
       el('div',{class:'btn-reihe'},
-        el('button',{class:'btn',onclick:async()=>{ await exportiereContainerJetzt(); s1(); }},exportInSitzung?'✓ exportiert — nochmal':'Container exportieren'),
-        el('button',{class:'btn'+(exportInSitzung?'':' still'),onclick:()=>{ if(!exportInSitzung){ toast('Bitte zuerst exportieren'); return; } schritt=2; s2(); }},'Weiter'),
+        el('button',{class:'btn',onclick:async()=>{ await exportiereContainerJetzt(); s1(); }},exportInSitzung?'✓ gesichert — nochmal':'Sicherung speichern'),
+        el('button',{class:'btn'+(exportInSitzung?'':' still'),onclick:()=>{ if(!exportInSitzung){ toast('Bitte zuerst sichern'); return; } schritt=2; s2(); }},'Weiter'),
         el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
   }
   function s2(){ // Altes Jahr
@@ -3183,7 +3194,7 @@ function loescheKursEndgueltig(id){
   dlgZeigen('<h3>Endgültig löschen</h3><p class="u-warn13">Unwiderruflich: Kurs, Schülerliste, Sitzplan und ALLE Ereignisse werden entfernt.</p>'+
     '<p class="u-hinweis">Sichere vorher (falls noch nicht geschehen). Zum Bestätigen den Kursnamen „'+esc(k.name)+'" eintippen:</p>'+
     '<input type="text" id="del-confirm" autocomplete="off" class="u-w170">'+
-    '<div class="btn-reihe"><button class="btn still" id="del-export">Erst exportieren</button><button class="btn gefahr" id="del-ok" disabled>Löschen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    '<div class="btn-reihe"><button class="btn still" id="del-export">Erst sichern</button><button class="btn gefahr" id="del-ok" disabled>Löschen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{
       el.querySelector('#del-confirm').oninput=e=>{ el.querySelector('#del-ok').disabled=e.target.value.trim()!==k.name; };
       el.querySelector('#del-export').onclick=()=>{ dlgZu(); exportiereContainer(); };
@@ -3205,7 +3216,7 @@ function loescheKursEndgueltig(id){
     });
 }
 // Sitzplan als PDF (Zero 2026-10-02, Variante P2 + Klarstellung: „die Sitzuordnung soll abgebildet sein - nur in der Spalte mit namen
-// brauche ich die sitzplatznummer usw. nicht“): der Plan wie im Unterricht, Tafel unten, leere Tische gestrichelt; rechts die Namen A–Z
+// brauche ich die sitzplatznummer usw. nicht“): der Plan wie im Unterricht, Tafel unten, leere Tische gestrichelt; rechts die Schülerliste nach Nr
 // mit Schülernummer. Die Kladde zeichnet auf eine Zeichenfläche (A4 quer, 200 dpi) und schreibt die PDF selbst (logic/pdfbild.mjs).
 // LB-Schüler tragen ein dezentes ◆ in Kachel und Liste, unten „◆ = LB“ (Zero 02.10. abends, Frage-Dialog: „Dezentes Zeichen ◆“).
 // Die Nr steht auch klein in der Kachel — sie verbindet Plan und Liste.
@@ -3241,8 +3252,8 @@ function sitzplanPdfZeichnen(k){
   const tafY=planY+nR*ka+(nR-1)*LU+44, tafB=Math.min(breite,900);
   g.beginPath(); g.roundRect(x0+(breite-tafB)/2,tafY,tafB,60,10); g.strokeStyle=LINIE; g.lineWidth=3; g.stroke();
   font(26,600); text('T A F E L',x0+breite/2,tafY+40,TINTE,'center');
-  // Namen A–Z mit Schülernummer — ohne Reihe und Platz
-  const lx=B-RAND-LB_LISTE; font(34,700); text('Namen A–Z',lx,planY+30,TINTE);
+  // Schülerliste nach Schülernummer (Zero 03.10.: „Sollte nach Schülernummer sortiert sein“ — die Schule führt ein Kind nach einer Namensänderung weiter auf seiner Nr) — ohne Reihe und Platz
+  const lx=B-RAND-LB_LISTE; font(34,700); text('Schülerliste',lx,planY+30,TINTE);
   const zh=Math.min(46,(H-RAND-planY-70)/Math.max(1,a.liste.length)); let y=planY+70;
   font(zh*.42,600); text('Nr.',lx+60,y,LEISE,'right'); text('Name',lx+84,y,LEISE);
   for(const x of a.liste){ y+=zh; font(zh*.56); text(String(x.nr),lx+60,y,LEISE,'right');
@@ -3896,69 +3907,90 @@ function stundenplanAssistent(){
 const GRUPPEN_LABELS=['A','B','C','D'];   // Halbgruppen der Kurs-Seite
 
 
-/* ═══ MEHR · Sync (Export/Import) + Heimnetz + Diagnose ═══ */
+/* ═══ MEHR · Sichern & Übertragen · Sicherheit · Darstellung · Technik (Scheibe 7, Zero 04.10.: 1 A · 2 B · 3 B · 4 A · 5 B) ═══ */
+// Kalendertage seit einem Zeitpunkt: Banner und „Sichern“ zählen gleich (Math.round fängt die 23-/25-h-Tage der Zeitumstellung)
+function tageSeit(ts){ const d=new Date(ts), h=new Date(); return Math.round((new Date(h.getFullYear(),h.getMonth(),h.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000); }
+// Datenschutz-Satz (Zero 03.10. „Nur Datenschutz-Satz“, Ort 04.10. „Fuß der Seite“). Der Satz des Design-Gerüsts („verlassen das Gerät nur
+// verschlüsselt“) stimmte nicht: Drucken, Sitzplan-PDF, „Vorschläge kopieren“ und „Kurzbericht kopieren“ geben Klartext heraus (Prüfer 04.10.).
+const DATENSCHUTZ_SATZ='Kein Tracking, keine fremden Server: Deine Einträge liegen verschlüsselt auf diesem Gerät und verlassen es unverschlüsselt nur, wenn du druckst, ein Sitzplan-PDF erzeugst oder Vorschläge bzw. einen Kurzbericht kopierst.';
+// Kopf von „Sichern“: Stand der letzten Sicherung aus IndexedDB `letzterExport`. Aufgerufen von renderMehr und nach jedem Sichern
+// (merkeExport: Speichern und „An den PC senden“) — vorher blieb der Kopf nach dem Sichern stehen (Prüfer 04.10.).
+// Gezählt werden nur Einträge; Stammdaten-Änderungen (Listen, Sitzpläne) sieht die Zahl nicht, darum „keine neuen Einträge“.
+function sicherungsKopf(){
+  const stand=$('ms-stand'); if(!stand||!vault) return;
+  const n=vault.events.length, pad=x=>String(x).padStart(2,'0');
+  idbGet('letzterExport').then(le=>{
+    if(!le){ stand.classList.add('ms-alt'); stand.replaceChildren(el('b',{class:'ms-gross'},'Noch nie gesichert'),el('span',{class:'ms-klein'},(n===1?'1 Eintrag':n+' Einträge')+' nur auf diesem Gerät')); return; }
+    const d=new Date(le.ts), tage=tageSeit(le.ts), neu=Math.max(0,n-(le.events||0));
+    stand.classList.toggle('ms-alt',tage>7&&neu>0);   // dieselbe Schwelle wie das Sicherungs-Banner
+    stand.replaceChildren(el('b',{class:'ms-gross'},tage<=0?'Heute gesichert':tage===1?'Gestern gesichert':'Gesichert vor '+tage+' Tagen'),
+      el('span',{class:'ms-klein'},WOCHENTAG_KURZ[d.getDay()]+' '+pad(d.getDate())+'.'+pad(d.getMonth()+1)+'., '+pad(d.getHours())+':'+pad(d.getMinutes())+' · '+
+        (neu===0?'seitdem keine neuen Einträge':neu===1?'seitdem 1 neuer Eintrag':'seitdem '+neu+' neue Einträge')));
+  }).catch(()=>{});
+}
 function renderMehr(){
-  const wrap=$('view-mehr');
-  // Zwei FESTE Spalten (Zero-Feldtest 2026-07-10: automatischer Spaltenfluss kippte am iPad zu 4:1):
-  // links die Aktionen (Sicherheit · Sichern · Sync), rechts die Info/Optik (Werkstatt · Darstellung).
-  wrap.innerHTML=
-    '<div class="mehr-spalte">'+
-    '<div class="panel"><h2>Sicherheit</h2>'+
-    '<div class="zeile"><span>Automatisch sperren nach</span><span><select id="sec-lockmin">'+[5,10,15,30].map(m=>'<option value="'+m+'"'+(lockMinuten()===m?' selected':'')+'>'+m+' min</option>').join('')+'</select></span></div>'+
-    '<label class="zeile"><span>Beim Verlassen sofort sperren</span><span><input type="checkbox" id="sec-sofort"'+(localStorage.getItem('kladde_lock_sofort')==='1'?' checked':'')+' class="u-check"></span></label>'+
-    '<label class="zeile"><span>Während des Unterrichts nicht sperren</span><span><input type="checkbox" id="sec-unterricht"'+(localStorage.getItem('kladde_lock_unterricht')!=='0'?' checked':'')+' class="u-check"></span></label>'+
-    '<div class="zeile"><span>Fingerabdruck / Face ID</span><span id="sec-bio">…</span></div>'+
-    '<div class="btn-reihe"><button class="btn still" id="sec-pass">Passphrase ändern…</button></div></div>'+
-    '<div class="panel"><h2>Sichern & Übertragen</h2>'+
-    '<p class="u-hinweis">Container ist AES-GCM-verschlüsselt (Passphrase nötig zum Öffnen). iPad: „In Dateien sichern" → SMB-Ordner des PCs.</p>'+
-    '<div class="btn-reihe"><button class="btn" id="btn-export">Container exportieren</button>'+
-    '<button class="btn still" id="btn-import">Container importieren/mergen</button></div>'+
-    '<input type="file" id="file-cont" accept=".enc,application/octet-stream" class="hidden"></div>'+
-    (PAGES_KONTEXT?'':'<div class="panel"><h2>Heimnetz-Sync (PC-Server)</h2><div class="btn-reihe">'+
-      '<button class="btn" id="btn-push">Push</button><button class="btn" id="btn-pull">Pull + Merge</button>'+
-      '<span id="sync-status" class="u-hinweis u-selfcenter"></span></div></div>')+
-    '</div>'+
-    '<div class="mehr-spalte" id="mehr-spalte-b">'+
-    '<div class="panel"><h2>Werkstatt</h2>'+
-    '<div class="zeile"><span>Version</span><span class="wert">v'+APP_VERSION+' · '+GERAET+(PAGES_KONTEXT?' · Pages':' · Heimnetz')+'</span></div>'+
-    '<div class="zeile"><span>Modus</span><span class="wert" id="dg-mode">…</span></div>'+
-    '<div class="zeile"><span>persist()</span><span class="wert" id="dg-persist">…</span></div>'+
-    '<div class="zeile"><span>Speicher</span><span class="wert" id="dg-quota">…</span></div>'+
-    '<div class="zeile"><span>Ereignisse im Log</span><span class="wert">'+vault.events.length+'</span></div>'+
-    '<div class="zeile"><span>Letzte Sicherung</span><span class="wert" id="dg-save">Write-through aktiv</span></div>'+
-    '<div class="zeile"><span>Regel</span><span class="wert u-maxw55">'+esc(regelText(bewertProfil(kurs())))+'</span></div></div>'+
-    '</div>';
-  const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-  $('dg-mode').textContent=standalone?'standalone (installiert)':'Browser-Tab';
-  if(navigator.storage?.persisted) navigator.storage.persisted().then(p=>$('dg-persist').textContent=p?'gewährt':'nicht gewährt');
-  if(navigator.storage?.estimate) navigator.storage.estimate().then(e=>{ const mb=n=>(n/1048576).toFixed(1)+' MB'; $('dg-quota').textContent=mb(e.usage||0)+' / '+mb(e.quota||0); });
-  $('btn-export').onclick=exportiereContainer;
-  $('btn-import').onclick=()=>$('file-cont').click();
-  $('file-cont').onchange=importiereContainer;
-  $('sec-lockmin').onchange=e=>{ localStorage.setItem('kladde_lock_min',e.target.value); toast('Auto-Lock: '+e.target.value+' min'); };
-  $('sec-sofort').onchange=e=>localStorage.setItem('kladde_lock_sofort',e.target.checked?'1':'0');
-  $('sec-unterricht').onchange=e=>localStorage.setItem('kladde_lock_unterricht',e.target.checked?'1':'0');
-  $('sec-pass').onclick=passphraseWechselDialog;
-  // Fingerabdruck-Zeile: Zustand aus IndexedDB, Knopf je nach Lage (einrichten/entfernen/nicht möglich)
-  idbGet('bio').then(bio=>{
-    const z=$('sec-bio'); if(!z) return;
-    if(!bioVerfuegbar()){ z.replaceChildren(el('span',{class:'u-hinweis'},'hier nicht verfügbar')); return; }
-    z.replaceChildren(bio
-      ?el('button',{class:'btn still u-btn-klein',onclick:bioEntfernen},'eingerichtet · entfernen')
-      :el('button',{class:'btn u-btn-klein',onclick:bioEinrichten},'einrichten…'));
-  });
+  const wrap=$('view-mehr'), n=vault.events.length;
+  const zeile=(l,w,id)=>el('div',{class:'zeile'},el('span',{},l),el('span',{class:'wert',id},w));
+  // Segment-Wahl an Ort und Stelle: Fokus und Lage bleiben, kein Neubau der Ansicht (Prüfer 04.10., Fokus-Regel)
+  const waehleImSeg=b=>{ for(const x of b.parentElement.children){ const an=x===b; x.classList.toggle('still',!an); x.setAttribute('aria-pressed',String(an)); } };
+  // Schalter wie die Beamer-Optionen (Scheibe 5): die ganze Zeile ist das Ziel, die Wahl gilt sofort
+  const schalter=(key,label,unter,an)=>{
+    const b=el('button',{type:'button',class:'btn still schalter',role:'switch','aria-checked':String(an),dataset:{opt:key},
+      onclick:()=>{ const neu=b.getAttribute('aria-checked')!=='true'; b.setAttribute('aria-checked',String(neu)); localStorage.setItem(key,neu?'1':'0'); }},
+      el('span',{class:'schalter-text'},el('b',{},label),el('small',{},unter)),el('span',{class:'schalter-knopf','aria-hidden':'true'}));
+    return b; };
+  // Sichern & Übertragen: den Stand der letzten Sicherung füllt sicherungsKopf() nach dem Einhängen
+  const stand=el('div',{class:'ms-kopf',id:'ms-stand'});
+  const datei=el('input',{type:'file',id:'file-cont',accept:'.enc,application/octet-stream',class:'hidden'}); datei.onchange=importiereContainer;
+  const sichern=el('div',{class:'panel'},el('h2',{},'Sichern & Übertragen'),stand,
+    el('div',{class:'btn-reihe'},el('button',{class:'btn',id:'btn-export',onclick:exportiereContainer},'Sicherung speichern'),
+      el('button',{class:'btn still',id:'btn-import',onclick:()=>datei.click()},'Sicherung einlesen')),
+    el('p',{class:'u-hinweis'},'Die Datei ist verschlüsselt und öffnet sich nur mit deiner Passphrase. Mit ihr kommt die Kladde auch auf dein zweites Gerät. Am iPad: „In Dateien sichern“ → Ordner am PC.'),datei);
+  // Abgleich mit dem PC gibt es nur in der Heimnetz-Instanz (auf github.io fehlt der Server)
+  let pc=null;
   if(!PAGES_KONTEXT){
-    $('btn-push').onclick=syncPush;
-    $('btn-pull').onclick=syncPull;
-    fetch('/api/kladde/status',{cache:'no-store'}).then(r=>r.json()).then(s=>{ $('sync-status').textContent='Server ok · Zert bis '+s.zert_bis; }).catch(()=>{ $('sync-status').textContent='Server nicht erreichbar'; });
+    const st=el('span',{id:'sync-status',class:'u-hinweis u-selfcenter'});
+    pc=el('div',{class:'panel'},el('h2',{},'Mit dem PC abgleichen'),
+      el('div',{class:'btn-reihe'},el('button',{class:'btn',id:'btn-push',onclick:syncPush},'An den PC senden'),el('button',{class:'btn',id:'btn-pull',onclick:syncPull},'Vom PC holen'),st));
+    fetch('/api/kladde/status',{cache:'no-store'}).then(r=>r.json()).then(s=>{ st.textContent='PC erreichbar · Zertifikat bis '+s.zert_bis; }).catch(()=>{ st.textContent='PC nicht erreichbar'; });
   }
-  // Darstellung: Tag/Nacht/System (Zero-Entscheid E1: Default Nacht) — 3-Weg, ergänzt den Header-Schnell-Toggle. el()-Neubau (CSP).
-  const themeBtn=(p,txt)=>el('button',{class:'btn'+(themePref()===p?'':' still'),onclick:()=>{ localStorage.setItem(THEME_KEY,p); themeAnwenden(); renderMehr(); }},txt);
-  $('mehr-spalte-b').append(el('div',{class:'panel'},
-    el('h2',{},'Darstellung'),
-    el('div',{class:'zeile'},el('span',{},'Erscheinungsbild'),
-      el('span',{class:'seg'}, themeBtn('tag','Tag'), themeBtn('nacht','Nacht'), themeBtn('system','System'))),
-    el('p',{class:'u-hinweis'},'System folgt dem Gerät. Der Mond/Sonne-Knopf oben schaltet schnell zwischen Tag und Nacht.')));
+  // Sicherheit: Minuten mit einem Tipp, Schalter statt 22-px-Kästchen
+  const lockSeg=el('span',{class:'seg',role:'group','aria-label':'Automatisch sperren nach'},...[5,10,15,30].map(m=>el('button',{type:'button',class:'btn'+(lockMinuten()===m?'':' still'),
+    'aria-pressed':String(lockMinuten()===m),dataset:{lockMin:String(m)},onclick:e=>{ localStorage.setItem('kladde_lock_min',String(m)); toast('Sperrt nach '+m+' min'); waehleImSeg(e.currentTarget); }},m+' min')));
+  const bio=el('span',{id:'sec-bio'},'…');
+  idbGet('bio').then(b=>{
+    if(!bioVerfuegbar()){ bio.replaceChildren(el('span',{class:'u-hinweis'},'hier nicht verfügbar')); return; }
+    bio.replaceChildren(b?el('button',{class:'btn still u-btn-klein',onclick:bioEntfernen},'eingerichtet · entfernen'):el('button',{class:'btn u-btn-klein',onclick:bioEinrichten},'einrichten…'));
+  });
+  const sicherheit=el('div',{class:'panel'},el('h2',{},'Sicherheit'),
+    el('div',{class:'ms-block'},el('span',{},'Automatisch sperren nach'),lockSeg),
+    el('div',{class:'schalter-liste'},
+      schalter('kladde_lock_sofort','Beim Verlassen sofort sperren','Sonst deckt die Kladde beim App-Wechsel nur ab.',localStorage.getItem('kladde_lock_sofort')==='1'),
+      schalter('kladde_lock_unterricht','Im Unterricht nicht sperren','Während einer Stunde läuft die Zeit oben nicht ab.',localStorage.getItem('kladde_lock_unterricht')!=='0')),
+    el('div',{class:'zeile'},el('span',{},'Fingerabdruck / Face ID'),bio),
+    el('div',{class:'btn-reihe'},el('button',{class:'btn still',id:'sec-pass',onclick:passphraseWechselDialog},'Passphrase ändern…')));
+  // Darstellung: Tag/Nacht/System (Zero-Entscheid E1: Default Nacht) als eigene Zeile, damit „System“ am Handy nicht am Rand klebt
+  const themeBtn=(p,txt)=>el('button',{type:'button',class:'btn'+(themePref()===p?'':' still'),'aria-pressed':String(themePref()===p),onclick:e=>{ localStorage.setItem(THEME_KEY,p); themeAnwenden(); waehleImSeg(e.currentTarget); }},txt);
+  const darstellung=el('div',{class:'panel'},el('h2',{},'Darstellung'),
+    el('div',{class:'ms-block'},el('span',{},'Erscheinungsbild'),el('span',{class:'seg',role:'group','aria-label':'Erscheinungsbild'},themeBtn('tag','Tag'),themeBtn('nacht','Nacht'),themeBtn('system','System'))),
+    el('p',{class:'u-hinweis'},'System folgt dem Gerät. Der Mond/Sonne-Knopf oben schaltet schnell zwischen Tag und Nacht.'));
+  // Technik: eingeklappt, in Alltagssprache (vorher „Werkstatt“ mit persist(), Log-Zähler, Formel offen)
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true, k=kurs();
+  const technik=el('details',{class:'panel ms-technik'},
+    el('summary',{},el('span',{},'Technik'),el('span',{class:'wert'},'v'+APP_VERSION)),
+    zeile('Version','v'+APP_VERSION+' · '+GERAET+(PAGES_KONTEXT?' · Pages':' · Heimnetz')),
+    zeile('Läuft als',standalone?'installierte App':'Browser-Tab'),
+    zeile('Speicher dauerhaft','…','dg-persist'),
+    zeile('Speicher belegt','…','dg-quota'),
+    zeile('Einträge gesamt',String(n)),
+    k?el('div',{class:'ms-block ms-regel'},el('span',{},'Notenregel '+k.name),el('span',{class:'u-hinweis'},regelText(bewertProfil(k)))):null);
+  if(navigator.storage?.persisted) navigator.storage.persisted().then(p=>{ const z=$('dg-persist'); if(z) z.textContent=p?'ja':'nein (der Browser darf räumen)'; });
+  if(navigator.storage?.estimate) navigator.storage.estimate().then(e=>{ const z=$('dg-quota'); if(z) z.textContent=((e.usage||0)/1048576).toFixed(1)+' MB'; });
+  // Zwei FESTE Spalten (Zero-Feldtest 10.07.), verteilt nach Höhe: links Sichern (+ PC) und Darstellung, rechts Sicherheit und Technik.
+  // Am Handy dieselbe Reihenfolge untereinander. Der Datenschutz-Satz steht am Fuß über beiden Spalten.
+  wrap.replaceChildren(el('div',{class:'mehr-spalte'},sichern,pc,darstellung),el('div',{class:'mehr-spalte',id:'mehr-spalte-b'},sicherheit,technik),
+    el('p',{class:'ms-satz'},DATENSCHUTZ_SATZ));
+  sicherungsKopf();
 }
 async function aktuellerContainerBlob(){
   await speichern();
@@ -3967,15 +3999,15 @@ async function aktuellerContainerBlob(){
 }
 function exportiereContainer(){
   // Export-Warnung (Konzept §2) — sensibilisieren, dann die bewährte Kaskade
-  dlgZeigen('<h3>Container exportieren</h3>'+
+  dlgZeigen('<h3>Sicherung speichern</h3>'+
     '<p>Diese Datei enthält deine Kladde verschlüsselt. Sie kann nur mit deiner Passphrase geöffnet werden.</p>'+
     '<p class="u-hinweis">Die Sicherheit hängt von der Stärke deiner Passphrase ab. Bewahre die Datei geschützt auf.</p>'+
-    '<div class="btn-reihe"><button class="btn" data-ok>Exportieren</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    '<div class="btn-reihe"><button class="btn" data-ok>Speichern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); exportiereContainerJetzt(); }; });
 }
 let exportInSitzung=false; // für Schuljahr-Assistent: „Weiter" erst nach echtem Export
 function merkeExport(){
-  exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length});
+  exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}).then(sicherungsKopf).catch(()=>{});   // „Mehr“ offen: Kopf gleich nachziehen
   // Die v1-Sicherung aus der Umstellung v1→v2 trägt den alten Stand (auch längst gelöschte Kurse) mit der alten Passphrase.
   // Mit einer v2-Sicherung hat sie ihren Zweck erfüllt (Prüfer 2026-09-29: „Endgültig löschen“ war nicht endgültig).
   idbDel('vault_v1_backup').catch(()=>{});
@@ -3985,14 +4017,14 @@ async function exportiereContainerJetzt(){
   try {
     bytes=await aktuellerContainerBlob();
     name='kladde-'+GERAET+'-'+heuteIso()+'.enc';
-  } catch(err){ toast('⚠ Export: '+err.message,4000); return; }
+  } catch(err){ toast('⚠ Sicherung: '+err.message,4000); return; }
   // FEHLER:519-Kaskade: share primär (iOS), bei Nicht-Abbruch-Fehler → Download-Fallback
   const file=new File([bytes],name,{type:'application/octet-stream'});
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     try {
-      await navigator.share({files:[file],title:'Kladde-Container'});
+      await navigator.share({files:[file],title:'Kladde-Sicherung'});
       merkeExport();
-      toast('Export übergeben (Share)');
+      toast('Sicherung übergeben');
       return;
     } catch(err){
       if(err.name==='AbortError') return;            // bewusst abgebrochen
@@ -4004,12 +4036,12 @@ async function exportiereContainerJetzt(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   merkeExport();
-  toast('Export gestartet: '+name);
+  toast('Sicherung wird gespeichert: '+name);
 }
 async function importiereContainer(e){
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
   const gen=sperrGen;
-  const pin=await passphraseAbfragen('Passphrase für den Import'); if(!pin) return;
+  const pin=await passphraseAbfragen('Passphrase der Sicherung'); if(!pin) return;
   const bytes=new Uint8Array(await f.arrayBuffer());
   let fremd;
   try {
@@ -4018,18 +4050,18 @@ async function importiereContainer(e){
     // Container eines Geräts mit ANDERER Passphrase: einmal nach deren Passphrase fragen — vorher endete der Import nur mit
     // „gleiche Passphrase auf beiden Geräten?“. Deine eigene Passphrase bleibt unverändert.
     if(!nochOffen(gen)) return;
-    const fremdPin=await passphraseAbfragen('Passphrase dieses Containers','Mit deiner Passphrase ließ sich die Datei nicht öffnen. Stammt sie von einem Gerät mit anderer Passphrase, gib diese hier ein. Deine eigene bleibt unverändert.');
+    const fremdPin=await passphraseAbfragen('Passphrase dieser Sicherung','Mit deiner Passphrase ließ sich die Datei nicht öffnen. Stammt sie von einem Gerät mit anderer Passphrase, gib diese hier ein. Deine eigene bleibt unverändert.');
     if(!fremdPin) return;
     try { fremd=(await decodeContainerAuto(bytes,fremdPin)).daten; }
-    catch(err){ toast('⚠ Import: '+err.message,5000); return; }
+    catch(err){ toast('⚠ Einlesen: '+err.message,5000); return; }
   }
   if(!nochOffen(gen)) return;   // während PBKDF2 gesperrt → nichts mehr anfassen
-  if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren (neu laden).',6000); return; }
+  if(!schemaBekannt(fremd.schema)){ toast('⚠ Diese Sicherung ('+fremd.schema+') stammt aus einer neueren App — bitte die App aktualisieren (neu laden).',6000); return; }
   // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
   const eigeneIds=new Set(vault.events.map(x=>x.id));
   const neue=(fremd.events||[]).filter(x=>!eigeneIds.has(x.id)).length;
   const dry=mergeContainerDaten(vault,fremd);
-  dlgZeigen('<h3>Container erkannt</h3>'+
+  dlgZeigen('<h3>Sicherung erkannt</h3>'+
     '<div class="zeile"><span>Quelle</span><span class="wert">'+esc(fremd.stamm?.geraet||'?')+'</span></div>'+
     '<div class="zeile"><span>Letzter Stand</span><span class="wert">'+esc(String(fremd.stamm?.ts||'?').slice(0,16).replace('T',' '))+'</span></div>'+
     '<div class="zeile"><span>Kurse</span><span class="wert">'+(fremd.stamm?.kurse?.length||0)+'</span></div>'+
@@ -4039,7 +4071,7 @@ async function importiereContainer(e){
       :'<p class="u-hinweis">Keine Stammdaten-Konflikte.</p>')+
     // Sicherer Import (Zero 2026-09-29): was nur im anderen Stand stand, wird ergänzt — vorher ging es still verloren
     (dry.hinweise&&dry.hinweise.length?'<p class="u-hinweis">Ergänzt aus dem anderen Stand: '+esc(dry.hinweise.slice(0,4).join(' · '))+(dry.hinweise.length>4?' · … ('+dry.hinweise.length+')':'')+'</p>':'')+
-    '<div class="btn-reihe"><button class="btn" data-ok>Importieren und mergen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
+    '<div class="btn-reihe"><button class="btn" data-ok>Einlesen und zusammenführen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
     el=>{ el.querySelector('[data-ok]').onclick=async()=>{
       dlgZu();
       if(!nochOffen(gen)) return;
@@ -4049,17 +4081,17 @@ async function importiereContainer(e){
         while(dry.daten.verworfeneStaende.length>3) dry.daten.verworfeneStaende.shift();
       } else if(vault.verworfeneStaende){ dry.daten.verworfeneStaende=vault.verworfeneStaende; }
       vault=dry.daten; stammOhneBump(); await speichern();
-      toast('Gemergt: '+vault.events.length+' Ereignisse'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
+      toast('Zusammengeführt: '+vault.events.length+' Einträge'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
       kursAutowahl(); renderAlles();
     }; });
 }
 function stammOhneBump(){ /* Merge-Ergebnis behält die Sieger-rev — bewusst kein rev++ */ }
 function passphraseWechselDialog(){
   dlgZeigen('<h3>Passphrase ändern</h3>'+
-    '<p class="u-warn13">Wichtig: auf BEIDEN Geräten ändern — sonst können Import und Heimnetz-Sync den fremden Container nicht mehr öffnen.</p>'+
+    '<p class="u-warn13">Wichtig: auf BEIDEN Geräten ändern — sonst brauchst du für jede Sicherung des anderen Geräts dessen Passphrase.</p>'+
     // Ehrlich statt beruhigend (Prüfer 2026-09-29, gemessen): der innere Datenschlüssel bleibt gleich. Ihn zu erneuern hat Zero
     // abgelehnt („nicht nötig“) — dann muss der Text aber sagen, was der Wechsel NICHT leistet.
-    '<p class="u-hinweis">Bereits exportierte Sicherungen öffnen sich weiter mit der alten Passphrase. Der innere Datenschlüssel bleibt derselbe: Wer die alte Passphrase und eine alte Sicherung hat, kann auch künftige Sicherungen öffnen. Der Wechsel schützt also vor dem Weitergeben der neuen, nicht vor einer schon bekannten alten Passphrase.</p>'+
+    '<p class="u-hinweis">Bereits gespeicherte Sicherungen öffnen sich weiter mit der alten Passphrase. Der innere Datenschlüssel bleibt derselbe: Wer die alte Passphrase und eine alte Sicherung hat, kann auch künftige Sicherungen öffnen. Der Wechsel schützt also vor dem Weitergeben der neuen, nicht vor einer schon bekannten alten Passphrase.</p>'+
     '<div class="zeile"><span>Aktuelle</span><span><input type="password" id="pw-alt" autocomplete="off" class="u-w170"></span></div>'+
     '<div class="zeile"><span>Neue (min. 10)</span><span><input type="password" id="pw-neu" autocomplete="off" class="u-w170"></span></div>'+
     '<div class="zeile"><span>Wiederholen</span><span><input type="password" id="pw-neu2" autocomplete="off" class="u-w170"></span></div>'+
@@ -4088,27 +4120,27 @@ async function syncPush(){
     const r=await fetch('/api/kladde/push/'+GERAET,{method:'POST',body:bytes});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json();
-    merkeExport(); // Container liegt jetzt auf dem PC — zählt als Sicherung (Backup-Banner)
-    toast('Push ok · Generation '+j.generationen);
-  } catch(err){ toast('⚠ Push: '+err.message,4000); }
+    merkeExport(); // Sicherung liegt jetzt auf dem PC — zählt als Sicherung (Backup-Banner)
+    toast('An den PC gesendet · Stand '+j.generationen);
+  } catch(err){ toast('⚠ An den PC: '+err.message,4000); }
 }
 async function syncPull(){
   try {
     const von=GERAET==='pc'?'ipad':'pc';
     const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store'});
-    if(r.status===404){ toast('Noch kein Container von „'+von+'" auf dem Server'); return; }
+    if(r.status===404){ toast('Noch keine Sicherung von „'+von+'" auf dem PC'); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const gen=sperrGen;
-    const pin=await passphraseAbfragen('Passphrase für den Pull'); if(!pin) return;
+    const pin=await passphraseAbfragen('Passphrase der Sicherung vom PC'); if(!pin) return;
     const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pin)).daten;
     if(!nochOffen(gen)) return;
-    if(!schemaBekannt(fremd.schema)){ toast('⚠ Container-Schema '+fremd.schema+' ist neuer als diese App — bitte App aktualisieren.',6000); return; }
+    if(!schemaBekannt(fremd.schema)){ toast('⚠ Diese Sicherung ('+fremd.schema+') stammt aus einer neueren App — bitte die App aktualisieren.',6000); return; }
     const dry=mergeContainerDaten(vault,fremd);
     const anwenden=async()=>{
       if(!nochOffen(gen)) return;
       if(vault.verworfeneStaende&&!dry.daten.verworfeneStaende) dry.daten.verworfeneStaende=vault.verworfeneStaende;
       vault=dry.daten; await speichern();
-      toast('Pull+Merge ok: '+vault.events.length+' Ereignisse'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
+      toast('Vom PC geholt: '+vault.events.length+' Einträge'+(dry.konflikte.length?' · ⚠ '+dry.konflikte[0]:''),dry.konflikte.length?6000:2600);
       kursAutowahl(); renderAlles();
     };
     // Ein Handgriff bleibt ein Handgriff — Bestätigung NUR bei Stammdaten-Konflikt (P1.6)
@@ -4117,7 +4149,7 @@ async function syncPull(){
         '<div class="btn-reihe"><button class="btn" data-ok>Übernehmen</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
         el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); anwenden(); }; });
     } else await anwenden();
-  } catch(err){ toast('⚠ Pull: '+err.message+' (gleiche Passphrase?)',4500); }
+  } catch(err){ toast('⚠ Vom PC: '+err.message+' (richtige Passphrase?)',4500); }
 }
 
 /* ═══ HINWEIS-BANNER (Migration · Passphrase-Empfehlung · Backup · Update) ═══ */
@@ -4131,7 +4163,7 @@ function zeigeBanner(html,setup){
 async function zeigeStartHinweise(){
   if(migrationsHinweis){
     migrationsHinweis=false;
-    zeigeBanner('<span>Kladde nutzt jetzt das schnellere Container-Format v2. Empfohlen: einmal exportieren (deine bisherige Sicherung bleibt mit alter Passphrase lesbar).</span><button class="btn" data-exp>Jetzt exportieren</button>',
+    zeigeBanner('<span>Kladde nutzt jetzt das schnellere Format v2. Empfohlen: einmal sichern (deine bisherige Sicherung bleibt mit alter Passphrase lesbar).</span><button class="btn" data-exp>Jetzt sichern</button>',
       b=>{ b.querySelector('[data-exp]').onclick=()=>{ b.classList.add('hidden'); exportiereContainer(); }; });
     return;
   }
@@ -4153,9 +4185,9 @@ async function zeigeStartHinweise(){
   // Backup-Erinnerung (P1.5): das realste Verlustszenario ist Gerätedefekt/Speicherbereinigung, nicht der Angreifer
   try{
     const le=await idbGet('letzterExport');
-    const tage=le?Math.floor((Date.now()-le.ts)/86400000):Infinity;
+    const tage=le?tageSeit(le.ts):Infinity;   // Kalendertage wie in „Mehr → Sichern“ (Scheibe 7)
     if(tage>7&&vault&&vault.events.length>(le?.events??0)){
-      zeigeBanner('<span>Letzte Sicherung '+(le?'vor '+tage+' Tagen':'noch nie')+' — jetzt exportieren?</span><button class="btn" data-exp>Jetzt exportieren</button>',
+      zeigeBanner('<span>Letzte Sicherung '+(le?'vor '+tage+' Tagen':'noch nie')+' — jetzt sichern?</span><button class="btn" data-exp>Jetzt sichern</button>',
         b=>{ b.querySelector('[data-exp]').onclick=()=>{ b.classList.add('hidden'); exportiereContainer(); }; });
     }
   }catch{}

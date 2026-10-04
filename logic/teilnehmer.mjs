@@ -65,4 +65,28 @@ function wendeAbgleichAn(alt, ab, hatEvents) {
   return list.sort((a, b) => a.nr - b.nr);
 }
 
-export { entferneNachrueckend, listenAbgleich, wendeAbgleichAn };
+// Sofort-Schutz (Zero 04.10.): Ist die Mappe gegenüber der Kladde verschoben (Kind eingeschoben oder nachgerückt), steht an
+// einer Nr MIT Einträgen ein anderes Kind — „Geändert“ hängte dessen Einträge, Sitzplatz und Halbgruppe an dieses Kind.
+// Anderes Kind, wenn
+//  (a) die Mappe an dieser Nr ein Kind nennt, das in der Kladde unter einer ANDEREN Nr steht (nachgerückt — fängt auch
+//      Geschwister mit gleichem Nachnamen), oder
+//  (b) ein Kind der Kladde in der Mappe als „Neu“ unter anderer Nr auftaucht: dann ist die Mappe verschoben und jede
+//      „Geändert“-Nr mit Einträgen gesperrt (Einschub direkt vor dem letzten Kind, Prüfer 04.10. K3-c), oder
+//  (c) Vor- UND Nachname in der Schreibform anders sind.
+// Ein Namenswechsel mit gleichem Vornamen (A→K), Rufname und Schreibvarianten bleiben erlaubt.
+// Schreibform (Prüfer 04.10. K2-b): ohne Groß/Klein, Umlaut/ß als ae/oe/ue/ss, Akzente weg (ş→s, ç→c), Bindestrich und
+// Apostroph als Leerraum — „Ayse Celik“ = „Ayşe Çelik“, „Mueller“ = „Müller“, „Anna-Lena“ = „Anna Lena“.
+const schreibform = t => String(t ?? '').normalize('NFC').toLowerCase()
+  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+  .normalize('NFD').replace(/\p{M}/gu, '').replace(/[-‐‑'’]/g, ' ').split(/\s+/).filter(Boolean).join(' ');
+function fremdeKinder(ab, hatEvents, alt = []) {
+  const wer = s => schreibform(s.vorname) + '|' + schreibform(s.name);
+  const nrnVon = new Map();   // Schreibform → alle Nrn (gleiche Namen gibt es, Prüfer K2-c)
+  for (const s of alt || []) { const w = wer(s); if (!nrnVon.has(w)) nrnVon.set(w, new Set()); nrnVon.get(w).add(s.nr); }
+  const anderswo = s => { const n = nrnVon.get(wer(s)); return !!n && !n.has(s.nr); };
+  const verschoben = (ab.neue || []).some(anderswo);
+  return (ab.geaendert || []).filter(g => hatEvents(g.nr) && (verschoben || anderswo(g.neu)
+    || (schreibform(g.alt.vorname) !== schreibform(g.neu.vorname) && schreibform(g.alt.name) !== schreibform(g.neu.name))));
+}
+
+export { entferneNachrueckend, fremdeKinder, listenAbgleich, wendeAbgleichAn };

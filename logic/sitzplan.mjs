@@ -126,7 +126,7 @@ function kompaktiere(sp) {
 
 // druckAnordnung(sp, schueler) — was das Sitzplan-PDF zeigt (Zero 02.10.: „die Sitzuordnung soll abgebildet sein - nur in der Spalte
 // mit namen brauche ich die sitzplatznummer usw. nicht“): Reihen und Spalten wie im Unterricht (belegte Reihen, Lücken, leere Tische)
-// und die Namensliste A–Z mit Schülernummer — ohne Reihe und Platz. schueler: die aktiven Schüler des Kurses; wer nicht darunter
+// und die Schülerliste nach Schülernummer — ohne Reihe und Platz (Zero 03.10.: „Sollte nach Schülernummer sortiert sein“ — die Schule führt ein Kind nach einer Namensänderung weiter auf seiner Nr, wie die Excel-Mappe). schueler: die aktiven Schüler des Kurses; wer nicht darunter
 // ist (deaktiviert), steht weder im Plan noch in der Liste. Wer keinen Platz hat, steht nur in der Liste.
 // lb: LB-Schüler bekommen im PDF ein dezentes ◆ in Kachel und Liste (Zero 02.10. abends, Frage-Dialog „Dezentes Zeichen ◆“).
 function druckAnordnung(sp, schueler) {
@@ -143,7 +143,7 @@ function druckAnordnung(sp, schueler) {
   plaetze.sort((a, b) => a.r - b.r || a.c - b.c);
   const spalten = plaetze.map(p => p.c);
   const liste = [...(schueler || [])]
-    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'de') || String(a.vorname || '').localeCompare(String(b.vorname || ''), 'de'))
+    .sort((a, b) => a.nr - b.nr)
     .map(x => ({ nr: x.nr, vorname: x.vorname || '', name: x.name || '', gruppe: x.gruppe || null, lb: !!x.lb }));
   return { reihen, vonC: spalten.length ? Math.min(...spalten) : 0, bisC: spalten.length ? Math.max(...spalten) : -1, plaetze, liste };
 }
