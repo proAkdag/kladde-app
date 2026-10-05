@@ -5,8 +5,9 @@
 // sichert test/mappe.test.mjs gegen dieselben Fixtures; die Konstanten unten sind die
 // JS-Fassung von kladde_lib.py. Aendert sich dort eine Zelladresse, MUSS sie hier mit.
 //
-// Vertrag (MAPPING.md §1/§2): Die Nr aus Spalte A ist der Join-Schluessel zur Mappenzeile —
-// Schueler Nr n steht in Zeile n+5. Namen werden nie zum Matchen benutzt.
+// Vertrag (MAPPING.md §1/§2): Die Nr ist die Mappenzeile — Schueler Nr n steht in Zeile n+5 (Spalte A wird nicht gelesen).
+// Seit den zwei Nummern (MAPPING §2a) ist sie beim Abgleich eines bestehenden Kurses nur die Zeile; zugeordnet wird dort ueber
+// den Namen (logic/teilnehmer.mjs planeAbgleich), die Ausweis-Nr vergibt die Kladde.
 
 import { oeffneXlsx, xlsxLesbar } from './xlsx.mjs';
 
@@ -63,7 +64,7 @@ function deuteZellen(zellen, dateiName = '') {
     profil = 'sek1'; lbSpalte = null;
     warnungen.push(
       `Kopf D5 = ${d5 === null ? 'None' : "'" + d5 + "'"} (weder 'LB' noch 'Notiz') — Alt-Liste? ` +
-      'Nehme Nr/Name/Vorname aus A/B/C, LB-Flags leer. Für volle Treue in die v15-Vorlage übertragen.');
+      'Nehme Name/Vorname aus B/C (Nr = Zeile), LB-Flags leer. Für volle Treue in die v15-Vorlage übertragen.');
   }
 
   const schueler = [];
@@ -117,16 +118,32 @@ function pruefeKursDatei(obj) {
   kurs.slot = /^m[1-6]$/.test(q.slot) ? q.slot : 'm1';
   if (q.slot !== undefined && kurs.slot !== q.slot) warnungen.push(`Slot '${q.slot}' unbekannt — m1 angenommen`);
 
+  // Zwei Nummern (MAPPING §1, Zero 04.10.): `nr` = Ausweis-Nr (ganze Zahl ab 1, ohne Grenze — trägt die Einträge),
+  // `liste` = Listen-Nr (Mappenzeile 1–35, fehlt = gleich nr, null = keine). Beide müssen eindeutig sein: eine doppelte
+  // Ausweis-Nr vermischt Einträge, eine doppelte Listen-Nr schreibt zwei Kinder in dieselbe Mappenzeile.
   if (!Array.isArray(obj.schueler)) throw new Error('Schülerliste fehlt');
-  const schueler = [], nrn = new Set();
+  const schueler = [], nrn = new Set(), zeilen = new Map();
   for (const r of obj.schueler) {
     const nr = Number(r?.nr);
-    if (!Number.isInteger(nr) || nr < 1 || nr > MAX_SCHUELER) throw new Error(`Schüler-Nr '${r?.nr}' ungültig (1–${MAX_SCHUELER})`);
+    if (!Number.isSafeInteger(nr) || nr < 1) throw new Error(`Schüler-Nr '${r?.nr}' ungültig (ganze Zahl ab 1)`);
     if (nrn.has(nr)) throw new Error(`Nr ${nr} doppelt — die Einträge wären nicht mehr eindeutig zuzuordnen`);
     nrn.add(nr);
+    let liste = nr;
+    if (r.liste === null) {   // keine Zeile gibt es nur für Abgänge (MAPPING §2a, Prüfer 05.10. G3)
+      if (r.inaktiv !== true) throw new Error(`Nr ${nr}: aktives Kind ohne Listen-Nr — nur ein Abgang (inaktiv) hat keine Mappenzeile`);
+      liste = null;
+    }
+    else if (r.liste !== undefined) {
+      liste = Number(r.liste);
+      if (!Number.isInteger(liste) || liste < 1 || liste > MAX_SCHUELER) throw new Error(`Listen-Nr '${r.liste}' bei Nr ${nr} ungültig (1–${MAX_SCHUELER})`);
+    } else if (nr > MAX_SCHUELER) throw new Error(`Nr ${nr} ohne Listen-Nr — hinter der letzten Mappenzeile (${MAX_SCHUELER})`);
     const s = { nr, name: txt(r.name), vorname: txt(r.vorname), lb: r.lb === true };
-    if (!s.name && !s.vorname) { warnungen.push(`Nr ${nr} ohne Namen — übersprungen`); continue; }
-    if (r.lb !== undefined && typeof r.lb !== 'boolean') warnungen.push(`Nr ${nr}: LB-Wert '${r.lb}' ist kein ja/nein — nicht als LB übernommen, bitte prüfen`);
+    const zeig = liste === null ? 'ohne Nr' : 'Nr ' + liste;   // gemeldet wird die Listen-Nr — sie steht in der Mappe
+    if (!s.name && !s.vorname) { warnungen.push(`${zeig} ohne Namen — übersprungen`); continue; }
+    if (liste !== null && zeilen.has(liste)) throw new Error(`Listen-Nr ${liste} doppelt (${zeilen.get(liste)} und ${s.vorname} ${s.name}) — zwei Kinder in derselben Mappenzeile`);
+    if (liste !== null) zeilen.set(liste, `${s.vorname} ${s.name}`);
+    if (liste !== nr) s.liste = liste;   // gleich der Ausweis-Nr → Feld weglassen (Bestand bleibt, wie er war)
+    if (r.lb !== undefined && typeof r.lb !== 'boolean') warnungen.push(`${zeig}: LB-Wert '${r.lb}' ist kein ja/nein — nicht als LB übernommen, bitte prüfen`);
     if (txt(r.gruppe)) s.gruppe = txt(r.gruppe);
     if (r.inaktiv === true) s.inaktiv = true;
     schueler.push(s);

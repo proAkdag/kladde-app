@@ -9,6 +9,9 @@
 //     (Zero 02.10. abends: „Die sollen aber nichts hinter sich lassen“; Mülleimer: „Ja“).
 //   · Wird er aus dem Kurs genommen, bleibt sein Platz als leerer Tisch stehen (vomPlatz, alsTische).
 // Rein: jede Funktion liefert einen neuen Sitzplan, der alte bleibt unberührt.
+// `grid` trägt die Ausweis-Nr (zwei Nummern, Zero 04.10.): der Platz bleibt beim Kind, auch wenn sich seine Listen-Nr ändert.
+
+import { lnr, nachListe } from './teilnehmer.mjs';
 
 const SPALTEN = 12;
 const reiheVon = key => Number(key.split(',')[0]);
@@ -72,7 +75,7 @@ function vomPlatz(sp, nr) {
   return fertig(n);
 }
 
-// alsTische(sp, keys) — freigewordene Plätze werden leere Tische (z. B. nach entferneNachrueckend, logic/teilnehmer.mjs)
+// alsTische(sp, keys) — freigewordene Plätze werden leere Tische (bis v1.19.0 nach dem Nachrücken beim Entfernen)
 function alsTische(sp, keys) {
   const n = kopie(sp);
   for (const key of keys || []) if (key && n.grid[key] == null) n.tische.push(key);
@@ -136,15 +139,14 @@ function druckAnordnung(sp, schueler) {
   for (const [key, nr] of Object.entries(s.grid || {})) {
     const x = nachNr.get(nr); if (!x) continue;
     const [r, c] = key.split(',').map(Number);
-    plaetze.push({ r, c, art: 'schueler', nr, vorname: x.vorname || '', name: x.name || '', lb: !!x.lb });
+    plaetze.push({ r, c, art: 'schueler', nr: lnr(x) ?? '', vorname: x.vorname || '', name: x.name || '', lb: !!x.lb });   // gezeigt wird die Listen-Nr (WAHL U3)
   }
   const besetzt = new Set(Object.keys(s.grid || {}));   // ein Gerät mit v1.13.0 kennt „tische“ nicht und setzt Schüler darauf (Prüfer 02.10., B5)
   for (const key of s.tische || []) { if (besetzt.has(key)) continue; const [r, c] = key.split(',').map(Number); plaetze.push({ r, c, art: 'tisch' }); }
   plaetze.sort((a, b) => a.r - b.r || a.c - b.c);
   const spalten = plaetze.map(p => p.c);
-  const liste = [...(schueler || [])]
-    .sort((a, b) => a.nr - b.nr)
-    .map(x => ({ nr: x.nr, vorname: x.vorname || '', name: x.name || '', gruppe: x.gruppe || null, lb: !!x.lb }));
+  const liste = nachListe(schueler)   // nach Listen-Nr = Mappenzeile (WAHL U3, U12)
+    .map(x => ({ nr: lnr(x) ?? '', vorname: x.vorname || '', name: x.name || '', gruppe: x.gruppe || null, lb: !!x.lb }));
   return { reihen, vonC: spalten.length ? Math.min(...spalten) : 0, bisC: spalten.length ? Math.max(...spalten) : -1, plaetze, liste };
 }
 

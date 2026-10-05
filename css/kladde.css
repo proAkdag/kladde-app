@@ -93,6 +93,7 @@
   .btn:active { background: rgba(196,154,90,.15); }
   .btn.still { color: var(--leise); border-color: var(--kante); }
   .btn.gefahr { color: var(--fehl); border-color: var(--fehl); }
+  .btn:disabled { opacity: .4; cursor: default; }   /* gesperrt sieht gesperrt aus (Schülerliste 05.10.); Sonderfälle in views gehen vor */
   .btn-reihe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
   select, input[type=text], input[type=password], input[type=date], input[type=time], input[type=number] {
     background: var(--karte2); color: var(--text); border: 1px solid var(--kante); border-radius: 8px;
@@ -792,6 +793,21 @@
   .ms-regel { border-top: 1px solid var(--kante); padding-top: 8px; }
   .ms-satz { flex: 1 0 100%; font-size: 13px; color: var(--leise); line-height: 1.5; text-align: center; margin: 4px 0 0; padding: 0 12px; }
   @media (prefers-reduced-motion: reduce) { .ms-technik > summary > span:first-child::before { transition: none; } }
+  /* Liste aktualisieren (zwei Nummern, Zero 05.10., WAHL 1A): ganze Liste, je Zeile Nr · Name · Marke, Rückfrage unter der Zeile */
+  .la-seg { margin: 4px 0 2px; }
+  .la-seg button { min-height: 44px; font-size: 14px; }
+  .la-segtext { margin: 4px 0 8px; }
+  .la-liste { border-top: 1px solid var(--kante); }
+  .la-zeile { display: grid; grid-template-columns: 2.6em 1fr auto; align-items: center; gap: 4px 10px; min-height: 44px; padding: 4px 0; border-bottom: 1px solid var(--kante); font-size: 15px; }
+  .la-nr { font-variant-numeric: tabular-nums; color: var(--leise); text-align: right; }
+  .la-ist-neu .la-nr, .la-ist-neu .la-name { color: var(--text); font-weight: 600; }
+  .la-ist-weg .la-name { color: var(--leise); text-decoration: line-through; }
+  .la-marke { font-size: 12.5px; color: var(--leise); border: 1px solid var(--kante); border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+  .la-neu { color: var(--band-text); border-color: var(--band); }
+  .la-warn { color: var(--warn); border-color: var(--warn); }
+  .la-frage { grid-column: 2 / -1; display: grid; gap: 6px; padding: 2px 0 6px; }
+  .la-klein { font-size: 13px; color: var(--leise); }
+  .la-wahl { display: flex; gap: 8px; flex-wrap: wrap; }
   /* Panel-Politur: mehr Luft, weicher */
   .panel { border-radius: 14px; padding: 16px 18px; }
   .panel h2 { font-size: 11.5px; letter-spacing: .08em; }

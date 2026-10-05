@@ -210,14 +210,20 @@ function regelText(profil, nSechs = 0) {
 }
 
 // „Vorschläge kopieren" (P4.5): Zeilen fürs Einfügen in die Excel-Klassenmappe.
-// TAB-getrennt (Excel-Paste = eine Spalte je TAB), eine Zeile je Schüler. Reihenfolge = wie übergeben.
+// TAB-getrennt (Excel-Paste = eine Spalte je TAB). `nr` ist die Listen-Nr = Mappenzeile: eine Zeile je Nr von 1 bis zur
+// höchsten, nach Nr sortiert; eine Lücke (gegangen, inaktiv) trägt nur ihre Nr — so passt der Block Zeile für Zeile auf die
+// Mappe (zwei Nummern, WAHL U2). Ohne Listen-Nr steht ein Kind nicht im Block.
 // KEIN Datei-Export, kein Schreiben in die Mappe — nur Zwischenablage, der Mensch fügt ein (User-Entscheid „Beides").
 function vorschlagsZeilen(rows) {
-  return rows.map(r => {
-    const felder = [r.nr, r.vorschlag ?? ''];
+  const nachNr = new Map(rows.filter(r => r.nr != null).map(r => [r.nr, r]));
+  const zeilen = [];
+  for (let nr = 1; nr <= Math.max(0, ...nachNr.keys()); nr++) {
+    const r = nachNr.get(nr) || { nr };
+    const felder = [nr, r.vorschlag ?? ''];
     if (r.fSummen != null && r.fSummen !== '') felder.push(r.fSummen);
-    return felder.join('\t');
-  }).join('\n');
+    zeilen.push(felder.join('\t'));
+  }
+  return zeilen.join('\n');
 }
 
 // ── Quartals-Verlauf (Zero 2026-09-02, Punkt 7): Bilanz-Score je Zeitraum + Pfeil zum vorigen

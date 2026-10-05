@@ -4,6 +4,8 @@
 // abweichendem Inhalt = ECHTER Konflikt → später ts gewinnt, Verlierer wird beigelegt
 // und gemeldet (Prüfstein 3: Konflikt sichtbar, kein Datenverlust).
 
+import { lnr, nachListe } from './teilnehmer.mjs';
+
 function mergeEvents(eventsA, eventsB) {
   const nachId = new Map();
   for (const e of [...eventsA, ...eventsB]) {
@@ -80,12 +82,15 @@ function inhaltGleich(a, b) {
 // hingen verwaist im Log (Prüfer 2026-09-29: neuer Schüler Nr 29 auf dem iPad, drei Sitzplan-Züge am PC → weg).
 // Sie werden jetzt ergänzt und gemeldet. Gleiche Nr mit anderem Namen = Konflikt (Basis behält, Meldung sichtbar).
 function ergaenzeAusVerlierer(sieger, verlierer, loesch) {
-  const hinweise = [], konflikte = [];
+  const hinweise = [], konflikte = [], sammel = [];
   if (!verlierer) return { stamm: sieger, hinweise, konflikte };
   const s = JSON.parse(JSON.stringify(sieger));
   s.kurse = s.kurse || []; s.schueler = s.schueler || {};
   const basisKurse = new Map(s.kurse.map(k => [k.id, k]));
   for (const k of verlierer.kurse || []) {
+    // Höchstmarke der Ausweis-Nr (Prüfer 05.10. R4): die höhere beider Stände gilt — eine schon vergebene Nr kommt nie zurück
+    const b = basisKurse.get(k.id);
+    if (b && (k.ausweisBis || 0) > (b.ausweisBis || 0)) b.ausweisBis = k.ausweisBis;
     if (basisKurse.has(k.id) || istGeloescht((loesch || {})[k.id])) continue;   // gelöscht bleibt gelöscht
     s.kurse.push(k);
     s.schueler[k.id] = (verlierer.schueler || {})[k.id] || [];
@@ -98,19 +103,50 @@ function ergaenzeAusVerlierer(sieger, verlierer, loesch) {
     const kurs = basisKurse.get(kid); if (!kurs) continue;   // Kurs nur im Verlierer: oben vollständig übernommen
     const eigen = s.schueler[kid] || [];
     const nachNr = new Map(eigen.map(x => [x.nr, x]));
-    const neu = [...eigen];
+    const neu = [...eigen], abweichend = [];
     for (const x of liste || []) {
-      const da = nachNr.get(x.nr);
+      const da = nachNr.get(x.nr);   // Abgleich über die Ausweis-Nr (sie trägt die Einträge); gemeldet wird die Listen-Nr
       const wer = (x.vorname || '') + ' ' + (x.name || '');
-      if (!da) { neu.push(x); hinweise.push(kurs.name + ': Nr ' + x.nr + ' ' + wer.trim() + ' ergänzt'); }
+      if (!da) { neu.push(x); hinweise.push(kurs.name + ': ' + nrText(x) + ' ' + wer.trim() + ' ergänzt'); }
       else if ((da.vorname || '') !== (x.vorname || '') || (da.name || '') !== (x.name || '')) {
-        konflikte.push(kurs.name + ' Nr ' + x.nr + ': „' + ((da.vorname || '') + ' ' + (da.name || '')).trim() + '" (' + sieger.geraet + ') ≠ „' + wer.trim() + '" (' + verlierer.geraet + ') — ' + sieger.geraet + ' behalten, bitte prüfen.');
+        konflikte.push(kurs.name + ' ' + nrText(da) + ': „' + ((da.vorname || '') + ' ' + (da.name || '')).trim() + '" (' + sieger.geraet + ') ≠ „' + wer.trim() + '" (' + verlierer.geraet + ') — ' + sieger.geraet + ' behalten, bitte prüfen.');
+      }
+      // Zwei Nummern (Prüfer 05.10. Y7): eine Umnummerierung oder ein Abgang im unterlegenen Stand ginge sonst still verloren
+      else if (lnr(da) !== lnr(x) || !!da.inaktiv !== !!x.inaktiv) {
+        const anders = [lnr(da) !== lnr(x) ? 'Listen-Nr ' + (lnr(da) ?? 'keine') + ' (' + sieger.geraet + ') ≠ ' + (lnr(x) ?? 'keine') + ' (' + verlierer.geraet + ')' : null,
+          !!da.inaktiv !== !!x.inaktiv ? (da.inaktiv ? 'inaktiv' : 'aktiv') + ' (' + sieger.geraet + '), ' + (x.inaktiv ? 'inaktiv' : 'aktiv') + ' (' + verlierer.geraet + ')' : null].filter(Boolean);
+        abweichend.push(nrText(da) + ' ' + wer.trim() + ': ' + anders.join(', '));
       }
     }
+    // Eine Meldung je Kurs, neutral (Nachprüfung N1): ohne gemeinsamen Vorgänger ist nicht entscheidbar, welcher Stand die Mappe
+    // trägt — im Normalfall ist der übernommene der neuere, dann stimmt alles; sonst klärt „Mappe laden“ es
+    if (abweichend.length) sammel.push(kurs.name + ': ' + abweichend.length + (abweichend.length === 1 ? ' Kind steht' : ' Kinder stehen')
+      + ' in den beiden Ständen verschieden (' + abweichend.slice(0, 3).join(' · ') + (abweichend.length > 3 ? ' · … und ' + (abweichend.length - 3) + ' weitere' : '')
+      + ') — übernommen: Stand ' + sieger.geraet + ', verworfen: Stand ' + verlierer.geraet + '. Passt das nicht zur Mappe, die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
     neu.sort((a, b) => a.nr - b.nr);
     s.schueler[kid] = neu;
   }
+  // Reihenfolge (Nachprüfung 2 P1): „Vom PC holen“ und die Toasts zeigen nur die erste Meldung — echte Konflikte (anderer Name,
+  // doppelte Listen-Nr) über alle Kurse zuerst, die neutralen Sammelmeldungen danach
+  konflikte.push(...doppelteListenNrn(s.kurse, s.schueler), ...sammel);
   return { stamm: s, hinweise, konflikte };
+}
+const nrText = x => (lnr(x) == null ? 'ohne Nr' : 'Nr ' + lnr(x));
+// Zwei Nummern (U10, Zero 05.10.): Nach dem Ergänzen muss jede Listen-Nr eines Kurses eindeutig sein. Ein Kind aus dem
+// anderen Stand kann eine Zeile tragen, die hier inzwischen ein anderes Kind hat (Liste auf einem Gerät aktualisiert,
+// auf dem anderen unten angehängt). Gemeldet, nicht geraten — geklärt wird über „Liste aktualisieren“.
+function doppelteListenNrn(kurse, schueler) {
+  const out = [];
+  for (const k of kurse || []) {
+    const belegt = new Map();
+    for (const x of nachListe((schueler || {})[k.id])) {
+      const n = lnr(x); if (n == null) continue;
+      belegt.set(n, [...(belegt.get(n) || []), ((x.vorname || '') + ' ' + (x.name || '')).trim()]);
+    }
+    for (const [n, namen] of belegt) if (namen.length > 1)
+      out.push(k.name + ': Listen-Nr ' + n + ' doppelt (' + namen.join(' und ') + ') — nichts geraten, bitte die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
+  }
+  return out;
 }
 
 function mergeStammdaten(a, b, loesch) {
@@ -139,7 +175,7 @@ function mergeContainerDaten(a, b) {
   const konflikte = [];
   const loesch = vereinigeLoeschungen(a.stamm && a.stamm.geloescht, b.stamm && b.stamm.geloescht);
   const stamm = mergeStammdaten(a.stamm, b.stamm, loesch);
-  konflikte.push(...(stamm.konflikte || []));   // Namens-Konflikte zuerst — die Vorschau zeigt den ersten
+  konflikte.push(...(stamm.konflikte || []));   // echte Konflikte zuerst, Sammelmeldungen danach — die Vorschau zeigt den ersten
   if (stamm.konflikt) konflikte.push(stamm.konflikt);
   const events = mergeEvents(a.events || [], b.events || []);
   const rein = stamm.ergebnis ? wendeLoeschungenAn(stamm.ergebnis, events, loesch) : { stamm: stamm.ergebnis, events, hinweise: [] };
