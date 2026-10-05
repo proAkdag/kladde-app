@@ -7,3 +7,8 @@ Service Worker, Icons. Es enthält und empfängt **keinerlei personenbezogene Da
 alle Inhalte entstehen erst lokal auf dem Endgerät (IndexedDB, verschlüsselt) und
 verlassen es nur als AES-GCM-verschlüsselte Container über selbstgewählte Kanäle.
 Kein Tracking, keine externen Requests, kein CDN.
+
+## Lizenz
+
+Frei für Lehrkräfte, Schulen und alle nicht-kommerziellen Zwecke. Kommerzielle Nutzung ist nicht erlaubt.
+Siehe [LICENSE](LICENSE) (PolyForm Noncommercial 1.0.0).
