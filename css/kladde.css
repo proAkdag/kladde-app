@@ -25,6 +25,8 @@
        Markengold auf hellem Grund nur 2,43:1 misst (Zero-Entscheid 2026-09-02) — Flächen/Rahmen behalten --band. */
     --band-text:#C79A4B;
     --gut:#6FA080; --warn:#CE9B4B; --fehl:#C67C60; --info:#6E9DB8;
+    /* Ampel als SCHRIFT (Login-Meldung, Passphrase-Stärke) wie --band-text: Nacht gleich, Tag dunkler (Prüfer S10 🟡 5) */
+    --gut-text:#6FA080; --warn-text:#CE9B4B; --fehl-text:#C67C60;
     /* --L = Helligkeit der Fachfarben (logic/fachfarben.mjs). Eine Zahl je Theme schaltet
        die ganze Palette um; die dunkle Stufe rechnet selbst -0.15 davon ab. */
     --L: .70;
@@ -41,6 +43,8 @@
     --text:#26241E; --leise:#716B5D; --band:#C79A4B;
     --band-text:#8A6420;   /* gemessen 4,71 / 5,05 / 5,35 auf grund/karte/karte2 */
     --gut:#5B8C6E; --warn:#B5852F; --fehl:#B4654A; --info:#4E7A99;
+    /* als Schrift maßen gut/warn/fehl nur 3,41 / 2,90 / 3,77 auf --grund — dieselben Töne dunkler: 4,67 / 4,65 / 4,66 (karte2 ≥ 5,29) */
+    --gut-text:#4C745B; --warn-text:#8A6524; --fehl-text:#9E5941;
     --L: .52;
     --tile-plus:#EBF0EA; --tile-minus:#F6E8E1; --tile-fehlt:#EDEAE1;
   }
@@ -276,12 +280,37 @@
   .gr-b.an { background: var(--band); color: var(--auf-band); border-color: var(--band); }
   /* ── Lock ── */
   #lock {
-    position: fixed; inset: 0; background: var(--grund); z-index: 100;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px;
+    position: fixed; inset: 0; background: var(--grund); z-index: 100; overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center; justify-content: safe center; padding: 24px;   /* safe: bei offener Tastatur bleibt der Kopf erreichbar */
   }
-  #lock h1 { font-size: 30px; margin: 0; font-family: var(--font-serif); font-weight: 500; }
-  #lock input { text-align: center; letter-spacing: .3em; font-size: 22px; width: 220px; }
-  #lock .fehler { color: var(--fehl); min-height: 1.4em; font-size: 14px; }
+  /* Login (Scheibe 10, Zero 05.10.): eine Spalte, beide Felder gleich, Auge im Feld, ein großer Hauptknopf, keine leere Lücke */
+  .lk { width: min(340px, 100%); display: flex; flex-direction: column; gap: 12px; }
+  .lk-kopf { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .lk-logo { width: 84px; height: 84px; border-radius: 18px; display: block; }
+  #lock h1, #soft-lock h1 { font-size: 34px; margin: 0; font-family: var(--font-serif); font-weight: 500; }
+  .lk-unter { color: var(--leise); font-size: 15px; text-align: center; }
+  .lk-unter:empty { display: none; }
+  .lk-punkte { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .lk-punkte li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 14.5px; line-height: 1.4; }
+  .lk-punkte .ico { width: 20px; height: 20px; color: var(--band); margin-top: 1px; }
+  .lk-felder { display: flex; flex-direction: column; gap: 12px; }
+  .lk-feld { position: relative; }
+  #lock .lk-feld input { width: 100%; box-sizing: border-box; font-size: 18px; letter-spacing: normal; padding: 12px 52px 12px 14px; min-height: 50px; }
+  .lk-auge { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
+    background: none; border: 0; color: var(--leise); cursor: pointer; padding: 0; }
+  .lk-auge .ico { width: 20px; height: 20px; }
+  .lk-haupt { width: 100%; min-height: 50px; border-radius: 10px; background: var(--band); color: #1a1206; border: 0; font: inherit; font-size: 17px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+  .lk-haupt:disabled { opacity: .55; cursor: default; }
+  /* nach „Passphrase eingeben“ tritt der Fingerabdruck zurück: ein goldener Knopf je Bild */
+  .lk-haupt.zweit { background: transparent; color: var(--band-text); border: 1px solid var(--kante); font-weight: 500; font-size: 15px; min-height: 46px; }
+  .lk-haupt .ico { width: 22px; height: 22px; }
+  .lk-link { align-self: center; background: none; border: 0; color: var(--leise); font: inherit; font-size: 15px; min-height: 44px; padding: 0 12px;
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  #lock .pass-staerke:empty, #lock .fehler:empty { display: none; }
+  #lock .pass-staerke { margin-top: -6px; }
+  #lock .fehler { color: var(--fehl-text); font-size: 14px; text-align: center; }
+  #lock .fehler.leise { color: var(--leise); }   /* „prüfe…“ und Abbruch sind Hinweise, kein Fehler */
 }
 
 /* ╔═══ ANIMATIONEN v0.7.0 · plattform-adaptiv, GPU-first ═══════════════════╗
@@ -371,12 +400,11 @@
 }
 /* ── v0.8.0 · Sicherheits-UI (P1.3–P1.7) ── */
 @layer views {
-  .pin-zeile { display: flex; gap: 6px; align-items: center; }
-  #pin-staerke, .pass-staerke { min-height: 1.2em; font-size: 13px; color: var(--leise); }
-  .pass-staerke.schwach { color: var(--fehl); }
-  .pass-staerke.okay { color: var(--warn); }
-  .pass-staerke.gut { color: var(--gut); }
-  #lock-text small { color: var(--leise); font-size: 12.5px; line-height: 1.4; display: inline-block; max-width: 340px; }
+  /* ohne #pin-staerke: die ID schlug die Farbe der Stufen, „Stärke: gut“ blieb grau (Prüfer S10 🟢 8) */
+  .pass-staerke { min-height: 1.2em; font-size: 13px; color: var(--leise); }
+  .pass-staerke.schwach { color: var(--fehl-text); }
+  .pass-staerke.okay { color: var(--warn-text); }
+  .pass-staerke.gut { color: var(--gut-text); }
 
   /* Soft-Lock: SOFORT deckend, BEWUSST ohne jede Transition/Animation —
      jeder Frame Verzögerung landet im iOS-App-Switcher-Screenshot. */
@@ -808,6 +836,38 @@
   .la-frage { grid-column: 2 / -1; display: grid; gap: 6px; padding: 2px 0 6px; }
   .la-klein { font-size: 13px; color: var(--leise); }
   .la-wahl { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* Kurs anlegen (Scheibe 8, Zero 05.10. Wahl 1 A „Ein Blatt“): oben „Mappe laden“ als Haupttat, darunter die Liste */
+  .kn-mappe { width: 100%; min-height: 64px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; text-align: left; padding: 10px 14px; margin-top: 4px; }
+  .kn-mappe b { font-size: 16px; }
+  .kn-mappe small { font-weight: 400; color: var(--leise); font-size: 13px; line-height: 1.35; white-space: normal; }
+  .kn-oder { display: flex; align-items: center; gap: 10px; color: var(--leise); font-size: 13px; margin: 16px 0 4px; }
+  .kn-oder::before, .kn-oder::after { content: ''; flex: 1; border-top: 1px solid var(--kante); }
+  .kn-reihe, .sp-reihe { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--kante); }
+  .kn-reihe > span:first-child, .sp-reihe > span:first-child { min-width: 84px; }
+  .kn-seg, .sp-seg { flex: 1; min-width: 200px; }
+  .kn-seg button, .sp-seg button { min-height: 44px; font-size: 14px; }
+  /* Zeitraster (Scheibe 8, Wahl 2 B „Vorlage zuerst“): Summe, Zeiten des Tages zum Lesen, das Feine am Ort */
+  .sp-summe { margin: 10px 0 4px; font-size: 15px; }
+  .sp-lesezeiten { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-size: 13px; color: var(--leise); margin-top: 6px; }
+  .sp-lesezeiten b { color: var(--text); font-weight: 600; }
+  .sp-drei { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0 4px; }
+  .sp-drei label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--leise); }
+  .sp-drei input { width: 100%; min-height: 44px; }
+  .sp-std { min-height: 48px; }
+  .zeile.sp-pause { min-height: 44px; color: var(--leise); font-size: 13px; padding-left: 14px; border-left: 2px dotted var(--kante); margin-left: 6px; }
+  .sp-auf { border-top: 1px solid var(--kante); margin-top: 8px; }
+  .sp-auf[open] { padding-bottom: 8px; }
+  /* Block-Details (Scheibe 8, Wahl 3 B): über dem Raster an Stelle der Palette, die Stunde darunter markiert */
+  .sp-detail { border: 1px solid var(--band); border-radius: 10px; padding: 10px 12px; margin: 8px 0; background: var(--karte); }
+  /* Das ✕ des Dialogs (44 px, oben rechts, über dem Scrollbereich) verdeckte „Fertig“ der Details (Prüfer 05.10. R1):
+     scrollIntoView hält Abstand nach oben, und rechts im Kopf bleibt Platz, auch wenn der Kopf von Hand oben am Rand steht */
+  .sp-oben { scroll-margin-top: 60px; }
+  .sp-detail-kopf { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; padding-right: 32px; }
+  .sp-reihe-kopf { margin-top: 8px; }
+  .sp-anker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; padding: 8px; border: 1px dashed var(--band); border-radius: 8px; font-size: 13px; }
+  .sp-anker .sp-seg { min-width: 180px; flex: 0 0 auto; }
+  .sp-anker .btn-reihe { flex-basis: 100%; margin-top: 0; }
+  .sp-zelle.sp-gewaehlt { box-shadow: 0 0 0 2px var(--band-text); }
   /* Panel-Politur: mehr Luft, weicher */
   .panel { border-radius: 14px; padding: 16px 18px; }
   .panel h2 { font-size: 11.5px; letter-spacing: .08em; }
@@ -1007,7 +1067,6 @@
   .dlg-x { position: absolute; top: 8px; right: 8px; z-index: 3; width: 44px; height: 44px; border-radius: 10px;
     border: 1px solid var(--kante); background: var(--karte2); color: var(--leise); display: grid; place-items: center; cursor: pointer; padding: 0; }
   .dlg-x .ico { width: 18px; height: 18px; }
-  #lock-bio { min-width: 220px; }
 }
 @layer anim { @media (hover: hover) and (pointer: fine) { .dlg-x:hover { border-color: var(--band); color: var(--text); } } }
 
@@ -1333,3 +1392,32 @@
     body[data-ansicht]:not([data-ansicht="heute"]) :is(#toast, #undo-chip) { bottom: calc(var(--unten) + 12px); }
   }
 }
+
+/* ── Scheibe 9 · Hilfe je Ansicht (Zero 05.10. Wahl 1 C, 3 B): Feld über dem „i“, am Handy Blatt von unten, Nummern an den Knöpfen ── */
+@layer views {
+  #dlg.hilfe { position: fixed; inset: auto auto 12px 76px; margin: 0; width: min(460px, calc(100vw - 88px)); max-width: none; max-height: 58vh; }
+  /* Kopf: Titel und „Zeichen ›“ in einer Zeile, rechts Platz für ✕ (Zero 05.10. zu Prüfer-B1: „Kürzer + Zeichen oben“) */
+  .hl-kopf { display: flex; align-items: center; gap: 10px; padding-right: 48px; margin-bottom: 4px; }
+  .hl-kopf h3 { margin: 0; flex: 1; }
+  .hl-kopf h3:focus { outline: none; }
+  .hl-zeichen { flex: none; padding: 8px 12px; }
+  .hl-z { display: grid; grid-template-columns: 124px 1fr; gap: 8px; padding: 5px 0; border-top: 1px solid var(--kante); font-size: 14px; line-height: 1.35; }
+  .hl-z > span { color: var(--leise); }
+  .hl-n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--band); color: #1a1206; font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: 1px; }
+  /* in der Zeile hebt die Nummer die Zeilenhöhe nicht an (vorher +3 px je nummerierter Zeile) */
+  .hl-z .hl-n { margin: -3px 6px -3px 0; vertical-align: -2px; }
+  .hilfe-marken { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.5); pointer-events: none; }
+  /* dunkler Außenrand: im Tag-Theme hatte Gold auf dem gedimmten hellen Grund nur 1,7:1 (Prüfer S9 B18) */
+  .hilfe-marken .hl-ring { position: fixed; border: 2px solid var(--band); border-radius: 10px; box-shadow: 0 0 0 2px rgba(0,0,0,.7); }
+  .hilfe-marken .hl-n { position: fixed; margin: 0; width: 26px; height: 26px; font-size: 13px; box-shadow: 0 0 0 3px rgba(0,0,0,.6); }
+  @media (min-width: 1200px) { #dlg.hilfe { left: 212px; } }
+  @media (min-width: 600px) { #btn-hilfe-k { display: none; } }
+  @media (max-width: 599px) {
+    /* Blatt so hoch, dass die Knöpfe oben frei bleiben (Kopf, Streifen, Reiter, Suche, Kurskarte enden bei 251 px) — Zero zu B1 */
+    #dlg.hilfe { inset: auto 6px 6px 6px; width: auto; max-height: max(58vh, calc(100dvh - 270px)); }
+    .hl-z { grid-template-columns: 1fr; gap: 1px; padding: 4px 0; }
+    header.app #btn-hilfe-k { flex: none; }
+  }
+}
+/* Das Feld dimmt nicht selbst: die Ebene mit den Nummern dimmt die Ansicht, damit Rahmen und Nummern hell bleiben */
+@layer anim { #dlg.hilfe[open]::backdrop { background-color: transparent; } }

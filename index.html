@@ -19,31 +19,48 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kladde">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.20.0">
+<link rel="stylesheet" href="./css/kladde.css?v=1.23.0">
 </head>
 <body>
 
+<!-- Login (Scheibe 10, Zero 05.10.: Wiederkehr „A · Ein Knopf“, Erster Start „B · Drei Zeilen mit Zeichen“, Kopf mit dem Symbol):
+     eine Spalte; mit Fingerabdruck nur dessen Knopf und „Passphrase eingeben“, sonst Feld und „Öffnen“ -->
 <div id="lock">
-  <span class="band band-hoch"></span>
-  <h1>Kladde</h1>
-  <div id="lock-text" class="sub u-leise">Passphrase eingeben</div>
-  <div class="pin-zeile">
-    <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase">
-    <button id="pin-auge" class="icon-btn" type="button" title="Anzeigen"></button>
+  <div class="lk">
+    <div class="lk-kopf">
+      <img class="lk-logo" src="./logo.svg" alt="" width="84" height="84">
+      <h1>Kladde</h1>
+      <div id="lock-text" class="lk-unter"></div>
+    </div>
+    <ul id="lock-erklaer" class="lk-punkte hidden">
+      <li data-ikon="schloss">Die Passphrase verschlüsselt alles auf diesem Gerät.</li>
+      <li data-ikon="warnung">Niemand kann sie zurücksetzen. Vergessen heißt: Die Daten sind weg.</li>
+      <li data-ikon="geraete">Zweites Gerät: Sicherung speichern und dort mit derselben Passphrase öffnen.</li>
+    </ul>
+    <button class="lk-haupt hidden" id="lock-bio" type="button">Mit Fingerabdruck öffnen</button>
+    <button class="lk-link hidden" id="lock-pass" type="button">Passphrase eingeben</button>
+    <div id="lock-felder" class="lk-felder">
+      <div class="lk-feld">
+        <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase" placeholder="Passphrase">
+        <button id="pin-auge" class="lk-auge" type="button" title="Anzeigen" aria-label="Passphrase anzeigen" aria-pressed="false"></button>
+      </div>
+      <div id="pin-staerke" class="pass-staerke"></div>
+      <div class="lk-feld hidden" id="pin2-feld">
+        <input id="pin2" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase wiederholen" placeholder="noch einmal">
+        <button id="pin2-auge" class="lk-auge" type="button" title="Anzeigen" aria-label="Passphrase anzeigen" aria-pressed="false"></button>
+      </div>
+      <button class="lk-haupt" id="lock-btn">Öffnen</button>
+    </div>
+    <div class="fehler" id="lock-fehler" role="status"></div>
   </div>
-  <input id="pin2" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase wiederholen" class="hidden" placeholder="wiederholen">
-  <div id="pin-staerke" class="pass-staerke"></div>
-  <div class="fehler" id="lock-fehler"></div>
-  <button class="btn" id="lock-btn">Öffnen</button>
-  <button class="btn still hidden" id="lock-bio" type="button">Mit Fingerabdruck öffnen</button>
 </div>
 
 <!-- Soft-Lock (P1.4): deckt die App SOFORT ab, wenn sie in den Hintergrund geht —
      iOS schießt fürs App-Umschalter-Karussell einen Screenshot. KEINE Animation hier. -->
 <div id="soft-lock" class="hidden">
-  <span class="band band-hoch"></span>
+  <img class="lk-logo" src="./logo.svg" alt="" width="84" height="84">
   <h1>Kladde</h1>
 </div>
 
@@ -96,6 +113,7 @@
       <div class="spacer"></div>
       <button id="kurs-chip"><span class="kurs-band"></span><span class="kurs-txt"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></span></button>
       <div id="kopf-stunde"></div>
+      <button class="icon-btn" id="btn-hilfe-k" title="Hilfe zu dieser Ansicht" aria-label="Hilfe"></button>
       <button class="icon-btn" id="btn-menue" title="Mehr Werkzeuge" aria-label="Mehr Werkzeuge"></button>
     </header>
 
@@ -147,6 +165,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.20.0"></script>
+<script type="module" src="./js/app.mjs?v=1.23.0"></script>
 </body>
 </html>

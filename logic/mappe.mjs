@@ -151,9 +151,26 @@ function pruefeKursDatei(obj) {
   return { schema: SCHEMA, kurs, schueler, warnungen };
 }
 
+// Ein neuer Kurs hat überall dieselbe Form (Scheibe 8, Zero 05.10.): aus „Liste einfügen“ wie aus „Mappe laden“ mit Schuljahr,
+// Status und Slot, bei der Oberstufe mit Noten-Eingabe. Vorher fehlten sie beim „Schnell“-Weg (Schuljahr, Status, Noten-Eingabe)
+// und beim Mappen-Import (Schuljahr, Status; den Slot setzt dort schon pruefeKursDatei). Was der Kurs trägt, bleibt; die Eingabe bleibt unverändert.
+function ergaenzeNeuenKurs(kurs, schuljahrId) {
+  const k = { ...kurs };
+  if (!k.slot) k.slot = 'm1';
+  if (!k.status) k.status = 'aktiv';
+  if (!k.schuljahrId && schuljahrId) k.schuljahrId = schuljahrId;
+  if (k.profil === 'sek2' && !k.notenmodus) k.notenmodus = 'punkte';
+  return k;
+}
+function neuerKurs({ name, fach, schuljahr, profil = 'sek1', notenmodus }, schuljahrId) {
+  const k = { id: slug(`${name}-${fach}-${schuljahr}`), name, fach, schuljahr, lehrkraft: '', profil };
+  if (profil === 'sek2' && notenmodus) k.notenmodus = notenmodus;
+  return ergaenzeNeuenKurs(k, schuljahrId);
+}
+
 // Python prueft `in (None, "", 0)` — die 0 faengt eine als Zahl formatierte Leerzelle
 function leer(w) {
   return w === null || w === undefined || w === '' || w === '0' || w === 0;
 }
 
-export { lieseMappe, deuteZellen, pruefeKursDatei, xlsxLesbar, SCHEMA, BLATT_LISTE, MAX_SCHUELER, LISTE_DATEN_START, KOPF };
+export { lieseMappe, deuteZellen, pruefeKursDatei, xlsxLesbar, neuerKurs, ergaenzeNeuenKurs, SCHEMA, BLATT_LISTE, MAX_SCHUELER, LISTE_DATEN_START, KOPF };
