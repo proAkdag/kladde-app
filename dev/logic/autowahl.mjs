@@ -80,18 +80,59 @@ function wochentagVon(datumIso) {
 }
 
 // Alt-Bestand heilen: Entfall-Einträge (kursId null) auf Blöcken OHNE Plan sind folgenlos
-// (die Autowahl hätte dort ohnehin „frei" gesagt), standen aber als „entfällt" im Tagesblick.
-// Vertretungen (kursId gesetzt) bleiben immer. IDEMPOTENT, kein rev-Bump (wie migriereStamm:
-// beide Geräte heilen lokal, ein künstlicher Konflikt wäre nur Merge-Lärm). → true = geändert.
+// (die Autowahl hätte dort ohnehin „frei" gesagt), standen aber als „entfällt" im Stundenplan.
+// Vertretungen (kursId gesetzt) bleiben immer, ebenso ein Entfall, der eine alte Vertretung trägt (`ersetzt`).
+// IDEMPOTENT, kein rev-Bump (wie migriereStamm: beide Geräte heilen lokal, ein künstlicher Konflikt wäre nur Merge-Lärm). → true = geändert.
 function bereinigeAusnahmen(stamm) {
   const zm = (stamm.zeitmodelle || [])[0];
   const alt = stamm.ausnahmeSlots || [];
   if (!zm || !alt.length) return false;
   const kontext = { wochenplan: stamm.wochenplan || [], ausnahmen: [], zeitmodell: zm };
-  const neu = alt.filter(a => a.kursId || !!slotFuerBlock(a.datum, wochentagVon(a.datum), a.blockNr, kontext));
+  const neu = alt.filter(a => a.kursId || a.ersetzt || !!slotFuerBlock(a.datum, wochentagVon(a.datum), a.blockNr, kontext));
   if (neu.length === alt.length) return false;
   stamm.ausnahmeSlots = neu;
   return true;
+}
+
+// ── Ausfall-Griffe des Stundenplans (Scheibe 2, Zero 2026-10-02) — reine Funktionen, geben ein NEUES Array zurück
+// oder dasselbe, wenn sich nichts ändert (dann speichert die App nicht und zählt keine Revision hoch).
+// Ganzer Tag: Entfall für die laut Plan belegten Blöcke. Ein überschriebener Eintrag mit Kurs (alte Vertretung, alter Tausch)
+// wandert als `ersetzt` in den Entfall und kommt bei der Rücknahme zurück — vorher ging er still verloren (Prüfer 2026-10-02).
+// an=false nimmt nur die Entfälle des Tages zurück.
+function tagesAusfall(ausnahmen, datum, blockNrn, an) {
+  const alt = ausnahmen || [];
+  if (an) {
+    if (!blockNrn.length) return alt;
+    const imTag = new Set(blockNrn);
+    const neu = blockNrn.map(blockNr => {
+      const vorher = alt.find(a => a.datum === datum && a.blockNr === blockNr);
+      if (vorher && vorher.kursId === null) return vorher;   // fällt schon aus: bleibt, wie er ist
+      return { datum, blockNr, kursId: null, teilgruppe: null, grund: 'entfall',
+        ...(vorher ? { ersetzt: { kursId: vorher.kursId, teilgruppe: vorher.teilgruppe ?? null, grund: vorher.grund ?? null } } : {}) };
+    });
+    return [...alt.filter(a => a.datum !== datum || !imTag.has(a.blockNr)), ...neu];
+  }
+  const aus = alt.filter(a => a.datum === datum && a.kursId === null);
+  if (!aus.length) return alt;
+  return [...alt.filter(a => !aus.includes(a)), ...aus.filter(a => a.ersetzt).map(a => ({ datum, blockNr: a.blockNr, ...a.ersetzt }))];
+}
+
+// Einen Entfall zurücknehmen — trägt er eine alte Vertretung (`ersetzt`), steht sie danach wieder da
+function entfallZurueck(ausnahmen, datum, blockNr) {
+  const alt = ausnahmen || [];
+  const a = alt.find(x => x.datum === datum && x.blockNr === blockNr);
+  if (!a) return alt;
+  const rest = alt.filter(x => x !== a);
+  return a.kursId === null && a.ersetzt ? [...rest, { datum, blockNr, ...a.ersetzt }] : rest;
+}
+
+// Alte Ausnahme mit Kurs entfernen. Ein alter Tausch besteht aus zwei Einträgen (grund 'tausch', v1.13.0) — beide gehen
+// zusammen, sonst stünde derselbe Kurs zweimal am Tag und der andere fehlte (Prüfer 2026-10-02).
+function ausnahmeEntfernen(ausnahmen, datum, blockNr) {
+  const alt = ausnahmen || [];
+  const a = alt.find(x => x.datum === datum && x.blockNr === blockNr);
+  if (!a) return alt;
+  return a.grund === 'tausch' ? alt.filter(x => !(x.datum === datum && x.grund === 'tausch')) : alt.filter(x => x !== a);
 }
 
 // Einen Block im Wochenplan belegen oder freimachen, für „jede Woche“ oder nur eine A-/B-Woche (Prüfer 2026-09-29: der
@@ -116,4 +157,4 @@ function setzeSlot(plan, wochentag, blockNr, rhythmus, slot) {
   return neu;
 }
 
-export { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, setzeSlot, SLOT_ARTEN, KOMMEND_FENSTER_SEK };
+export { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN, KOMMEND_FENSTER_SEK };

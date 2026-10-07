@@ -5,7 +5,7 @@
 // Atomaritaet: neuer CACHE_NAME → frische Cache-Instanz → addAll fetcht ALLES neu;
 // schlaegt eine Datei fehl (Pages-Deploy unfertig), wird der Install verworfen (fail-closed).
 
-const CACHE_NAME = 'kladde-dev-v1.12.0-1790812435';
+const CACHE_NAME = 'kladde-dev-v2.0.0-1791361045';
 // Caches sind ORIGIN-global, SW-Scopes nicht: Der Cleanup darf nur die EIGENE
 // Versions-Familie räumen, sonst löscht der Dev-SW die Prod-Caches (und umgekehrt).
 const CACHE_FAMILIE = CACHE_NAME.slice(0, CACHE_NAME.lastIndexOf('-v') + 2);
@@ -16,29 +16,35 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './icon-180.png',
+  './logo.svg',
   './fonts/HankenGrotesk-subset.woff2',
   './fonts/Newsreader-subset.woff2',
-  './css/kladde.css?v=1.12.0.1790812435',
-  './js/app.mjs?v=1.12.0.1790812435',
-  './logic/skalen.mjs?v=1.12.0.1790812435',
-  './logic/verdichtung.mjs?v=1.12.0.1790812435',
-  './logic/merge.mjs?v=1.12.0.1790812435',
-  './logic/container.mjs?v=1.12.0.1790812435',
-  './logic/parser.mjs?v=1.12.0.1790812435',
-  './logic/zeitmodell.mjs?v=1.12.0.1790812435',
-  './logic/rasterVorlagen.mjs?v=1.12.0.1790812435',
-  './logic/autowahl.mjs?v=1.12.0.1790812435',
-  './logic/migration.mjs?v=1.12.0.1790812435',
-  './logic/kursStatus.mjs?v=1.12.0.1790812435',
-  './logic/kursSort.mjs?v=1.12.0.1790812435',
-  './logic/teilnehmer.mjs?v=1.12.0.1790812435',
-  './logic/bericht.mjs?v=1.12.0.1790812435',
-  './logic/biometrie.mjs?v=1.12.0.1790812435',
-  './logic/auswahl.mjs?v=1.12.0.1790812435',
-  './logic/fachfarben.mjs?v=1.12.0.1790812435',
-  './logic/mappe.mjs?v=1.12.0.1790812435',
-  './logic/xlsx.mjs?v=1.12.0.1790812435',
-  './logic/erfassListe.mjs?v=1.12.0.1790812435'
+  './css/kladde.css?v=2.0.0.1791361045',
+  './js/app.mjs?v=2.0.0.1791361045',
+  './logic/skalen.mjs?v=2.0.0.1791361045',
+  './logic/verdichtung.mjs?v=2.0.0.1791361045',
+  './logic/merge.mjs?v=2.0.0.1791361045',
+  './logic/container.mjs?v=2.0.0.1791361045',
+  './logic/parser.mjs?v=2.0.0.1791361045',
+  './logic/zeitmodell.mjs?v=2.0.0.1791361045',
+  './logic/rasterVorlagen.mjs?v=2.0.0.1791361045',
+  './logic/autowahl.mjs?v=2.0.0.1791361045',
+  './logic/migration.mjs?v=2.0.0.1791361045',
+  './logic/kursStatus.mjs?v=2.0.0.1791361045',
+  './logic/kursSort.mjs?v=2.0.0.1791361045',
+  './logic/teilnehmer.mjs?v=2.0.0.1791361045',
+  './logic/bericht.mjs?v=2.0.0.1791361045',
+  './logic/biometrie.mjs?v=2.0.0.1791361045',
+  './logic/auswahl.mjs?v=2.0.0.1791361045',
+  './logic/hilfe.mjs?v=2.0.0.1791361045',
+  './logic/fachfarben.mjs?v=2.0.0.1791361045',
+  './logic/mappe.mjs?v=2.0.0.1791361045',
+  './logic/xlsx.mjs?v=2.0.0.1791361045',
+  './logic/erfassListe.mjs?v=2.0.0.1791361045',
+  './logic/stunden.mjs?v=2.0.0.1791361045',
+  './logic/sitzplan.mjs?v=2.0.0.1791361045',
+  './logic/pdfbild.mjs?v=2.0.0.1791361045'
 ];
 
 self.addEventListener('install', (event) => {

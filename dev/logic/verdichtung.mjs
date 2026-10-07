@@ -43,13 +43,35 @@ const BEWERTUNG_TYPEN = new Set(['+', 'o', '-', 'note', 'verweigert']);
 //   still   → ältere Doppelte (frühere Versionen, zwei Geräte), bekommen je einen Storno
 //   notiz   → Notizen an ersetzten Zeichen reisen mit; die Begründung eines ⊘ NICHT — sie geht mit dem ⊘ und kommt mit ↶
 //             zurück (Zero 2026-09-30: sonst stand „＋ · Mitarbeit verweigert“ im Verlauf und im Kurzbericht). Notiz-Einträge bleiben unberührt.
+// Eine Verspätung je Termin (Scheibe 5, Zero 03.10.: „die zeit anzupassen wenn nötig“): eine neue ersetzt die bisherigen nach derselben
+// Regel — so addieren weder ein ↷ Wiederherstellen noch zwei Geräte noch Altbestand die Minuten (Prüfer 03.10., 🔴 1/🟡 2). Die Brücke
+// braucht keine eigene Regel: sie liest die gebuchten Stornos (export_mappe.py wirksame_events).
+// Doppelstunde (Zero 03.10.: „Dazuzählen, wenn es ein späterer Block ist“): Verspätungen verschiedener Blöcke desselben Tages stehen
+// nebeneinander. Fehlt einer Seite der Block (Altbestand, Nachtrag), gilt die Tagesregel — so bleibt der Schutz gegen ↶ + ↷.
+// Anwesenheit je Stunde (v1.17.1, Zero 03.10.: „⏰ nimmt ∅ zurück“): ∅ und ⏰ schließen sich in EINER Stunde aus — ⏰ auf ein ∅ ersetzt es
+// („kommt doch“), ∅ auf ein ⏰ ebenso, ↶ bringt das Vorige zurück. Ein ∅ einer anderen Stunde bleibt offen (Prüfer ❓ 5, eigene Festlegung).
+// Vorher klärte addEvent das ∅ mit eigenen Stornos: ↶ verlor dabei die ältere Verspätung, ∅ ⏰ ∅ ⏰ ließ ∅ offen (Prüfer 🟡 4).
+const ANWESEND_TYPEN = new Set(['versp', 'fehlt_o']);
+// Eine Quartalsnote je Quartal (Scheibe 6, Festlegung des Bauers, Zero 03.10. bestätigt: „Ja, ersetzt“): die neue ersetzt die bisherige desselben Quartals
+// (hj + quartal, nicht der Termin) — so gewinnt sie auch, wenn die Uhr eines Geräts nachgeht; vorher entschied allein der Zeitstempel. ↶ bringt
+// die alte zurück. Die Brücke braucht nichts Eigenes (export_mappe.py quartalsnoten liest wirksame_events).
+const QN_TYPEN = new Set(['quartalsnote']);
+const gleicherBlock = (a, b) => a.blockNr == null || b.blockNr == null || a.blockNr === b.blockNr;
 function ersetzungFuer(events, neu) {
-  if (!BEWERTUNG_TYPEN.has(neu.typ) || neu.stornoVon) return null;
-  const alt = wirksameEvents(events)
-    .filter(e => BEWERTUNG_TYPEN.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr && terminVon(e) === terminVon(neu))
-    .sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-  if (!alt.length) return null;
-  const ersetzt = alt.pop();
+  const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : ANWESEND_TYPEN.has(neu.typ) ? ANWESEND_TYPEN : QN_TYPEN.has(neu.typ) ? QN_TYPEN : null;
+  if (!art || neu.stornoVon) return null;
+  const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr &&
+    (art === QN_TYPEN ? e.hj === neu.hj && e.quartal === neu.quartal : terminVon(e) === terminVon(neu) && (art !== ANWESEND_TYPEN || gleicherBlock(e, neu)));
+  // Ältere Doppelte so lange stornieren, bis nur das Ersetzte bleibt: ein Storno hebt auch die Wirkung des Stornierten auf und brächte
+  // sonst dessen eigenes Ersetztes zurück (zwei Geräte: 5 → 7 neben ∅, ⏰ 8 ergab 13). Ein Wiederkehrer ist immer älter als das Ersetzte.
+  let evs = events, alt = [], ersetzt = null;
+  for (;;) {
+    const jetzt = wirksameEvents(evs).filter(gleich).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+    if (jetzt.length <= 1) { ersetzt = jetzt[0] || null; break; }
+    const weg = jetzt.slice(0, -1);
+    alt = [...alt, ...weg]; evs = [...evs, ...weg.map(a => ({ id: '~' + a.id, typ: 'storno', stornoVon: a.id }))];
+  }
+  if (!ersetzt) return null;
   let notiz = neu.notiz ? String(neu.notiz).trim() : '';   // „includes“: ein ↷ Wiederherstellen bringt den Text schon mit
   for (const a of [ersetzt, ...alt]) {
     const t = a.typ !== 'verweigert' && a.notiz ? String(a.notiz).trim() : '';
@@ -188,14 +210,20 @@ function regelText(profil, nSechs = 0) {
 }
 
 // „Vorschläge kopieren" (P4.5): Zeilen fürs Einfügen in die Excel-Klassenmappe.
-// TAB-getrennt (Excel-Paste = eine Spalte je TAB), eine Zeile je Schüler. Reihenfolge = wie übergeben.
+// TAB-getrennt (Excel-Paste = eine Spalte je TAB). `nr` ist die Listen-Nr = Mappenzeile: eine Zeile je Nr von 1 bis zur
+// höchsten, nach Nr sortiert; eine Lücke (gegangen, inaktiv) trägt nur ihre Nr — so passt der Block Zeile für Zeile auf die
+// Mappe (zwei Nummern, WAHL U2). Ohne Listen-Nr steht ein Kind nicht im Block.
 // KEIN Datei-Export, kein Schreiben in die Mappe — nur Zwischenablage, der Mensch fügt ein (User-Entscheid „Beides").
 function vorschlagsZeilen(rows) {
-  return rows.map(r => {
-    const felder = [r.nr, r.vorschlag ?? ''];
+  const nachNr = new Map(rows.filter(r => r.nr != null).map(r => [r.nr, r]));
+  const zeilen = [];
+  for (let nr = 1; nr <= Math.max(0, ...nachNr.keys()); nr++) {
+    const r = nachNr.get(nr) || { nr };
+    const felder = [nr, r.vorschlag ?? ''];
     if (r.fSummen != null && r.fSummen !== '') felder.push(r.fSummen);
-    return felder.join('\t');
-  }).join('\n');
+    zeilen.push(felder.join('\t'));
+  }
+  return zeilen.join('\n');
 }
 
 // ── Quartals-Verlauf (Zero 2026-09-02, Punkt 7): Bilanz-Score je Zeitraum + Pfeil zum vorigen

@@ -17,33 +17,51 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#17150F">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kladde">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.12.0.1790812435">
+<link rel="stylesheet" href="./css/kladde.css?v=2.0.0.1791361045">
 </head>
 <body>
 
+<!-- Login (Scheibe 10, Zero 05.10.: Wiederkehr „A · Ein Knopf“, Erster Start „B · Drei Zeilen mit Zeichen“, Kopf mit dem Symbol):
+     eine Spalte; mit Fingerabdruck nur dessen Knopf und „Passphrase eingeben“, sonst Feld und „Öffnen“ -->
 <div id="lock">
-  <span class="band band-hoch"></span>
-  <h1>Kladde</h1>
-  <div id="lock-text" class="sub u-leise">Passphrase eingeben</div>
-  <div class="pin-zeile">
-    <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase">
-    <button id="pin-auge" class="icon-btn" type="button" title="Anzeigen"></button>
+  <div class="lk">
+    <div class="lk-kopf">
+      <img class="lk-logo" src="./logo.svg" alt="" width="84" height="84">
+      <h1>Kladde</h1>
+      <div id="lock-text" class="lk-unter"></div>
+    </div>
+    <ul id="lock-erklaer" class="lk-punkte hidden">
+      <li data-ikon="schloss">Die Passphrase verschlüsselt alles auf diesem Gerät.</li>
+      <li data-ikon="warnung">Niemand kann sie zurücksetzen. Vergessen heißt: Die Daten sind weg.</li>
+      <li data-ikon="geraete">Zweites Gerät: Sicherung speichern und dort mit derselben Passphrase öffnen.</li>
+    </ul>
+    <button class="lk-haupt hidden" id="lock-bio" type="button">Mit Fingerabdruck öffnen</button>
+    <button class="lk-link hidden" id="lock-pass" type="button">Passphrase eingeben</button>
+    <div id="lock-felder" class="lk-felder">
+      <div class="lk-feld">
+        <input id="pin" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase" placeholder="Passphrase">
+        <button id="pin-auge" class="lk-auge" type="button" title="Anzeigen" aria-label="Passphrase anzeigen" aria-pressed="false"></button>
+      </div>
+      <div id="pin-staerke" class="pass-staerke"></div>
+      <div class="lk-feld hidden" id="pin2-feld">
+        <input id="pin2" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase wiederholen" placeholder="noch einmal">
+        <button id="pin2-auge" class="lk-auge" type="button" title="Anzeigen" aria-label="Passphrase anzeigen" aria-pressed="false"></button>
+      </div>
+      <button class="lk-haupt" id="lock-btn">Öffnen</button>
+    </div>
+    <div class="fehler" id="lock-fehler" role="status"></div>
   </div>
-  <input id="pin2" type="password" autocomplete="off" enterkeyhint="go" aria-label="Passphrase wiederholen" class="hidden" placeholder="wiederholen">
-  <div id="pin-staerke" class="pass-staerke"></div>
-  <div class="fehler" id="lock-fehler"></div>
-  <button class="btn" id="lock-btn">Öffnen</button>
-  <button class="btn still hidden" id="lock-bio" type="button">Mit Fingerabdruck öffnen</button>
 </div>
 
 <!-- Soft-Lock (P1.4): deckt die App SOFORT ab, wenn sie in den Hintergrund geht —
      iOS schießt fürs App-Umschalter-Karussell einen Screenshot. KEINE Animation hier. -->
 <div id="soft-lock" class="hidden">
-  <span class="band band-hoch"></span>
+  <img class="lk-logo" src="./logo.svg" alt="" width="84" height="84">
   <h1>Kladde</h1>
 </div>
 
@@ -78,6 +96,13 @@
         <span class="nav-label">Mehr</span>
       </button>
     </nav>
+    <!-- Werkzeuge unten links (Zero 2026-10-01: Rahmen verdichten, „Dark-Mode-Umschalter hat einen Platz, den er nicht verdient“) -->
+    <div class="nav-unten">
+      <button class="nav-werkzeug" id="btn-plan" title="Stundenplan" aria-label="Stundenplan"></button>
+      <button class="nav-werkzeug" id="btn-theme" title="Tag / Nacht"></button>
+      <button class="nav-werkzeug" id="btn-lock" title="Sperren" aria-label="Sperren"></button>
+      <button class="nav-werkzeug" id="btn-hilfe" title="Hilfe zu dieser Ansicht" aria-label="Hilfe"></button>
+    </div>
   </aside>
 
   <div class="hauptspalte">
@@ -88,22 +113,23 @@
       </div>
       <div class="spacer"></div>
       <button id="kurs-chip"><span class="kurs-band"></span><span class="kurs-txt"><span id="kurs-name">Kein Kurs</span><small id="kurs-slot"></small></span></button>
-      <button class="icon-btn" id="btn-plan" title="Stundenplan" aria-label="Stundenplan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="3.5" y="4.5" width="17" height="15" rx="2"></rect><path d="M3.5 9.5h17"></path><path d="M9.2 9.5v10"></path><path d="M14.9 9.5v10"></path></svg></button>
-      <button class="icon-btn" id="btn-theme" title="Tag / Nacht"></button>
-      <button class="icon-btn" id="btn-beamer" title="Beamer-Modus: Bewertungen verstecken"></button>
-      <button class="icon-btn" id="btn-lock" title="Sperren"></button>
+      <div id="kopf-stunde"></div>
+      <button class="icon-btn" id="btn-hilfe-k" title="Hilfe zu dieser Ansicht" aria-label="Hilfe"></button>
+      <button class="icon-btn" id="btn-menue" title="Mehr Werkzeuge" aria-label="Mehr Werkzeuge"></button>
     </header>
 
     <div id="banner" class="hidden"></div>
-    <div id="beamer-hinweis" class="hidden"><span>Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button></div>
+    <div id="beamer-hinweis" class="hidden"><span>Projektionsmodus — Bewertungen verborgen</span><button class="btn still u-btn-klein" id="beamer-opt">Optionen</button><button class="btn still u-btn-klein" id="beamer-aus">Beenden</button></div>
 
     <main>
       <section id="view-heute">
+        <!-- Raster 2 × 2 (Zero 2026-10-01): Leiste | Erfasst gleich hoch, darunter Plan | Stempel auf einer Oberkante -->
         <div class="heute-grid">
+          <div id="datum-streifen"></div>
+          <div id="erfasst-ort"></div>
           <div class="plan-spalte">
-            <div id="datum-streifen"></div>
             <div id="plan-wrap"><div id="plan"></div><div class="tafel" aria-hidden="true"><span>Tafel</span></div></div>
-            <p id="heute-leer" class="hidden u-leise">Kein Kurs gewählt — unter „Kurse" importieren oder oben den Kurs-Chip antippen.</p>
+            <p id="heute-leer" class="hidden u-leise">Noch kein aktiver Kurs — unter „Kurse“ anlegen oder importieren.</p>
           </div>
           <aside id="rail" class="rail"></aside>
         </div>
@@ -111,20 +137,23 @@
 
       <section id="view-deck" class="hidden">
         <div class="deck-mitte">
+        <div id="deck-nachtrag" class="nachtrag-leiste" hidden></div>
         <div id="deck-fortschritt"></div>
         <div id="deck-optionen" class="deck-optionen"></div>
         <div id="deck-karte"></div>
-        <div class="deck-hilfe"><span>← −</span><span>↑ Notiz · ↓ weiter</span><span>+ →</span></div>
+        <div class="deck-hilfe"><span>← −</span><span>↑ mehr · ↓ weiter</span><span>+ →</span></div>
         <div class="deck-btns">
           <button class="btn deck-minus" data-deck="-">−</button>
           <button class="btn still" data-deck="o">o</button>
           <button class="btn deck-plus" data-deck="+">+</button>
+          <button class="btn still" data-deck="notiz" aria-label="mehr: Schülerblatt öffnen">mehr ↑</button>
           <button class="btn still" data-deck="skip">weiter ↓</button>
         </div>
         </div>
         <aside id="deck-verlauf" aria-label="Verlauf dieser Runde"></aside>
       </section>
 
+      <div id="schueler-nachtrag" class="nachtrag-leiste" hidden></div>
       <section id="view-schueler" class="hidden"></section>
 
       <section id="view-kurse" class="hidden"></section>
@@ -139,6 +168,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.12.0.1790812435"></script>
+<script type="module" src="./js/app.mjs?v=2.0.0.1791361045"></script>
 </body>
 </html>
