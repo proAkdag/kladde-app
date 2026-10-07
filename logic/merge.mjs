@@ -107,9 +107,10 @@ function ergaenzeAusVerlierer(sieger, verlierer, loesch) {
     for (const x of liste || []) {
       const da = nachNr.get(x.nr);   // Abgleich über die Ausweis-Nr (sie trägt die Einträge); gemeldet wird die Listen-Nr
       const wer = (x.vorname || '') + ' ' + (x.name || '');
-      if (!da) { neu.push(x); hinweise.push(kurs.name + ': ' + nrText(x) + ' ' + wer.trim() + ' ergänzt'); }
+      if (!da) { neu.push(x); hinweise.push(kursName(kurs) + ': ' + nrText(x) + ' ' + wer.trim() + ' ergänzt'); }
       else if ((da.vorname || '') !== (x.vorname || '') || (da.name || '') !== (x.name || '')) {
-        konflikte.push(kurs.name + ' ' + nrText(da) + ': „' + ((da.vorname || '') + ' ' + (da.name || '')).trim() + '" (' + sieger.geraet + ') ≠ „' + wer.trim() + '" (' + verlierer.geraet + ') — ' + sieger.geraet + ' behalten, bitte prüfen.');
+        // „Kurs: Nr …“ wie die übrigen Meldungen — „9a · Mathematik Nr 3“ las sich wie ein Kursname (Prüfer 06.10. B13)
+        konflikte.push(kursName(kurs) + ': ' + nrText(da) + ' „' + ((da.vorname || '') + ' ' + (da.name || '')).trim() + '" (' + sieger.geraet + ') ≠ „' + wer.trim() + '" (' + verlierer.geraet + ') — ' + sieger.geraet + ' behalten, bitte prüfen.');
       }
       // Zwei Nummern (Prüfer 05.10. Y7): eine Umnummerierung oder ein Abgang im unterlegenen Stand ginge sonst still verloren
       else if (lnr(da) !== lnr(x) || !!da.inaktiv !== !!x.inaktiv) {
@@ -120,7 +121,7 @@ function ergaenzeAusVerlierer(sieger, verlierer, loesch) {
     }
     // Eine Meldung je Kurs, neutral (Nachprüfung N1): ohne gemeinsamen Vorgänger ist nicht entscheidbar, welcher Stand die Mappe
     // trägt — im Normalfall ist der übernommene der neuere, dann stimmt alles; sonst klärt „Mappe laden“ es
-    if (abweichend.length) sammel.push(kurs.name + ': ' + abweichend.length + (abweichend.length === 1 ? ' Kind steht' : ' Kinder stehen')
+    if (abweichend.length) sammel.push(kursName(kurs) + ': ' + abweichend.length + (abweichend.length === 1 ? ' Kind steht' : ' Kinder stehen')
       + ' in den beiden Ständen verschieden (' + abweichend.slice(0, 3).join(' · ') + (abweichend.length > 3 ? ' · … und ' + (abweichend.length - 3) + ' weitere' : '')
       + ') — übernommen: Stand ' + sieger.geraet + ', verworfen: Stand ' + verlierer.geraet + '. Passt das nicht zur Mappe, die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
     neu.sort((a, b) => a.nr - b.nr);
@@ -131,7 +132,7 @@ function ergaenzeAusVerlierer(sieger, verlierer, loesch) {
   konflikte.push(...doppelteListenNrn(s.kurse, s.schueler), ...sammel);
   return { stamm: s, hinweise, konflikte };
 }
-const nrText = x => (lnr(x) == null ? 'ohne Nr' : 'Nr ' + lnr(x));
+const nrText = x => (lnr(x) == null ? 'ohne Nr' : 'Nr ' + lnr(x)), kursName = k => k.name + (k.fach ? ' · ' + k.fach : '');   // mit Fach: zwei Kurse „7b“ (Prüfer P2)
 // Zwei Nummern (U10, Zero 05.10.): Nach dem Ergänzen muss jede Listen-Nr eines Kurses eindeutig sein. Ein Kind aus dem
 // anderen Stand kann eine Zeile tragen, die hier inzwischen ein anderes Kind hat (Liste auf einem Gerät aktualisiert,
 // auf dem anderen unten angehängt). Gemeldet, nicht geraten — geklärt wird über „Liste aktualisieren“.
@@ -144,7 +145,7 @@ function doppelteListenNrn(kurse, schueler) {
       belegt.set(n, [...(belegt.get(n) || []), ((x.vorname || '') + ' ' + (x.name || '')).trim()]);
     }
     for (const [n, namen] of belegt) if (namen.length > 1)
-      out.push(k.name + ': Listen-Nr ' + n + ' doppelt (' + namen.join(' und ') + ') — nichts geraten, bitte die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
+      out.push(kursName(k) + ': Listen-Nr ' + n + ' doppelt (' + namen.join(' und ') + ') — nichts geraten, bitte die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
   }
   return out;
 }

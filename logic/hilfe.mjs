@@ -8,7 +8,9 @@
 
 export const HILFE_ANSICHTEN = ['heute', 'deck', 'schueler', 'kurse', 'mehr'];
 
-const KURS = { begriff: 'Kurs', text: 'Kurs dieser Ansicht. Antippen wechselt.', ziel: '#kurs-chip', wort: null };
+const KURS = { begriff: 'Kurs', text: 'Kurs und Stunde, in die gebucht wird. Antippen: Stunde wählen.', ziel: '#kurs-chip', wort: null };
+// nur im Nachtrag sichtbar (Zero 06.10. „B · Chip und Leiste“)
+const NACHTRAG = (ziel) => ({ begriff: 'Nachtrag', text: 'Neue Einträge gehen auf einen früheren Tag. „↩ Heute“ führt zurück.', ziel, wort: null });
 const BEAMER_AN = { begriff: 'Beamer an', text: 'Bewertungen verborgen, „Beenden“ zeigt sie.', ziel: '#beamer-aus', wort: null };
 const MENUE = { begriff: '⋯', text: 'Stundenplan, Beamer, Tag/Nacht, Sperren.', ziel: '#btn-menue', wort: null };
 
@@ -39,7 +41,7 @@ export const HILFE = {
     { begriff: 'mischen', text: 'Neue Reihenfolge.', ziel: '#deck-optionen', wort: '^mischen$' },
     { begriff: 'Diese Runde', text: 'Buchungen der Runde. Antippen korrigiert.', ziel: '#deck-verlauf', wort: null },
     { begriff: 'Nochmal durchgehen', text: 'Die Kinder ohne Eintrag noch einmal.', ziel: '[data-fehlende]', wort: null },
-    KURS, BEAMER_AN, MENUE,
+    NACHTRAG('#deck-nachtrag'), KURS, BEAMER_AN, MENUE,
   ] },
   schueler: { titel: 'Schüler', zeilen: [
     { begriff: 'Liste · Noten · Termine · Fehlzeiten', text: 'Vier Blicke auf denselben Kurs.', ziel: '[data-sm="noten"]', wort: null },
@@ -57,7 +59,7 @@ export const HILFE = {
     { begriff: 'Warnschwelle', text: 'Ab so vielen Unentschuldigten: Warnung.', ziel: '#view-schueler input[type="number"]', wort: null },
     { begriff: 'Zeitstrahl', text: 'Einen Tag antippen zeigt seine Einträge.', ziel: '#view-schueler .zs-tag', wort: null },
     { begriff: 'Kurzbericht', text: 'Bilanz, Noten und Notizen als Text.', ziel: '#s-bericht', wort: null },
-    KURS, BEAMER_AN, MENUE,
+    NACHTRAG('#schueler-nachtrag'), KURS, BEAMER_AN, MENUE,
   ] },
   kurse: { titel: 'Kurse', zeilen: [
     { begriff: 'Kurskarte', text: 'Antippen: mit dem Kurs in „Heute“ arbeiten.', ziel: '#view-kurse .kurs-karte[data-kurs]', wort: null },

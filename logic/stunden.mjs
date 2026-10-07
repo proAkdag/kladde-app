@@ -85,10 +85,21 @@ function schulBloecke(datumIso, kontext) {
   const wt = wochentagVon(datumIso);
   return wt > 5 || istFerien(zm, datumIso) ? [] : resolveBloecke(zm, wt, datumIso);
 }
+// stundeFaelltAus(kontext, datum, blockNr, kursId) → fällt dieser Block für diesen Kurs aus (Entfall auf seiner Plan-Stunde)?
+// Ohne Zeitraster nie: sonst bräche jede Buchung mit gewählter Stunde ab (Prüfer 06.10. B2). Vertretung und Tausch sind nicht geplant
+// (Zero 06.10.: „Vertretung war nicht geplant“), darum zählt nur der Wochenplan.
+function stundeFaelltAus(kontext, datumIso, blockNr, kursId) {
+  if (!kontext || !kontext.zeitmodell) return false;
+  const wt = wochentagVon(datumIso), s = slotFuerBlock(datumIso, wt, blockNr, kontext);
+  if (!s || !s.entfall) return false;
+  const plan = slotFuerBlock(datumIso, wt, blockNr, { ...kontext, ausnahmen: [] });
+  return !!plan && plan.kursId === kursId;
+}
 // stundeFuerBuchung(kontext, {jetzt, termin, kursId, gewaehlt, handBlock}) → {blockNr, startSek, endeSek, laeuft} | null
-//   gewaehlt  = Block der in „Stunde wählen“ gewählten Stunde. Sie hält bis zur nächsten Wahl, „Heute“/‹ › oder einem Kurswechsel (Zero: „Wahl hält“).
-//   handBlock = Block, für den der Kurs heute über „Alle Kurse“ oder die Kurskarte von Hand gewählt wurde — zählt wie eine eigene Stunde.
-//   1. gewählte Stunde → sie · 2. Nachtrag ohne Wahl → null (Tagesregel, wie Prod)
+//   gewaehlt  = Block der in „Stunde wählen“ gewählten Stunde. Sie hält bis zur nächsten Wahl, „Heute“/‹ › oder einem Kurswechsel (Zero: „Wahl hält“),
+//               und ruht, solange sie ausfällt (Zero 06.10.: „Ausfall löst die Wahl“; die Rücknahme stellt sie wieder her: „Ja, wie Rückgängig“).
+//   handBlock = Block, für den der Kurs heute über „Alle Kurse“ oder die Kurskarte von Hand gewählt wurde — zählt wie eine eigene Stunde, außer sie fällt aus.
+//   1. gewählte Stunde → sie, sofern sie nicht ausfällt · 2. Nachtrag ohne Wahl → null (Tagesregel, wie Prod)
 //   3. heute: die laufende oder gerade beendete eigene Stunde (Doppelstunde: die Korrektur in der Pause bleibt in Block 2); sonst die eigene,
 //      die in ≤ 10 min beginnt (Anwesenheit vor dem Gong); sonst die zuletzt begonnene eigene; sonst die erste eigene des Tages; sonst null
 // laeuft = der Block läuft jetzt (nur dann gibt es einen Minutenvorschlag).
@@ -97,10 +108,13 @@ function stundeFuerBuchung(kontext, { jetzt, termin, kursId, gewaehlt = null, ha
   const heute = termin === iso;
   const mit = b => ({ blockNr: b.blockNr, startSek: b.startSek ?? null, endeSek: b.endeSek ?? null,
     laeuft: heute && b.startSek != null && b.startSek <= sek && sek <= b.endeSek });
-  if (gewaehlt != null) return mit(schulBloecke(termin, kontext).find(b => b.blockNr === gewaehlt) || { blockNr: gewaehlt });
+  // Ausfall löst die Wahl (Zero 06.10.): eine gewählte Stunde oder ein Hand-Block, der laut Plan diesem Kurs gehört und ausfällt, gilt nicht.
+  // Eine ausgefallene Stunde bekommt keine Einträge. Fällt dort ein anderer Kurs aus, hält die Wahl. Nimmt jemand den Ausfall zurück, gilt sie wieder.
+  const ausgefallen = (datum, nr) => stundeFaelltAus(kontext, datum, nr, kursId);
+  if (gewaehlt != null && !ausgefallen(termin, gewaehlt)) return mit(schulBloecke(termin, kontext).find(b => b.blockNr === gewaehlt) || { blockNr: gewaehlt });
   if (!heute) return null;
   const bl = schulBloecke(iso, kontext), wt = wochentagVon(iso);
-  const eigen = b => { if (b.blockNr === handBlock) return true; const s = slotFuerBlock(iso, wt, b.blockNr, kontext); return !!s && !s.entfall && s.kursId === kursId; };
+  const eigen = b => { if (b.blockNr === handBlock && !ausgefallen(iso, b.blockNr)) return true; const s = slotFuerBlock(iso, wt, b.blockNr, kontext); return !!s && !s.entfall && s.kursId === kursId; };
   const eigene = bl.filter(eigen);
   const begonnen = bl.filter(b => b.startSek <= sek).pop();   // der laufende oder gerade beendete Block
   const b = (begonnen && eigene.includes(begonnen) && begonnen) ||
@@ -118,4 +132,4 @@ function kalenderwoche(datumIso) {
   return 1 + Math.round(((t - j) / 86400000 - 3 + ((j.getUTCDay() + 6) % 7)) / 7);
 }
 
-export { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung };
+export { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung, stundeFaelltAus };

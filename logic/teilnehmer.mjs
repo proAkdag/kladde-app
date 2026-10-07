@@ -27,7 +27,8 @@ function neueAusweisNr(schueler, events = [], bis = 0) {
 }
 
 // Laufen Ausweis- und Listen-Nr eines aktiven Kindes durch diesen Schritt NEU auseinander? Ein Gerät mit älterem Stand (bis v1.19.0)
-// kennt nur die Ausweis-Nr und zeigt, druckt und kopiert dann eine andere Zeile — Dialog, „+ Schüler“ und Aktivieren warnen (Prüfer R3)
+// kennt nur die Ausweis-Nr und zeigt, druckt und kopiert dann eine andere Zeile. Dafür warnte die App (Prüfer R3); die Warnung ist seit
+// v1.24.0 entfallen (Zero 06.10. „Ganz weg“), die App ruft die Funktion nicht mehr — sie bleibt getestet für einen Rückweg
 const nrnAuseinander = (vorher, nachher) => (nachher || []).some(s => !s.inaktiv && lnr(s) !== s.nr
   && !(vorher || []).some(a => a.nr === s.nr && !a.inaktiv && lnr(a) === lnr(s)));
 

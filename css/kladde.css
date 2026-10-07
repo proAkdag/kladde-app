@@ -21,11 +21,14 @@
     --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
     --grund:#17150F; --karte:#211E17; --karte2:#2B2820; --kante:#38342A;
     --text:#ECE6D8; --leise:#A49C8A; --band:#C79A4B;
-    /* --band-text = Gold als SCHRIFT. Nacht: identisch mit --band (6,46:1 auf Karte). Tag: #8A6420, weil das
-       Markengold auf hellem Grund nur 2,43:1 misst (Zero-Entscheid 2026-09-02) — Flächen/Rahmen behalten --band. */
+    /* Gold in drei Rollen. --band-text = SCHRIFT (Nacht = --band, Tag #8A6420, Zero-Entscheid 2026-09-02). --band = LINIEN und Zustände
+       (Rahmen, Fokus, Schalter; Tag dunkler, ≥ 3:1). --band-flaeche = goldene FLÄCHEN mit dunkler Schrift (Markengold in beiden Themes).
+       Zero 06.10. Farbrunde: „B · Linien dunkler“ (design/farbe_2026-10-06/). */
     --band-text:#C79A4B;
+    --band-flaeche:#C79A4B;
     --gut:#6FA080; --warn:#CE9B4B; --fehl:#C67C60; --info:#6E9DB8;
-    /* Ampel als SCHRIFT (Login-Meldung, Passphrase-Stärke) wie --band-text: Nacht gleich, Tag dunkler (Prüfer S10 🟡 5) */
+    /* Ampel als SCHRIFT wie --band-text: Nacht gleich, Tag dunkler (Prüfer S10 🟡 5; überall seit der Farbrunde, Zero 06.10. „Ja, dunkler“) —
+       Flächen und Rahmen behalten --gut/--warn/--fehl */
     --gut-text:#6FA080; --warn-text:#CE9B4B; --fehl-text:#C67C60;
     /* --L = Helligkeit der Fachfarben (logic/fachfarben.mjs). Eine Zahl je Theme schaltet
        die ganze Palette um; die dunkle Stufe rechnet selbst -0.15 davon ab. */
@@ -40,7 +43,7 @@
     --grund:#F4F0E7; --karte:#FBF8F1; --karte2:#FFFFFF; --kante:#BFB39A;
     /* --leise: #8A8478 maß nur 3,50:1 auf --karte (AA braucht 4,5) — #716B5D ist der hellste
        Ton derselben warmen Familie mit AA auf grund/karte/karte2 (4,66/5,00/5,30 · W5.2-Messung 2026-08-29) */
-    --text:#26241E; --leise:#716B5D; --band:#C79A4B;
+    --text:#26241E; --leise:#716B5D; --band:#AB8440;   /* Linien: Markengold maß 2,26 / 2,43 / 2,58, derselbe Ton dunkler 3,02 / 3,24 / 3,44 */
     --band-text:#8A6420;   /* gemessen 4,71 / 5,05 / 5,35 auf grund/karte/karte2 */
     --gut:#5B8C6E; --warn:#B5852F; --fehl:#B4654A; --info:#4E7A99;
     /* als Schrift maßen gut/warn/fehl nur 3,41 / 2,90 / 3,77 auf --grund — dieselben Töne dunkler: 4,67 / 4,65 / 4,66 (karte2 ≥ 5,29) */
@@ -72,7 +75,7 @@
     padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
     border-bottom: 1px solid var(--kante);
   }
-  .band { width: 6px; height: 22px; background: var(--band); border-radius: 2px; }
+  .band { width: 6px; height: 22px; background: var(--band-flaeche); border-radius: 2px; }
   /* #kurs-chip: volle Definition lebt im Header-Block (@layer components, Band+Text-Struktur) */
   .spacer { flex: 1; }
   .icon-btn {
@@ -96,7 +99,7 @@
   }
   .btn:active { background: rgba(196,154,90,.15); }
   .btn.still { color: var(--leise); border-color: var(--kante); }
-  .btn.gefahr { color: var(--fehl); border-color: var(--fehl); }
+  .btn.gefahr { color: var(--fehl-text); border-color: var(--fehl); }
   .btn:disabled { opacity: .4; cursor: default; }   /* gesperrt sieht gesperrt aus (Schülerliste 05.10.); Sonderfälle in views gehen vor */
   .btn-reihe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
   select, input[type=text], input[type=password], input[type=date], input[type=time], input[type=number] {
@@ -130,7 +133,7 @@
   }
   .datum-streifen .heute-tag { font-weight: 700; font-size: 15px; }
   .datum-streifen.nachtrag { border-color: var(--warn); }
-  .datum-streifen .nachtrag-hinweis { color: var(--warn); font-size: 13px; }
+  .datum-streifen .nachtrag-hinweis { color: var(--warn-text); font-size: 13px; }
   .datum-streifen .rechts { margin-left: auto; display: flex; gap: 6px; }
   .datum-streifen button { background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; min-height: 40px; padding: 4px 12px; cursor: pointer; font-size: 14px; }
   .datum-streifen button.aktiv { border-color: var(--band); color: var(--band-text); }
@@ -206,10 +209,6 @@
   body.beamer #plan .kachel .marken { display: none; }
   body.beamer #plan .kachel .lb-badge { display: none; }  /* LB ist sensibel — nicht an die Wand projizieren */
   body.beamer #deck-verlauf { display: none; }  /* Runden-Historie = Name + Bewertung — nie projizieren (§4-Beamer-Regel gilt in ALLEN Ansichten) */
-  /* Die Flugrichtung war die zweite Verraeterin: + flog nach rechts, − nach links — an der Wand
-     ablesbar. Bei Projektion fliegt jede Karte gleich (nach unten wie „weiter"). Zero-Befund 2026-08-30. */
-  body.beamer #deck-karte.weg-plus,
-  body.beamer #deck-karte.weg-minus { animation-name: kladde-karte-weiter; }
   body.beamer #plan .kachel.netto-plus, body.beamer #plan .kachel.netto-minus, body.beamer #plan .kachel.netto-fehlt { background: var(--karte); opacity: 1; }
   #plan.editor .kachel.leer { border: 1px dashed var(--kante); cursor: pointer; }
   /* Leere Tische (Zero 2026-10-02): blass und gestrichelt; im Unterricht antippbar wie ein leeres Feld, im Editor in der Bandfarbe */
@@ -247,14 +246,14 @@
   .deck-mitte { flex: 0 1 520px; min-width: 0; }
   #deck-verlauf { flex: 0 0 190px; background: var(--karte); border: 1px solid var(--kante); border-radius: 14px;
     padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-height: 70vh; overflow-y: auto; }
-  .dv-zeile { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px;
+  .dv-zeile { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px;   /* Ziel ≥ 44 px (W5.2, gemessen 06.10.: 40) */
     background: none; border: none; border-bottom: 1px solid var(--kante); padding: 5px 2px; cursor: pointer;
     font: inherit; color: inherit; text-align: left; width: 100%; }
   .dv-zeile:last-child { border-bottom: none; }
   .dv-zeile .dv-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
   .dv-zeile .dv-mark { font-weight: 700; flex: none; }
-  .dv-zeile .dv-mark.plus { color: var(--gut); }
-  .dv-zeile .dv-mark.minus { color: var(--warn); }
+  .dv-zeile .dv-mark.plus { color: var(--gut-text); }
+  .dv-zeile .dv-mark.minus { color: var(--warn-text); }
   .dv-zeile.leer { opacity: .55; }
   .dv-zeile:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; border-radius: 8px; }
   @media (max-width: 900px) { #view-deck { flex-direction: column; align-items: stretch; }
@@ -267,7 +266,6 @@
     background: none; border: none; font: inherit; color: inherit; width: 100%; text-align: left; }  /* echter Button (C5: Tastatur + Screenreader) */
   .s-item:focus-visible { outline: 2px solid var(--band); outline-offset: 1px; border-radius: 8px; }
   .s-item .pfeil { color: var(--leise); font-size: 15px; }
-  .v-titel:focus { outline: none; }  /* programmatischer Ansichts-Fokus ohne visuellen Ring */
   .balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--karte); }
   .balken div, .balken span { height: 100%; display: block; }
   .s-detail { padding: 4px 10px 12px; }
@@ -277,7 +275,7 @@
   .balken { min-width: 60px; }
   /* ── Halbgruppen-Knöpfe (Kurs-Seite) ── */
   .gr-b { background: var(--karte2); border: 1px solid var(--kante); border-radius: 7px; min-width: 38px; min-height: 40px; cursor: pointer; font-weight: 700; color: inherit; }
-  .gr-b.an { background: var(--band); color: var(--auf-band); border-color: var(--band); }
+  .gr-b.an { background: var(--band-flaeche); color: var(--auf-band); border-color: var(--band); }
   /* ── Lock ── */
   #lock {
     position: fixed; inset: 0; background: var(--grund); z-index: 100; overflow-y: auto;
@@ -299,7 +297,7 @@
   .lk-auge { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
     background: none; border: 0; color: var(--leise); cursor: pointer; padding: 0; }
   .lk-auge .ico { width: 20px; height: 20px; }
-  .lk-haupt { width: 100%; min-height: 50px; border-radius: 10px; background: var(--band); color: #1a1206; border: 0; font: inherit; font-size: 17px; font-weight: 600;
+  .lk-haupt { width: 100%; min-height: 50px; border-radius: 10px; background: var(--band-flaeche); color: #1a1206; border: 0; font: inherit; font-size: 17px; font-weight: 600;
     display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
   .lk-haupt:disabled { opacity: .55; cursor: default; }
   /* nach „Passphrase eingeben“ tritt der Fingerabdruck zurück: ein goldener Knopf je Bild */
@@ -367,6 +365,12 @@
   #deck-karte.weg-plus  { animation: kladde-karte-plus  .24s cubic-bezier(.3,0,1,1) forwards; }
   #deck-karte.weg-minus { animation: kladde-karte-minus .24s cubic-bezier(.3,0,1,1) forwards; }
   #deck-karte.weg-weiter{ animation: kladde-karte-weiter .2s cubic-bezier(.3,0,1,1) forwards; }
+  /* Die Flugrichtung war die zweite Verraeterin: + flog nach rechts, − nach links — an der Wand
+     ablesbar. Bei Projektion fliegt jede Karte gleich (nach unten wie „weiter"). Zero-Befund 2026-08-30.
+     Die Regel muss in DIESER Ebene stehen: In @layer views verlor sie gegen die Flugregeln oben (spätere Ebene gewinnt vor
+     Spezifität), im Beamer flog ＋ weiter nach rechts (W5.4, 06.10., gemessen auch an v1.19.0–v1.23.0) */
+  body.beamer #deck-karte.weg-plus,
+  body.beamer #deck-karte.weg-minus { animation-name: kladde-karte-weiter; }
   #deck-karte.rein { animation: kladde-karte-rein .22s cubic-bezier(.05,.7,.1,1); }
 
   /* ── View Transitions (Tab-/Ansichtswechsel) · Kopf+Leiste bleiben statisch ── */
@@ -387,6 +391,10 @@
 
   /* ── Tastatur-Fokus (PC) ── */
   :focus-visible { outline: 2px solid var(--band); outline-offset: 2px; }
+  /* der Seitentitel bekommt den Fokus nur für Screenreader (Ansichtswechsel, „↩ Heute“): ohne Ring. In @layer views verlor die Regel gegen
+     die Zeile darüber, der Titel stand nach jedem Ansichtswechsel im goldenen Rahmen (gefunden 05.10.). Ebenso der Titel der Hilfe
+     nach „‹ Hilfe“ (Prüfer 06.10. B9) */
+  .v-titel:focus-visible, .hl-kopf h3:focus-visible { outline: none; }
 
   /* ── Reduced-Motion: alles aus (Apple HIG · DSGVO-A11y) ── */
   @media (prefers-reduced-motion: reduce) {
@@ -422,6 +430,10 @@
     padding: 9px 12px; font-size: 14px;
   }
   #banner.hidden { display: none; }
+  /* Nur der Text bricht um, Knopf und × bleiben in einer Zeile (320–1080 px gemessen). Vorher stand das × am Handy allein in einer
+     zweiten Zeile; der Hinweis wurde 117 px hoch und schob den Plan so weit nach unten, dass die feste Zeile „Sitzplan | Liste“ die
+     Unterkante der letzten Reihe verdeckte (W5.4 und Prüfer M2/M7, 06.10.) */
+  #banner { flex-wrap: nowrap; } #banner > span { min-width: 0; } #banner > button { flex: none; }
   #banner .btn { min-height: 38px; padding: 6px 12px; }
   #banner .banner-zu {
     margin-left: auto; background: transparent; border: 1px solid var(--kante);
@@ -432,13 +444,13 @@
 /* ── v0.8.0 · Utility-Klassen (CSP: ersetzen die style=""-Attribute der HTML-String-Renderer) ── */
 @layer components {
   .u-leise { color: var(--leise); }
-  .u-gut { color: var(--gut); }
-  .u-fehl { color: var(--fehl); }
+  .u-gut { color: var(--gut-text); }
+  .u-fehl { color: var(--fehl-text); }
   .u-hinweis { font-size: 13px; color: var(--leise); }
-  .u-warn13 { font-size: 13px; color: var(--warn); }
+  .u-warn13 { font-size: 13px; color: var(--warn-text); }
   .u-regelzeile { font-size: 12px; color: var(--leise); margin: 4px 0 8px; }
   .u-vorschau { font-size: 13px; color: var(--leise); min-height: 2.6em; margin-top: 6px; }
-  .u-fehlerfeld { color: var(--fehl); min-height: 1.3em; font-size: 13px; }
+  .u-fehlerfeld { color: var(--fehl-text); min-height: 1.3em; font-size: 13px; }
   .u-kopf-leise { margin-top: 12px; color: var(--leise); }
   .u-wert-rechts { font-weight: 700; min-width: 40px; text-align: right; }
   .u-fs14 { font-size: 14px; }
@@ -463,13 +475,13 @@
   /* Zwei Aktions-Knoepfe in einer .zeile: Abstand, damit der Finger den destruktiven nicht streift */
   .u-akt { display: flex; gap: 8px; }
   /* Hinweis auf der Deck-Karte, wenn der Schueler waehrend der Runde abwesend gestempelt wurde */
-  .deck-fehlt { display: block; margin-top: 10px; color: var(--warn); font-size: 13px; }
+  .deck-fehlt { display: block; margin-top: 10px; color: var(--warn-text); font-size: 13px; }
   /* Leerer Runden-Verlauf: haelt die Spaltenbreite, ohne zu rufen */
   .dv-leer { color: var(--leise); font-size: 13px; margin: 6px 2px 0; font-style: italic; }
   /* Farbwahl je Kurs: 12 Tupfer, der aktive traegt einen Ring */
   .farbwahl { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
   .farbtupf { width: 26px; height: 26px; min-height: 26px; border-radius: 8px; padding: 0;
-    background: var(--f, var(--band)); border: 2px solid transparent; cursor: pointer; }
+    background: var(--f, var(--band-flaeche)); border: 2px solid transparent; cursor: pointer; }
   .farbtupf.an { border-color: var(--text); }
   .farbtupf.auto { background: var(--karte2); border: 1px dashed var(--kante); color: var(--leise);
     font-size: 11px; width: auto; padding: 0 9px; }
@@ -481,8 +493,8 @@
   .chip-fehl { background: var(--fehl); color: var(--auf-neg); }
   .chip-kante { background: var(--kante); color: var(--text); }
   .chip-info { background: var(--info); color: var(--auf-info); }
-  .deck-minus { color: var(--fehl); border-color: var(--fehl); }
-  .deck-plus { color: var(--gut); border-color: var(--gut); }
+  .deck-minus { color: var(--fehl-text); border-color: var(--fehl); }
+  .deck-plus { color: var(--gut-text); border-color: var(--gut); }
 }
 
 /* ── v0.9.0 · Stundenplan-Assistent (P2.4) ── */
@@ -491,7 +503,7 @@
   .sp-kopf h3 { margin: 0; }
   .sp-steps { display: flex; gap: 5px; }
   .sp-step { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); }
-  .sp-step.an { background: var(--band); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
+  .sp-step.an { background: var(--band-flaeche); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
   .sp-pausen .zeile { padding: 3px 0; }
   .sp-vorschau { margin-top: 10px; background: var(--karte2); border: 1px solid var(--kante); border-radius: 8px; padding: 6px 10px; }
   .sp-vorschau .zeile { padding: 3px 0; }
@@ -516,14 +528,14 @@
 @layer views {
   .zr-leiste { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; }
   .zr-chip { flex: 0 0 auto; background: var(--karte2); border: 1px solid var(--kante); color: var(--leise); border-radius: 14px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
-  .zr-chip.an { background: var(--band); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
+  .zr-chip.an { background: var(--band-flaeche); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
 }
 
 /* ── v0.10.0 · Klärungsliste (P3.5) ── */
 @layer views {
   .klaer-zeile { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--kante); font-size: 14px; }
   .klaer-zeile:first-of-type { border-top: none; }
-  .klaer-zeile.alt { color: var(--warn); }
+  .klaer-zeile.alt { color: var(--warn-text); }
   .klaer-btns { display: flex; gap: 4px; flex: 0 0 auto; }
 }
 
@@ -545,6 +557,12 @@
 
   /* Deck-Start-Optionen (P4.4) */
   .deck-optionen { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px auto 0; max-width: 420px; }
+  /* Nachtrag außerhalb von „Heute“: über Deck-Karte und Schülerliste, wohin die Einträge gehen, mit „↩ Heute“ (Zero 06.10. „B · Chip und Leiste“) */
+  .nachtrag-leiste { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--warn); border-radius: 12px;
+    padding: 4px 4px 4px 12px; margin-bottom: 10px; }
+  .nachtrag-leiste[hidden] { display: none; }
+  .nachtrag-leiste .nachtrag-hinweis { color: var(--warn-text); font-size: 13.5px; }
+  .nachtrag-leiste .btn { flex: none; }   /* 44 px hoch über .u-btn-klein (unten, W5.2) */
   .deck-optionen:empty { display: none; }
   .deck-optionen button { background: var(--karte2); border: 1px solid var(--kante); color: var(--leise);
     border-radius: 14px; padding: 6px 13px; min-height: 40px; font-size: 13px; cursor: pointer; }
@@ -553,8 +571,8 @@
   /* Kurskarten-Badge (P4.2 · „Klasse auf einen Blick") */
   .kurs-badge { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 9px; margin-left: 6px;
     text-transform: none; letter-spacing: 0; vertical-align: middle; border: 1px solid var(--kante); color: var(--leise); white-space: nowrap; }
-  .kurs-badge.jetzt { background: var(--band); color: var(--auf-band); border-color: var(--band); }
-  .kurs-badge.warn { background: transparent; color: var(--warn); border-color: var(--warn); }
+  .kurs-badge.jetzt { background: var(--band-flaeche); color: var(--auf-band); border-color: var(--band); }
+  .kurs-badge.warn { background: transparent; color: var(--warn-text); border-color: var(--warn); }
 }
 @layer anim {
   /* Konflikt-Shake (§31: „Block bereits belegt" / Fehlbedienung) */
@@ -603,7 +621,7 @@
     border: 1px dashed var(--kante); border-radius: 10px; }
   .sp-trash.ziel { border-color: var(--fehl); background: rgba(201,111,111,.2); }
   .sp-ghost { position: fixed; z-index: 90; transform: translate(-50%,-150%); pointer-events: none;
-    background: var(--band); color: var(--auf-band); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700;
+    background: var(--band-flaeche); color: var(--auf-band); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700;
     box-shadow: 0 8px 22px rgba(0,0,0,.5); white-space: nowrap; }
   body.sp-edit main { padding-bottom: 120px; }
   body.sp-edit #plan.editor .kachel.schueler { touch-action: none; cursor: grab; }
@@ -680,7 +698,7 @@
   .marke { display: flex; align-items: center; gap: 11px; padding: 2px 8px 16px; }
   /* Handy quer (≥ 600 breit, niedrig): die beschriftete Leiste ist höher als das Fenster — scrollen statt abschneiden (Prüfer 2026-10-01) */
   @media (min-width: 600px) and (max-height: 600px) { .sidebar { overflow-y: auto; } }
-  .marke-band { width: 7px; height: 30px; background: var(--band); border-radius: 3px; flex: none; }
+  .marke-band { width: 7px; height: 30px; background: var(--band-flaeche); border-radius: 3px; flex: none; }
   .marke-name { font-family: var(--font-serif); font-size: 22px; font-weight: 500; line-height: 1; }
   .marke-sub { font-size: 10px; color: var(--leise); letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
   #hauptnav { display: flex; flex-direction: column; gap: 3px; }
@@ -711,10 +729,13 @@
     border: 1px solid var(--kante); border-radius: 11px; padding: 7px 13px; min-height: 44px; cursor: pointer; max-width: 260px;
   }
   /* --f = Fachfarbe (logic/fachfarben.mjs, per CSSOM gesetzt) · Rückfall: Markenton */
-  .kurs-band { width: 6px; height: 28px; background: var(--f, var(--band)); border-radius: 3px; flex: none; }
+  .kurs-band { width: 6px; height: 28px; background: var(--f, var(--band-flaeche)); border-radius: 3px; flex: none; }
   .kurs-txt { display: flex; flex-direction: column; text-align: left; min-width: 0; }
   #kurs-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #kurs-chip small { color: var(--leise); font-size: 11.5px; }
+  /* Nachtrag (Zero 06.10. „B · Chip und Leiste“): der Chip nennt Datum und Stunde der Buchung, Rand und Schrift in Warnfarbe */
+  #kurs-chip.nachtrag { border-color: var(--warn); }
+  #kurs-chip.nachtrag small { color: var(--warn-text); }
   header.app .icon-btn { border-radius: 11px; }
 
   /* ── Heute-Cockpit: Sitzplan + permanente Rail ── */
@@ -743,7 +764,7 @@
   .rail-btn svg { width: 19px; height: 19px; }
   /* iPad: Long-Press-Callout/Text-Selection/Doppeltipp-Zoom unterdrücken (Rail-Long-Press-Label + Stempel-Serien) */
   .rail-btn, #plan .kachel { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
-  .rail-btn.an { background: var(--band); border-color: var(--band); color: var(--auf-band); }
+  .rail-btn.an { background: var(--band-flaeche); border-color: var(--band); color: var(--auf-band); }
   .rail-btn.plus.an { background: var(--gut); border-color: var(--gut); color: var(--auf-pos); }
   .rail-btn.minus.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
   .rail-btn.verw.an { background: var(--fehl); border-color: var(--fehl); color: var(--auf-neg); }
@@ -753,7 +774,7 @@
   .rail-bar { height: 6px; background: var(--kante); border-radius: 4px; overflow: hidden; margin-top: 7px; }
   .rail-bar > div { height: 100%; background: var(--gut); border-radius: 4px; }
   .rail-karte.komplett { border-color: var(--gut); }  /* alle erfasst → grünes Stunde-komplett-Signal */
-  .rail-karte.komplett .rail-erfasst-zahl { color: var(--gut); }
+  .rail-karte.komplett .rail-erfasst-zahl { color: var(--gut-text); }
   /* Erfasst-Karte auf Datums-Zeilen-Höhe (58px) — Titel + Zahl in eine Zeile, Balken darunter, vertikal zentriert */
   .erfasst-karte { min-height: 58px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; gap: 5px; }
   .erfasst-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -806,7 +827,7 @@
   .ms-kopf { display: grid; gap: 2px; padding: 2px 0 12px; }
   .ms-gross { font-family: var(--font-serif); font-size: 24px; font-weight: 500; }
   .ms-klein { font-size: 13px; color: var(--leise); }
-  .ms-kopf.ms-alt .ms-gross { color: var(--warn); }
+  .ms-kopf.ms-alt .ms-gross { color: var(--warn-text); }
   .ms-block { display: grid; gap: 8px; padding: 2px 0 10px; font-size: 15px; }
   .schalter-liste + .zeile { border-top: none; margin-top: 4px; }
   .panel.ms-technik { padding: 0 18px; }   /* .panel (16px oben/unten) steht weiter unten und gewönne bei gleicher Spezifität */
@@ -832,7 +853,7 @@
   .la-ist-weg .la-name { color: var(--leise); text-decoration: line-through; }
   .la-marke { font-size: 12.5px; color: var(--leise); border: 1px solid var(--kante); border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
   .la-neu { color: var(--band-text); border-color: var(--band); }
-  .la-warn { color: var(--warn); border-color: var(--warn); }
+  .la-warn { color: var(--warn-text); border-color: var(--warn); }
   .la-frage { grid-column: 2 / -1; display: grid; gap: 6px; padding: 2px 0 6px; }
   .la-klein { font-size: 13px; color: var(--leise); }
   .la-wahl { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -897,7 +918,7 @@
   .qn-fest small, .s-vorschlag small { font-weight: 400; font-size: 10.5px; color: var(--leise); }
   .s-vorschlag { font-weight: 700; }
   .s-anlass { color: var(--leise); font-size: 12.5px; }
-  .s-anlass.warn { color: var(--warn); }
+  .s-anlass.warn { color: var(--warn-text); }
   /* Gegenwartszeile über dem Zeitstrahl (C3) */
   .zs-gegenwart { font-size: 13px; color: var(--leise); margin: 6px 0 4px; }
   .zs-gegenwart b { color: var(--text); }
@@ -961,7 +982,7 @@
   .breit .sp-pausenzeile { font-size: 11.5px; }
   /* Maler-Palette umbricht — viele Fächer passen sonst nicht in eine Zeile */
   .sp-malpalette { flex-wrap: wrap; row-gap: 6px; }
-  .mal-band { display: inline-block; width: 5px; height: 15px; border-radius: 2px; background: var(--f, var(--band)); margin-right: 7px; vertical-align: -2px; }
+  .mal-band { display: inline-block; width: 5px; height: 15px; border-radius: 2px; background: var(--f, var(--band-flaeche)); margin-right: 7px; vertical-align: -2px; }
   .sp-malpalette .mal-chip.an { border-color: var(--f, var(--band)); color: var(--f, var(--band)); }
   /* Klassen-/Reservestunde: gestrichelt, ohne Fachfarbe — ein Slot ohne Kurs */
   .sp-zelle.sp-art { border-style: dashed; border-color: var(--leise); color: var(--leise);
@@ -978,7 +999,7 @@
 /* ── v1.7.0 · Übersichten (Noten · Termine · Fehlzeiten) · Druck · Ferien · Wisch-Malen (Zero 2026-09-02) ── */
 @layer views {
   .s-modus { margin-bottom: 4px; }
-  .s-abw { color: var(--warn); font-size: 11px; margin-left: 6px; font-weight: 600; }
+  .s-abw { color: var(--warn-text); font-size: 11px; margin-left: 6px; font-weight: 600; }
   .druck-kopf { font-size: 13px; color: var(--leise); margin: 4px 0 8px; }
   .druck-kopf b { color: var(--text); }
   .ut-aktionen { margin: 0 0 8px; }
@@ -1007,7 +1028,7 @@
   .s-nzeile .nt-zelle { min-height: 44px; width: 64px; }
   .s-nbil { color: var(--leise); font-variant-numeric: tabular-nums; }
   /* Quartalsnote als Gitter: gesetzte Note gefüllt, Vorschlag umrandet */
-  .sb-wahl .btn.gesetzt { background: var(--band); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
+  .sb-wahl .btn.gesetzt { background: var(--band-flaeche); color: var(--auf-band); border-color: var(--band); font-weight: 700; }
   .qn-wahl { margin: 4px 0 8px; }
   .ut-verlauf { font-size: 12px; }
   tr.ut-warn td { background: color-mix(in oklab, var(--fehl) 10%, transparent); }
@@ -1080,7 +1101,7 @@
   .s-seite .klaer-zeile { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
   .s-seite .klaer-wer { display: flex; flex-direction: column; gap: 2px; }
   .s-seite .klaer-wer small { color: var(--leise); font-size: 12.5px; }
-  .s-seite .klaer-zeile.alt .klaer-wer small { color: var(--warn); }
+  .s-seite .klaer-zeile.alt .klaer-wer small { color: var(--warn-text); }
   .s-seite .klaer-btns .btn { flex: 1 1 0; padding: 2px 6px; }
   /* Handy: Klärung als Leiste über der Liste, das Blatt öffnet sie (Scheibe 6, Zero 03.10.: „A · Leiste über der Liste“) */
   .s-klaer-leiste { display: none; width: 100%; min-height: 48px; margin: 0 0 10px; padding: 0 14px; align-items: center; justify-content: space-between; gap: 10px;
@@ -1196,7 +1217,7 @@
   .stunde-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
   .stunde-txt b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stunde-txt small { font-size: 12px; color: var(--leise); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .stunde-txt small.nachtrag-hinweis { color: var(--warn); }
+  .stunde-txt small.nachtrag-hinweis { color: var(--warn-text); }
   .stunde-pfeil { margin-left: auto; padding-left: 4px; color: var(--leise); font-size: 12px; }
   .datum-streifen .rechts { align-items: center; }
   /* Sitzplan | 🎲 | Liste — ein Segment, der Würfel in der Mitte */
@@ -1270,7 +1291,7 @@
     font: inherit; font-size: 18px; cursor: pointer; }
   .sw-zeile.offen > .sw-stunde, .sw-zeile.offen > .sw-mehr { border-color: var(--band); }
   .sw-stunde.entf b { text-decoration: line-through; color: var(--leise); font-weight: 400; }
-  .sw-badge.fehl { border-color: var(--fehl); color: var(--fehl); }
+  .sw-badge.fehl { border-color: var(--fehl); color: var(--fehl-text); }
   .sw-aktion { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; border: 1px solid var(--band); border-radius: 10px; }
   .sw-aktion .btn { flex: 1 1 220px; }
   .sw-aktion .sw-hinweis, .sp-c-feld .sw-hinweis { flex-basis: 100%; margin: 0; }
@@ -1302,6 +1323,22 @@
   .sp-c-feld .btn:disabled { opacity: .4; cursor: default; }   /* „öffnen“ an ausgefallener oder künftiger Stunde */
   .sp-c-feld .u-hinweis { margin: 0; }
   .sp-c-bearb { margin-left: auto; }
+  /* Stundenplan-Punkte (Zero 06.10.): 8 kommende Ausfälle rechts unter dem Feld · 11 die andere A/B-Woche leise in der Zelle ·
+     12 nur lesend bei offenem Sitzplan-Editor · 21 Reiter Tag am iPad schmal, rechts „Alle Kurse“, Datum, Heute */
+  .sp-c-rechts { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .sp-c-rechts .sp-c-kommend { margin-top: 0; }
+  .sp-c-kommend-z { min-height: 44px; font-size: 13.5px; }
+  /* --leise maß auf dem getönten Zellgrund 4,14–4,82, in der gedimmten Ausfall-Zelle 2,67–3,4 (Prüfer 06.10., B3; AA 4,5) */
+  .sp-zelle .sp-c-ab { color: color-mix(in srgb, var(--text) 45%, var(--leise)); font-size: 10.5px; font-style: italic; }
+  .sp-zelle.sp-c.entf .sp-c-ab { color: var(--text); }
+  .sp-c-leer.mit-ab { opacity: 1; display: grid; place-items: center; }
+  .sp-c-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }   /* nur für Screenreader */
+  .sw-nurlesen { margin: -4px 0 8px; }
+  .sw-liste.nur-lesen .sw-stunde:disabled:not(.entf):not(.archiv) { opacity: 1; }   /* archivierte (alte Vertretung) bleiben grau */
+  .sw-tag-spalten { display: grid; grid-template-columns: minmax(0, 540px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .sw-tag-rechts .sw-alle { margin-top: 0; }
+  /* einspaltig bis 800 px: bei 761–768 px war die rechte Spalte schmaler als das Datumsfeld (Prüfer 06.10., B5); iPad hochkant 810 px passt */
+  @media (max-width: 800px) { .sw-tag-spalten { grid-template-columns: 1fr; gap: 0; } .sw-tag-rechts .sw-alle { margin-top: 10px; } }
   @media (max-width: 760px) { .sp-c { grid-template-columns: 1fr; } }
   @media (max-width: 599px) { .breit .sp-c-woche { grid-template-columns: 40px repeat(5, minmax(0, 1fr)); gap: 4px; } .breit .sp-zelle.sp-c { font-size: 12px; padding: 3px 2px; } }
   /* Handy „⋯“: Werkzeuge als Liste */
@@ -1399,11 +1436,10 @@
   /* Kopf: Titel und „Zeichen ›“ in einer Zeile, rechts Platz für ✕ (Zero 05.10. zu Prüfer-B1: „Kürzer + Zeichen oben“) */
   .hl-kopf { display: flex; align-items: center; gap: 10px; padding-right: 48px; margin-bottom: 4px; }
   .hl-kopf h3 { margin: 0; flex: 1; }
-  .hl-kopf h3:focus { outline: none; }
   .hl-zeichen { flex: none; padding: 8px 12px; }
   .hl-z { display: grid; grid-template-columns: 124px 1fr; gap: 8px; padding: 5px 0; border-top: 1px solid var(--kante); font-size: 14px; line-height: 1.35; }
   .hl-z > span { color: var(--leise); }
-  .hl-n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--band); color: #1a1206; font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: 1px; }
+  .hl-n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--band-flaeche); color: #1a1206; font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: 1px; }
   /* in der Zeile hebt die Nummer die Zeilenhöhe nicht an (vorher +3 px je nummerierter Zeile) */
   .hl-z .hl-n { margin: -3px 6px -3px 0; vertical-align: -2px; }
   .hilfe-marken { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.5); pointer-events: none; }

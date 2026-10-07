@@ -17,11 +17,12 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#17150F">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=1.23.0">
+<link rel="stylesheet" href="./css/kladde.css?v=1.24.0">
 </head>
 <body>
 
@@ -136,6 +137,7 @@
 
       <section id="view-deck" class="hidden">
         <div class="deck-mitte">
+        <div id="deck-nachtrag" class="nachtrag-leiste" hidden></div>
         <div id="deck-fortschritt"></div>
         <div id="deck-optionen" class="deck-optionen"></div>
         <div id="deck-karte"></div>
@@ -151,6 +153,7 @@
         <aside id="deck-verlauf" aria-label="Verlauf dieser Runde"></aside>
       </section>
 
+      <div id="schueler-nachtrag" class="nachtrag-leiste" hidden></div>
       <section id="view-schueler" class="hidden"></section>
 
       <section id="view-kurse" class="hidden"></section>
@@ -165,6 +168,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=1.23.0"></script>
+<script type="module" src="./js/app.mjs?v=1.24.0"></script>
 </body>
 </html>
