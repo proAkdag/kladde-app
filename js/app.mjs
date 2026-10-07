@@ -1,28 +1,28 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=1.24.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=1.24.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=1.24.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey } from '../logic/container.mjs?v=1.24.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=1.24.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=1.24.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=1.24.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=1.24.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=1.24.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=1.24.0';
-import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn } from '../logic/teilnehmer.mjs?v=1.24.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=1.24.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=1.24.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=1.24.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=1.24.0';
-import { HILFE, findeZiel } from '../logic/hilfe.mjs?v=1.24.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar, neuerKurs, ergaenzeNeuenKurs } from '../logic/mappe.mjs?v=1.24.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=1.24.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=1.24.0';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung, stundeFaelltAus } from '../logic/stunden.mjs?v=1.24.0';
-import { setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=1.24.0';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=1.24.0';
-const APP_VERSION = '1.24.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=2.0.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=2.0.0';
+import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=2.0.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey } from '../logic/container.mjs?v=2.0.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=2.0.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=2.0.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=2.0.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=2.0.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=2.0.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=2.0.0';
+import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn } from '../logic/teilnehmer.mjs?v=2.0.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=2.0.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=2.0.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=2.0.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=2.0.0';
+import { HILFE, findeZiel } from '../logic/hilfe.mjs?v=2.0.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar, neuerKurs, ergaenzeNeuenKurs } from '../logic/mappe.mjs?v=2.0.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=2.0.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=2.0.0';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung, stundeFaelltAus } from '../logic/stunden.mjs?v=2.0.0';
+import { setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=2.0.0';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=2.0.0';
+const APP_VERSION = '2.0.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -3132,7 +3132,8 @@ function listenAbgleichDialog(k,neu,herkunft){
       if(vault.stamm.sitzplaene[k.id]) for(const w of plan.weg) vault.stamm.sitzplaene[k.id]=vomPlatz(vault.stamm.sitzplaene[k.id],w.kind.nr);   // der Platz bleibt als leerer Tisch
       stammMutiert(); speichern(); dlgZu(); res(true);
     };
-    dlgZeigenEl(el('h3',{},'Liste aktualisieren · '+k.name),
+    // mit Fach: es gibt zwei Kurse „9a“ (Zero 07.10. „Titel mit Fach“); Kurs und Fach mit geschützten Leerzeichen, am Handy brach sonst „7b ·“ / „Mathematik“
+    dlgZeigenEl(el('h3',{},'Liste aktualisieren · '+k.name+(k.fach?'\u00a0·\u00a0'+k.fach:'')),
       el('p',{class:'u-hinweis'},'Die Kladde erkennt die Kinder am Namen. Einträge, Sitzplatz und Halbgruppe bleiben bei jedem Kind, auch wenn sich seine Nummer ändert.'),
       seg,segText,liste,unten);
     zeichne();
