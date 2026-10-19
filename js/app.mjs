@@ -1,28 +1,28 @@
 // Kladde · js/app.mjs — Bootstrap + UI (P1.1-A1: mechanischer Umzug aus index.html v0.7, verhaltensneutral)
 // Logik lebt in ../logic/*.mjs — App und Tests importieren DIESELBEN Dateien (Drift unmöglich).
-import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=2.0.0';
-import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=2.0.0';
-import { mergeContainerDaten, hebeLoeschungAuf } from '../logic/merge.mjs?v=2.0.0';
-import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey } from '../logic/container.mjs?v=2.0.0';
-import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=2.0.0';
-import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=2.0.0';
-import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=2.0.0';
-import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=2.0.0';
-import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=2.0.0';
-import { sortiereKurse } from '../logic/kursSort.mjs?v=2.0.0';
-import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn } from '../logic/teilnehmer.mjs?v=2.0.0';
-import { schuelerBericht } from '../logic/bericht.mjs?v=2.0.0';
-import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=2.0.0';
-import { kursStatus } from '../logic/kursStatus.mjs?v=2.0.0';
-import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=2.0.0';
-import { HILFE, findeZiel } from '../logic/hilfe.mjs?v=2.0.0';
-import { lieseMappe, pruefeKursDatei, xlsxLesbar, neuerKurs, ergaenzeNeuenKurs } from '../logic/mappe.mjs?v=2.0.0';
-import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=2.0.0';
-import { listenEintraege } from '../logic/erfassListe.mjs?v=2.0.0';
-import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung, stundeFaelltAus } from '../logic/stunden.mjs?v=2.0.0';
-import { setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=2.0.0';
-import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=2.0.0';
-const APP_VERSION = '2.0.0';
+import { DRITTELNOTEN, wertZuLabel, drittelnoteLabel, noteAlsWert } from '../logic/skalen.mjs?v=2.1.0';
+import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag, regelText, vorschlagsZeilen, quartalsVerlauf, kursEinordnung, notenAbstand } from '../logic/verdichtung.mjs?v=2.1.0';
+import { mergeContainerDaten, hebeLoeschungAuf, entferneKursReferenzen, uebernehmeMerge } from '../logic/merge.mjs?v=2.1.0';
+import { decodeContainerAuto, encodeContainerV2, wechslePassphrase, neueV2Identitaet, dekRohMitPassphrase, decodeContainerMitDek, importDekKey } from '../logic/container.mjs?v=2.1.0';
+import { bioWrap, bioUnwrap } from '../logic/biometrie.mjs?v=2.1.0';
+import { parseSchuelerListe, MAX_SCHUELER } from '../logic/parser.mjs?v=2.1.0';
+import { migriereStamm, schemaBekannt, standardZeitraeume } from '../logic/migration.mjs?v=2.1.0';
+import { resolveBloecke, formatZeit, blockLabel, istAWoche, istFerien } from '../logic/zeitmodell.mjs?v=2.1.0';
+import { kursZurZeit, slotFuerBlock, geplanteBlockNrn, bereinigeAusnahmen, tagesAusfall, entfallZurueck, ausnahmeEntfernen, setzeSlot, SLOT_ARTEN } from '../logic/autowahl.mjs?v=2.1.0';
+import { sortiereKurse } from '../logic/kursSort.mjs?v=2.1.0';
+import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn } from '../logic/teilnehmer.mjs?v=2.1.0';
+import { schuelerBericht } from '../logic/bericht.mjs?v=2.1.0';
+import { RASTER_VORLAGEN, KURZRASTER_45 } from '../logic/rasterVorlagen.mjs?v=2.1.0';
+import { kursStatus } from '../logic/kursStatus.mjs?v=2.1.0';
+import { zufallsGewicht, gewichteteWahl } from '../logic/auswahl.mjs?v=2.1.0';
+import { HILFE, findeZiel } from '../logic/hilfe.mjs?v=2.1.0';
+import { lieseMappe, pruefeKursDatei, xlsxLesbar, neuerKurs, ergaenzeNeuenKurs } from '../logic/mappe.mjs?v=2.1.0';
+import { fachFarbe, fachKuerzel, FACH_LISTE, WAEHLER_HUES } from '../logic/fachfarben.mjs?v=2.1.0';
+import { listenEintraege } from '../logic/erfassListe.mjs?v=2.1.0';
+import { tagesStunden, stundenAm, stundeDesKurses, kursTag, naechsteStunde, kalenderwoche, tagPlus, wochentagVon, stundeFuerBuchung, stundeFaelltAus } from '../logic/stunden.mjs?v=2.1.0';
+import { setzeAufPlatz, raeumePlatz, vorlauf, vomPlatz, tischStempel, reiheEinfuegen as spReiheEinfuegen, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, druckAnordnung } from '../logic/sitzplan.mjs?v=2.1.0';
+import { pdfAusJpeg, jpegAusDataUrl } from '../logic/pdfbild.mjs?v=2.1.0';
+const APP_VERSION = '2.1.0';
 // Android = „handy“ (v1.11.0): Handy und iPad laufen parallel, Import-Vorschau und Konfliktmeldungen müssen sie unterscheiden.
 // iPadOS gibt sich als Mac aus („Macintosh“) — erkennbar an den Touch-Punkten; ein Mac hat keine (Zero 2026-09-30: iPad zeigte „pc“)
 const GERAET = /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? 'ipad'
@@ -216,6 +216,7 @@ async function lockInit({auto=false}={}){
       const id=await neueV2Identitaet(pin);
       dekKey=id.dek; containerKopf=id.kopf;
       anmeldung='pass'; passSchwach=passStaerke(pin)==='schwach'; vault=leererVault();
+      migriereStamm(vault);   // derselbe Stand wie nach dem Entsperren: Schuljahr mit Zeiträumen sofort da (Codex 07.10. B3: Q1 ging erst nach Sperren)
       await speichern(); entsperrt();
     } else {
       $('lock-btn').disabled=true; lockMeldung('prüfe… (PBKDF2)',true);
@@ -1325,16 +1326,17 @@ function kachelKlassen(s,st){
   }
   return cls;
 }
-function kachelHtml(s,st,r,c){
+// Bedienbar = Tab-Ziel, Enter/Leertaste wie Antippen (Codex 07.10. B5); die Legenden-Kachel ist nur Anschauung
+function kachelHtml(s,st,r,c,bedienbar=true){
   const cls=kachelKlassen(s,st);
   const marken=markenHtml(st);
-  return '<div class="'+cls+'" data-nr="'+s.nr+'" data-r="'+r+'" data-c="'+c+'">'+
+  return '<div class="'+cls+'" data-nr="'+s.nr+'" data-r="'+r+'" data-c="'+c+'"'+(bedienbar?' role="button" tabindex="0"':'')+'>'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
     '<span class="nn">'+esc(anzeigeNachname(s))+'</span>'+
     '<div class="marken">'+marken+'</div></div>';
 }
 function listenZeile(s,e,st){
-  return el('div',{class:kachelKlassen(s,st)+' listen-zeile',dataset:{nr:String(s.nr)}},
+  return el('div',{class:kachelKlassen(s,st)+' listen-zeile',role:'button',tabindex:'0',dataset:{nr:String(s.nr)}},
     el('span',{class:'vn'},e.vorname),el('span',{class:'nn'},e.kurz),s.lb?el('span',{class:'lb-badge'},'LB'):null,
     el('span',{class:'marken'},...markenEl(st)));
 }
@@ -1413,7 +1415,7 @@ function renderHeute(){
       const nr=grid[r+','+c];
       const s=nr?kursSchueler(k).find(x=>x.nr===nr):null;
       if(s&&sichtbar.has(s.nr)) html+=kachelHtml(s,idx.get(s.nr)||leererStand(),r,c);
-      else if(nr==null&&tische.has(r+','+c)) html+='<div class="kachel tisch" data-r="'+r+'" data-c="'+c+'" title="Leerer Tisch"></div>';
+      else if(nr==null&&tische.has(r+','+c)) html+='<div class="kachel tisch" data-r="'+r+'" data-c="'+c+'" title="Leerer Tisch" role="button" tabindex="0" aria-label="Leerer Tisch"></div>';
       else html+='<div class="kachel leer" data-r="'+r+'" data-c="'+c+'"></div>';
     }
     html+='</div>';
@@ -1463,14 +1465,28 @@ $('plan').addEventListener('pointerdown',e=>{ planTipp={x:e.clientX,y:e.clientY}
 $('plan').addEventListener('pointerup',e=>{
   const t=planTipp; planTipp=null;
   const kachel=e.target.closest('.kachel.schueler, .kachel.tisch'); if(!kachel) return;
-  if(editorAktiv||$('plan').classList.contains('editor')) return;
   if(t&&Math.hypot(e.clientX-t.x,e.clientY-t.y)>=8) return;   // gewischt, nicht getippt (Schwelle wie im Editor)
+  kachelAktion(kachel);
+});
+// Tastatur (Codex 07.10. B5): Enter und Leertaste auf einer Kachel tun dasselbe wie Antippen
+$('plan').addEventListener('keydown',e=>{
+  if((e.key!=='Enter'&&e.key!==' ')||e.repeat) return;
+  const kachel=e.target.closest('.kachel.schueler, .kachel.tisch'); if(!kachel||kachel!==e.target) return;
+  if(editorAktiv||$('plan').classList.contains('editor')) return;   // der Editor bedient seine Tasten selbst (Prüfer 19.10. B4)
+  e.preventDefault();   // Leertaste scrollt sonst die Seite
+  const platz='[data-r="'+kachel.dataset.r+'"][data-c="'+kachel.dataset.c+'"]';
+  kachelAktion(kachel);
+  // Ein Stempel zeichnet den Plan neu und nähme den Fokus mit — er bleibt auf demselben Platz, eine Serie geht per Tastatur (Prüfer 19.10. B3)
+  requestAnimationFrame(()=>{ if($('dlg').open) return; const neu=$('plan').querySelector('.kachel'+platz); if(neu&&neu!==document.activeElement) neu.focus(); });
+});
+function kachelAktion(kachel){
+  if(editorAktiv||$('plan').classList.contains('editor')) return;
   if(kachel.classList.contains('tisch')){ if(!stempelTyp&&!busy) tischWahl(kachel.dataset.r+','+kachel.dataset.c); return; }   // mit scharfem Stempel geschieht nichts (Wischen über den Plan)
   const nr=Number(kachel.dataset.nr);
   if(stempelTyp){ stempleKachel(nr); return; }   // Stempel scharf: direkt setzen, kein Dialog
   if(busy) return;
   schuelerBlatt(nr);   // leere Hand = anschauen (Detail-Blatt · Master-Detail)
-});
+}
 HANDY.addEventListener('change',()=>{ if(vault){ renderHeute(); hilfeNeu(); } });   // über 600 px gedreht: Stunde und Umschalter wandern zwischen Kopf/fester Zeile (Handy) und Streifen (v1.13.0)
 // P4.5 · Serien-Stempel: eine Kachel bekommt den scharfen Stempel. Pro Kachel ~80 ms Sperre,
 // damit ein Wischen nicht doppelt zählt — aber verschiedene Kacheln bleiben frei (kein globaler Lock).
@@ -1797,7 +1813,7 @@ function zeigeZeichen(){
   // ein Zeichen je Stunde, Notenwerte der Kurve.
   const sek2=bewertProfil(kurs())==='sek2';
   const wert=(note,p)=>sek2?p+' P':note;
-  const demo=kachelHtml({nr:0,vorname:'Anna',name:'Anders',lb:true},{...leererStand(),plus:1,mat:1,notiz:1,versp:5},0,0);
+  const demo=kachelHtml({nr:0,vorname:'Anna',name:'Anders',lb:true},{...leererStand(),plus:1,mat:1,notiz:1,versp:5},0,0,false);
   const marke=teil=>markenHtml({...leererStand(),...teil});
   const stempel=inhalt=>'<span class="lg-stempel">'+inhalt+'</span>';
   const zeile3=(st,teil,txt)=>'<div class="lg-zeile drei">'+stempel(st)+'<span class="lg-sym">'+(teil?marke(teil):'')+'</span><span>'+txt+'</span></div>';
@@ -2374,7 +2390,7 @@ function quartalsnotenSammeln(k,zr,liste){
         for(const d of liste){ if(!haken.get(d.s.nr)) continue;
           const wert=sek2?String(d.v.vorschlag.wert):wertZuLabel(d.v.vorschlag.wert);
           if(!wert) continue;   // nie still eine Ersatznote (vorher '3') — ohne Label bleibt die Zeile offen
-          if(!addEvent('quartalsnote',d.s.nr,{hj,quartal,wert,zeitraumId:zr.id})){ dlgZu(); return; } n++; }   // nichts gebucht (Archiv, Kurswechsel): nicht weiter, die Meldung nennt den Grund
+          if(!addEvent('quartalsnote',d.s.nr,{hj,quartal,wert,zeitraumId:zr.id,einheit:sek2?'punkte':'drittel'})){ dlgZu(); return; } n++; }   // nichts gebucht (Archiv, Kurswechsel): nicht weiter, die Meldung nennt den Grund
         dlgZu(); toast(n+' Quartalsnoten gesetzt ('+zr.label+')'); renderSchueler();
       }},'Setzen'),
       el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
@@ -2646,7 +2662,7 @@ function setzeQuartalsnote(s,vorschlag,zeitraum){
     const vor=v?(sek2?String(v.wert):wertZuLabel(v.wert))||null:null, jetzt=ev?String(ev.wert):null, q=Number(z.id.slice(1));
     const buche=w=>{ if(kursGewechselt(opt)) return;
       if(w===jetzt){ dlgZu(); toast('unverändert: '+z.id.toUpperCase()+'-Note '+zeige(w)+' · '+s.vorname); return; }
-      if(addEvent('quartalsnote',s.nr,{hj:q>2?2:1,quartal:q%2?1:2,wert:w,zeitraumId:z.id})){ dlgZu(); toast(z.id.toUpperCase()+'-Note '+zeige(w)+' · '+s.vorname); if(aktView==='schueler') renderSchueler(); } else dlgZu(); };   // nichts gebucht: die Meldung liegt frei
+      if(addEvent('quartalsnote',s.nr,{hj:q>2?2:1,quartal:q%2?1:2,wert:w,zeitraumId:z.id,einheit:sek2?'punkte':'drittel'})){ dlgZu(); toast(z.id.toUpperCase()+'-Note '+zeige(w)+' · '+s.vorname); if(aktView==='schueler') renderSchueler(); } else dlgZu(); };   // nichts gebucht: die Meldung liegt frei
     dlgZeigenEl(el('h3',{},'Quartalsnote · '+s.vorname+' '+s.name),
       el('div',{class:'zr-leiste qn-wahl',role:'group','aria-label':'Quartal'},...qs.map(x=>el('button',{type:'button',class:'zr-chip'+(x.id===z.id?' an':''),'aria-pressed':String(x.id===z.id),dataset:{qn:x.id},onclick:()=>{ z=x; zeichne(); const b=$('dlg').querySelector('[data-qn="'+x.id+'"]'); if(b) b.focus(); }},x.id.toUpperCase()))),
       el('section',{class:'sb-stunde'},el('div',{class:'sb-feld ruhig'},
@@ -2946,8 +2962,11 @@ function kursSeite(k){
       const wahl=e.target.value;
       if(wahl===(k.notenmodus||'punkte')) return;
       // Direkte Noten (📊/⭐) sind in der alten Einheit gebucht und wären danach unlesbar — darum sperren, solange es welche gibt (Prüfer 2026-09-29)
-      const nNoten=wirksameEvents(vault.events).filter(x=>x.kursId===k.id&&x.typ==='note').length;
-      if(nNoten){ e.target.value=k.notenmodus||'punkte'; toast('Wechsel nicht möglich: '+nNoten+' direkte Note'+(nNoten>1?'n':'')+' in der alten Einheit — erst stornieren',5000); return; }
+      // Quartalsnoten ebenso (Codex 07.10. B4: Q1 = 13 P stand nach dem Wechsel als „13“ unter Drittelnoten)
+      const kev=wirksameEvents(vault.events).filter(x=>x.kursId===k.id);
+      const nNoten=kev.filter(x=>x.typ==='note').length, nQn=kev.filter(x=>x.typ==='quartalsnote').length;
+      if(nNoten||nQn){ e.target.value=k.notenmodus||'punkte';
+        toast('Wechsel nicht möglich: '+[nNoten?nNoten+' direkte Note'+(nNoten>1?'n':''):null,nQn?nQn+' Quartalsnote'+(nQn>1?'n':''):null].filter(Boolean).join(' und ')+' in der alten Einheit — erst stornieren',5000); return; }
       const label=wahl==='drittel'?'Drittelnoten':'Punkte 0–15';
       dlgZeigenEl(
         el('h3',{},'Noten-Eingabe wechseln?'),
@@ -3224,8 +3243,13 @@ function schuljahrAssistent(){
   const kopf=t=>el('div',{class:'sp-kopf'},el('h3',{},t),el('div',{class:'sp-steps'},...[1,2,3,4].map(n=>el('span',{class:'sp-step'+(n===schritt?' an':'')},String(n)))));
 
   function s1(){ // Sicherung erzwingen
+    // Nur ein Download, kein Teilen: ob die Datei ankam, weiß die App nicht — du bestätigst es (Review 19.10. §8)
+    const bestaetigen=!exportInSitzung&&downloadGestartet
+      ? el('label',{class:'zeile'},el('span',{},el('input',{type:'checkbox',class:'u-check',onchange:e=>{ if(e.target.checked){ exportInSitzung=true; s1(); } }}),' Die Sicherungsdatei liegt sichtbar in meinen Downloads bzw. Dateien'))
+      : null;
     dlgZeigenEl(kopf('Sicherung'),
       el('p',{},'Bevor du das neue Schuljahr startest, sichere die aktuelle Kladde. „Weiter" wird erst nach einer Sicherung frei.'),
+      bestaetigen,
       el('div',{class:'btn-reihe'},
         el('button',{class:'btn',onclick:async()=>{ await exportiereContainerJetzt(); s1(); }},exportInSitzung?'✓ gesichert — nochmal':'Sicherung speichern'),
         el('button',{class:'btn'+(exportInSitzung?'':' still'),onclick:()=>{ if(!exportInSitzung){ toast('Bitte zuerst sichern'); return; } schritt=2; s2(); }},'Weiter'),
@@ -3356,15 +3380,10 @@ function loescheKursEndgueltig(id){
       el.querySelector('#del-ok').onclick=()=>{
         // Lösch-Markierung: sonst holt der nächste Import vom zweiten Gerät Kurs und Einträge zurück (logic/merge)
         vault.stamm.geloescht={...(vault.stamm.geloescht||{}),[id]:{am:new Date().toISOString()}};
-        // Auch die beigelegten verworfenen Stände (bis zu drei ganze Stammdaten-Kopien) tragen Namen und Liste
-        for(const st of vault.verworfeneStaende||[]){
-          st.kurse=(st.kurse||[]).filter(x=>x.id!==id);
-          for(const feld of ['schueler','sitzplaene','kursprofile']) if(st[feld]) delete st[feld][id];
-          if(Array.isArray(st.wochenplan)) st.wochenplan=st.wochenplan.filter(w=>w.kursId!==id);
-        }
-        vault.stamm.kurse=vault.stamm.kurse.filter(x=>x.id!==id);
-        delete vault.stamm.schueler[id]; delete vault.stamm.sitzplaene[id]; delete vault.stamm.kursprofile[id];
-        vault.stamm.wochenplan=(vault.stamm.wochenplan||[]).filter(w=>w.kursId!==id);
+        // Auch die beigelegten verworfenen Stände (bis zu drei ganze Stammdaten-Kopien) tragen Namen und Liste.
+        // Eine Liste aller Kurs-Stellen (logic/merge, Review 19.10. §4) — am Ort zugewiesen, andere Stellen halten vault.stamm
+        for(const st of vault.verworfeneStaende||[]) Object.assign(st,entferneKursReferenzen(st,[id]));
+        Object.assign(vault.stamm,entferneKursReferenzen(vault.stamm,[id]));
         vault.events=vault.events.filter(e=>e.kursId!==id);
         stammMutiert(); speichern(); dlgZu(); renderKurse(); toast('Endgültig gelöscht: '+k.name);
       };
@@ -4102,7 +4121,8 @@ function sicherungsKopf(){
     if(!le){ stand.classList.add('ms-alt'); stand.replaceChildren(el('b',{class:'ms-gross'},'Noch nie gesichert'),el('span',{class:'ms-klein'},(n===1?'1 Eintrag':n+' Einträge')+' nur auf diesem Gerät')); return; }
     const d=new Date(le.ts), tage=tageSeit(le.ts), neu=Math.max(0,n-(le.events||0));
     stand.classList.toggle('ms-alt',tage>7&&neu>0);   // dieselbe Schwelle wie das Sicherungs-Banner
-    stand.replaceChildren(el('b',{class:'ms-gross'},tage<=0?'Heute gesichert':tage===1?'Gestern gesichert':'Gesichert vor '+tage+' Tagen'),
+    const wann=tage<=0?'heute':tage===1?'gestern':'vor '+tage+' Tagen';   // Download: angestoßen, nicht bestätigt (Review §8)
+    stand.replaceChildren(el('b',{class:'ms-gross'},le.art==='download'?'Download '+wann+' gestartet':tage<=0?'Heute gesichert':tage===1?'Gestern gesichert':'Gesichert vor '+tage+' Tagen'),
       el('span',{class:'ms-klein'},WOCHENTAG_KURZ[d.getDay()]+' '+pad(d.getDate())+'.'+pad(d.getMonth()+1)+'., '+pad(d.getHours())+':'+pad(d.getMinutes())+' · '+
         (neu===0?'seitdem keine neuen Einträge':neu===1?'seitdem 1 neuer Eintrag':'seitdem '+neu+' neue Einträge')));
   }).catch(()=>{});
@@ -4129,9 +4149,17 @@ function renderMehr(){
   let pc=null;
   if(!PAGES_KONTEXT){
     const st=el('span',{id:'sync-status',class:'u-hinweis u-selfcenter'});
+    // Kopplung einmal je Gerät (Codex 07.10. S1) — die Zeile erscheint nur, wenn der PC erreichbar ist und dieses Gerät noch nicht gekoppelt
+    const code=el('input',{type:'text',id:'sync-code',autocomplete:'off',autocapitalize:'off',spellcheck:'false',placeholder:'abcd-1234',class:'u-w110','aria-label':'Kopplungscode'});
+    code.onkeydown=e=>{ if(e.key==='Enter') koppeln(code.value); };
+    const koppel=el('div',{class:'zeile hidden',id:'sync-koppel'},el('span',{},'Kopplungscode'),
+      el('span',{},code,' ',el('button',{class:'btn still',id:'btn-koppeln',onclick:()=>koppeln(code.value)},'Koppeln')));
     pc=el('div',{class:'panel'},el('h2',{},'Mit dem PC abgleichen'),
-      el('div',{class:'btn-reihe'},el('button',{class:'btn',id:'btn-push',onclick:syncPush},'An den PC senden'),el('button',{class:'btn',id:'btn-pull',onclick:syncPull},'Vom PC holen'),st));
-    fetch('/api/kladde/status',{cache:'no-store'}).then(r=>r.json()).then(s=>{ st.textContent='PC erreichbar · Zertifikat bis '+s.zert_bis; }).catch(()=>{ st.textContent='PC nicht erreichbar'; });
+      el('div',{class:'btn-reihe'},el('button',{class:'btn',id:'btn-push',onclick:syncPush},'An den PC senden'),el('button',{class:'btn',id:'btn-pull',onclick:syncPull},'Vom PC holen'),st),koppel);
+    fetch('/api/kladde/status',{cache:'no-store',headers:kopplungKopf()}).then(r=>r.json()).then(s=>{
+      st.textContent='PC erreichbar · '+(s.gekoppelt?'gekoppelt':'nicht gekoppelt')+' · Zertifikat bis '+s.zert_bis;
+      koppel.classList.toggle('hidden',!!s.gekoppelt);
+    }).catch(()=>{ st.textContent='PC nicht erreichbar'; });
   }
   // Sicherheit: Minuten mit einem Tipp, Schalter statt 22-px-Kästchen
   const lockSeg=el('span',{class:'seg',role:'group','aria-label':'Automatisch sperren nach'},...[5,10,15,30].map(m=>el('button',{type:'button',class:'btn'+(lockMinuten()===m?'':' still'),
@@ -4153,6 +4181,10 @@ function renderMehr(){
   const darstellung=el('div',{class:'panel'},el('h2',{},'Darstellung'),
     el('div',{class:'ms-block'},el('span',{},'Erscheinungsbild'),el('span',{class:'seg',role:'group','aria-label':'Erscheinungsbild'},themeBtn('tag','Tag'),themeBtn('nacht','Nacht'),themeBtn('system','System'))),
     el('p',{class:'u-hinweis'},'System folgt dem Gerät. Der Mond/Sonne-Knopf oben schaltet schnell zwischen Tag und Nacht.'));
+  // Excel bleibt als Vorlage zum Mitnehmen (Zero 19.10.: „soll der Excel weg aber auch bleiben und als Vorlage auch runterladbar sein“)
+  const vorlage=el('div',{class:'panel'},el('h2',{},'Excel-Vorlage'),
+    el('div',{class:'btn-reihe'},...VORLAGEN.map(v=>el('button',{class:'btn still',dataset:{vorlage:v.id},onclick:()=>vorlageHerunterladen(v)},v.knopf))),
+    el('p',{class:'u-hinweis'},'Leere Klassenmappe für Excel, für alle, die dort weiterarbeiten möchten. Die Kladde braucht sie nicht.'));
   // Technik: eingeklappt, in Alltagssprache (vorher „Werkstatt“ mit persist(), Log-Zähler, Formel offen)
   const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true, k=kurs();
   const technik=el('details',{class:'panel ms-technik'},
@@ -4167,9 +4199,34 @@ function renderMehr(){
   if(navigator.storage?.estimate) navigator.storage.estimate().then(e=>{ const z=$('dg-quota'); if(z) z.textContent=((e.usage||0)/1048576).toFixed(1)+' MB'; });
   // Zwei FESTE Spalten (Zero-Feldtest 10.07.), verteilt nach Höhe: links Sichern (+ PC) und Darstellung, rechts Sicherheit und Technik.
   // Am Handy dieselbe Reihenfolge untereinander. Der Datenschutz-Satz steht am Fuß über beiden Spalten.
-  wrap.replaceChildren(el('div',{class:'mehr-spalte'},sichern,pc,darstellung),el('div',{class:'mehr-spalte',id:'mehr-spalte-b'},sicherheit,technik),
+  wrap.replaceChildren(el('div',{class:'mehr-spalte'},sichern,pc,darstellung,vorlage),el('div',{class:'mehr-spalte',id:'mehr-spalte-b'},sicherheit,technik),
     el('p',{class:'ms-satz'},DATENSCHUTZ_SATZ));
   sicherungsKopf();
+}
+const VORLAGEN=[
+  {id:'seki',knopf:'Klassenmappe Sek I',datei:'./vorlagen/Klassenmappe_SekI_Vorlage_v15.2.xlsx'},
+  {id:'sekii',knopf:'Kursmappe Oberstufe',datei:'./vorlagen/Kursmappe_Oberstufe_Vorlage_v15.2.xlsx'}];
+// Selbst holen und prüfen statt nackter Link: offline liefert der Service Worker bei einem Fehlgriff index.html (service-worker.js),
+// die als „.xlsx“ gespeichert würde. Eine Excel-Datei ist ein ZIP und beginnt mit „PK“.
+async function vorlageHerunterladen(v){
+  const name=v.datei.split('/').pop();
+  let bytes;
+  try{
+    const r=await fetch(v.datei,{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    bytes=new Uint8Array(await r.arrayBuffer());
+    if(bytes.length<4||bytes[0]!==0x50||bytes[1]!==0x4b) throw new Error('keine Excel-Datei erhalten');
+  }catch(err){ toast('⚠ Vorlage nicht geladen ('+err.message+') — dafür braucht die App Netz',5000); return; }
+  const file=new File([bytes],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:name}); return; }
+    catch(err){ if(err.name==='AbortError') return; }   // sonst Download wie bei der Sicherung
+  }
+  const url=URL.createObjectURL(file);
+  const a=document.createElement('a'); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Download gestartet: '+name,4000);
 }
 async function aktuellerContainerBlob(){
   await speichern();
@@ -4185,7 +4242,12 @@ function exportiereContainer(){
     el=>{ el.querySelector('[data-ok]').onclick=()=>{ dlgZu(); exportiereContainerJetzt(); }; });
 }
 let exportInSitzung=false; // für Schuljahr-Assistent: „Weiter" erst nach echtem Export
-function merkeExport(){
+// Ein Browser-Download sagt nach a.click() nicht, ob die Datei angekommen ist (Review 19.10. §8). Er zählt als „gestartet“:
+// der Kopf sagt es so, und das Schuljahr-Tor öffnet erst, wenn du bestätigst, dass die Datei sichtbar da liegt.
+let downloadGestartet=false;
+function merkeExport(art){
+  if(art==='download'){ downloadGestartet=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length,art:'download'}).then(sicherungsKopf).catch(()=>{});
+    idbDel('vault_v1_backup').catch(()=>{}); return; }   // wie vor v2.1 (Prüfer 19.10. B1): die v1-Sicherung trägt längst gelöschte Kurse
   exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}).then(sicherungsKopf).catch(()=>{});   // „Mehr“ offen: Kopf gleich nachziehen
   // Die v1-Sicherung aus der Umstellung v1→v2 trägt den alten Stand (auch längst gelöschte Kurse) mit der alten Passphrase.
   // Mit einer v2-Sicherung hat sie ihren Zweck erfüllt (Prüfer 2026-09-29: „Endgültig löschen“ war nicht endgültig).
@@ -4214,8 +4276,8 @@ async function exportiereContainerJetzt(){
   const a=document.createElement('a'); a.href=url; a.download=name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  merkeExport();
-  toast('Sicherung wird gespeichert: '+name);
+  merkeExport('download');
+  toast('Download gestartet: '+name+' — bitte nachsehen, ob die Datei angekommen ist',5000);
 }
 // Unterschiede zweier Stände (merge.mjs: Schülerliste je Kurs mit Fach, zuletzt ein reiner Stand-Konflikt) — Import-Vorschau und „Vom PC holen“
 // zeigen dieselbe Liste, bis zu fünf Meldungen (Prüfer P2, Zero 06.10. „Text klarer, Abfrage bleibt“)
@@ -4258,17 +4320,16 @@ async function importiereContainer(e){
     el=>{ el.querySelector('[data-ok]').onclick=async()=>{
       dlgZu();
       if(!nochOffen(gen)) return;
-      // Verworfener Stand liegt bei (max 3, FIFO) — gerätelokal informativ, überlebt eigene Saves
-      if(dry.verworfen){
-        (dry.daten.verworfeneStaende=vault.verworfeneStaende||[]).push(dry.verworfen);
-        while(dry.daten.verworfeneStaende.length>3) dry.daten.verworfeneStaende.shift();
-      } else if(vault.verworfeneStaende){ dry.daten.verworfeneStaende=vault.verworfeneStaende; }
-      vault=dry.daten; stammOhneBump(); await speichern();
+      // Verworfener Stand liegt bei (max 3, FIFO) — derselbe Weg wie „Vom PC holen“ (logic/merge uebernehmeMerge, Review 19.10. §5)
+      tresorUebernehmen(dry); stammOhneBump(); await speichern();
       // kurz mit Zahl wie „Vom PC holen“ (Prüfer 06.10. B10): die Meldungen stehen in der Vorschau
       toast('Zusammengeführt: '+vault.events.length+' Einträge'+(dry.konflikte.length?' · '+unterschiede(dry.konflikte.length):''),dry.konflikte.length?4000:2600);
       kursAutowahl(); renderAlles();
     }; });
 }
+// Import und Pull übernehmen gleich (Review 19.10. §5) und landen im selben Schema wie nach dem Entsperren — ein alter Stand ohne
+// Schuljahr bekam es sonst erst nach dem nächsten Sperren (Prüfer 19.10. B10)
+function tresorUebernehmen(dry){ vault=uebernehmeMerge(vault,dry); migriereStamm(vault); }
 function stammOhneBump(){ /* Merge-Ergebnis behält die Sieger-rev — bewusst kein rev++ */ }
 function passphraseWechselDialog(){
   dlgZeigen('<h3>Passphrase ändern</h3>'+
@@ -4298,10 +4359,41 @@ function passphraseWechselDialog(){
       }catch(err){ feh.textContent=err.message; }
     }; });
 }
+// Kopplung mit dem PC-Server (Codex 07.10. S1): der Code steht im Server-Fenster, die App schickt ihn bei Status, Senden und Holen mit.
+// Er liegt nur in dieser Heimnetz-Instanz (eigene Origin), nie im Tresor und nie in einer Sicherung.
+function kopplungKopf(){ let c=null; try{ c=localStorage.getItem('kladde_kopplung'); }catch{} return c?{'X-Kladde-Kopplung':c}:{}; }
+const NICHT_GEKOPPELT='Erst mit dem PC koppeln: den Kopplungscode aus dem Server-Fenster unter „Mit dem PC abgleichen“ eingeben';
+async function koppeln(code){
+  code=String(code||'').trim().toLowerCase();
+  if(!/^[0-9a-f]{4}-[0-9a-f]{4}$/.test(code)){ toast('Der Kopplungscode hat die Form abcd-1234',4000); return; }
+  try{ localStorage.setItem('kladde_kopplung',code); }catch{ toast('⚠ Dieser Browser speichert den Code nicht',4000); return; }
+  try{
+    const s=await fetch('/api/kladde/status',{cache:'no-store',headers:kopplungKopf()}).then(r=>r.json());
+    if(s.gekoppelt){ toast('Mit dem PC gekoppelt'); renderMehr(); return; }
+    try{ localStorage.removeItem('kladde_kopplung'); }catch{}
+    toast('Der Code stimmt nicht — bitte im Server-Fenster nachsehen',5000);
+  }catch(err){ toast('⚠ PC nicht erreichbar: '+err.message,4000); }
+}
+// Stand eines Geräts auf dem PC: der Server benennt Generationen nach der UTC-Zeit (20261019T103257…Z)
+function pcStandLabel(stem){
+  const m=/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)/.exec(String(stem||'')); if(!m) return '?';
+  const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5])), pad=x=>String(x).padStart(2,'0');
+  return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'., '+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+// Review 19.10. §7: der PC holte immer „ipad“, ein Handy-Stand war vom PC aus nicht zu holen. Jetzt nennt der Server die Geräte mit Stand.
+function waehleQuelle(quellen){
+  return new Promise(resRoh=>{
+    const res=aufloesenBeiClose(resRoh,null);
+    dlgZeigenEl(el('h3',{},'Von welchem Gerät holen?'),
+      el('div',{class:'btn-reihe'},...quellen.map(([g,v])=>el('button',{class:'btn',dataset:{quelle:g},onclick:()=>{ dlgZu(); res(g); }},g+' · Stand '+pcStandLabel(v.letzter)))),
+      el('div',{class:'btn-reihe'},el('button',{class:'btn still',onclick:()=>{ dlgZu(); res(null); }},'Abbrechen')));
+  });
+}
 async function syncPush(){
   try {
     const bytes=await aktuellerContainerBlob();
-    const r=await fetch('/api/kladde/push/'+GERAET,{method:'POST',body:bytes});
+    const r=await fetch('/api/kladde/push/'+GERAET,{method:'POST',body:bytes,headers:kopplungKopf()});
+    if(r.status===401){ toast(NICHT_GEKOPPELT,6000); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json();
     merkeExport(); // Sicherung liegt jetzt auf dem PC — zählt als Sicherung (Backup-Banner)
@@ -4310,8 +4402,13 @@ async function syncPush(){
 }
 async function syncPull(){
   try {
-    const von=GERAET==='pc'?'ipad':'pc';
-    const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store'});
+    const st=await fetch('/api/kladde/status',{cache:'no-store',headers:kopplungKopf()}).then(x=>x.json());
+    if(!st.gekoppelt){ toast(NICHT_GEKOPPELT,6000); return; }
+    const quellen=Object.entries(st.geraete||{}).filter(([g,v])=>g!==GERAET&&v&&v.letzter);
+    if(!quellen.length){ toast('Noch keine Sicherung eines anderen Geräts auf dem PC'); return; }
+    const von=quellen.length===1?quellen[0][0]:await waehleQuelle(quellen); if(!von) return;
+    const r=await fetch('/api/kladde/pull/'+von,{cache:'no-store',headers:kopplungKopf()});
+    if(r.status===401){ toast(NICHT_GEKOPPELT,6000); return; }
     if(r.status===404){ toast('Noch keine Sicherung von „'+von+'" auf dem PC'); return; }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const gen=sperrGen;
@@ -4322,8 +4419,7 @@ async function syncPull(){
     const dry=mergeContainerDaten(vault,fremd);
     const anwenden=async()=>{
       if(!nochOffen(gen)) return;
-      if(vault.verworfeneStaende&&!dry.daten.verworfeneStaende) dry.daten.verworfeneStaende=vault.verworfeneStaende;
-      vault=dry.daten; await speichern();
+      tresorUebernehmen(dry); await speichern();   // legt den unterlegenen Stand bei wie der Dateiimport (Review 19.10. §5)
       toast('Vom PC geholt: '+vault.events.length+' Einträge'+(dry.konflikte.length?' · '+unterschiede(dry.konflikte.length):''),dry.konflikte.length?4000:2600);
       kursAutowahl(); renderAlles();
     };
@@ -4372,7 +4468,7 @@ async function zeigeStartHinweise(){
     const le=await idbGet('letzterExport');
     const tage=le?tageSeit(le.ts):Infinity;   // Kalendertage wie in „Mehr → Sichern“ (Scheibe 7)
     if(tage>7&&vault&&vault.events.length>(le?.events??0)){
-      zeigeBanner('<span>Letzte Sicherung '+(le?'vor '+tage+' Tagen':'noch nie')+' — jetzt sichern?</span><button class="btn" data-exp>Jetzt sichern</button>',
+      zeigeBanner('<span>'+(le&&le.art==='download'?'Letzter Download ':'Letzte Sicherung ')+(le?'vor '+tage+' Tagen':'noch nie')+' — jetzt sichern?</span><button class="btn" data-exp>Jetzt sichern</button>',
         b=>{ b.querySelector('[data-exp]').onclick=()=>{ b.classList.add('hidden'); exportiereContainer(); }; });
     }
   }catch{}

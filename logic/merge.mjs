@@ -42,24 +42,39 @@ function hebeLoeschungAuf(stamm, jetzt) {
     if (istGeloescht(l)) l.wieder = jetzt;
   }
 }
-// Entfernt gelöschte Kurse samt Liste, Sitzplan, Profil, Stundenplan-Slots und Einträgen — auf Kopien, nie in place
+// Jede Stelle des Stamms, die an einer Kurs-id hängt — EINE Liste für Endgültig-Löschen, Lösch-Markierung und verworfene Stände
+// (Review 19.10. §4: Ausnahmen und Alt-Slots fehlten, die Autowahl wählte danach den gelöschten Kurs). Ein neues Feld mit kursId kommt hierher.
+const KURS_SCHLUESSEL = ['schueler', 'sitzplaene', 'kursprofile'];          // { [kursId]: … }
+const KURS_LISTEN = ['wochenplan', 'ausnahmeSlots', 'stundenplanSlots'];    // [{ kursId, … }] — Entfall (kursId null) bleibt
+function entferneKursReferenzen(stamm, ids) {
+  const weg = ids instanceof Set ? ids : new Set(ids || []);
+  if (!stamm || !weg.size) return stamm;
+  const s = { ...stamm };
+  if (Array.isArray(stamm.kurse)) s.kurse = stamm.kurse.filter(k => !weg.has(k.id));
+  for (const feld of KURS_SCHLUESSEL) {
+    if (!stamm[feld]) continue;
+    s[feld] = { ...stamm[feld] };
+    for (const id of weg) delete s[feld][id];
+  }
+  for (const feld of KURS_LISTEN) if (Array.isArray(stamm[feld])) s[feld] = stamm[feld].filter(x => !weg.has(x.kursId)).map(ohneErsetztWeg);
+  return s;
+  // Ein Entfall merkt sich die überschriebene Vertretung (autowahl tagesAusfall `ersetzt`), „Zurücknehmen“ holt sie zurück —
+  // zeigt sie auf einen gelöschten Kurs, bleibt der Entfall, der Verweis geht (Prüfer 19.10. A1)
+  function ohneErsetztWeg(x) {
+    if (!x.ersetzt || !weg.has(x.ersetzt.kursId)) return x;
+    const { ersetzt: _weg, ...rest } = x;
+    return rest;
+  }
+}
+// Entfernt gelöschte Kurse samt aller Referenzen und Einträge — auf Kopien, nie in place
 // (die Import-Vorschau rechnet auf dem lebenden Tresor). Einträge eines neu angelegten Kurses bleiben, sofern sie
 // jünger sind als die Löschung.
 function wendeLoeschungenAn(stamm, events, loesch) {
   const ids = Object.keys(loesch || {});
   if (!ids.length) return { stamm, events, hinweise: [] };
-  const s = { ...stamm, geloescht: loesch };
   const weg = new Set(ids.filter(id => istGeloescht(loesch[id])));
+  const s = { ...entferneKursReferenzen(stamm, weg), geloescht: loesch };
   const hinweise = [];
-  if (weg.size) {
-    s.kurse = (stamm.kurse || []).filter(k => !weg.has(k.id));
-    for (const feld of ['schueler', 'sitzplaene', 'kursprofile']) {
-      if (!stamm[feld]) continue;
-      s[feld] = { ...stamm[feld] };
-      for (const id of weg) delete s[feld][id];
-    }
-    if (Array.isArray(stamm.wochenplan)) s.wochenplan = stamm.wochenplan.filter(w => !weg.has(w.kursId));
-  }
   const vorher = events.length;
   const ev = events.filter(e => {
     const l = loesch[e.kursId];
@@ -192,4 +207,18 @@ function mergeContainerDaten(a, b) {
   };
 }
 
-export { mergeEvents, mergeStammdaten, mergeContainerDaten, istGeloescht, hebeLoeschungAuf };
+// Übernimmt ein Merge-Ergebnis als neuen Tresor — EIN Weg für Dateiimport und Heimnetz-Pull (Review 19.10. §5: der Pull legte den
+// unterlegenen Stand nicht bei). Der Verlierer liegt bei (höchstens drei, der älteste fällt), gerätelokal informativ. Ein beigelegter
+// Stand trägt keinen gelöschten Kurs (sonst stünden Namen und Liste eines endgültig gelöschten Kurses weiter im Tresor).
+const MAX_VERWORFEN = 3;
+function uebernehmeMerge(vault, dry) {
+  const loesch = (dry.daten.stamm && dry.daten.stamm.geloescht) || {};
+  const weg = new Set(Object.keys(loesch).filter(id => istGeloescht(loesch[id])));
+  // Der Verlierer als eigene Kopie: Kurse nur in ihm stehen sonst als dasselbe Objekt auch im neuen Stamm (Prüfer 19.10. B9)
+  const verlierer = dry.verworfen ? [JSON.parse(JSON.stringify(dry.verworfen))] : [];
+  const liste = [...(vault.verworfeneStaende || []), ...verlierer].map(st => entferneKursReferenzen(st, weg));
+  while (liste.length > MAX_VERWORFEN) liste.shift();
+  return liste.length ? { ...dry.daten, verworfeneStaende: liste } : { ...dry.daten };
+}
+
+export { mergeEvents, mergeStammdaten, mergeContainerDaten, istGeloescht, hebeLoeschungAuf, entferneKursReferenzen, uebernehmeMerge };

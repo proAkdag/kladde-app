@@ -1,0 +1,8 @@
+{
+  "name": "kladde-app",
+  "private": true,
+  "description": "Kladde · Tests der Fachlogik (Node ≥ 22, ohne Abhängigkeiten)",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

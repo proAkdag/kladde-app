@@ -32,6 +32,7 @@ const FORMAT_V1 = 1;
 const FORMAT_V2 = 2;
 const KDF_PBKDF2_SHA256 = 1;
 const DEFAULT_ITERATIONEN = 600000;
+const KDF_ITER_MIN = 100000, KDF_ITER_MAX = 2000000;   // Lesegrenzen für fremde Köpfe (leseHeader)
 const HEADER_V1 = 38;
 const V2_OFF_SALT = 10, V2_OFF_IVWRAP = 26, V2_OFF_WDEK = 38, V2_OFF_IVDATA = 86, V2_OFF_CT = 98;
 const WDEK_LAENGE = 48; // 32 B DEK + 16 B GCM-Tag
@@ -110,6 +111,10 @@ function leseHeader(bytes) {
   }
   if (kdf !== KDF_PBKDF2_SHA256) throw new Error('unbekannte KDF-Kennung ' + kdf);
   const iterationen = new DataView(bytes.buffer, bytes.byteOffset).getUint32(6, true);
+  // Fremder Kopf diktiert den Rechenaufwand nicht (Review 19.10. §9): jede veröffentlichte Version schrieb 600 000
+  if (iterationen < KDF_ITER_MIN || iterationen > KDF_ITER_MAX) {
+    throw new Error('Sicherung mit ungewöhnlichem Schlüsselaufwand (' + iterationen + ' Runden) — nicht geöffnet');
+  }
   if (version === FORMAT_V1) {
     return {
       version, kdf, iterationen,

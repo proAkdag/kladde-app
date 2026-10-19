@@ -1,0 +1,200 @@
+{
+  "sek1_mit_lb": {
+    "zellen": {
+      "C2": "2026/27",
+      "E2": "7b",
+      "H2": "A. Akdag",
+      "J2": "Mathematik",
+      "B6": "Ahrens",
+      "B7": "Berger",
+      "B8": "Cordes",
+      "C6": "Nele",
+      "C7": "Tom",
+      "C8": "Mia",
+      "D5": "LB",
+      "D6": "LB"
+    },
+    "erwartet": {
+      "schema": "kladde/v1",
+      "kurs": {
+        "id": "7b-mathematik-2026-27",
+        "name": "7b",
+        "fach": "Mathematik",
+        "schuljahr": "2026/27",
+        "lehrkraft": "A. Akdag",
+        "profil": "sek1"
+      },
+      "schueler": [
+        {
+          "nr": 1,
+          "name": "Ahrens",
+          "vorname": "Nele",
+          "lb": true
+        },
+        {
+          "nr": 2,
+          "name": "Berger",
+          "vorname": "Tom",
+          "lb": false
+        },
+        {
+          "nr": 3,
+          "name": "Cordes",
+          "vorname": "Mia",
+          "lb": false
+        }
+      ],
+      "warnungen": []
+    }
+  },
+  "sek2": {
+    "zellen": {
+      "C2": "2026/27",
+      "E2": "Q1",
+      "H2": "A. Akdag",
+      "J2": "Physik",
+      "B6": "Dahl",
+      "B7": "Ebert",
+      "C6": "Jonas",
+      "C7": "Lina",
+      "D5": "Notiz"
+    },
+    "erwartet": {
+      "schema": "kladde/v1",
+      "kurs": {
+        "id": "q1-physik-2026-27",
+        "name": "Q1",
+        "fach": "Physik",
+        "schuljahr": "2026/27",
+        "lehrkraft": "A. Akdag",
+        "profil": "sek2"
+      },
+      "schueler": [
+        {
+          "nr": 1,
+          "name": "Dahl",
+          "vorname": "Jonas",
+          "lb": false
+        },
+        {
+          "nr": 2,
+          "name": "Ebert",
+          "vorname": "Lina",
+          "lb": false
+        }
+      ],
+      "warnungen": []
+    }
+  },
+  "altliste": {
+    "zellen": {
+      "C2": "2025/26",
+      "E2": "5b",
+      "B6": "Ahrens",
+      "B7": "Berger",
+      "C6": "Nele",
+      "C7": "Tom",
+      "D6": "LB"
+    },
+    "erwartet": {
+      "schema": "kladde/v1",
+      "kurs": {
+        "id": "5b-2025-26",
+        "name": "5b",
+        "fach": "",
+        "schuljahr": "2025/26",
+        "lehrkraft": "",
+        "profil": "sek1"
+      },
+      "schueler": [
+        {
+          "nr": 1,
+          "name": "Ahrens",
+          "vorname": "Nele",
+          "lb": false
+        },
+        {
+          "nr": 2,
+          "name": "Berger",
+          "vorname": "Tom",
+          "lb": false
+        }
+      ],
+      "warnungen": [
+        "Kopf D5 = None (weder 'LB' noch 'Notiz') — Alt-Liste? Nehme Name/Vorname aus B/C (Nr = Zeile), LB-Flags leer. Für volle Treue in die v15-Vorlage übertragen."
+      ]
+    }
+  },
+  "leer": {
+    "zellen": {
+      "C2": "2026/27",
+      "E2": "8c",
+      "H2": "A. Akdag",
+      "J2": "Deutsch",
+      "D5": "LB"
+    },
+    "erwartet": {
+      "schema": "kladde/v1",
+      "kurs": {
+        "id": "8c-deutsch-2026-27",
+        "name": "8c",
+        "fach": "Deutsch",
+        "schuljahr": "2026/27",
+        "lehrkraft": "A. Akdag",
+        "profil": "sek1"
+      },
+      "schueler": [],
+      "warnungen": [
+        "Keine Schüler in B6:C40 gefunden — leere Vorlage?"
+      ]
+    }
+  },
+  "luecke": {
+    "zellen": {
+      "C2": "2026/27",
+      "E2": "9a",
+      "H2": "A. Akdag",
+      "J2": "Chemie",
+      "B6": "Ahrens",
+      "B8": "Cordes",
+      "B10": "Ebert",
+      "C6": "Nele",
+      "C8": "Mia",
+      "C10": "Lina",
+      "D5": "LB",
+      "D8": "LB"
+    },
+    "erwartet": {
+      "schema": "kladde/v1",
+      "kurs": {
+        "id": "9a-chemie-2026-27",
+        "name": "9a",
+        "fach": "Chemie",
+        "schuljahr": "2026/27",
+        "lehrkraft": "A. Akdag",
+        "profil": "sek1"
+      },
+      "schueler": [
+        {
+          "nr": 1,
+          "name": "Ahrens",
+          "vorname": "Nele",
+          "lb": false
+        },
+        {
+          "nr": 3,
+          "name": "Cordes",
+          "vorname": "Mia",
+          "lb": true
+        },
+        {
+          "nr": 5,
+          "name": "Ebert",
+          "vorname": "Lina",
+          "lb": false
+        }
+      ],
+      "warnungen": []
+    }
+  }
+}
