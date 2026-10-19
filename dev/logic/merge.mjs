@@ -5,6 +5,7 @@
 // und gemeldet (Prüfstein 3: Konflikt sichtbar, kein Datenverlust).
 
 import { lnr, nachListe } from './teilnehmer.mjs';
+import { felderMitKurs } from './vertrag.mjs';
 
 function mergeEvents(eventsA, eventsB) {
   const nachId = new Map();
@@ -43,9 +44,10 @@ function hebeLoeschungAuf(stamm, jetzt) {
   }
 }
 // Jede Stelle des Stamms, die an einer Kurs-id hängt — EINE Liste für Endgültig-Löschen, Lösch-Markierung und verworfene Stände
-// (Review 19.10. §4: Ausnahmen und Alt-Slots fehlten, die Autowahl wählte danach den gelöschten Kurs). Ein neues Feld mit kursId kommt hierher.
-const KURS_SCHLUESSEL = ['schueler', 'sitzplaene', 'kursprofile'];          // { [kursId]: … }
-const KURS_LISTEN = ['wochenplan', 'ausnahmeSlots', 'stundenplanSlots'];    // [{ kursId, … }] — Entfall (kursId null) bleibt
+// (Review 19.10. §4: Ausnahmen und Alt-Slots fehlten, die Autowahl wählte danach den gelöschten Kurs). Ein neues Feld mit kursId
+// wird im Kladde-Vertrag (logic/vertrag.mjs) eingetragen, die Listen hier folgen daraus (A2).
+const KURS_SCHLUESSEL = felderMitKurs('schluessel');   // { [kursId]: … }
+const KURS_LISTEN = felderMitKurs('liste');            // [{ kursId, … }] — Entfall (kursId null) bleibt
 function entferneKursReferenzen(stamm, ids) {
   const weg = ids instanceof Set ? ids : new Set(ids || []);
   if (!stamm || !weg.size) return stamm;
