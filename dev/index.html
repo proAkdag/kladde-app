@@ -13,7 +13,7 @@
 
 <title>Kladde</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
-<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=()">
+<!-- Kein Permissions-Policy-meta: es wirkt in keinem Browser (docs/datenschutz-technisch.md); der Heimnetz-Server setzt den Header -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#17150F">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,7 +22,7 @@
 <meta name="apple-mobile-web-app-title" content="Kladde">
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="stylesheet" href="./css/kladde.css?v=2.0.0.1791361045">
+<link rel="stylesheet" href="./css/kladde.css?v=2.1.0.1792415673">
 </head>
 <body>
 
@@ -168,6 +168,6 @@
 
 <dialog id="dlg"></dialog>
 
-<script type="module" src="./js/app.mjs?v=2.0.0.1791361045"></script>
+<script type="module" src="./js/app.mjs?v=2.1.0.1792415673"></script>
 </body>
 </html>
