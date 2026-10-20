@@ -77,12 +77,20 @@ test('Sicherer Import: Schüler und Kurs nur im unterlegenen Stand werden ergän
   assert.deepEqual(mergeStammdaten(ipad, pc).ergebnis.schueler['7b'].map(s => s.nr), [1, 2, 29]);   // symmetrisch
 });
 
-test('Sicherer Import: gleiche Nr, anderer Name → Konflikt gemeldet, Basis behält', () => {
+// v2.2 (Identität): gleiche Ausweis-Nr aus v2, anderer Name = Frage „zwei Kinder?“. Offen oder „ja“: beide bleiben, das andere Kind
+// bekommt eine neue Ausweis-Nr (seine Listen-Nr bleibt → doppelt gemeldet); „nein“ (dasselbe Kind): Basis behält, Meldung.
+test('Sicherer Import: gleiche Nr, anderer Name → Frage; offen trennt, „dasselbe Kind“ behält die Basis', () => {
   const ipad2 = { ...ipad, schueler: { '7b': [{ nr: 1, vorname: 'Anja', name: 'X' }, basisSchueler[1]] } };
   const c = mergeContainerDaten({ stamm: pc, events: [] }, { stamm: ipad2, events: [] });
   assert.equal(c.daten.stamm.schueler['7b'].find(s => s.nr === 1).vorname, 'Anna');
-  assert.equal(c.konflikte.length, 1);
-  assert.match(c.konflikte[0], /Nr 1/);
+  assert.deepEqual(c.fragen.map(f => [f.art, f.id]), [['zwei', 'zwei|a:7b:1|anja|x']]);
+  assert.equal(c.offen, 1);
+  assert.deepEqual(c.daten.stamm.schueler['7b'].map(s => [s.vorname, s.nr]), [['Anna', 1], ['Ben', 2], ['Anja', 3]]);
+  assert.match(c.konflikte[0], /^7b · M: Listen-Nr 1 doppelt \(Anna A und Anja X\)/);
+  const gleich = mergeContainerDaten({ stamm: pc, events: [] }, { stamm: ipad2, events: [] }, { antworten: { 'zwei|a:7b:1|anja|x': false } });
+  assert.equal(gleich.offen, 0);
+  assert.deepEqual(gleich.daten.stamm.schueler['7b'].map(s => s.vorname), ['Anna', 'Ben']);
+  assert.match(gleich.konflikte[0], /^7b · M: Nr 1 „Anna A" \(pc\) ≠ „Anja X" \(ipad\) — pc behalten\./);
 });
 
 // Zwei Nummern (U10, Zero 05.10.): PC hat die Liste aktualisiert (Dana neu auf Zeile 2, Ben rückt auf 3), das iPad hat
@@ -136,11 +144,18 @@ test('Zwei Nummern: echte Konflikte vor der Sammelmeldung, über alle Kurse (Nac
     { nr: 4, vorname: 'Dana', name: 'D', liste: 1 }], '9a': [{ nr: 1, vorname: 'Dora', name: 'D' }] } };
   const ipadL = { ...ipad, rev: 4, kurse: [kursA, k9], schueler: { '7b': [...basisSchueler, { nr: 3, vorname: 'Cem', name: 'C' }], '9a': [{ nr: 1, vorname: 'Dirk', name: 'K' }] } };
   const m = mergeContainerDaten({ stamm: pcL, events: [] }, { stamm: ipadL, events: [] });
+  // v2.2: Dora/Dirk (gleiche Ausweis-Nr, anderer Name) ist eine Frage; offen = zwei Kinder → Listen-Nr 1 in 9a doppelt
   assert.equal(m.konflikte.length, 3);
   // Kurs mit Fach in jeder Meldung (Prüfer P2, Zero 06.10. „Text klarer, Abfrage bleibt“): zwei Kurse „7b“ sind sonst nicht zu unterscheiden
-  assert.match(m.konflikte[0], /^9a · Ph: Nr 1 „Dora D" \(pc\) ≠ „Dirk K" \(ipad\)/);   // „Kurs: Nr“ wie die übrigen (Prüfer 06.10. B13)
-  assert.match(m.konflikte[1], /^7b · M: Listen-Nr 3 doppelt \(Ben B und Cem C\)/);
+  assert.match(m.konflikte[0], /^7b · M: Listen-Nr 3 doppelt \(Ben B und Cem C\)/);
+  assert.match(m.konflikte[1], /^9a · Ph: Listen-Nr 1 doppelt \(Dora D und Dirk K\)/);
   assert.match(m.konflikte[2], /^7b · M: 2 Kinder stehen in den beiden Ständen verschieden/);
+  assert.deepEqual(m.fragen.map(f => f.kurs + ' ' + f.art), ['9a · Ph zwei']);
+  // „dasselbe Kind“: die alte Meldung „Kurs: Nr …“ steht wieder vor der Sammelmeldung (Prüfer 06.10. B13)
+  const g = mergeContainerDaten({ stamm: pcL, events: [] }, { stamm: ipadL, events: [] }, { antworten: { 'zwei|a:9a:1|dirk|k': false } });
+  assert.match(g.konflikte[0], /^9a · Ph: Nr 1 „Dora D" \(pc\) ≠ „Dirk K" \(ipad\)/);
+  assert.match(g.konflikte[1], /^7b · M: Listen-Nr 3 doppelt \(Ben B und Cem C\)/);
+  assert.match(g.konflikte[2], /^7b · M: 2 Kinder stehen in den beiden Ständen verschieden/);
 });
 
 // Prüfer 06.10. B6 (N1): ein Kurs ohne Fach heißt nur „9a“ — kein „9a · “ und kein „· undefined“
@@ -148,9 +163,12 @@ test('Meldungen: Kurs ohne Fach nur mit Namen', () => {
   const k9 = { id: '9a', name: '9a' };
   const a = { ...pc, rev: 5, kurse: [kursA, k9], schueler: { '7b': basisSchueler, '9a': [{ nr: 1, vorname: 'Dora', name: 'D' }] } };
   const b = { ...ipad, rev: 4, kurse: [kursA, k9], schueler: { '7b': basisSchueler, '9a': [{ nr: 1, vorname: 'Dirk', name: 'K' }, { nr: 2, vorname: 'Eva', name: 'E' }] } };
-  const m = mergeStammdaten(a, b);
-  assert.deepEqual(m.konflikte, ['9a: Nr 1 „Dora D" (pc) ≠ „Dirk K" (ipad) — pc behalten, bitte prüfen.']);
+  const m = mergeStammdaten(a, b, undefined, { antworten: { 'zwei|a:9a:1|dirk|k': false } });   // „dasselbe Kind“ (v2.2)
+  assert.deepEqual(m.konflikte, ['9a: Nr 1 „Dora D" (pc) ≠ „Dirk K" (ipad) — pc behalten.']);
   assert.deepEqual(m.hinweise, ['9a: Nr 2 Eva E ergänzt']);
+  const offen = mergeStammdaten(a, b);   // offen = zwei Kinder
+  assert.deepEqual(offen.konflikte, ['9a: Listen-Nr 1 doppelt (Dora D und Dirk K) — nichts geraten, bitte die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).']);
+  assert.deepEqual(offen.hinweise, ['9a: Nr 1 Dirk K ergänzt (andere Person als Dora D)', '9a: Nr 2 Eva E ergänzt']);
 });
 
 // Prüfer 05.10. R4: Die Höchstmarke der Ausweis-Nr (kurs.ausweisBis) gilt nach dem Zusammenführen als die höhere beider Stände

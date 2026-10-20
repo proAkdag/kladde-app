@@ -171,8 +171,8 @@ test('Autowahl am Kurztag: 08:40 trifft Stunde 2 des 45er-Rasters — normaler F
 
 test('INVARIANTE (verbotener Pfad 3): geplanter Block ohne Events ändert KEINE Verdichtungskennzahl', () => {
   const events = [
-    { id: 'e1', typ: '+', schuelerNr: 1, datum: '2026-08-24', ts: '2026-08-24T08:00Z', geraet: 't' },
-    { id: 'e2', typ: 'o', schuelerNr: 1, datum: '2026-08-25', ts: '2026-08-25T08:00Z', geraet: 't' },
+    { id: 'e1', typ: '+', schuelerNr: 1, sid: 1, datum: '2026-08-24', ts: '2026-08-24T08:00Z', geraet: 't' },
+    { id: 'e2', typ: 'o', schuelerNr: 1, sid: 1, datum: '2026-08-25', ts: '2026-08-25T08:00Z', geraet: 't' },
   ];
   const ohnePlan = verdichte(events, 1, { profil: 'sek1' });
   // Wochenplan existiert mit 30 geplanten Blöcken — verdichte() kennt ihn nicht einmal als Parameter:

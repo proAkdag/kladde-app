@@ -84,4 +84,12 @@ function noteAlsWert(eingabe, profil) {
   return w;
 }
 
-export { DRITTELNOTEN_SCHWELLEN, DRITTELNOTEN, EPS, drittelnoteLabel, wertZuLabel, rundeAufDrittel, PUNKTE_MIN, PUNKTE_MAX, punkteValid, klemmePunkte, noteAlsWert };
+// Einheit der Noten eines Kurses (v2.2, Prüfer v2.1 B2): dieselben drei Fälle wie bewertProfil — Sek II in Punkten = 'punkte',
+// Sek I und Sek II in Drittelnoten = 'drittel'. Eine Quartalsnote trägt ihre Einheit (`einheit`); fehlt sie (vor v2.1), gilt die des Kurses.
+const notenEinheit = kurs => (kurs && kurs.profil === 'sek2' && (kurs.notenmodus || 'punkte') !== 'drittel' ? 'punkte' : 'drittel');
+const einheitVon = (e, kurs) => (e && e.einheit) || notenEinheit(kurs);
+// Passt eine Quartalsnote zur jetzigen Einheit ihres Kurses? Nein → nicht deuten (kein Abstand, keine Sortierung), Einheit dazuschreiben.
+const einheitPasst = (e, kurs) => einheitVon(e, kurs) === notenEinheit(kurs);
+
+export { DRITTELNOTEN_SCHWELLEN, DRITTELNOTEN, EPS, drittelnoteLabel, wertZuLabel, rundeAufDrittel, PUNKTE_MIN, PUNKTE_MAX, punkteValid, klemmePunkte, noteAlsWert,
+  notenEinheit, einheitVon, einheitPasst };

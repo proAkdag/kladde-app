@@ -5,7 +5,7 @@ import { verdichte, wirksameEvents, ersetzungFuer, istTerminEintrag } from '../l
 
 let seq = 0;
 function ev(typ, schuelerNr, datum, extra = {}) {
-  return { id: 'e' + (++seq), typ, schuelerNr, datum, ts: datum + 'T08:' + String(seq).padStart(2, '0') + ':00Z', geraet: 'test', ...extra };
+  return { id: 'e' + (++seq), typ, schuelerNr, sid: schuelerNr, datum, ts: datum + 'T08:' + String(seq).padStart(2, '0') + ':00Z', geraet: 'test', ...extra };
 }
 
 // Gemeinsames Kurs-Szenario (identisch zur Alt-Suite)

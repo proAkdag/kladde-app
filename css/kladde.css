@@ -855,6 +855,8 @@
   .la-neu { color: var(--band-text); border-color: var(--band); }
   .la-warn { color: var(--warn-text); border-color: var(--warn); }
   .la-frage { grid-column: 2 / -1; display: grid; gap: 6px; padding: 2px 0 6px; }
+  .abgleich-frage { border-top: 1px solid var(--kante); padding: 10px 0 4px; }   /* v2.2: Fragen des Abgleichs (mehr.mjs fragenKlaeren) */
+  .abgleich-frage p { margin: 0; }
   .la-klein { font-size: 13px; color: var(--leise); }
   .la-wahl { display: flex; gap: 8px; flex-wrap: wrap; }
   /* Kurs anlegen (Scheibe 8, Zero 05.10. Wahl 1 A „Ein Blatt“): oben „Mappe laden“ als Haupttat, darunter die Liste */

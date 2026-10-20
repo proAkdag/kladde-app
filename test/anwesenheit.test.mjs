@@ -5,7 +5,7 @@ import { verdichte } from '../logic/verdichtung.mjs';
 
 let seq = 0;
 function ev(typ, schuelerNr, datum, extra = {}) {
-  return { id: 'e' + (++seq), typ, schuelerNr, datum, ts: datum + 'T08:' + String(seq % 60).padStart(2, '0') + ':00Z', geraet: 'test', ...extra };
+  return { id: 'e' + (++seq), typ, schuelerNr, sid: schuelerNr, datum, ts: datum + 'T08:' + String(seq % 60).padStart(2, '0') + ':00Z', geraet: 'test', ...extra };
 }
 const T = n => '2026-09-' + String(n).padStart(2, '0');
 
@@ -117,8 +117,8 @@ test('Undo einer Klärung bringt die offene Fehlzeit zurück (Prüfer 2026-09-29
 test('2-Geräte-Widerspruch desselben Termins: jüngste Klärung gewinnt, e/u disjunkt', () => {
   // Gerät A (früher) klärt „e", Gerät B (später) klärt „u" — denselben fehlt_o-Termin.
   const o = ev('fehlt_o', 1, T(3));
-  const e = { id: 'kE', typ: 'fehlt_e', schuelerNr: 1, datum: T(3), ts: '2026-09-10T10:00:00Z', geraet: 'pc', stornoVon: o.id };
-  const u = { id: 'kU', typ: 'fehlt_u', schuelerNr: 1, datum: T(3), ts: '2026-09-11T09:00:00Z', geraet: 'ipad', stornoVon: o.id };
+  const e = { id: 'kE', typ: 'fehlt_e', schuelerNr: 1, sid: 1, datum: T(3), ts: '2026-09-10T10:00:00Z', geraet: 'pc', stornoVon: o.id };
+  const u = { id: 'kU', typ: 'fehlt_u', schuelerNr: 1, sid: 1, datum: T(3), ts: '2026-09-11T09:00:00Z', geraet: 'ipad', stornoVon: o.id };
   const v = verdichte([ev('+', 1, T(1)), o, e, u], 1, { profil: 'sek1' });
   assert.equal(v.nFehltU, 1);  // jüngste (u) gewinnt
   assert.equal(v.nFehltE, 0);  // e verliert — NICHT beide zählen

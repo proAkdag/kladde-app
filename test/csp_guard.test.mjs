@@ -10,7 +10,8 @@ const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Whitelist: Stand P1.7 (v0.8.0). Erhöhung NUR mit Begründung im Commit —
 // Neubau gehört auf el() (js/app.mjs, Migrationsregel PLAN 1.7).
-const INNERHTML_WHITELIST = { 'js/app.mjs': 16 }; // v1.23.0: Login-Text auf textContent (−1, Scheibe 10) · davor 17, v1.21.0: Kurs anlegen auf el(), „Schnell“ mit innerHTML-Vorschau entfällt (−1, Scheibe 8) · davor 18, v1.19.0: „Mehr“ auf el() (−1, Scheibe 7) · davor 19, v1.13.0: Datumsstreifen auf el() (−2, Zero 2026-10-01 Rahmen + „Stunde“) · davor 21: // v2 „Studio": Aktionsbar entfernt (−1); Neubau via el() (Rail, Detail-Aktionen); +1 S216 renderSchuelerSeite (Vollseite, durchgehend esc()-gesichert)
+const INNERHTML_WHITELIST = { 'js/ansichten/banner.mjs': 1, 'js/ansichten/deck.mjs': 5, 'js/ansichten/heute.mjs': 3, 'js/ansichten/kurse.mjs': 1,
+  'js/ansichten/schueler.mjs': 4, 'js/ansichten/sperre.mjs': 1, 'js/kern/dialog.mjs': 1 }; // A2 19.10.: Bestand (16) nach Modulen verteilt, je Datei fest (Prüfer 🟢 9) · // v1.23.0: Login-Text auf textContent (−1, Scheibe 10) · davor 17, v1.21.0: Kurs anlegen auf el(), „Schnell“ mit innerHTML-Vorschau entfällt (−1, Scheibe 8) · davor 18, v1.19.0: „Mehr“ auf el() (−1, Scheibe 7) · davor 19, v1.13.0: Datumsstreifen auf el() (−2, Zero 2026-10-01 Rahmen + „Stunde“) · davor 21: // v2 „Studio": Aktionsbar entfernt (−1); Neubau via el() (Rail, Detail-Aktionen); +1 S216 renderSchuelerSeite (Vollseite, durchgehend esc()-gesichert)
 
 function alleMjs(d, akku = []) {
   for (const n of readdirSync(join(APP, d))) {

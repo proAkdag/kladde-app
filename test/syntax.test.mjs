@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 const APP = fileURLToPath(new URL('../', import.meta.url));
-const dateien = ['js/app.mjs', 'service-worker.js', ...readdirSync(join(APP, 'logic')).filter(f => f.endsWith('.mjs')).map(f => 'logic/' + f)];
+// A2 (19.10., Prüfer 🔴 2): alle Module unter js/ (kern/, ansichten/) — vorher nur js/app.mjs, das jetzt 60 Zeilen Start ist
+const dateien = ['service-worker.js', ...['js', 'logic'].flatMap(d => readdirSync(join(APP, d), { recursive: true }).map(f => d + '/' + String(f).replace(/\\/g, '/')).filter(f => f.endsWith('.mjs')))];
 
 test('alle App-Dateien parsen (node --check)', () => {
   assert.ok(dateien.length > 10, 'zu wenige Dateien gefunden: ' + dateien.length);

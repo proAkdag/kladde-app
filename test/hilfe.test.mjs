@@ -5,7 +5,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { HILFE, HILFE_ANSICHTEN, findeZiel } from '../logic/hilfe.mjs';
 
-const QUELLE = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8') + fs.readFileSync(new URL('../js/app.mjs', import.meta.url), 'utf8');
+// A2 (Modul-Umbau): die Ids stehen in index.html und in allen Modulen unter js/
+const JS = new URL('../js/', import.meta.url);
+const QUELLE = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+  + fs.readdirSync(JS, { recursive: true }).filter(f => String(f).endsWith('.mjs')).map(f => fs.readFileSync(new URL(String(f).replace(/\\/g, '/'), JS), 'utf8')).join('\n');
 
 test('Hilfe: jede der fünf Ansichten hat Titel und Zeilen, nur „Heute“ führt zu den Zeichen', () => {
   assert.deepEqual(HILFE_ANSICHTEN, ['heute', 'deck', 'schueler', 'kurse', 'mehr']);

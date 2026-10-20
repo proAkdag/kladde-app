@@ -17,11 +17,11 @@ function v1Vault() {
   };
 }
 
-test('v1→v2: ergänzt zeitmodelle/wochenplan/ausnahmeSlots + Schema-String', () => {
+test('v1→v3: ergänzt zeitmodelle/wochenplan/ausnahmeSlots + Schema-String', () => {
   const v = v1Vault();
   const geaendert = migriereStamm(v);
   assert.equal(geaendert, true);
-  assert.equal(v.schema, 'kladde/v2');
+  assert.equal(v.schema, 'kladde/v3');
   assert.deepEqual(v.stamm.zeitmodelle, []);
   assert.deepEqual(v.stamm.wochenplan, []);
   assert.deepEqual(v.stamm.ausnahmeSlots, []);
@@ -54,11 +54,25 @@ test('gefüllte v2-Felder werden nie überschrieben', () => {
   assert.equal(v.stamm.wochenplan.length, 1);
 });
 
-test('Schema-Guard: v1/v2/fehlend bekannt, v3 abgelehnt', () => {
+test('Schema-Guard: v1/v2/v3/fehlend bekannt, v4 abgelehnt', () => {
   assert.equal(schemaBekannt('kladde/v1'), true);
   assert.equal(schemaBekannt('kladde/v2'), true);
+  assert.equal(schemaBekannt('kladde/v3'), true);
   assert.equal(schemaBekannt(undefined), true);
-  assert.equal(schemaBekannt('kladde/v3'), false);
+  assert.equal(schemaBekannt('kladde/v4'), false);
+});
+
+// v2.2 Identität: Kinder und Einträge bekommen die deterministische Alt-sid; kursweite Einträge (ohne Schüler) keine
+test('v3: sid an Kind und Eintrag aus kursId + Ausweis-Nr; Bestand sonst unverändert', () => {
+  const v = v1Vault();
+  v.events.push({ id: 'e2', typ: 'termin', kursId: '7b-mathe', datum: '2026-09-01' });
+  v.events[0].kursId = '7b-mathe';
+  migriereStamm(v);
+  assert.equal(v.stamm.schueler['7b-mathe'][0].sid, 'a:7b-mathe:1');
+  assert.equal(v.events[0].sid, 'a:7b-mathe:1');
+  assert.equal(v.events[0].schuelerNr, 1);           // bleibt stehen (alte Geräte, Brücke bis B·4)
+  assert.equal('sid' in v.events[1], false);
+  assert.equal(v.stamm.rev, 7);                      // kein rev-Bump
 });
 
 // ── P3.1 Schuljahr-Migration ──

@@ -6,7 +6,7 @@ import { schuelerBericht } from '../logic/bericht.mjs';
 import { istFerien } from '../logic/zeitmodell.mjs';
 import { kursZurZeit } from '../logic/autowahl.mjs';
 
-const ev = (typ, datum, nr = 1) => ({ id: typ + datum + nr, typ, datum, ts: datum + 'T08:00:00Z', schuelerNr: nr, kursId: 'k' });
+const ev = (typ, datum, nr = 1) => ({ id: typ + datum + nr, typ, datum, ts: datum + 'T08:00:00Z', schuelerNr: nr, sid: nr, kursId: 'k' });
 const ZR = [
   { id: 'q1', label: '1. Quartal', von: '2026-08-01', bis: '2026-11-06' },
   { id: 'q2', label: '2. Quartal', von: '2026-11-07', bis: '2027-01-31' },
