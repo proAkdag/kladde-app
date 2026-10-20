@@ -1,17 +1,17 @@
 // Kladde · js/ansichten/stempel.mjs — Abschnitt „PERMANENTE STEMPEL-RAIL“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { findeZiel, HILFE } from '../../logic/hilfe.mjs?v=2.3.1.1792523037';
-import { stundeFuerBuchung } from '../../logic/stunden.mjs?v=2.3.1.1792523037';
-import { verdichte, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.1.1792523037';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.3.1.1792523037';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.3.1.1792523037';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.3.1.1792523037';
-import { aktiverKursId, aktView, anzeigeBlock, beamerModus, setzeStempelTyp, stempelTyp, terminDatum, vault } from '../kern/zustand.mjs?v=2.3.1.1792523037';
-import { addEvent, anzahlBewertungen, bewertProfil, eintragLabel, kurs, leererStand, schuelerVonNr, sidVonNr, standAmTermin, stornoVon, tagesStandIndex, wiederDa } from './eintraege.mjs?v=2.3.1.1792523037';
-import { anzeigeVorname, bestleistungDialog, BEWERTUNGS_TYPEN, FEHLT_WORT, HANDY, kachelHtml, markenHtml, planKontext, renderHeute, sichtbareSchueler, stundeUntertitel, verweigerungDialog } from './heute.mjs?v=2.3.1.1792523037';
-import { aktualisiereKursChip, handwahlLesen } from './kurswahl.mjs?v=2.3.1.1792523037';
-import { renderAlles } from './navigation.mjs?v=2.3.1.1792523037';
-import { renderSchueler, schuelerDetailHtml, setzeQuartalsnote, verdrahteDetail } from './schueler.mjs?v=2.3.1.1792523037';
+import { findeZiel, HILFE } from '../../logic/hilfe.mjs?v=2.4.0.1792533458';
+import { stundeFuerBuchung } from '../../logic/stunden.mjs?v=2.4.0.1792533458';
+import { verdichte, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.0.1792533458';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.0.1792533458';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.4.0.1792533458';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.4.0.1792533458';
+import { aktiverKursId, aktView, anzeigeBlock, beamerModus, setzeStempelTyp, stempelTyp, terminDatum, vault } from '../kern/zustand.mjs?v=2.4.0.1792533458';
+import { addEvent, anzahlBewertungen, bewertProfil, eintragLabel, kurs, leererStand, schuelerVonNr, sidVonNr, standAmTermin, stornoVon, tagesStandIndex, wiederDa } from './eintraege.mjs?v=2.4.0.1792533458';
+import { anzeigeVorname, bestleistungDialog, BEWERTUNGS_TYPEN, FEHLT_WORT, HANDY, kachelHtml, markenHtml, planKontext, renderHeute, sichtbareSchueler, stundeUntertitel, verweigerungDialog } from './heute.mjs?v=2.4.0.1792533458';
+import { aktualisiereKursChip, handwahlLesen } from './kurswahl.mjs?v=2.4.0.1792533458';
+import { renderAlles } from './navigation.mjs?v=2.4.0.1792533458';
+import { renderSchueler, schuelerDetailHtml, setzeQuartalsnote, verdrahteDetail } from './schueler.mjs?v=2.4.0.1792533458';
 
 /* ═══ PERMANENTE STEMPEL-RAIL (v2) · Werkzeug-in-die-Hand-Paradigma (Zero-Wunsch) ═══
    Stempel wählen → Kacheln antippen. Löst das alte „Schüler wählen → dann eintragen" ab. */

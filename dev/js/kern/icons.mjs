@@ -7,6 +7,10 @@
 const ICON={
   plus:[['p','M12 5v14M5 12h14']],
   tabelle:[['r',3,4,18,16,2],['p','M3 10h18M9 10v10']],   // Liste aus Excel/Untis einfügen (Scheibe E, kompakt)
+  qr:[['r',3,3,7,7,1.5],['r',14,3,7,7,1.5],['r',3,14,7,7,1.5],['p','M14 14h3v3M21 14v1M14 20h1M18 18h3v3h-3z']],   // Abgleich: Code zeigen (Scheibe C)
+  kamera:[['r',3,7,18,13,3],['c',12,13.5,3.5],['p','M8.5 7l1.5-3h4l1.5 3']],   // Abgleich: Code scannen
+  datei:[['p','M7 3h7l4 4v14H7z'],['p','M14 3v4h4M10 13h5M10 17h5']],
+  pc:[['r',3,4,18,12,2],['p','M8 20h8M12 16v4']],   // Abgleich-Rückfall: vom PC holen
   ziehen:[['p','M8 20V4M4.5 7.5 8 4l3.5 3.5'],['p','M16 4v16M12.5 16.5 16 20l3.5-3.5']],   // eigene Reihenfolge
   griff:[['cf',9,6,1.5],['cf',15,6,1.5],['cf',9,12,1.5],['cf',15,12,1.5],['cf',9,18,1.5],['cf',15,18,1.5]],   // Ziehgriff
   neutral:[['c',12,12,6]],

@@ -905,6 +905,30 @@
   .ke-lb { flex: none; min-width: 44px; min-height: 44px; border-radius: 8px; border: 1px solid var(--kante); background: transparent; color: var(--leise); font-size: 12px; }
   .ke-lb.an { color: var(--band-text); border-color: var(--band); }
   .ke-griff { flex: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; gap: 2px; color: var(--leise); font-size: 20px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  /* Scheibe C „Abgleich über Direktverbindung“ (Zero 20.10., Entwürfe design/c_abgleich_2026-10-20/) */
+  .ab-wahl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 4px; }
+  .ab-wahl .btn { min-height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 16px; }
+  .ab-wahl .ico { width: 30px; height: 30px; }
+  .ab-wahl small { color: var(--leise); font-size: 12px; font-weight: 400; }
+  .ab-satz { font-size: 14px; color: var(--leise); margin: 0 0 10px; }
+  .ab-schritt { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 0 0 8px; }
+  .ab-schritt b { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--band); color: var(--band-text); font-size: 13px; }
+  .ab-qr { display: grid; place-items: center; padding: 10px; background: #fff; border-radius: 12px; width: min(100%, 300px); margin: 4px auto 10px; }
+  .ab-qr-bild { width: 100%; height: auto; image-rendering: pixelated; }
+  .ab-kamera { aspect-ratio: 4 / 3; border-radius: 12px; background: #0d0c09; margin: 4px 0 10px; overflow: hidden; }
+  .ab-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ab-status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--leise); margin: 6px 0 0; }
+  .ab-status .punkt { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); flex: none; }
+  .ab-status.gut { color: var(--gut-text); }
+  .ab-status.gut .punkt { background: var(--gut); }
+  .ab-leiste { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .ab-leiste .btn, .ab-rueck .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+  .ab-leiste .ico { width: 18px; height: 18px; }
+  .ab-rueck { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--kante); font-size: 13px; color: var(--leise); }
+  .ab-text { margin: 8px 0 0; font-size: 13px; color: var(--leise); }
+  .ab-text summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+  .ab-text textarea { width: 100%; font-size: 13px; margin: 4px 0 6px; }
+  .ab-fort { display: block; width: 100%; height: 6px; margin: 8px 0 12px; accent-color: var(--gut); }   /* echter Fortschritt (Prüfer 🟢 3) */
   .ke-verwerfen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--warn); border-radius: 10px; }
   .ke-pfeil, .ke-stift { flex: none; width: 44px; min-height: 44px; border-radius: 8px; border: 1px solid var(--kante); background: transparent; color: var(--text); font-size: 17px; }
   .ke-stift { color: var(--leise); }

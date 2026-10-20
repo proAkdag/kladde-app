@@ -78,6 +78,7 @@ export const HILFE = {
     KURS, BEAMER_AN, MENUE,
   ] },
   mehr: { titel: 'Mehr', zeilen: [
+    { begriff: 'Abgleich', text: 'Mit dem anderen Gerät im WLAN, per QR.', ziel: '#btn-abgleich', wort: null },
     { begriff: 'Sicherung', text: 'Verschlüsselt speichern oder einlesen.', ziel: '#btn-export', wort: null },
     { begriff: 'PC', text: 'Abgleich mit dem PC im Heimnetz.', ziel: '#btn-push', wort: null },
     { begriff: 'Darstellung', text: 'Tag, Nacht oder wie das Gerät.', ziel: '#view-mehr', wort: '^System$' },

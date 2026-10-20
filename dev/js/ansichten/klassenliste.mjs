@@ -4,9 +4,9 @@
 // Fokus-Lehre (Stundenplan v1.3.0): die Eingabezeile wird einmal gebaut und nie neu gezeichnet — neu gezeichnet wird nur die Liste,
 // darum bleibt die Tastatur am iPad offen. Ränder der Pfeile tragen aria-disabled statt disabled (Safari 26: ein fokussierter Knopf,
 // der disabled wird, wirft den Fokus an den Seitenanfang).
-import { teileName } from '../../logic/klassenliste.mjs?v=2.3.1.1792523037';
-import { el, toast } from '../kern/dom.mjs?v=2.3.1.1792523037';
-import { iconEl } from '../kern/icons.mjs?v=2.3.1.1792523037';
+import { teileName } from '../../logic/klassenliste.mjs?v=2.4.0.1792533458';
+import { el, toast } from '../kern/dom.mjs?v=2.4.0.1792533458';
+import { iconEl } from '../kern/icons.mjs?v=2.4.0.1792533458';
 
 // Schalter Alphabetisch | Eigene Reihenfolge — dasselbe Segment wie „Stufe“ im Blatt (aktiv = btn, sonst btn still). Die Knöpfe werden
 // einmal gebaut, umgeschaltet werden nur Klasse und aria-pressed: sonst fiel der Fokus nach der Wahl auf <body> (Prüfer 20.10. 🟢 1)
