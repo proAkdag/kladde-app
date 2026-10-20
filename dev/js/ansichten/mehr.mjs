@@ -1,21 +1,22 @@
 // Kladde · js/ansichten/mehr.mjs — Abschnitt „MEHR“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { decodeContainerAuto, wechslePassphrase } from '../../logic/container.mjs?v=2.1.0.1792442217';
-import { mergeContainerDaten, uebernehmeMerge } from '../../logic/merge.mjs?v=2.1.0.1792442217';
-import { migriereStamm, schemaBekannt } from '../../logic/migration.mjs?v=2.1.0.1792442217';
-import { regelText } from '../../logic/verdichtung.mjs?v=2.1.0.1792442217';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconHtml } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { THEME_KEY, themeAnwenden, themePref } from '../kern/theme.mjs?v=2.1.0.1792442217';
-import { idbDel, idbGet, idbPut, nochOffen, setzeSchluessel, speicherFehler, speichern, sperrGen } from '../kern/tresor.mjs?v=2.1.0.1792442217';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.1.0.1792442217';
-import { heuteIso, setzeVault, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { bewertProfil, kurs, WOCHENTAG_KURZ } from './eintraege.mjs?v=2.1.0.1792442217';
-import { kursAutowahl } from './kurswahl.mjs?v=2.1.0.1792442217';
-import { renderAlles } from './navigation.mjs?v=2.1.0.1792442217';
-import { aufloesenBeiClose, bioEinrichten, bioEntfernen, bioVerfuegbar, lockMinuten, passphraseAbfragen } from './sperre.mjs?v=2.1.0.1792442217';
-import { APP_VERSION } from '../app.mjs?v=2.1.0.1792442217';
+import { decodeContainerAuto, wechslePassphrase } from '../../logic/container.mjs?v=2.2.1.1792457964';
+import { mergeContainerDaten, uebernehmeMerge } from '../../logic/merge.mjs?v=2.2.1.1792457964';
+import { migriereStamm, schemaBekannt } from '../../logic/migration.mjs?v=2.2.1.1792457964';
+import { regelText } from '../../logic/verdichtung.mjs?v=2.2.1.1792457964';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconHtml } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { THEME_KEY, themeAnwenden, themePref } from '../kern/theme.mjs?v=2.2.1.1792457964';
+import { idbDel, idbGet, idbPut, nochOffen, setzeSchluessel, speicherFehler, speichern, sperrGen } from '../kern/tresor.mjs?v=2.2.1.1792457964';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.2.1.1792457964';
+import { heuteIso, setzeVault, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { bewertProfil, kurs, WOCHENTAG_KURZ } from './eintraege.mjs?v=2.2.1.1792457964';
+import { kursAutowahl } from './kurswahl.mjs?v=2.2.1.1792457964';
+import { renderAlles } from './navigation.mjs?v=2.2.1.1792457964';
+import { aufloesenBeiClose, bioEinrichten, bioEntfernen, bioVerfuegbar, lockMinuten, passphraseAbfragen } from './sperre.mjs?v=2.2.1.1792457964';
+import { APP_VERSION } from '../app.mjs?v=2.2.1.1792457964';
+import { aktualisieren, updateBereit } from '../kern/update.mjs?v=2.2.1.1792457964';
 
 /* ═══ MEHR · Sichern & Übertragen · Sicherheit · Darstellung · Technik (Scheibe 7, Zero 04.10.: 1 A · 2 B · 3 B · 4 A · 5 B) ═══ */
 // Kalendertage seit einem Zeitpunkt: Banner und „Sichern“ zählen gleich (Math.round fängt die 23-/25-h-Tage der Zeitumstellung)
@@ -111,7 +112,11 @@ function renderMehr(){
   if(navigator.storage?.estimate) navigator.storage.estimate().then(e=>{ const z=$('dg-quota'); if(z) z.textContent=((e.usage||0)/1048576).toFixed(1)+' MB'; });
   // Zwei FESTE Spalten (Zero-Feldtest 10.07.), verteilt nach Höhe: links Sichern (+ PC) und Darstellung, rechts Sicherheit und Technik.
   // Am Handy dieselbe Reihenfolge untereinander. Der Datenschutz-Satz steht am Fuß über beiden Spalten.
-  wrap.replaceChildren(el('div',{class:'mehr-spalte'},sichern,pc,darstellung,vorlage),el('div',{class:'mehr-spalte',id:'mehr-spalte-b'},sicherheit,technik),
+  // Update (Zero 20.10.): nach × im Hinweis der Weg hierher; nur sichtbar, solange eine neue Fassung bereitliegt
+  const update=updateBereit()?el('div',{class:'panel',id:'ms-update'},el('h2',{},'Update'),
+    el('p',{},'Neues Update verfügbar.'),
+    el('div',{class:'btn-reihe'},el('button',{class:'btn',onclick:()=>aktualisieren()},'Aktualisieren'))):null;
+  wrap.replaceChildren(el('div',{class:'mehr-spalte'},sichern,pc,darstellung,vorlage),el('div',{class:'mehr-spalte',id:'mehr-spalte-b'},update,sicherheit,technik),
     el('p',{class:'ms-satz'},DATENSCHUTZ_SATZ));
   sicherungsKopf();
 }
@@ -193,6 +198,40 @@ async function exportiereContainerJetzt(){
 }
 // Unterschiede zweier Stände (merge.mjs: Schülerliste je Kurs mit Fach, zuletzt ein reiner Stand-Konflikt) — Import-Vorschau und „Vom PC holen“
 // zeigen dieselbe Liste, bis zu fünf Meldungen (Prüfer P2, Zero 06.10. „Text klarer, Abfrage bleibt“)
+// ── Fragen des Abgleichs (v2.2 Identität, Zero 19.10. „Fragen: dasselbe Kind?“) ──
+// logic/merge.mjs liefert `fragen`: 'zwei' = gleiche Nummer aus der Zeit vor v2.2, anderer Name (umbenannt — oder ein anderes Kind?) ·
+// 'dasselbe' = gleicher Name, auf zwei Geräten getrennt angelegt. Eine Karte je Frage, „Weiter“ erst, wenn alle beantwortet sind (wie
+// „Liste aktualisieren“); jede Antwort rechnet den Abgleich neu. → antworten { [id]: true|false } oder null (abgebrochen).
+// Antwort-Sinn wie in merge.mjs: 'zwei' true = zwei Kinder · 'dasselbe' true = dasselbe Kind.
+function fragenKlaeren(fremd,gen){
+  const antworten={};
+  if(!mergeContainerDaten(vault,fremd).fragen.length) return Promise.resolve(antworten);
+  return new Promise(resRoh=>{
+    const res=aufloesenBeiClose(resRoh,null);   // X/Escape = Abbrechen
+    const wer=s=>((s.vorname||'')+' '+(s.name||'')).trim();
+    const zeichne=()=>{
+      if(!nochOffen(gen)){ dlgZu(); return; }
+      const dry=mergeContainerDaten(vault,fremd,{antworten});
+      const karte=f=>{
+        const gleich=f.art==='dasselbe', zwei=!gleich;   // welcher Wert „dasselbe Kind“ bzw. „zwei Kinder“ bedeutet
+        const text=f.art==='zwei'
+          ?f.kurs+': „'+wer(f.hier)+'“ ('+f.geraetHier+') und „'+wer(f.dort)+'“ ('+f.geraetDort+') tragen dieselbe Nummer. Umbenannt oder zwei Kinder?'
+          :f.kurs+': „'+wer(f.dort)+'“ steht auf beiden Geräten, getrennt angelegt. Dasselbe Kind?';
+        const knopf=(wert,lab)=>el('button',{class:'btn'+(f.antwort===wert?'':' still'),'aria-pressed':String(f.antwort===wert),dataset:{frage:f.id},
+          onclick:()=>{ antworten[f.id]=wert; zeichne(); }},lab);
+        return el('div',{class:'abgleich-frage'},el('p',{},text),el('div',{class:'btn-reihe'},
+          knopf(gleich,f.art==='zwei'?'Dasselbe Kind (umbenannt)':'Dasselbe Kind'),knopf(zwei,'Zwei Kinder')));
+      };
+      dlgZeigenEl(el('h3',{},'Bitte klären'),
+        el('p',{class:'u-hinweis'},'Die beiden Stände unterscheiden sich bei einzelnen Kindern. Die App rät nicht — ihre Einträge bleiben bei dem Kind, das du wählst.'),
+        ...dry.fragen.map(karte),
+        el('div',{class:'btn-reihe'},
+          el('button',{class:'btn',dataset:{weiter:''},disabled:dry.offen>0?'':undefined,onclick:()=>{ if(dry.offen) return; res(antworten); dlgZu(); }},dry.offen?'Noch '+dry.offen+' offen':'Weiter'),
+          el('button',{class:'btn still',onclick:()=>{ res(null); dlgZu(); }},'Abbrechen')));
+    };
+    zeichne();
+  });
+}
 function konfliktListe(k){ return k.slice(0,5).map(t=>'<p class="u-warn13">'+iconHtml('warnung')+' '+esc(t)+'</p>').join('')+(k.length>5?'<p class="u-hinweis">… und '+(k.length-5)+' weitere</p>':''); }
 function unterschiedeTitel(k){ return k.every(t=>/^Stammdaten-Konflikt/.test(t))?'Unterschiede zwischen den Ständen':'Unterschiede in der Schülerliste'; }
 function unterschiede(n){ return n===1?'1 Unterschied':n+' Unterschiede'; }
@@ -215,10 +254,12 @@ async function importiereContainer(e){
   }
   if(!nochOffen(gen)) return;   // während PBKDF2 gesperrt → nichts mehr anfassen
   if(!schemaBekannt(fremd.schema)){ toast('⚠ Diese Sicherung ('+fremd.schema+') stammt aus einer neueren App — bitte die App aktualisieren (neu laden).',6000); return; }
+  const antworten=await fragenKlaeren(fremd,gen);   // v2.2: erst die Kinder klären, dann die Vorschau
+  if(!antworten||!nochOffen(gen)) return;
   // Import-Vorschau (Konzept §3): erst zeigen, dann mergen — nie still
   const eigeneIds=new Set(vault.events.map(x=>x.id));
   const neue=(fremd.events||[]).filter(x=>!eigeneIds.has(x.id)).length;
-  const dry=mergeContainerDaten(vault,fremd);
+  const dry=mergeContainerDaten(vault,fremd,{antworten});
   dlgZeigen('<h3>Sicherung erkannt</h3>'+
     '<div class="zeile"><span>Quelle</span><span class="wert">'+esc(fremd.stamm?.geraet||'?')+'</span></div>'+
     '<div class="zeile"><span>Letzter Stand</span><span class="wert">'+esc(String(fremd.stamm?.ts||'?').slice(0,16).replace('T',' '))+'</span></div>'+
@@ -328,7 +369,9 @@ async function syncPull(){
     const fremd=(await decodeContainerAuto(new Uint8Array(await r.arrayBuffer()),pin)).daten;
     if(!nochOffen(gen)) return;
     if(!schemaBekannt(fremd.schema)){ toast('⚠ Diese Sicherung ('+fremd.schema+') stammt aus einer neueren App — bitte die App aktualisieren.',6000); return; }
-    const dry=mergeContainerDaten(vault,fremd);
+    const antworten=await fragenKlaeren(fremd,gen);   // v2.2: erst die Kinder klären — nie still übernehmen
+    if(!antworten||!nochOffen(gen)) return;
+    const dry=mergeContainerDaten(vault,fremd,{antworten});
     const anwenden=async()=>{
       if(!nochOffen(gen)) return;
       tresorUebernehmen(dry); await speichern();   // legt den unterlegenen Stand bei wie der Dateiimport (Review 19.10. §5)

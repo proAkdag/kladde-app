@@ -1,16 +1,17 @@
 // Kladde · js/ansichten/eintraege.mjs — Abschnitt „ZUSTAND-HELPERS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.1.0.1792442217';
-import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.1.0.1792442217';
-import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconEl } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { speichern } from '../kern/tresor.mjs?v=2.1.0.1792442217';
-import { GERAET } from '../kern/umgebung.mjs?v=2.1.0.1792442217';
-import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.1.0.1792442217';
-import { renderAlles } from './navigation.mjs?v=2.1.0.1792442217';
-import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.1.0.1792442217';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.2.1.1792457964';
+import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.2.1.1792457964';
+import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconEl } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { altSid } from '../../logic/identitaet.mjs?v=2.2.1.1792457964';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=2.2.1.1792457964';
+import { GERAET } from '../kern/umgebung.mjs?v=2.2.1.1792457964';
+import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.2.1.1792457964';
+import { renderAlles } from './navigation.mjs?v=2.2.1.1792457964';
+import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.2.1.1792457964';
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverSchueler=null, undoStack=[];
@@ -19,11 +20,26 @@ function kursSchueler(k){ return nachListe((vault.stamm.schueler[k.id]||[]).filt
 // Bewertungs-Modus: bildet die 3 Fälle (Sek I=Drittel · Sek II=Punkte · Sek II=Drittel)
 // auf die getestete 2-Wege-Logik ab — Sek-II-Drittel rechnet wie Sek I (Drittelnoten 1–6).
 function bewertProfil(k){ return (k&&k.profil==='sek2'&&(k.notenmodus||'punkte')!=='drittel')?'sek2':'sek1'; }
-function addEvent(typ,schuelerNr,extra={}){
+// ── Identität (v2.2, Zero 19.10. „W2 · alle Lesestellen umstellen“) ──
+// Ein Eintrag gehört über seine sid zum Kind (logic/identitaet.mjs). Die Ansichten reichen weiter die Ausweis-Nr als Griff herum: sie ist
+// im Kurs eindeutig, der Abgleich vergibt sie bei Kollision neu. Diese Helfer sind die einzige Brücke zwischen Nr und sid; kein
+// Eintrag wird mehr über e.schuelerNr einem Kind zugeordnet (das Feld steht nur noch in Einträgen von vor v2.2).
+function sidVonNr(nr,k=kurs()){
+  if(!k||nr==null) return null;
+  const s=(vault.stamm.schueler[k.id]||[]).find(x=>x.nr===nr);
+  return s?(s.sid||altSid(k.id,s.nr)):null;
+}
+function kindVonEvent(e){ return e&&e.sid?(vault.stamm.schueler[e.kursId]||[]).find(s=>s.sid===e.sid)||null:null; }
+function nrVonEvent(e){ const s=kindVonEvent(e); return s?s.nr:null; }
+// sid → Ausweis-Nr eines Kurses in einem Durchlauf (für Schleifen über alle Einträge)
+function nrNachSid(kursId){ return new Map((vault.stamm.schueler[kursId]||[]).map(s=>[s.sid||altSid(kursId,s.nr),s.nr])); }
+function addEvent(typ,nr,extra={}){   // nr: Ausweis-Nr als Griff der Ansicht; gebunden wird die sid
   if(dlgKurs&&kursGewechselt({kursId:dlgKurs})) return null;   // offener Dialog eines anderen Kurses: dieselbe Nr ist hier ein anderes Kind (dlgOeffnen)
   const k=kurs();
   if(k&&k.status==='archiviert'){ toast('Archivierter Kurs — schreibgeschützt'); return null; } // P3.3
-  const e={id:crypto.randomUUID(),typ,schuelerNr,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,...extra};
+  const sid=sidVonNr(nr,k);
+  if(!sid){ toast('Kind nicht im Kurs — nichts gebucht'); return null; }   // nie ein Eintrag ohne Kind (v2.2)
+  const e={id:crypto.randomUUID(),typ,sid,kursId:aktiverKursId,datum:terminDatum,ts:new Date().toISOString(),geraet:GERAET,geraetId,...extra};
   // ⏰ und ∅ tragen ihre Stunde (v1.17.1 Blockmodell): Doppelstunde (Zero 03.10.: „Dazuzählen, wenn es ein späterer Block ist“), und ⏰ nimmt
   // das ∅ derselben Stunde zurück (Zero: „⏰ nimmt ∅ zurück“) — beides regelt ersetzungFuer unten. Die Stunde kommt frisch aus der Uhr
   // (buchungsStunde), nicht aus der Autowahl: dort galt in der Pause schon der nächste Block (Prüfer 03.10. 🔴 1)
@@ -32,7 +48,7 @@ function addEvent(typ,schuelerNr,extra={}){
   // (Klärungsliste, Kurs-Badge, Kurzbericht „1× ungeklärt“ UND „1× entschuldigt“; Prüfer 2026-09-29). Hat ⏰ das ∅ schon ersetzt („kommt
   // doch“), klärt e/u es mit — sonst stünde es nach einem ↶ der Verspätung neben dem e (Prüfer 03.10. 🟢 7)
   if((typ==='fehlt_e'||typ==='fehlt_u')&&!e.stornoVon){
-    const w=wirksameEvents(vault.events), gleich=x=>x.typ==='fehlt_o'&&x.kursId===e.kursId&&x.schuelerNr===schuelerNr&&x.datum===e.datum;
+    const w=wirksameEvents(vault.events), gleich=x=>x.typ==='fehlt_o'&&x.kursId===e.kursId&&x.sid===sid&&x.datum===e.datum;
     const o=w.find(gleich)||vault.events.find(x=>gleich(x)&&w.some(v=>v.typ==='versp'&&v.stornoVon===x.id));
     if(o) e.stornoVon=o.id;
   }
@@ -50,7 +66,7 @@ function addEvent(typ,schuelerNr,extra={}){
   zeigeUndo(e,ers?ers.ersetzt:null);
   return e;
 }
-function stornoEreignis(e){ return {id:crypto.randomUUID(),typ:'storno',schuelerNr:e.schuelerNr,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,stornoVon:e.id}; }
+function stornoEreignis(e){ return {id:crypto.randomUUID(),typ:'storno',sid:e.sid,kursId:e.kursId,datum:e.datum,ts:new Date().toISOString(),geraet:GERAET,geraetId,stornoVon:e.id}; }
 function stornoVon(e){
   if(dlgKurs&&kursGewechselt({kursId:dlgKurs})) return false;   // wie addEvent: ein Dialog des alten Kurses nimmt nichts mehr zurück (dlgOeffnen)
   // Archiv ist schreibgeschützt — auch für Rücknahmen (vorher: addEvent schützte, ↶/„Irrtum" nicht · Prüfer 2026-09-29)
@@ -73,14 +89,14 @@ function chipZeig(ikon,text,onTap){
   chip._t2=setTimeout(()=>{ chip.classList.add('hidden'); chip.classList.remove('weg'); },6050);
   chip.onclick=()=>{ clearTimeout(chip._t1); clearTimeout(chip._t2); chip.classList.remove('weg'); onTap(); };
 }
-function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):e.typ==='versp'&&e.minuten?'zu spät '+e.minuten+' min':e.typ==='quartalsnote'&&e.hj&&e.quartal?'Q'+((e.hj-1)*2+e.quartal)+'-Note '+e.wert+(kursSek2(e.kursId)?' P':''):(TYP_LABEL[e.typ]||e.typ); }
+function eintragLabel(e){ return e.typ==='note'?(e.best?'bes. Leistung':'Note '+e.wert):e.typ==='versp'&&e.minuten?'zu spät '+e.minuten+' min':e.typ==='quartalsnote'&&e.hj&&e.quartal?'Q'+((e.hj-1)*2+e.quartal)+'-Note '+e.wert+((e.einheit?e.einheit==='punkte':kursSek2(e.kursId))?' P':e.einheit==='drittel'&&kursSek2(e.kursId)?' (Drittel)':''):(TYP_LABEL[e.typ]||e.typ); }
 // Was Chip und Meldung zeigen: am Beamer keine Bewertung im Klartext (Prüfer 03.10. 🟡 4; die Regel „Bewertungen … immer verborgen“)
 function kursSek2(id){ return bewertProfil(vault&&vault.stamm.kurse.find(x=>x.id===id))==='sek2'; }   // Chip „Q1-Note 11 P“ wie die Meldung (Prüfer 03.10. 🟢 9)
 function sichtLabel(e){ return beamerModus&&(BEWERTUNGS_TYPEN.has(e.typ)||e.typ==='quartalsnote')?'Bewertung':eintragLabel(e); }   // auch keine Quartalsnote (Prüfer 03.10. 🟢 10)
 function zeigeUndo(e,ersetzt){
-  const s=stammKind(e.schuelerNr);
+  const s=kindVonEvent(e);
   // Ersetzen sichtbar machen (Mechanik erklärt sich selbst): „o → ＋“ — ein Tap bringt das alte Zeichen zurück
-  chipZeig('rueck',(s?anzeigeVorname(s):'Nr '+e.schuelerNr)+': '+(ersetzt?sichtLabel(ersetzt)+' → ':'')+sichtLabel(e),
+  chipZeig('rueck',(s?anzeigeVorname(s):'?')+': '+(ersetzt?sichtLabel(ersetzt)+' → ':'')+sichtLabel(e),
     ()=>{ stornoVon(e); toast('Rückgängig: '+sichtLabel(e)+wiederDa(e)); renderAlles(); zeigeRedo(e); });   // alle Ansichten — Deck/Schüler blieben sonst veraltet
 }
 // Nach einer Rücknahme: was das zurückgenommene Event ersetzt oder geklärt hatte, gilt wieder („— wieder o“)
@@ -90,13 +106,14 @@ function wiederDa(e){
 }
 // Storniertes Original mit einem Tap wieder einbuchen — append-only bleibt gewahrt (kein Löschen,
 // der Storno bleibt im Log; addEvent stempelt id/ts frisch, alle Sachfelder reisen mit).
+// v2.2: das Kind kommt über die sid (nrVonEvent), Gerät und Kennung stempelt addEvent neu; ein Eintrag aus v2 trägt noch schuelerNr — weg damit.
 function bucheErneut(e){
-  const {id:_id,ts:_ts,geraet:_ge,stornoVon:_sv,typ,schuelerNr,...sach}=e;
-  return addEvent(typ,schuelerNr,sach);
+  const {id:_id,ts:_ts,geraet:_ge,geraetId:_gi,stornoVon:_sv,sid:_sid,schuelerNr:_nr,typ,...sach}=e;
+  return addEvent(typ,nrVonEvent(e),sach);
 }
 function zeigeRedo(e){
-  const s=stammKind(e.schuelerNr);
-  chipZeig('wieder',(s?s.vorname:'Nr '+e.schuelerNr)+': '+(TYP_LABEL[e.typ]||e.typ)+' wiederherstellen',
+  const s=kindVonEvent(e);
+  chipZeig('wieder',(s?s.vorname:'?')+': '+(TYP_LABEL[e.typ]||e.typ)+' wiederherstellen',
     ()=>{ bucheErneut(e); toast('Wiederhergestellt: '+(TYP_LABEL[e.typ]||e.typ)); renderAlles(); });
 }
 function schuelerVonNr(nr){ const k=kurs(); return k?kursSchueler(k).find(s=>s.nr===nr):null; }
@@ -132,13 +149,15 @@ function reduziereStand(evs){
 // (Zero 2026-09-29: ⭐ und ⊘ galten dort nicht als Bewertung, die Kinder blieben im Deck).
 function anzahlBewertungen(st){ return st?st.plus+st.neutral+st.minus+(st.note!=null?1:0)+st.verweigert:0; }
 function standAmTermin(nr,datum){
-  return reduziereStand(wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===datum));
+  const sid=sidVonNr(nr);
+  return reduziereStand(wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.sid===sid&&e.datum===datum));
 }
 function tagesStandIndex(datum){
-  const byNr=new Map();
+  const byNr=new Map(), nrVon=nrNachSid(aktiverKursId);
   for(const e of wirksameEvents(vault.events)){
     if(e.kursId!==aktiverKursId||e.datum!==datum) continue;
-    let a=byNr.get(e.schuelerNr); if(!a){ a=[]; byNr.set(e.schuelerNr,a); }
+    const nr=nrVon.get(e.sid); if(nr==null) continue;
+    let a=byNr.get(nr); if(!a){ a=[]; byNr.set(nr,a); }
     a.push(e);
   }
   const idx=new Map();
@@ -176,4 +195,4 @@ function beamerOptionenSheet(){
 function setzeAktiverSchueler(w){ aktiverSchueler=w; }
 
 
-export { aktiverSchueler, undoStack, kurs, kursSchueler, bewertProfil, addEvent, stornoEreignis, stornoVon, TYP_LABEL, chipZeig, eintragLabel, kursSek2, sichtLabel, zeigeUndo, wiederDa, bucheErneut, zeigeRedo, schuelerVonNr, stammKind, listenNr, leererStand, reduziereStand, anzahlBewertungen, standAmTermin, tagesStandIndex, WOCHENTAG_KURZ, datumLabel, BTN_BEAMER, setzeBeamer, beamerOptionenSheet, setzeAktiverSchueler };
+export { aktiverSchueler, undoStack, kurs, kursSchueler, bewertProfil, sidVonNr, kindVonEvent, nrVonEvent, nrNachSid, addEvent, stornoEreignis, stornoVon, TYP_LABEL, chipZeig, eintragLabel, kursSek2, sichtLabel, zeigeUndo, wiederDa, bucheErneut, zeigeRedo, schuelerVonNr, stammKind, listenNr, leererStand, reduziereStand, anzahlBewertungen, standAmTermin, tagesStandIndex, WOCHENTAG_KURZ, datumLabel, BTN_BEAMER, setzeBeamer, beamerOptionenSheet, setzeAktiverSchueler };

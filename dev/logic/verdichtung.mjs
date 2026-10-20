@@ -60,7 +60,7 @@ const gleicherBlock = (a, b) => a.blockNr == null || b.blockNr == null || a.bloc
 function ersetzungFuer(events, neu) {
   const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : ANWESEND_TYPEN.has(neu.typ) ? ANWESEND_TYPEN : QN_TYPEN.has(neu.typ) ? QN_TYPEN : null;
   if (!art || neu.stornoVon) return null;
-  const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.schuelerNr === neu.schuelerNr &&
+  const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.sid === neu.sid &&   // v2.2: dasselbe Kind = dieselbe sid
     (art === QN_TYPEN ? e.hj === neu.hj && e.quartal === neu.quartal : terminVon(e) === terminVon(neu) && (art !== ANWESEND_TYPEN || gleicherBlock(e, neu)));
   // Ältere Doppelte so lange stornieren, bis nur das Ersetzte bleibt: ein Storno hebt auch die Wirkung des Stornierten auf und brächte
   // sonst dessen eigenes Ersetztes zurück (zwei Geräte: 5 → 7 neben ∅, ⏰ 8 ergab 13). Ein Wiederkehrer ist immer älter als das Ersetzte.
@@ -94,7 +94,8 @@ function scoreVon(somi) {
   return { nPlus: p, nNull: o, nMinus: m, score: (p - m) / Math.max(1, p + o + m) };
 }
 
-function verdichte(kursEvents, schuelerNr, opt) {
+// sid: das Kind (v2.2 Identität, logic/identitaet.mjs) — nicht mehr die Ausweis-Nr
+function verdichte(kursEvents, sid, opt) {
   const profil = opt?.profil || 'sek1';
   const lb = Boolean(opt?.lb);
   const von = opt?.von || '';
@@ -106,7 +107,7 @@ function verdichte(kursEvents, schuelerNr, opt) {
 
   const kursTermine = new Set(
     wirksam.filter(e => TERMIN_TYPEN.has(e.typ)).map(terminVon));
-  const meine = wirksam.filter(e => e.schuelerNr === schuelerNr);
+  const meine = wirksam.filter(e => e.sid === sid);
   const somi = meine.filter(e => SOMI_TYPEN.has(e.typ));
   // Direkte Noten, die im Notenmodus des Kurses nicht lesbar sind (Punkte ↔ Drittel nach einem Wechsel, Importe),
   // werden übersprungen statt die ganze Auswertung abzubrechen (Prüfer 2026-09-29: Liste und Vollseite warfen).
@@ -229,10 +230,10 @@ function vorschlagsZeilen(rows) {
 // ── Quartals-Verlauf (Zero 2026-09-02, Punkt 7): Bilanz-Score je Zeitraum + Pfeil zum vorigen
 // Zeitraum MIT Daten (leere Quartale werden übersprungen, nicht als Absturz gewertet).
 // Dieselbe Schwelle wie der Verlaufspfeil innerhalb eines Zeitraums (|Δ| > 0.15).
-function quartalsVerlauf(kursEvents, schuelerNr, zeitraeume, opt) {
+function quartalsVerlauf(kursEvents, sid, zeitraeume, opt) {
   const out = []; let vorher = null;
   for (const z of zeitraeume || []) {
-    const v = verdichte(kursEvents, schuelerNr, { ...opt, von: z.von, bis: z.bis });
+    const v = verdichte(kursEvents, sid, { ...opt, von: z.von, bis: z.bis });
     const n = v.nPlus + v.nNull + v.nMinus;
     const e = { id: z.id, label: z.label, score: n ? v.score : null, n, vorschlag: v.vorschlag, pfeil: null };
     if (e.score !== null && vorher !== null) { const d = e.score - vorher; e.pfeil = d > 0.15 ? '↑' : d < -0.15 ? '↓' : '→'; }

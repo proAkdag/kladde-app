@@ -1,31 +1,32 @@
 // Kladde · js/ansichten/kurse.mjs — Abschnitt „KURSE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.1.0.1792442217';
-import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.1.0.1792442217';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.1.0.1792442217';
-import { kursStatus } from '../../logic/kursStatus.mjs?v=2.1.0.1792442217';
-import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.1.0.1792442217';
-import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.1.0.1792442217';
-import { standardZeitraeume } from '../../logic/migration.mjs?v=2.1.0.1792442217';
-import { MAX_SCHUELER, parseSchuelerListe } from '../../logic/parser.mjs?v=2.1.0.1792442217';
-import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.1.0.1792442217';
-import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.1.0.1792442217';
-import { lnr, neueAusweisNr, planeAbgleich, wendePlanAn } from '../../logic/teilnehmer.mjs?v=2.1.0.1792442217';
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.1.0.1792442217';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.1.0.1792442217';
-import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, stammKind } from './eintraege.mjs?v=2.1.0.1792442217';
-import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.1.0.1792442217';
-import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.1.0.1792442217';
-import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.1.0.1792442217';
-import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.1.0.1792442217';
-import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.1.0.1792442217';
-import { aufloesenBeiClose } from './sperre.mjs?v=2.1.0.1792442217';
-import { stempelAus } from './stempel.mjs?v=2.1.0.1792442217';   // renderRail: eigene innere Funktion (Editor)
-import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.1.0.1792442217';
+import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.2.1.1792457964';
+import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.2.1.1792457964';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.2.1.1792457964';
+import { kursStatus } from '../../logic/kursStatus.mjs?v=2.2.1.1792457964';
+import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.2.1.1792457964';
+import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.2.1.1792457964';
+import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.2.1.1792457964';
+import { standardZeitraeume } from '../../logic/migration.mjs?v=2.2.1.1792457964';
+import { MAX_SCHUELER, parseSchuelerListe } from '../../logic/parser.mjs?v=2.2.1.1792457964';
+import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.2.1.1792457964';
+import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.2.1.1792457964';
+import { lnr, neueAusweisNr, planeAbgleich, wendePlanAn } from '../../logic/teilnehmer.mjs?v=2.2.1.1792457964';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.2.1.1792457964';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.2.1.1792457964';
+import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.2.1.1792457964';
+import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.2.1.1792457964';
+import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.2.1.1792457964';
+import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.2.1.1792457964';
+import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.2.1.1792457964';
+import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.2.1.1792457964';
+import { aufloesenBeiClose } from './sperre.mjs?v=2.2.1.1792457964';
+import { stempelAus } from './stempel.mjs?v=2.2.1.1792457964';   // renderRail: eigene innere Funktion (Editor)
+import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.2.1.1792457964';
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
 /* Kurs direkt in der App anlegen: Excel-Spalten kopieren → einfügen (Tab/Semikolon-tolerant) */
@@ -282,7 +283,7 @@ function kursSeite(k){
           if(naechsteListe>MAX_SCHUELER){ toast('Keine Zeile mehr frei — die Mappe hat '+MAX_SCHUELER+' Zeilen'); return; }
           const nr=neueAusweisNr(alle,vault.events.filter(e=>e.kursId===k.id),k.ausweisBis||0);   // Ausweis-Nr: nie wiederverwendet, ohne Grenze (WAHL U5, Prüfer R4)
           const list=vault.stamm.schueler[k.id]=vault.stamm.schueler[k.id]||[];
-          list.push({nr,...(naechsteListe!==nr?{liste:naechsteListe}:{}),name,vorname,lb:lbIn.checked,...(grIn&&grIn.value?{gruppe:grIn.value}:{})}); list.sort((a,b)=>a.nr-b.nr); k.ausweisBis=Math.max(k.ausweisBis||0,nr);
+          list.push({nr,sid:neueSid(),...(naechsteListe!==nr?{liste:naechsteListe}:{}),name,vorname,lb:lbIn.checked,...(grIn&&grIn.value?{gruppe:grIn.value}:{})}); list.sort((a,b)=>a.nr-b.nr); k.ausweisBis=Math.max(k.ausweisBis||0,nr);
           stammMutiert(); speichern(); dlgZu(); toast('Hinzugefügt: '+(vorname||name)+' · Nr '+naechsteListe); nochmal(); }},'＋ Hinzufügen'),
         el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
     setTimeout(()=>vnIn.focus(),60);
@@ -402,7 +403,7 @@ function kursDuplizierenDialog(id){
         if(vault.stamm.kurse.some(x=>x.id===neuId)){ toast('Diesen Kurs gibt es schon'); return; }
         const {farbHue:_f,...rest}=k;
         vault.stamm.kurse.push({...rest,id:neuId,name,fach,status:'aktiv'});
-        vault.stamm.schueler[neuId]=JSON.parse(JSON.stringify(vault.stamm.schueler[k.id]||[]));
+        vault.stamm.schueler[neuId]=ohneSid(vault.stamm.schueler[k.id]);
         if(vault.stamm.sitzplaene[k.id]) vault.stamm.sitzplaene[neuId]=JSON.parse(JSON.stringify(vault.stamm.sitzplaene[k.id]));
         if(vault.stamm.kursprofile[k.id]) vault.stamm.kursprofile[neuId]={...vault.stamm.kursprofile[k.id]};
         stammMutiert(); speichern(); dlgZu(); renderKurse(); toast('Dupliziert: '+name+' · '+fach);
@@ -418,13 +419,14 @@ function kursDuplizierenDialog(id){
 // → Promise<boolean> (true = übernommen), damit der Stapel-Import mehrere Kurse nacheinander abfragen kann.
 const LA_MARKE={teil:'Name?',gleich:'gleicher Name',wieder:'wieder da?'};
 // Die Warnung zum Mischbetrieb mit Geräten vor v1.20.0 (Prüfer R3) ist entfallen: Prod ist seit 05.10. mindestens v1.20.0 (Zero 06.10. „Ganz weg“)
+const markiereEntfernt=(kinder,k)=>markiereEntferntIn(vault.stamm,kinder,k.id,new Date().toISOString());   // v2.2 Löschmarke (B2)
 const LA_FRAGE={teil:['Ja, Name geändert','Nein, anderes Kind'],gleich:['Ja, dasselbe Kind','Nein, ein anderes'],wieder:['Ja, wieder da','Nein, ein neues Kind']};
 function listenAbgleichDialog(k,neu,herkunft){
   return new Promise(resRoh=>{
     const res=aufloesenBeiClose(resRoh,false);   // X/Escape = Abbrechen
     const alt=vault.stamm.schueler[k.id]||[];
     const kursEv=vault.events.filter(e=>e.kursId===k.id);
-    const hatEv=nr=>kursEv.some(e=>e.schuelerNr===nr&&e.typ!=='storno');
+    const hatEv=nr=>{ const sid=sidVonNr(nr,k); return kursEv.some(e=>e.sid===sid&&e.typ!=='storno'); };   // Eintrag → Kind über die sid (v2.2)
     let modus=herkunft==='einfuegen'?'behalten':'anpassen';
     const antworten={};
     if(planeAbgleich(alt,neu,'anpassen').unveraendert){   // „anpassen“ sieht jede Änderung, auch eine neue Reihenfolge (Prüfer G5)
@@ -500,6 +502,10 @@ function listenAbgleichDialog(k,neu,herkunft){
       const plan=planeAbgleich(alt,neu,modus,antworten);
       const neuListe=wendePlanAn(alt,plan,hatEv,kursEv,k.ausweisBis||0);
       if(!neuListe) return;   // offene Frage oder Fehler: nie halb übernehmen
+      // v2.2 Identität: neue Kinder bekommen eine eigene sid; wer ohne Einträge ganz entfernt wurde, bekommt eine Löschmarke —
+      // sonst holte der Abgleich ihn mit dem älteren Stand des anderen Geräts zurück (Befund B2)
+      for(const s of neuListe) if(!s.sid&&!alt.some(a=>a.nr===s.nr)) s.sid=neueSid();
+      markiereEntfernt(alt.filter(a=>!neuListe.some(s=>s.nr===a.nr)),k);
       vault.stamm.schueler[k.id]=neuListe;
       k.ausweisBis=Math.max(k.ausweisBis||0,...alt.map(s=>s.nr),...neuListe.map(s=>s.nr));   // Höchstmarke: keine dieser Nrn wird je neu vergeben (Prüfer R4)
       if(vault.stamm.sitzplaene[k.id]) for(const w of plan.weg) vault.stamm.sitzplaene[k.id]=vomPlatz(vault.stamm.sitzplaene[k.id],w.kind.nr);   // der Platz bleibt als leerer Tisch
@@ -522,7 +528,7 @@ function teilnehmerGriffe(k,zeige){
   const alle=()=>vault.stamm.schueler[k.id]||[];
   const raeumeSitzplatz=(nr)=>{ if(vault.stamm.sitzplaene[k.id]) vault.stamm.sitzplaene[k.id]=vomPlatz(vault.stamm.sitzplaene[k.id],nr); };   // der Platz bleibt als leerer Tisch
   const deaktiviere=(s)=>{
-    const hatEv=vault.events.some(e=>e.kursId===k.id&&e.schuelerNr===s.nr&&e.typ!=='storno');
+    const sid=sidVonNr(s.nr,k), hatEv=vault.events.some(e=>e.kursId===k.id&&e.sid===sid&&e.typ!=='storno');
     if(!hatEv){
       // Ohne Einträge ist echtes Entfernen gefahrlos (kein Erbe möglich) — der Tippfehler-Weg. Die Nummern der anderen bleiben:
       // umnummeriert wird nur über „Liste aktualisieren“ (Zero 05.10., 3A), sonst liefen Kladde und Mappe auseinander.
@@ -533,6 +539,7 @@ function teilnehmerGriffe(k,zeige){
         el('div',{class:'btn-reihe'},
           el('button',{class:'btn gefahr',onclick:()=>{
             k.ausweisBis=Math.max(k.ausweisBis||0,...alle().map(x=>x.nr));   // Höchstmarke: die Nr kommt nie wieder (Prüfer R4)
+            markiereEntfernt([s],k);   // v2.2: kommt mit dem älteren Stand des anderen Geräts nicht zurück (B2)
             vault.stamm.schueler[k.id]=alle().filter(x=>x.nr!==s.nr);
             raeumeSitzplatz(s.nr);
             stammMutiert(); speichern(); toast('Entfernt: '+(s.vorname||s.name)); zeige();
@@ -658,7 +665,7 @@ function schuljahrAssistent(){
       const neuKursId=slugId(w.name+'-'+k.fach+'-'+neuLabel);
       const nk={...k,id:neuKursId,name:w.name,schuljahr:neuLabel,schuljahrId:neuId,status:'aktiv'};
       vault.stamm.kurse.push(nk);
-      if(w.liste) vault.stamm.schueler[neuKursId]=JSON.parse(JSON.stringify(vault.stamm.schueler[k.id]||[]));
+      if(w.liste) vault.stamm.schueler[neuKursId]=ohneSid(vault.stamm.schueler[k.id]);
       if(w.plan){
         if(vault.stamm.sitzplaene[k.id]) vault.stamm.sitzplaene[neuKursId]=JSON.parse(JSON.stringify(vault.stamm.sitzplaene[k.id]));
         // Wochenplan-Blöcke des alten Kurses auf den neuen umhängen (Lücken-Fix #5)

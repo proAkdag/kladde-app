@@ -1,25 +1,26 @@
 // Kladde · js/ansichten/sperre.mjs — Abschnitt „PIN / LOCK + FINGERABDRUCK / FACE ID“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.1.0.1792442217';
-import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.1.0.1792442217';
-import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.1.0.1792442217';
-import { migriereStamm } from '../../logic/migration.mjs?v=2.1.0.1792442217';
-import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.1.0.1792442217';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconEl } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.1.0.1792442217';
-import { IST_DEV } from '../kern/umgebung.mjs?v=2.1.0.1792442217';
-import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { zeigeStartHinweise } from './banner.mjs?v=2.1.0.1792442217';
-import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.1.0.1792442217';
-import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.1.0.1792442217';
-import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.1.0.1792442217';
-import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.1.0.1792442217';
-import { renderMehr } from './mehr.mjs?v=2.1.0.1792442217';
-import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.1.0.1792442217';
-import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.1.0.1792442217';
-import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.1.0.1792442217';
+import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.2.1.1792457964';
+import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.2.1.1792457964';
+import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.2.1.1792457964';
+import { sichereRoh } from '../../logic/identitaet.mjs?v=2.2.1.1792457964';
+import { migriereStamm } from '../../logic/migration.mjs?v=2.2.1.1792457964';
+import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.2.1.1792457964';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconEl } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.2.1.1792457964';
+import { IST_DEV } from '../kern/umgebung.mjs?v=2.2.1.1792457964';
+import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { zeigeStartHinweise } from './banner.mjs?v=2.2.1.1792457964';
+import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.2.1.1792457964';
+import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.2.1.1792457964';
+import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.2.1.1792457964';
+import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.2.1.1792457964';
+import { renderMehr } from './mehr.mjs?v=2.2.1.1792457964';
+import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.2.1.1792457964';
+import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.2.1.1792457964';
+import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.2.1.1792457964';
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 
@@ -44,6 +45,12 @@ function augeSetzen(zeigt){
   $('pin').type=$('pin2').type=zeigt?'text':'password';
   ['pin-auge','pin2-auge'].forEach(id=>{ const a=$(id); a.replaceChildren(iconEl(zeigt?'augeZu':'auge'));
     a.setAttribute('aria-pressed',String(zeigt)); a.setAttribute('aria-label',zeigt?'Passphrase verbergen':'Passphrase anzeigen'); a.title=zeigt?'Verbergen':'Anzeigen'; });
+}
+// v2.2 (Schema kladde/v3, Identität): vor der ersten v3-Schreibung den gelesenen Container sichern, mit Rücklese-Prüfung — dasselbe
+// Muster wie v1→v2 (Auflage 1). Scheitert sie, wird nichts migriert gespeichert. Einmalig: ein v3-Tresor braucht keine Sicherung mehr.
+async function sichereVorV3(roh,daten){
+  if(daten&&daten.schema==='kladde/v3') return;
+  await sichereRoh(roh,v=>idbPut('vault_v2_backup',v),()=>idbGet('vault_v2_backup'));   // rein und getestet (logic/identitaet, Prüfer 20.10. G5)
 }
 async function lockInit({auto=false}={}){
   document.querySelector('.shell').inert=true;   // hinter dem Login nichts bedienbar, auch nicht per Bildschirmleser (Prüfer S10 🟢 8)
@@ -111,9 +118,10 @@ async function lockInit({auto=false}={}){
           setzeMigrationsHinweis(true);
           console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
         } else {
+          await sichereVorV3(roh,r.daten);   // v2.2: erst gesichert, dann v3
           setzeSchluessel(r.dek,r.kopf);
           setzeVault(r.daten); setzeAnmeldung('pass',passStaerke(pin)==='schwach');
-          const migriert=migriereStamm(vault); // Schema-Nachzug (v0.8-Bestand → kladde/v2)
+          const migriert=migriereStamm(vault); // Schema-Nachzug (v0.8-Bestand → kladde/v2 → v3)
           if(bereinigeAusnahmen(vault.stamm)||migriert) speichern(); // + folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
           console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
         }
@@ -162,6 +170,8 @@ async function bioEntsperren(bio,{auto=false}={}){
     const roh=await idbGet('vault');
     const r=await decodeContainerMitDek(roh,key);
     if(lauf.signal.aborted) return;   // abgelöst (neuer Tipp, Passphrase), der Browser kam trotzdem zurück — nichts übernehmen
+    await sichereVorV3(roh,r.daten);   // v2.2: erst gesichert, dann v3
+    if(lauf.signal.aborted) return;
     setzeSchluessel(r.dek,r.kopf); setzeVault(r.daten); setzeAnmeldung('bio',false);
     const migriert=migriereStamm(vault);
     if(bereinigeAusnahmen(vault.stamm)||migriert) speichern();

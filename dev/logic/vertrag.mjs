@@ -6,12 +6,16 @@
 // Stammfelder (vault.stamm). kurs: woran ein Kurs hängt, wenn er endgültig gelöscht wird —
 //   'schluessel' = { [kursId]: … } · 'liste' = [{ kursId, … }] (Einträge ohne kursId, z. B. Entfall des ganzen Tages, bleiben) · null = kein Kursbezug.
 // art: 'daten' = Inhalt des Lehrers · 'meta' = Verwaltung des Merge (rev/ts/geraet) bzw. Löschmarkierungen.
-// Merge: der Stamm gewinnt als Ganzes über rev (logic/merge.mjs); allein `geloescht` wird beider Geräte vereinigt.
+// Merge: der Stamm gewinnt als Ganzes über rev (logic/merge.mjs); die Felder mit merge:'vereinigen' werden beider Geräte vereinigt.
 const STAMM_FELDER = Object.freeze({
   rev:                { art: 'meta',  kurs: null },
   ts:                 { art: 'meta',  kurs: null },
   geraet:             { art: 'meta',  kurs: null },
   geloescht:          { art: 'meta',  kurs: null, merge: 'vereinigen' },   // { [kursId]: { am, wieder? } }
+  // Identität (v2.2, logic/identitaet.mjs): Antworten des Abgleichs und Kind-Löschmarken — beider Geräte vereinigt
+  sidAlias:           { art: 'meta',  kurs: null, merge: 'vereinigen' },   // { [sid]: zielSid } „dasselbe Kind“
+  trennungen:         { art: 'meta',  kurs: null, merge: 'vereinigen' },   // { [sid|name]: { neu, ereignisse, geraete } } „zwei Kinder“
+  geloeschteKinder:   { art: 'meta',  kurs: null, merge: 'vereinigen' },   // { [sid]: { am } }
   kurse:              { art: 'daten', kurs: 'eigen' },                     // [{ id, … }] — der Kurs selbst
   schueler:           { art: 'daten', kurs: 'schluessel' },
   sitzplaene:         { art: 'daten', kurs: 'schluessel' },

@@ -1,15 +1,15 @@
 // Kladde · js/ansichten/deck.mjs — Abschnitt „DECK“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.1.0.1792442217';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { aktiverKursId, aktiveTeilgruppe, aktView, beamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { addEvent, anzahlBewertungen, kurs, stammKind, stornoVon, tagesStandIndex, TYP_LABEL } from './eintraege.mjs?v=2.1.0.1792442217';
-import { anzeigeNachname, anzeigeVorname, bewertGuard, busy, FEHLT_WORT, setzeBusy, sichtbareSchueler } from './heute.mjs?v=2.1.0.1792442217';
-import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=2.1.0.1792442217';
-import { mitUebergang } from './navigation.mjs?v=2.1.0.1792442217';
-import { schuelerBlatt } from './stempel.mjs?v=2.1.0.1792442217';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.2.1.1792457964';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { aktiverKursId, aktiveTeilgruppe, aktView, beamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { addEvent, anzahlBewertungen, kurs, nrNachSid, stammKind, stornoVon, tagesStandIndex, TYP_LABEL } from './eintraege.mjs?v=2.2.1.1792457964';
+import { anzeigeNachname, anzeigeVorname, bewertGuard, busy, FEHLT_WORT, setzeBusy, sichtbareSchueler } from './heute.mjs?v=2.2.1.1792457964';
+import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=2.2.1.1792457964';
+import { mitUebergang } from './navigation.mjs?v=2.2.1.1792457964';
+import { schuelerBlatt } from './stempel.mjs?v=2.2.1.1792457964';
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Schülerblatt ↓weiter) ═══ */
 let deckListe=[], deckIdx=0, deckNurOhne=true;   // Zero 02.10.: „Deck soll standardmäßig mit nur offene Einträge starten“
@@ -18,7 +18,8 @@ let deckVerlauf=[]; // Buchungen DIESER Deck-Runde [{nr,name,evId,typ}] — mitl
 function baueDeckListe(){
   const k=kurs(); if(!k) return [];
   // Abwesende (fehlt_o/e/u) nie im Deck — kein Bewerten von Fehlenden
-  const abw=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum&&(e.typ==='fehlt_o'||e.typ==='fehlt_e'||e.typ==='fehlt_u')).map(e=>e.schuelerNr));
+  const nrVon=nrNachSid(k.id);   // Eintrag → Kind über die sid (v2.2)
+  const abw=new Set(wirksameEvents(vault.events).filter(e=>e.kursId===k.id&&e.datum===terminDatum&&(e.typ==='fehlt_o'||e.typ==='fehlt_e'||e.typ==='fehlt_u')).map(e=>nrVon.get(e.sid)));
   let liste=sichtbareSchueler(k).filter(s=>!abw.has(s.nr));
   if(deckNurOhne){ const idx=tagesStandIndex(terminDatum); liste=liste.filter(s=>anzahlBewertungen(idx.get(s.nr))===0); }
   return liste;
@@ -96,14 +97,14 @@ const DECK_WEITER=new Set(['+','o','-','note','verweigert','fehlt_o','fehlt_e','
 // Bewertungen tragen ihr Symbol, alles andere ein Stift — der Tap fuehrt in dieselbe Korrektur.
 function ergaenzeVerlaufAusEvents(){
   const k=kurs(); if(!k||!deckRundeStart) return;
-  const imDeck=new Set(deckListe.map(s=>s.nr));
+  const imDeck=new Set(deckListe.map(s=>s.nr)), nrVon=nrNachSid(k.id);   // Eintrag → Kind über die sid (v2.2)
   const bekannt=new Set(deckVerlauf.map(v=>v.evId).filter(Boolean));
   const neu=wirksameEvents(vault.events).filter(e=>
-    e.kursId===k.id&&e.datum===terminDatum&&imDeck.has(e.schuelerNr)&&
+    e.kursId===k.id&&e.datum===terminDatum&&imDeck.has(nrVon.get(e.sid))&&
     e.typ!=='storno'&&String(e.ts||'')>=deckRundeStart&&!bekannt.has(e.id));
   for(const e of neu.sort((a,b)=>String(a.ts).localeCompare(String(b.ts)))){
-    const s=stammKind(e.schuelerNr);
-    deckVerlauf.unshift({nr:e.schuelerNr,name:s?anzeigeVorname(s):'Nr '+e.schuelerNr,
+    const nr=nrVon.get(e.sid), s=stammKind(nr);
+    deckVerlauf.unshift({nr,name:s?anzeigeVorname(s):'?',
       evId:e.id,typ:DECK_SYMBOL[e.typ]?e.typ:null,fremd:!DECK_SYMBOL[e.typ]});
   }
 }

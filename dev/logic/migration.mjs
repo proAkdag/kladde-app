@@ -1,11 +1,12 @@
-// kladde/logic/migration · Vault-Schema-Migration (P2.1 · kladde/v1 → kladde/v2)
+// kladde/logic/migration · Vault-Schema-Migration (P2.1 · kladde/v1 → kladde/v2 · v2.2: → kladde/v3)
+import { vergibSids } from './identitaet.mjs';
 // v2 ergänzt die Stundenplan-Welt: stamm.zeitmodelle[] · stamm.wochenplan[] · stamm.ausnahmeSlots[].
 // (Phase 3 erweitert dieselbe Funktion additiv um schuljahre[] — Schema bleibt kladde/v2.)
 // IDEMPOTENT: zweiter Lauf ändert nichts. Bewusst KEIN rev-Bump — beide Geräte migrieren
 // lokal beim eigenen Update; ein künstlicher rev-Konflikt würde nur Merge-Lärm erzeugen
 // (JSON-Roundtrip älterer Clients erhält unbekannte Felder).
 
-const BEKANNTE_SCHEMAS = ['kladde/v1', 'kladde/v2'];
+const BEKANNTE_SCHEMAS = ['kladde/v1', 'kladde/v2', 'kladde/v3'];
 
 // Schuljahr-Label aus einem Datum (Aug–Jul → „2026/27"). Monate 0-basiert.
 function schuljahrLabelAusDatum(d) {
@@ -55,7 +56,9 @@ function migriereStamm(vault, jetzt = new Date()) {
     for (const k of (s.kurse || [])) { k.schuljahrId = k.schuljahrId || id; k.status = k.status || 'aktiv'; }
     geaendert = true;
   }
-  if (vault.schema !== 'kladde/v2') { vault.schema = 'kladde/v2'; geaendert = true; }
+  // v3 (v2.2 Identität): jedes Kind und jeder Eintrag trägt seine sid (identitaet.mjs) — deterministisch, beide Geräte gleich
+  if (vergibSids(vault)) geaendert = true;
+  if (vault.schema !== 'kladde/v3') { vault.schema = 'kladde/v3'; geaendert = true; }
   return geaendert;
 }
 

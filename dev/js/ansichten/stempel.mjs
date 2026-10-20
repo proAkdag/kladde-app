@@ -1,17 +1,17 @@
 // Kladde · js/ansichten/stempel.mjs — Abschnitt „PERMANENTE STEMPEL-RAIL“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { findeZiel, HILFE } from '../../logic/hilfe.mjs?v=2.1.0.1792442217';
-import { stundeFuerBuchung } from '../../logic/stunden.mjs?v=2.1.0.1792442217';
-import { verdichte, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.1.0.1792442217';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { aktiverKursId, aktView, anzeigeBlock, beamerModus, setzeStempelTyp, stempelTyp, terminDatum, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { addEvent, anzahlBewertungen, bewertProfil, eintragLabel, kurs, leererStand, schuelerVonNr, standAmTermin, stornoVon, tagesStandIndex, wiederDa } from './eintraege.mjs?v=2.1.0.1792442217';
-import { anzeigeVorname, bestleistungDialog, BEWERTUNGS_TYPEN, FEHLT_WORT, HANDY, kachelHtml, markenHtml, planKontext, renderHeute, sichtbareSchueler, stundeUntertitel, verweigerungDialog } from './heute.mjs?v=2.1.0.1792442217';
-import { aktualisiereKursChip, handwahlLesen } from './kurswahl.mjs?v=2.1.0.1792442217';
-import { renderAlles } from './navigation.mjs?v=2.1.0.1792442217';
-import { renderSchueler, schuelerDetailHtml, setzeQuartalsnote, verdrahteDetail } from './schueler.mjs?v=2.1.0.1792442217';
+import { findeZiel, HILFE } from '../../logic/hilfe.mjs?v=2.2.1.1792457964';
+import { stundeFuerBuchung } from '../../logic/stunden.mjs?v=2.2.1.1792457964';
+import { verdichte, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.2.1.1792457964';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { aktiverKursId, aktView, anzeigeBlock, beamerModus, setzeStempelTyp, stempelTyp, terminDatum, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { addEvent, anzahlBewertungen, bewertProfil, eintragLabel, kurs, leererStand, schuelerVonNr, sidVonNr, standAmTermin, stornoVon, tagesStandIndex, wiederDa } from './eintraege.mjs?v=2.2.1.1792457964';
+import { anzeigeVorname, bestleistungDialog, BEWERTUNGS_TYPEN, FEHLT_WORT, HANDY, kachelHtml, markenHtml, planKontext, renderHeute, sichtbareSchueler, stundeUntertitel, verweigerungDialog } from './heute.mjs?v=2.2.1.1792457964';
+import { aktualisiereKursChip, handwahlLesen } from './kurswahl.mjs?v=2.2.1.1792457964';
+import { renderAlles } from './navigation.mjs?v=2.2.1.1792457964';
+import { renderSchueler, schuelerDetailHtml, setzeQuartalsnote, verdrahteDetail } from './schueler.mjs?v=2.2.1.1792457964';
 
 /* ═══ PERMANENTE STEMPEL-RAIL (v2) · Werkzeug-in-die-Hand-Paradigma (Zero-Wunsch) ═══
    Stempel wählen → Kacheln antippen. Löst das alte „Schüler wählen → dann eintragen" ab. */
@@ -83,12 +83,12 @@ function verspVorschlag(st=buchungsStunde()){
   return min>=1&&min<=90?min:null;
 }
 // Ein offenes ∅ dieses Schülers in dieser Stunde: dann nimmt ⏰ es zurück („kommt doch“), auch mit denselben Minuten (Prüfer 03.10. 🟢 8)
-const offenesO=(nr,st)=>wirksameEvents(vault.events).some(e=>e.typ==='fehlt_o'&&e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&(e.blockNr==null||st?.blockNr==null||e.blockNr===st.blockNr));
+const offenesO=(nr,st)=>{ const sid=sidVonNr(nr); return wirksameEvents(vault.events).some(e=>e.typ==='fehlt_o'&&e.kursId===aktiverKursId&&e.sid===sid&&e.datum===terminDatum&&(e.blockNr==null||st?.blockNr==null||e.blockNr===st.blockNr)); };
 // Die wirksamen Verspätungen dieses Schülers in dieser Stunde (tag=true: am ganzen Tag) — meist eine; mehrere nur aus Altbestand oder von zwei
 // Geräten. Ein neuer Wert ersetzt die der Stunde: addEvent → ersetzungFuer (logic/verdichtung; Prüfer 03.10. 🔴 1/🟡 2; Doppelstunde Zero 03.10.)
 function verspAmTermin(nr,tag=false,st=buchungsStunde()){
   const b=st?.blockNr??null;
-  const l=wirksameEvents(vault.events).filter(e=>e.typ==='versp'&&e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&(tag||e.blockNr==null||b==null||e.blockNr===b));
+  const sid=sidVonNr(nr), l=wirksameEvents(vault.events).filter(e=>e.typ==='versp'&&e.kursId===aktiverKursId&&e.sid===sid&&e.datum===terminDatum&&(tag||e.blockNr==null||b==null||e.blockNr===b));
   return l.length?{minuten:l.reduce((s,e)=>s+(Number(e.minuten)||0),0),teile:l.map(e=>Number(e.minuten)||0)}:null;
 }
 const verspText=a=>'Gebucht: '+a.minuten+' min'+(a.teile.length>1?' ('+a.teile.join(' + ')+')':'')+'. Andere Minuten antippen — ersetzt.';
@@ -190,7 +190,7 @@ function schuelerBlatt(nr,{danach}={}){
   aktualisiereKursChip();   // das Blatt bucht in die Stunde von jetzt: der Chip dahinter nennt dieselbe (Deck ohne Takt, Prüfer 06.10., B5)
   // Beamer: das Blatt zeigt Vorschlag, Fehlzeiten, LB und Notizen — nie an die Wand (Prüfer 2026-09-29; die Schüler-Ansicht sperrt schon)
   if(beamerModus){ toast('Projektion aktiv — Details erst nach dem Beamer-Modus'); return; }
-  const v=verdichte(vault.events.filter(e=>e.kursId===k.id),nr,{profil:bewertProfil(k),lb:s.lb});
+  const v=verdichte(vault.events.filter(e=>e.kursId===k.id),sidVonNr(nr,k),{profil:bewertProfil(k),lb:s.lb});
   const opt={kursId:aktiverKursId}, sek2=bewertProfil(k)==='sek2';
   let offen=null;   // das aufgeklappte Feld: 'note' | 'versp' | 'notiz' | 'best' | 'verw'
   const stunde=el('section',{class:'sb-stunde','aria-label':'Diese Stunde'});
@@ -199,7 +199,7 @@ function schuelerBlatt(nr,{danach}={}){
     dlgZu(); toast(text+' · '+s.vorname); renderHeute(); pulseKachel(nr); if(danach) danach(eintraege[eintraege.length-1][0]); };
   const zeichne=fokus=>{
     const fehlt=standAmTermin(nr,terminDatum).fehlt;
-    const bew=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&BEWERTUNGS_TYPEN.has(e.typ))
+    const sid=sidVonNr(nr), bew=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.sid===sid&&e.datum===terminDatum&&BEWERTUNGS_TYPEN.has(e.typ))
       .sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).pop();
     const jetzt=bew?(bew.typ==='note'&&bew.best?'bestleistung':bew.typ):null;
     // Meldungen stehen IM Blatt — ein Toast läge unter dem Dialog (Prüfer 02.10., B2); ein schon gebuchtes e/u bucht nicht noch einmal (B8)

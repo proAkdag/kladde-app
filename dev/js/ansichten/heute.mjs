@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/heute.mjs — Abschnitt „HEUTE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { gewichteteWahl, zufallsGewicht } from '../../logic/auswahl.mjs?v=2.1.0.1792442217';
-import { ausnahmeEntfernen, entfallZurueck, geplanteBlockNrn, SLOT_ARTEN, slotFuerBlock, tagesAusfall } from '../../logic/autowahl.mjs?v=2.1.0.1792442217';
-import { listenEintraege } from '../../logic/erfassListe.mjs?v=2.1.0.1792442217';
-import { fachKuerzel } from '../../logic/fachfarben.mjs?v=2.1.0.1792442217';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.1.0.1792442217';
-import { setzeAufPlatz, belegteReihen as spBelegteReihen } from '../../logic/sitzplan.mjs?v=2.1.0.1792442217';
-import { kalenderwoche, kursTag, naechsteStunde, stundeDesKurses, stundenAm, tagesStunden, tagPlus, wochentagVon } from '../../logic/stunden.mjs?v=2.1.0.1792442217';
-import { lnr } from '../../logic/teilnehmer.mjs?v=2.1.0.1792442217';
-import { istTerminEintrag, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.1.0.1792442217';
-import { blockLabel, formatZeit, istAWoche, istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.1.0.1792442217';
-import { dlgBreit, dlgInhalt, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.1.0.1792442217';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.1.0.1792442217';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.1.0.1792442217';
-import { aktiverKursId, aktiveTeilgruppe, beamerModus, editorAktiv, heuteIso, setzeAnzeigeBlock, setzeTeilgruppe, setzeTermin, stempelTyp, terminDatum, terminNachtrag, vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { addEvent, aktiverSchueler, anzahlBewertungen, bewertProfil, BTN_BEAMER, datumLabel, eintragLabel, kurs, kursSchueler, leererStand, schuelerVonNr, setzeAktiverSchueler, stammKind, standAmTermin, stornoVon, tagesStandIndex, wiederDa, WOCHENTAG_KURZ, zeigeRedo } from './eintraege.mjs?v=2.1.0.1792442217';
-import { faerbe, sitzplanEditor } from './kurse.mjs?v=2.1.0.1792442217';
-import { autowahlInfo, gruppeWaehlen, gueltigeGruppe, handwahlSetzen, kursAutowahl, nachAusnahme, wochenplanAktiv } from './kurswahl.mjs?v=2.1.0.1792442217';
-import { mitUebergang, renderAlles } from './navigation.mjs?v=2.1.0.1792442217';
-import { buchungsStunde, hilfeNeu, kursGewechselt, noteDialog, notizDialog, pulseKachel, renderRail, schuelerBlatt, tagFeld, verspStempel } from './stempel.mjs?v=2.1.0.1792442217';
-import { ausnahmeFuer, schultagAb, setzeAusnahme, setzeAusnahmen, stundenplanAssistent, WT_KURZ } from './stundenplan.mjs?v=2.1.0.1792442217';
+import { gewichteteWahl, zufallsGewicht } from '../../logic/auswahl.mjs?v=2.2.1.1792457964';
+import { ausnahmeEntfernen, entfallZurueck, geplanteBlockNrn, SLOT_ARTEN, slotFuerBlock, tagesAusfall } from '../../logic/autowahl.mjs?v=2.2.1.1792457964';
+import { listenEintraege } from '../../logic/erfassListe.mjs?v=2.2.1.1792457964';
+import { fachKuerzel } from '../../logic/fachfarben.mjs?v=2.2.1.1792457964';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.2.1.1792457964';
+import { setzeAufPlatz, belegteReihen as spBelegteReihen } from '../../logic/sitzplan.mjs?v=2.2.1.1792457964';
+import { kalenderwoche, kursTag, naechsteStunde, stundeDesKurses, stundenAm, tagesStunden, tagPlus, wochentagVon } from '../../logic/stunden.mjs?v=2.2.1.1792457964';
+import { lnr } from '../../logic/teilnehmer.mjs?v=2.2.1.1792457964';
+import { istTerminEintrag, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.2.1.1792457964';
+import { blockLabel, formatZeit, istAWoche, istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.2.1.1792457964';
+import { dlgBreit, dlgInhalt, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1.1792457964';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.2.1.1792457964';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.2.1.1792457964';
+import { aktiverKursId, aktiveTeilgruppe, beamerModus, editorAktiv, heuteIso, setzeAnzeigeBlock, setzeTeilgruppe, setzeTermin, stempelTyp, terminDatum, terminNachtrag, vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { addEvent, aktiverSchueler, anzahlBewertungen, bewertProfil, BTN_BEAMER, datumLabel, eintragLabel, kurs, kursSchueler, leererStand, schuelerVonNr, setzeAktiverSchueler, sidVonNr, stammKind, standAmTermin, stornoVon, tagesStandIndex, wiederDa, WOCHENTAG_KURZ, zeigeRedo } from './eintraege.mjs?v=2.2.1.1792457964';
+import { faerbe, sitzplanEditor } from './kurse.mjs?v=2.2.1.1792457964';
+import { autowahlInfo, gruppeWaehlen, gueltigeGruppe, handwahlSetzen, kursAutowahl, nachAusnahme, wochenplanAktiv } from './kurswahl.mjs?v=2.2.1.1792457964';
+import { mitUebergang, renderAlles } from './navigation.mjs?v=2.2.1.1792457964';
+import { buchungsStunde, hilfeNeu, kursGewechselt, noteDialog, notizDialog, pulseKachel, renderRail, schuelerBlatt, tagFeld, verspStempel } from './stempel.mjs?v=2.2.1.1792457964';
+import { ausnahmeFuer, schultagAb, setzeAusnahme, setzeAusnahmen, stundenplanAssistent, WT_KURZ } from './stundenplan.mjs?v=2.2.1.1792457964';
 
 /* ═══ HEUTE · Sitzplan 12×12 (Beamer-Regel: keine Werte sichtbar) ═══ */
 let busy=false; // Härtungs-Regel 6: Eingabe-Lock
@@ -625,7 +625,8 @@ function stempleKachel(nr){
 }
 // Letzten heutigen Eintrag eines Schülers entfernen (Storno) — für ↩-Stempel + Aktionsbar
 function entferneLetzten(nr){
-  const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.schuelerNr===nr&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
+  const sid=sidVonNr(nr);   // Eintrag → Kind über die sid (v2.2)
+  const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.sid===sid&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
   if(!evs.length){ toast('nichts zu entfernen'); return; }
   const letzte=evs.reduce((a,e)=>String(e.ts)>String(a.ts)?e:a);
   stornoVon(letzte); toast('entfernt: '+eintragLabel(letzte)+wiederDa(letzte)); renderHeute(); zeigeRedo(letzte);

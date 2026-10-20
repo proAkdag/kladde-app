@@ -1,10 +1,12 @@
 // Kladde · js/ansichten/banner.mjs — Abschnitt „HINWEIS-BANNER“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { $ } from '../kern/dom.mjs?v=2.1.0.1792442217';
-import { anmeldung, idbGet, migrationsHinweis, passSchwach, setzeMigrationsHinweis } from '../kern/tresor.mjs?v=2.1.0.1792442217';
-import { vault } from '../kern/zustand.mjs?v=2.1.0.1792442217';
-import { exportiereContainer, tageSeit } from './mehr.mjs?v=2.1.0.1792442217';
-import { bioEinrichten, bioVerfuegbar } from './sperre.mjs?v=2.1.0.1792442217';
+import { $ } from '../kern/dom.mjs?v=2.2.1.1792457964';
+import { anmeldung, idbGet, migrationsHinweis, passSchwach, setzeMigrationsHinweis } from '../kern/tresor.mjs?v=2.2.1.1792457964';
+import { vault } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { exportiereContainer, renderMehr, tageSeit } from './mehr.mjs?v=2.2.1.1792457964';
+import { aktualisieren, beiUpdate, updateBereit } from '../kern/update.mjs?v=2.2.1.1792457964';
+import { aktView } from '../kern/zustand.mjs?v=2.2.1.1792457964';
+import { bioEinrichten, bioVerfuegbar } from './sperre.mjs?v=2.2.1.1792457964';
 
 /* ═══ HINWEIS-BANNER (Migration · Passphrase-Empfehlung · Backup · Update) ═══ */
 function zeigeBanner(html,setup){
@@ -14,6 +16,22 @@ function zeigeBanner(html,setup){
   b.querySelector('[data-zu]').onclick=()=>b.classList.add('hidden');
   if(setup) setup(b);
 }
+// Update (Zero 20.10.): „Neues Update verfügbar“ — erst der Klick holt es. × blendet den Hinweis für diese Sitzung aus;
+// aktualisieren lässt sich dann unter Mehr. Hinter der Sperre bleibt der Hinweis zu (dort ist nichts bedienbar).
+let updateAbgelehnt=false;
+function zeigeUpdateHinweis(){
+  zeigeBanner('<span>Neues Update verfügbar.</span><button class="btn" data-update>Aktualisieren</button>',
+    b=>{ b.querySelector('[data-update]').onclick=()=>aktualisieren();
+         b.querySelector('[data-zu]').addEventListener('click',()=>{ updateAbgelehnt=true; }); });
+}
+// Belegt ein anderer Hinweis den Platz (Fingerabdruck, Sicherung), rückt das Update nach, sobald er zu ist — egal über welchen Weg
+// (×, „Einrichten“, „Jetzt sichern“): der Beobachter sieht das Ausblenden selbst (Probe U4, 20.10.).
+const updateNachruecken=()=>{ if(updateBereit()&&vault&&!updateAbgelehnt&&$('banner').classList.contains('hidden')) zeigeUpdateHinweis(); };
+new MutationObserver(updateNachruecken).observe($('banner'),{attributes:true,attributeFilter:['class']});
+beiUpdate(()=>{
+  if(aktView==='mehr') renderMehr();
+  updateNachruecken();
+});
 async function zeigeStartHinweise(){
   if(migrationsHinweis){
     setzeMigrationsHinweis(false);
@@ -21,6 +39,7 @@ async function zeigeStartHinweise(){
       b=>{ b.querySelector('[data-exp]').onclick=()=>{ b.classList.add('hidden'); exportiereContainer(); }; });
     return;
   }
+  if(updateBereit()&&!updateAbgelehnt){ zeigeUpdateHinweis(); return; }
   // Einmaliger, nicht blockierender Hinweis für Bestands-Kurz-PINs (§1.3 — kein Zwang, Zwang erzeugt Post-its)
   if(anmeldung==='pass'&&passSchwach&&!localStorage.getItem('kladde_pass_hinweis')){
     localStorage.setItem('kladde_pass_hinweis','1');
