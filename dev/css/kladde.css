@@ -878,37 +878,46 @@
   .ke-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
   .ke-kopf h4 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--leise); font-weight: 600; }
   .ke-seg { flex: 0 1 340px; min-width: 260px; }
-  .ke-eingabe { display: flex; gap: 8px; align-items: center; padding: 10px; border: 1px solid var(--band); border-radius: 12px; background: var(--karte2); }
-  .ke-eingabe input[type=text] { flex: 1; min-width: 0; min-height: 48px; font-size: 17px; }
+  .ke-eingabe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }   /* kompakt (Zero 20.10. abends): eine Reihe, kein Kasten */
+  .ke-eingabe input[type=text] { flex: 1 1 100px; min-width: 0; min-height: 48px; font-size: 17px; }
   .ke-eingabe select { min-height: 48px; }
   .ke-eingabe .btn { min-height: 48px; flex: none; }
+  .ke-plus { width: 48px; padding: 0; display: grid; place-items: center; }
+  .ke-plus .ico, .ke-einfuegen .ico { width: 22px; height: 22px; }
+  .ke-kopfzeile { font-weight: inherit; }
+  .ke-zurueck { display: inline-grid; place-items: center; width: 44px; height: 44px; vertical-align: middle; margin: -10px 0; text-decoration: none; }
+  .ke-zurueck .ico { width: 18px; height: 18px; }
+  .ke-leiste { position: sticky; bottom: -16px; display: flex; align-items: center; gap: 6px; margin: 10px -16px -16px; padding: 10px 16px; background: var(--karte); border-top: 1px solid var(--kante); z-index: 2; }
+  .ke-leiste .ke-seg { flex: none; min-width: 0; }
+  .ke-leiste .ke-seg .btn { flex: none; padding: 0 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .ke-leiste .ke-seg .ico { width: 18px; height: 18px; }
+  .ke-luecke { flex: 1; }
+  .ke-einfuegen { width: 48px; min-height: 44px; padding: 0; display: grid; place-items: center; margin: 0; }
   .ke-liste { display: flex; flex-direction: column; border-top: 1px solid var(--kante); }
-  .ke-zeile { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 6px 0; border-bottom: 1px solid var(--kante); background: var(--karte); }
-  .ke-nr { width: 30px; flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--leise); font-size: 15px; }
-  .ke-name { flex: 1; min-width: 0; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ke-zeile { display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 2px 0; border-bottom: 1px solid var(--kante); background: var(--karte); }
+  .ke-nr { min-width: 22px; flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--leise); font-size: 15px; }
+  .ke-name { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button.ke-name { background: none; border: 0; padding: 0 4px; color: inherit; font: inherit; font-size: 16px; text-align: left; cursor: pointer; border-radius: 8px; }
   .ke-name small { color: var(--leise); font-size: 13px; margin-left: 6px; }
   .ke-zeile.neu .ke-name::after { content: 'neu'; margin-left: 8px; font-size: 11px; color: var(--band-text); border: 1px solid var(--band); border-radius: 6px; padding: 1px 6px; }
   .ke-zeile.bearbeiten input[type=text] { flex: 1; min-width: 0; min-height: 44px; font-size: 16px; }
   .ke-steuer { display: contents; }
   .ke-lb { flex: none; min-width: 44px; min-height: 44px; border-radius: 8px; border: 1px solid var(--kante); background: transparent; color: var(--leise); font-size: 12px; }
   .ke-lb.an { color: var(--band-text); border-color: var(--band); }
-  .ke-griff { flex: none; width: 44px; min-height: 44px; display: grid; place-items: center; color: var(--leise); font-size: 20px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .ke-griff { flex: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; gap: 2px; color: var(--leise); font-size: 20px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .ke-verwerfen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--warn); border-radius: 10px; }
   .ke-pfeil, .ke-stift { flex: none; width: 44px; min-height: 44px; border-radius: 8px; border: 1px solid var(--kante); background: transparent; color: var(--text); font-size: 17px; }
   .ke-stift { color: var(--leise); }
   .ke-stift.gefahr { color: var(--fehl-text); }
   .ke-pfeil[aria-disabled=true] { opacity: .35; cursor: default; }
   .ke-zeile.zieht { position: relative; z-index: 2; border: 1px solid var(--band); border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,.35); transition-property: none; }   /* die Lage folgt dem Finger sofort: auch die Kurz-Übergänge von „weniger Bewegung“ (Z. 54) verzögern sonst das Tauschen */
-  .ke-grenze { font-size: 13px; color: var(--leise); padding: 8px 0 0 38px; margin: 0; }
-  .ke-einfuegen { min-height: 44px; margin-top: 10px; }
+  .ke-griff .ico { width: 16px; height: 16px; }
+  .ke-grenze { font-size: 13px; color: var(--leise); padding: 8px 0 0; margin: 0; }
   .ke-einf-feld { margin: 8px 0; }
   .ke-erkannt { font-size: 13px; color: var(--leise); margin: 4px 0 8px; }
   .ke-satz { padding: 10px 12px; border-left: 3px solid var(--band); background: var(--karte2); border-radius: 6px; font-size: 14px; margin: 8px 0; }
   .ke-fuss { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; color: var(--leise); font-size: 13px; }
   @media (max-width: 599px) {
-    .ke-eingabe { flex-wrap: wrap; }
-    .ke-eingabe input[type=text] { flex: 1 1 calc(50% - 8px); }
-    .ke-eingabe .btn { flex: 1 1 auto; }
     .ke-zeile.bearbeiten { flex-wrap: wrap; }
     .ke-zeile.bearbeiten .ke-steuer { display: flex; flex-basis: 100%; justify-content: flex-end; gap: 8px; }
   }

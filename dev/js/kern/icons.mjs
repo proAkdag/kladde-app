@@ -6,6 +6,9 @@
    Vorlage + Entscheide: design/ICONS_VORSCHAU_2026-09-02.html. Kachel-Marken zeichnen mit Strich 2,4 (CSS .mk .ico). */
 const ICON={
   plus:[['p','M12 5v14M5 12h14']],
+  tabelle:[['r',3,4,18,16,2],['p','M3 10h18M9 10v10']],   // Liste aus Excel/Untis einfügen (Scheibe E, kompakt)
+  ziehen:[['p','M8 20V4M4.5 7.5 8 4l3.5 3.5'],['p','M16 4v16M12.5 16.5 16 20l3.5-3.5']],   // eigene Reihenfolge
+  griff:[['cf',9,6,1.5],['cf',15,6,1.5],['cf',9,12,1.5],['cf',15,12,1.5],['cf',9,18,1.5],['cf',15,18,1.5]],   // Ziehgriff
   neutral:[['c',12,12,6]],
   minus:[['p','M5 12h14']],
   note:[['p','M5 20v-7M12 20V5M19 20v-9M3 20h18']],

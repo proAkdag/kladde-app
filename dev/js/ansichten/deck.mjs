@@ -1,15 +1,15 @@
 // Kladde · js/ansichten/deck.mjs — Abschnitt „DECK“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.0.1792517281';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.3.0.1792517281';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.3.0.1792517281';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.3.0.1792517281';
-import { aktiverKursId, aktiveTeilgruppe, aktView, beamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.3.0.1792517281';
-import { addEvent, anzahlBewertungen, kurs, nrNachSid, stammKind, stornoVon, tagesStandIndex, TYP_LABEL } from './eintraege.mjs?v=2.3.0.1792517281';
-import { anzeigeNachname, anzeigeVorname, bewertGuard, busy, FEHLT_WORT, setzeBusy, sichtbareSchueler } from './heute.mjs?v=2.3.0.1792517281';
-import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=2.3.0.1792517281';
-import { mitUebergang } from './navigation.mjs?v=2.3.0.1792517281';
-import { schuelerBlatt } from './stempel.mjs?v=2.3.0.1792517281';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.1.1792523037';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.3.1.1792523037';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.3.1.1792523037';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.3.1.1792523037';
+import { aktiverKursId, aktiveTeilgruppe, aktView, beamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.3.1.1792523037';
+import { addEvent, anzahlBewertungen, kurs, nrNachSid, stammKind, stornoVon, tagesStandIndex, TYP_LABEL } from './eintraege.mjs?v=2.3.1.1792523037';
+import { anzeigeNachname, anzeigeVorname, bewertGuard, busy, FEHLT_WORT, setzeBusy, sichtbareSchueler } from './heute.mjs?v=2.3.1.1792523037';
+import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=2.3.1.1792523037';
+import { mitUebergang } from './navigation.mjs?v=2.3.1.1792523037';
+import { schuelerBlatt } from './stempel.mjs?v=2.3.1.1792523037';
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Schülerblatt ↓weiter) ═══ */
 let deckListe=[], deckIdx=0, deckNurOhne=true;   // Zero 02.10.: „Deck soll standardmäßig mit nur offene Einträge starten“
