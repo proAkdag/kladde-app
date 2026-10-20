@@ -1,17 +1,17 @@
 // Kladde · js/ansichten/eintraege.mjs — Abschnitt „ZUSTAND-HELPERS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.3.0';
-import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.0';
-import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.3.0';
-import { $, el, toast } from '../kern/dom.mjs?v=2.3.0';
-import { iconEl } from '../kern/icons.mjs?v=2.3.0';
-import { altSid } from '../../logic/identitaet.mjs?v=2.3.0';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=2.3.0';
-import { GERAET } from '../kern/umgebung.mjs?v=2.3.0';
-import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.3.0';
-import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.3.0';
-import { renderAlles } from './navigation.mjs?v=2.3.0';
-import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.3.0';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.3.1';
+import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.1';
+import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.3.1';
+import { $, el, toast } from '../kern/dom.mjs?v=2.3.1';
+import { iconEl } from '../kern/icons.mjs?v=2.3.1';
+import { altSid } from '../../logic/identitaet.mjs?v=2.3.1';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=2.3.1';
+import { GERAET } from '../kern/umgebung.mjs?v=2.3.1';
+import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.3.1';
+import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.3.1';
+import { renderAlles } from './navigation.mjs?v=2.3.1';
+import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.3.1';
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverSchueler=null, undoStack=[];

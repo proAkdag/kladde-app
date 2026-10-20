@@ -1,7 +1,7 @@
 // Kladde · js/kern/dialog.mjs — Dialog-Rahmen (Schließen-Knopf, Inhalt, Breite) (A2 Schnitt 2: wörtlich aus js/app.mjs, verhaltensneutral; der Kern kennt keine Ansicht)
-import { $, el } from './dom.mjs?v=2.3.0';
-import { iconEl } from './icons.mjs?v=2.3.0';
-import { aktiverKursId } from './zustand.mjs?v=2.3.0';
+import { $, el } from './dom.mjs?v=2.3.1';
+import { iconEl } from './icons.mjs?v=2.3.1';
+import { aktiverKursId } from './zustand.mjs?v=2.3.1';
 
 // Dialog-Rahmen (Zero 2026-09-02): ein Schließen-Knopf oben rechts, der beim Scrollen stehen bleibt.
 // Der Dialog trägt zwei Kinder: .dlg-x (absolut, außerhalb des Scrollbereichs) + .dlg-inhalt (scrollt).

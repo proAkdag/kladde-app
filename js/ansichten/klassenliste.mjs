@@ -4,15 +4,17 @@
 // Fokus-Lehre (Stundenplan v1.3.0): die Eingabezeile wird einmal gebaut und nie neu gezeichnet — neu gezeichnet wird nur die Liste,
 // darum bleibt die Tastatur am iPad offen. Ränder der Pfeile tragen aria-disabled statt disabled (Safari 26: ein fokussierter Knopf,
 // der disabled wird, wirft den Fokus an den Seitenanfang).
-import { teileName } from '../../logic/klassenliste.mjs?v=2.3.0';
-import { el, toast } from '../kern/dom.mjs?v=2.3.0';
+import { teileName } from '../../logic/klassenliste.mjs?v=2.3.1';
+import { el, toast } from '../kern/dom.mjs?v=2.3.1';
+import { iconEl } from '../kern/icons.mjs?v=2.3.1';
 
 // Schalter Alphabetisch | Eigene Reihenfolge — dasselbe Segment wie „Stufe“ im Blatt (aktiv = btn, sonst btn still). Die Knöpfe werden
 // einmal gebaut, umgeschaltet werden nur Klasse und aria-pressed: sonst fiel der Fokus nach der Wahl auf <body> (Prüfer 20.10. 🟢 1)
 function reihenfolgeSchalter(modus, beiWahl) {
   let jetzt = modus;
-  const knoepfe = [['alpha', 'Alphabetisch'], ['eigen', 'Eigene Reihenfolge']].map(([v, t]) =>
-    el('button', { type: 'button', class: 'btn', dataset: { keModus: v }, onclick: () => { if (jetzt !== v) { setze(v); beiWahl(v); } } }, t));
+  // kurz beschriftet (Zero 20.10. abends: „wenn man es geschickt abkürzt“), der volle Name steht im Label
+  const knoepfe = [['alpha', ['A–Z'], 'Alphabetisch'], ['eigen', [iconEl('ziehen'), 'Eigene'], 'Eigene Reihenfolge']].map(([v, inhalt, lang]) =>
+    el('button', { type: 'button', class: 'btn', 'aria-label': lang, title: lang, dataset: { keModus: v }, onclick: () => { if (jetzt !== v) { setze(v); beiWahl(v); } } }, ...inhalt));
   const setze = m => { jetzt = m; for (const k of knoepfe) { const an = k.dataset.keModus === m; k.classList.toggle('still', !an); k.setAttribute('aria-pressed', String(an)); } };
   const box = el('div', { class: 'seg kn-seg ke-seg', role: 'group', 'aria-label': 'Reihenfolge' }, ...knoepfe);
   setze(modus);
@@ -38,7 +40,7 @@ function eingabeZeile({ beiNeu, beiListe, gruppen = [], ids = {} }) {
   const lbB = el('button', { type: 'button', class: 'ke-lb', 'aria-pressed': 'false', title: 'LB (zieldifferent)', dataset: { keLb: '' },
     onclick: () => { lb = !lb; lbB.classList.toggle('an', lb); lbB.setAttribute('aria-pressed', String(lb)); } }, 'LB');
   const gr = gruppen.length ? el('select', { dataset: { ksGruppe: '' }, 'aria-label': 'Halbgruppe' }, el('option', { value: '' }, 'ohne'), ...gruppen.map(g => el('option', { value: g }, g))) : null;
-  const plus = el('button', { type: 'button', class: 'btn', dataset: { ksHinzu: '' }, ...(ids.plus ? { id: ids.plus } : {}) }, '＋ Hinzufügen');
+  const plus = el('button', { type: 'button', class: 'btn ke-plus', 'aria-label': 'Hinzufügen', title: 'Hinzufügen', dataset: { ksHinzu: '' }, ...(ids.plus ? { id: ids.plus } : {}) }, iconEl('plus'));
   const uebernimm = () => {
     let vorname = vor.value.trim(), name = nach.value.trim();
     if (!name && /\s/.test(vorname)) ({ vorname, name } = teileName(vorname));
@@ -130,15 +132,18 @@ function kinderListe() {
     const n = kinder.length;
     box.replaceChildren(...kinder.map((k, i) => {
       const z = el('div', { class: 'ke-zeile' + (opt.neu && opt.neu(i) ? ' neu' : ''), role: 'listitem', dataset: { i: String(i) } });
-      if (opt.ordnen) { const g = el('span', { class: 'ke-griff', 'aria-hidden': 'true', title: 'Ziehen' }, '≡'); zieheAn(g, z); z.append(g); }
-      z.append(el('span', { class: 'ke-nr' }, String(opt.nummer ? opt.nummer(i) : i + 1)),
-        el('span', { class: 'ke-name' }, name(k), k.lb ? el('small', {}, 'LB') : null));
+      // Griff und Nummer in einer Zelle, der Name tippbar statt ✎ (Zero 20.10. abends: links vom Namen war zu viel Platz, am Handy
+      // kürzte ✎ neben ↑↓ den Namen auf „Abdurrahm…“)
+      const nr = el('span', { class: 'ke-nr' }, String(opt.nummer ? opt.nummer(i) : i + 1));
+      if (opt.ordnen) { const g = el('span', { class: 'ke-griff', title: 'Ziehen' }, iconEl('griff'), nr); zieheAn(g, z); z.append(g); } else z.append(nr);
+      const inhalt = [name(k), k.lb ? el('small', {}, 'LB') : null];
+      z.append(opt.bearbeite ? el('button', { type: 'button', class: 'ke-name', 'aria-label': 'Bearbeiten · ' + name(k), title: 'Antippen zum Ändern', dataset: { keStift: '' }, onclick: () => bearbeitZeile(i, k) }, ...inhalt)
+        : el('span', { class: 'ke-name' }, ...inhalt));
       if (opt.ordnen) z.append(
         el('button', { type: 'button', class: 'ke-pfeil', 'aria-label': 'nach oben · ' + name(k), dataset: { keHoch: '' }, ...(i === 0 ? { 'aria-disabled': 'true' } : {}),
           onclick: () => { if (i > 0) { opt.beiVerschiebe(i, i - 1); fokusNach(i - 1, 'hoch'); } } }, '↑'),
         el('button', { type: 'button', class: 'ke-pfeil', 'aria-label': 'nach unten · ' + name(k), dataset: { keRunter: '' }, ...(i === n - 1 ? { 'aria-disabled': 'true' } : {}),
           onclick: () => { if (i < n - 1) { opt.beiVerschiebe(i, i + 1); fokusNach(i + 1, 'runter'); } } }, '↓'));
-      if (opt.bearbeite) z.append(el('button', { type: 'button', class: 'ke-stift', 'aria-label': 'Bearbeiten · ' + name(k), dataset: { keStift: '' }, onclick: () => bearbeitZeile(i, k) }, '✎'));
       return z;
     }));
   }

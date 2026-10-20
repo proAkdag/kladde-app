@@ -1,34 +1,34 @@
 // Kladde · js/ansichten/kurse.mjs — Abschnitt „KURSE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.3.0';
-import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.3.0';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.3.0';
-import { kursStatus } from '../../logic/kursStatus.mjs?v=2.3.0';
-import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.3.0';
-import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.3.0';
-import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.3.0';
-import { standardZeitraeume } from '../../logic/migration.mjs?v=2.3.0';
-import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=2.3.0';
-import { MAX_SCHUELER } from '../../logic/parser.mjs?v=2.3.0';
-import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.3.0';
-import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.3.0';
-import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=2.3.0';
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.0';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.3.0';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.3.0';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.3.0';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.3.0';
-import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.3.0';
-import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.3.0';
-import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.3.0';
-import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.3.0';
-import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.3.0';
-import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.3.0';
-import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.3.0';
-import { aufloesenBeiClose } from './sperre.mjs?v=2.3.0';
-import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=2.3.0';
-import { stempelAus } from './stempel.mjs?v=2.3.0';   // renderRail: eigene innere Funktion (Editor)
-import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.3.0';
+import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.3.1';
+import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.3.1';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.3.1';
+import { kursStatus } from '../../logic/kursStatus.mjs?v=2.3.1';
+import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.3.1';
+import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.3.1';
+import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.3.1';
+import { standardZeitraeume } from '../../logic/migration.mjs?v=2.3.1';
+import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=2.3.1';
+import { MAX_SCHUELER } from '../../logic/parser.mjs?v=2.3.1';
+import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.3.1';
+import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.3.1';
+import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=2.3.1';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.1';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.3.1';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.3.1';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.3.1';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.3.1';
+import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.3.1';
+import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.3.1';
+import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.3.1';
+import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.3.1';
+import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.3.1';
+import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.3.1';
+import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.3.1';
+import { aufloesenBeiClose } from './sperre.mjs?v=2.3.1';
+import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=2.3.1';
+import { stempelAus } from './stempel.mjs?v=2.3.1';   // renderRail: eigene innere Funktion (Editor)
+import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.3.1';
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
 /* Kurs direkt in der App anlegen: Excel-Spalten kopieren → einfügen (Tab/Semikolon-tolerant) */
@@ -86,13 +86,14 @@ function kursAnlegenBlatt(){
     notenZeile,
     el('div',{class:'kn-reihe'},el('span',{},'Sitzplan'),seg([['alpha','Alphabetisch verteilen'],['spaeter','Später']],'sitz')));
   // ── Schritt 2 · Kinder ──
-  const schritte=el('div',{class:'ke-schritte',role:'list'});
-  const zeigeSchritt=n=>{ schritte.replaceChildren(el('span',{role:'listitem',class:n===1?'an':'','aria-current':n===1?'step':null},'1 · Klasse'),el('span',{role:'listitem',class:n===2?'an':'','aria-current':n===2?'step':null},'2 · Kinder'));
+  // Kopf in einer Zeile (Zero 20.10. abends: Titel, Schritte und Kopfzeile nahmen viel Höhe für Nebensache): Schritt 1 „Kurs anlegen“,
+  // Schritt 2 „5c · Mathematik ✎“ — ✎ führt zurück zur Klasse
+  const titel=el('h3',{},'Kurs anlegen');
+  const zeigeSchritt=n=>{ titel.replaceChildren(...(n===1?['Kurs anlegen']:[el('span',{class:'ke-kopfzeile'},[w.name.trim(),w.fach.trim()].filter(Boolean).join(' · ')),' ',
+      el('button',{type:'button',class:'ke-link ke-zurueck',dataset:{knZurueck:''},'aria-label':'Klasse ändern',title:'Klasse ändern',onclick:()=>zeigeSchritt(1)},iconEl('notiz'))]));
     s1.classList.toggle('hidden',n!==1); s2.classList.toggle('hidden',n!==2); };
-  const kopfZeile=el('p',{class:'u-hinweis ke-kopfzeile'});
   const liste=kinderListe();
   const grenze=el('p',{class:'ke-grenze'}), dopp=el('p',{class:'u-warn13 ke-doppelt hidden'});
-  const zaehler=el('span',{class:'ke-zahl'});
   const zeichne=()=>{
     const s=sichtbar();
     // jede Hand an der Liste übernimmt zuerst das Eingefügte (fest): sonst baute die nächste Eingabe ins Feld es neu und ✎/✕ waren weg
@@ -104,7 +105,7 @@ function kursAnlegenBlatt(){
     grenze.textContent=!n?'Noch keine Kinder. Vorname, Nachname, ⏎ — die Tastatur bleibt offen.':n>MAX_SCHUELER?'Die Mappe hat '+MAX_SCHUELER+' Zeilen — bitte '+(n-MAX_SCHUELER)+' Kind'+(n-MAX_SCHUELER>1?'er':'')+' entfernen.':n===MAX_SCHUELER?'Die Mappe ist voll ('+MAX_SCHUELER+' Zeilen).':'';
     grenze.classList.toggle('hidden',!grenze.textContent);
     const d=doppelte(kinder); dopp.textContent=d.length?'Zweimal in der Liste: '+d.join(', ')+'. Gewollt? Sonst mit ✎ entfernen.':''; dopp.classList.toggle('hidden',!d.length);
-    zaehler.textContent=n+(n===1?' Kind':' Kinder')+' · Nr = Zeile in der Mappe';
+    ok.textContent='Anlegen'+(n?' · '+n:'');   // die Zahl steht am Knopf (vorher eine eigene Zeile)
     bereit();
   };
   const schalter=reihenfolgeSchalter(modus,m=>{ fest(); if(m==='eigen') kinder=sortiereAlpha(kinder); modus=m; zeichne(); });   // „Eigene“ beginnt mit dem, was zu sehen war
@@ -134,7 +135,8 @@ function kursAnlegenBlatt(){
     zeichne();
   });
   const einfBox=el('div',{class:'ke-einf-feld hidden'},el('p',{class:'u-hinweis'},'In Excel oder Untis die Spalten Nr · Name · Vorname (ggf. LB) markieren, kopieren und hier einfügen. Auch „Nachname, Vorname“ oder „Vorname Nachname“, eine Zeile je Kind.'),ta,info);
-  const einfAuf=el('button',{type:'button',class:'btn still ke-einfuegen',dataset:{knEinfuegen:''},onclick:()=>{ einfBox.classList.remove('hidden'); einfAuf.classList.add('hidden'); ta.focus(); }},'Aus Excel oder Untis einfügen …');
+  const einfAuf=el('button',{type:'button',class:'btn still ke-einfuegen','aria-label':'Aus Excel oder Untis einfügen',title:'Aus Excel oder Untis einfügen',dataset:{knEinfuegen:''},
+    onclick:()=>{ einfBox.classList.remove('hidden'); einfAuf.setAttribute('aria-expanded','true'); ta.focus(); }},iconEl('tabelle'));
   const frage=el('div',{class:'ke-verwerfen hidden',role:'alert'});
   const abbrechen=()=>{ if(verwerfenOk||!kinder.length){ verwerfenOk=true; dlgZu(); return; }
     frage.replaceChildren(el('span',{},kinder.length+(kinder.length===1?' Kind ist':' Kinder sind')+' noch nicht angelegt.'),el('span',{class:'btn-reihe'},
@@ -150,18 +152,15 @@ function kursAnlegenBlatt(){
     el('div',{class:'kn-oder'},'oder hier anlegen'),
     felder,
     el('div',{class:'btn-reihe'},weiter,el('button',{class:'btn still',onclick:abbrechen},'Abbrechen')));
+  // Eine Leiste unten (Zero 20.10. abends: „kann schon alles in eine Reihe“): Reihenfolge · Einfügen · Anlegen. Abbrechen ist das ✕ oben
+  // (fragt, solange Kinder getippt sind)
   const s2=el('div',{class:'kn-schritt2 hidden'},
-    kopfZeile,eingabe,
-    el('div',{class:'ke-kopf'},el('h4',{},'Kinder'),schalter),
-    einfBox,liste.el,grenze,dopp,einfAuf,
-    el('div',{class:'ke-fuss'},zaehler,el('span',{class:'btn-reihe'},ok,el('button',{class:'btn still',onclick:abbrechen},'Abbrechen'))));
-  weiter.onclick=()=>{ if(weiter.disabled) return;
-    kopfZeile.replaceChildren([w.name.trim(),w.fach.trim(),w.jahr.trim(),w.profil==='sek2'?'Oberstufe':'Sek I'].filter(Boolean).join(' · ')+' — ',
-      el('button',{type:'button',class:'ke-link',dataset:{knZurueck:''},onclick:()=>zeigeSchritt(1)},'ändern'));
-    zeigeSchritt(2); eingabe.fokus(); };
+    eingabe,einfBox,liste.el,grenze,dopp,
+    el('div',{class:'ke-leiste'},schalter,einfAuf,el('span',{class:'ke-luecke'}),ok));
+  weiter.onclick=()=>{ if(weiter.disabled) return; zeigeSchritt(2); eingabe.fokus(); };
   ok.onclick=()=>{ if(!ok.disabled){ verwerfenOk=true; legeKursAn(w,nummeriere(sichtbar()),eingefuegt.hinweise); } };
   zeigeSchritt(1); zeichne();
-  dlgZeigenEl(el('h3',{},'Kurs anlegen'),schritte,s1,s2,frage);
+  dlgZeigenEl(titel,s1,s2,frage);
   setTimeout(()=>$('kn-name')?.focus(),60);
 }
 // P4.2 · Status-Badge einer Kurskarte („Klasse auf einen Blick") — nutzt die getestete kursStatus-Logik.
