@@ -869,6 +869,49 @@
   .kn-reihe > span:first-child, .sp-reihe > span:first-child { min-width: 84px; }
   .kn-seg, .sp-seg { flex: 1; min-width: 200px; }
   .kn-seg button, .sp-seg button { min-height: 44px; font-size: 14px; }
+  /* Scheibe E „Klassenliste“ (Zero 20.10. Wahl B, design/e_klasse_2026-10-20/WAHL.md): Schritte, Eingabezeile, Liste mit ↑↓ und Ziehen */
+  .ke-schritte { display: flex; gap: 6px; margin: 2px 0 10px; font-size: 13px; color: var(--leise); }
+  .ke-schritte span { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--kante); }
+  .ke-schritte span.an { color: var(--band-text); border-color: var(--band); }
+  .ke-kopfzeile { margin: 0 0 10px; }
+  .ke-link { background: none; border: 0; padding: 0 2px; min-height: 0; color: var(--band-text); text-decoration: underline; font: inherit; cursor: pointer; }
+  .ke-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
+  .ke-kopf h4 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--leise); font-weight: 600; }
+  .ke-seg { flex: 0 1 340px; min-width: 260px; }
+  .ke-eingabe { display: flex; gap: 8px; align-items: center; padding: 10px; border: 1px solid var(--band); border-radius: 12px; background: var(--karte2); }
+  .ke-eingabe input[type=text] { flex: 1; min-width: 0; min-height: 48px; font-size: 17px; }
+  .ke-eingabe select { min-height: 48px; }
+  .ke-eingabe .btn { min-height: 48px; flex: none; }
+  .ke-liste { display: flex; flex-direction: column; border-top: 1px solid var(--kante); }
+  .ke-zeile { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 6px 0; border-bottom: 1px solid var(--kante); background: var(--karte); }
+  .ke-nr { width: 30px; flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--leise); font-size: 15px; }
+  .ke-name { flex: 1; min-width: 0; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ke-name small { color: var(--leise); font-size: 13px; margin-left: 6px; }
+  .ke-zeile.neu .ke-name::after { content: 'neu'; margin-left: 8px; font-size: 11px; color: var(--band-text); border: 1px solid var(--band); border-radius: 6px; padding: 1px 6px; }
+  .ke-zeile.bearbeiten input[type=text] { flex: 1; min-width: 0; min-height: 44px; font-size: 16px; }
+  .ke-steuer { display: contents; }
+  .ke-lb { flex: none; min-width: 44px; min-height: 44px; border-radius: 8px; border: 1px solid var(--kante); background: transparent; color: var(--leise); font-size: 12px; }
+  .ke-lb.an { color: var(--band-text); border-color: var(--band); }
+  .ke-griff { flex: none; width: 44px; min-height: 44px; display: grid; place-items: center; color: var(--leise); font-size: 20px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .ke-verwerfen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--warn); border-radius: 10px; }
+  .ke-pfeil, .ke-stift { flex: none; width: 44px; min-height: 44px; border-radius: 8px; border: 1px solid var(--kante); background: transparent; color: var(--text); font-size: 17px; }
+  .ke-stift { color: var(--leise); }
+  .ke-stift.gefahr { color: var(--fehl-text); }
+  .ke-pfeil[aria-disabled=true] { opacity: .35; cursor: default; }
+  .ke-zeile.zieht { position: relative; z-index: 2; border: 1px solid var(--band); border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,.35); transition-property: none; }   /* die Lage folgt dem Finger sofort: auch die Kurz-Übergänge von „weniger Bewegung“ (Z. 54) verzögern sonst das Tauschen */
+  .ke-grenze { font-size: 13px; color: var(--leise); padding: 8px 0 0 38px; margin: 0; }
+  .ke-einfuegen { min-height: 44px; margin-top: 10px; }
+  .ke-einf-feld { margin: 8px 0; }
+  .ke-erkannt { font-size: 13px; color: var(--leise); margin: 4px 0 8px; }
+  .ke-satz { padding: 10px 12px; border-left: 3px solid var(--band); background: var(--karte2); border-radius: 6px; font-size: 14px; margin: 8px 0; }
+  .ke-fuss { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; color: var(--leise); font-size: 13px; }
+  @media (max-width: 599px) {
+    .ke-eingabe { flex-wrap: wrap; }
+    .ke-eingabe input[type=text] { flex: 1 1 calc(50% - 8px); }
+    .ke-eingabe .btn { flex: 1 1 auto; }
+    .ke-zeile.bearbeiten { flex-wrap: wrap; }
+    .ke-zeile.bearbeiten .ke-steuer { display: flex; flex-basis: 100%; justify-content: flex-end; gap: 8px; }
+  }
   /* Zeitraster (Scheibe 8, Wahl 2 B „Vorlage zuerst“): Summe, Zeiten des Tages zum Lesen, das Feine am Ort */
   .sp-summe { margin: 10px 0 4px; font-size: 15px; }
   .sp-lesezeiten { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-size: 13px; color: var(--leise); margin-top: 6px; }

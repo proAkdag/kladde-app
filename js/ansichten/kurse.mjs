@@ -1,32 +1,34 @@
 // Kladde · js/ansichten/kurse.mjs — Abschnitt „KURSE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.2.1';
-import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.2.1';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.2.1';
-import { kursStatus } from '../../logic/kursStatus.mjs?v=2.2.1';
-import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.2.1';
-import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.2.1';
-import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.2.1';
-import { standardZeitraeume } from '../../logic/migration.mjs?v=2.2.1';
-import { MAX_SCHUELER, parseSchuelerListe } from '../../logic/parser.mjs?v=2.2.1';
-import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.2.1';
-import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.2.1';
-import { lnr, neueAusweisNr, planeAbgleich, wendePlanAn } from '../../logic/teilnehmer.mjs?v=2.2.1';
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.2.1';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.2.1';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.2.1';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.2.1';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.2.1';
-import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.2.1';
-import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.2.1';
-import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.2.1';
-import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.2.1';
-import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.2.1';
-import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.2.1';
-import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.2.1';
-import { aufloesenBeiClose } from './sperre.mjs?v=2.2.1';
-import { stempelAus } from './stempel.mjs?v=2.2.1';   // renderRail: eigene innere Funktion (Editor)
-import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.2.1';
+import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.3.0';
+import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.3.0';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.3.0';
+import { kursStatus } from '../../logic/kursStatus.mjs?v=2.3.0';
+import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.3.0';
+import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.3.0';
+import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.3.0';
+import { standardZeitraeume } from '../../logic/migration.mjs?v=2.3.0';
+import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=2.3.0';
+import { MAX_SCHUELER } from '../../logic/parser.mjs?v=2.3.0';
+import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.3.0';
+import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.3.0';
+import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=2.3.0';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.3.0';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.3.0';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.3.0';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.3.0';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.3.0';
+import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.3.0';
+import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.3.0';
+import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.3.0';
+import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.3.0';
+import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.3.0';
+import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.3.0';
+import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.3.0';
+import { aufloesenBeiClose } from './sperre.mjs?v=2.3.0';
+import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=2.3.0';
+import { stempelAus } from './stempel.mjs?v=2.3.0';   // renderRail: eigene innere Funktion (Editor)
+import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.3.0';
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
 /* Kurs direkt in der App anlegen: Excel-Spalten kopieren → einfügen (Tab/Semikolon-tolerant) */
@@ -55,15 +57,20 @@ function legeKursAn(w,schueler,warnungen){
   toast('Angelegt: '+name+' ('+schueler.length+' Schüler)'+(warnungen.length?' · '+warnungen.length+' Hinweis(e)':''));
   renderKurse();
 }
-// Kurs anlegen (Scheibe 8, Zero 05.10. Wahl 1 A „Ein Blatt“, design/s8_entwuerfe_2026-10-05/WAHL.md): oben „Mappe laden“ als Haupttat,
-// darunter eine Liste einfügen. Name, Fach, Schuljahr, Stufe und Sitzplan erscheinen, sobald Zeilen erkannt sind. Vorher drei Wege
-// (Wizard, „Schnell“, Mappe). Die Felder werden einmal gebaut und nur ein- und ausgeblendet, beim Tippen wird nichts neu gebaut
-// (Fokus-Lehre). Die Ids kn-* nutzen die Proben (P14, P29, P30).
+// Kurs anlegen (Scheibe E „Klassenliste“, Zero 20.10. Wahl B „Eingabezeile + Liste, zwei Schritte“, design/e_klasse_2026-10-20/WAHL.md;
+// vorher Scheibe 8 „Ein Blatt“ mit einem Textfeld). Schritt 1 Klasse: oben „Mappe laden“ als Haupttat, darunter Name, Fach, Schuljahr,
+// Stufe, Sitzplan. Schritt 2 Kinder: Eingabezeile (Vorname ⏎ Nachname ⏎), Schalter Alphabetisch | Eigene Reihenfolge (↑↓ und Ziehen),
+// ✎ je Zeile, „Aus Excel oder Untis einfügen …“ füllt die Liste. Angelegt wird mit Nr = Zeile 1…n über legeKursAn (ein Weg, Scheibe 8).
+// Beide Schritte werden einmal gebaut und nur umgeschaltet; beim Tippen wird nur die Liste neu gezeichnet (Fokus-Lehre).
+// Die Ids kn-* nutzen die Proben (P14, P29, P30, P44, P45): kn-liste ist das Einfügefeld, kn-ok legt an.
 function kursAnlegenBlatt(){
   const w={name:'',fach:'',jahr:(aktivesSchuljahr()?.label)||'',profil:'sek1',notenmodus:'punkte',sitz:'alpha'};
-  let geparst={schueler:[],warnungen:[]};
+  // kinder = sichtbare Reihenfolge im Modus „eigen“; im Modus „alpha“ wird sortiert angezeigt. quelle 'einf' = aus dem Einfügefeld
+  let kinder=[], modus='alpha', eingefuegt={hinweise:[],luecken:false,n:0}, verwerfenOk=false;
+  const sichtbar=()=>modus==='alpha'?sortiereAlpha(kinder):kinder;
   const ok=el('button',{class:'btn',id:'kn-ok',disabled:''},'Kurs anlegen');
-  const bereit=()=>{ ok.disabled=!(geparst.schueler.length&&w.name.trim()&&w.fach.trim()); };
+  const weiter=el('button',{type:'button',class:'btn',id:'kn-weiter',disabled:''},'Weiter: Kinder');
+  const bereit=()=>{ const kopf=!!(w.name.trim()&&w.fach.trim()); weiter.disabled=!kopf; ok.disabled=!(kopf&&kinder.length&&kinder.length<=MAX_SCHUELER); };
   const feld=(id,schluessel,ph,klasse,extra={})=>el('input',{type:'text',id,value:w[schluessel],placeholder:ph,class:klasse,...extra,oninput:e=>{ w[schluessel]=e.target.value; bereit(); }});
   // Segment: nur seine Knöpfe werden neu gezeichnet, nie die Textfelder
   const seg=(werte,schluessel,danach)=>{ const box=el('div',{class:'seg kn-seg'});
@@ -71,32 +78,91 @@ function kursAnlegenBlatt(){
       onclick:()=>{ w[schluessel]=v; zeichne(); if(danach) danach(); }},t)));
     zeichne(); return box; };
   const notenZeile=el('div',{class:'kn-reihe hidden'},el('span',{},'Noten'),seg([['punkte','Punkte 0–15'],['drittel','Drittelnoten']],'notenmodus'));
-  const felder=el('div',{class:'kn-felder hidden'},
+  const felder=el('div',{class:'kn-felder'},
     el('div',{class:'zeile'},el('span',{},'Klasse/Kurs'),el('span',{},feld('kn-name','name','z. B. 7b','u-w130',{'aria-label':'Klasse/Kurs'}))),
     el('div',{class:'zeile'},el('span',{},'Fach'),el('span',{},feld('kn-fach','fach','z. B. Mathematik','u-w160',{list:'fach-liste','aria-label':'Fach'}),fachDatalist())),
     el('div',{class:'zeile'},el('span',{},'Schuljahr'),el('span',{},feld('kn-jahr','jahr','2026/27','u-w110',{'aria-label':'Schuljahr'}))),
     el('div',{class:'kn-reihe'},el('span',{},'Stufe'),seg([['sek1','Sek I'],['sek2','Oberstufe']],'profil',()=>notenZeile.classList.toggle('hidden',w.profil!=='sek2'))),
     notenZeile,
     el('div',{class:'kn-reihe'},el('span',{},'Sitzplan'),seg([['alpha','Alphabetisch verteilen'],['spaeter','Später']],'sitz')));
-  const spaeter=el('p',{class:'u-hinweis'},'Name, Fach und Schuljahr fragt die Kladde, sobald Zeilen erkannt sind.');
-  const info=el('div',{class:'u-vorschau'},'Noch keine Zeilen erkannt.');
-  const ta=el('textarea',{id:'kn-liste',rows:'6',class:'u-textarea u-fs16',placeholder:'1\tMustermann\tMax\n2\tBeispiel\tBerna\tLB'});
+  // ── Schritt 2 · Kinder ──
+  const schritte=el('div',{class:'ke-schritte',role:'list'});
+  const zeigeSchritt=n=>{ schritte.replaceChildren(el('span',{role:'listitem',class:n===1?'an':'','aria-current':n===1?'step':null},'1 · Klasse'),el('span',{role:'listitem',class:n===2?'an':'','aria-current':n===2?'step':null},'2 · Kinder'));
+    s1.classList.toggle('hidden',n!==1); s2.classList.toggle('hidden',n!==2); };
+  const kopfZeile=el('p',{class:'u-hinweis ke-kopfzeile'});
+  const liste=kinderListe();
+  const grenze=el('p',{class:'ke-grenze'}), dopp=el('p',{class:'u-warn13 ke-doppelt hidden'});
+  const zaehler=el('span',{class:'ke-zahl'});
+  const zeichne=()=>{
+    const s=sichtbar();
+    // jede Hand an der Liste übernimmt zuerst das Eingefügte (fest): sonst baute die nächste Eingabe ins Feld es neu und ✎/✕ waren weg
+    liste.zeige(s,{ordnen:modus==='eigen',bearbeite:true,nachBearbeiten:()=>eingabe.fokus(),
+      beiVerschiebe:(von,nach)=>{ fest(); kinder=verschiebe(kinder,von,nach); zeichne(); },
+      beiAendern:(i,neu)=>{ fest(); Object.assign(s[i],neu); zeichne(); },
+      beiEntfernen:i=>{ fest(); kinder=kinder.filter(k=>k!==s[i]); zeichne(); }});
+    const n=kinder.length;
+    grenze.textContent=!n?'Noch keine Kinder. Vorname, Nachname, ⏎ — die Tastatur bleibt offen.':n>MAX_SCHUELER?'Die Mappe hat '+MAX_SCHUELER+' Zeilen — bitte '+(n-MAX_SCHUELER)+' Kind'+(n-MAX_SCHUELER>1?'er':'')+' entfernen.':n===MAX_SCHUELER?'Die Mappe ist voll ('+MAX_SCHUELER+' Zeilen).':'';
+    grenze.classList.toggle('hidden',!grenze.textContent);
+    const d=doppelte(kinder); dopp.textContent=d.length?'Zweimal in der Liste: '+d.join(', ')+'. Gewollt? Sonst mit ✎ entfernen.':''; dopp.classList.toggle('hidden',!d.length);
+    zaehler.textContent=n+(n===1?' Kind':' Kinder')+' · Nr = Zeile in der Mappe';
+    bereit();
+  };
+  const schalter=reihenfolgeSchalter(modus,m=>{ fest(); if(m==='eigen') kinder=sortiereAlpha(kinder); modus=m; zeichne(); });   // „Eigene“ beginnt mit dem, was zu sehen war
+  // eine ganze Liste im Namensfeld (Excel, Untis) geht ins Einfügefeld (Prüfer 20.10. 🟡 5: sonst wurde sie EIN Kind)
+  const eingabe=eingabeZeile({ids:{vor:'kn-vor',nach:'kn-nach',plus:'kn-plus'},beiListe:text=>{ einfAuf.click(); ta.value=(ta.value.trim()?ta.value.replace(/\s*$/,'\n'):'')+text; ta.dispatchEvent(new Event('input')); },beiNeu:k=>{
+    if(kinder.length>=MAX_SCHUELER){ toast('Die Mappe hat '+MAX_SCHUELER+' Zeilen — mehr Kinder passen nicht'); return false; }
+    kinder.push({vorname:k.vorname,name:k.name,lb:k.lb,quelle:'tipp'}); zeichne(); return true; }});
+  // Einfügen (Excel/Untis): das Feld ist live — was darin steht, steht in der Liste (getippte Kinder bleiben). Trägt die Liste eine
+  // Nr-Spalte, gilt ihre Reihenfolge (nicht alphabetisch → „Eigene Reihenfolge“); die Kladde nummeriert lückenlos. Sobald eine Hand an
+  // der Liste ist (✎, ✕, ↑↓, Ziehen, Schalter), wird das Eingefügte fest: Feld leer, die Kinder bleiben wie geändert (Prüfer 20.10. 🟡 1).
+  const info=el('div',{class:'ke-erkannt'});
+  const hinweisListe=r=>[...r.hinweise.map(x=>el('div',{class:'u-warn13'},iconEl('warnung'),' '+x)),
+    ...(r.luecken?[el('div',{class:'u-warn13'},iconEl('warnung'),' Die Nr-Spalte hat Lücken — die Kladde nummeriert lückenlos 1–'+r.n+'. Für eine bestehende Mappe „Mappe laden“ nehmen.')]:[])];
+  const fest=()=>{ const n=kinder.filter(k=>k.quelle==='einf').length; if(!n) return;
+    kinder.forEach(k=>{ if(k.quelle==='einf') k.quelle='fest'; }); ta.value='';
+    info.replaceChildren(el('b',{class:'u-gut'},n+' Kinder übernommen'),' — sie stehen unten in der Liste. Weitere Zeilen hier einfügen.',...hinweisListe(eingefuegt)); };
+  const ta=el('textarea',{id:'kn-liste',rows:'5',class:'u-textarea u-fs16','aria-label':'Liste einfügen',placeholder:'1\tMustermann\tMax\n2\tBeispiel\tBerna\tLB'});
   ta.addEventListener('input',()=>{
-    geparst=parseSchuelerListe(ta.value);
-    const n=geparst.schueler.length, lb=geparst.schueler.filter(s=>s.lb).length;
-    info.replaceChildren(...(n?[el('b',{class:'u-gut'},n+' Schüler erkannt'),(lb?' · '+lb+'× LB':'')+' — '+geparst.schueler.slice(0,3).map(s=>s.nr+' '+s.vorname+' '+s.name).join(' · ')+(n>3?' …':'')]:['Noch keine Zeilen erkannt.']),
+    const r=liesEinfuegen(ta.value), neu=r.kinder.map(k=>({...k,quelle:'einf'})), getippt=kinder.filter(k=>k.quelle!=='einf');
+    if(r.mitNr&&!istAlphabetisch(neu)){ if(modus==='alpha') kinder=sortiereAlpha(getippt); modus='eigen'; schalter.setze('eigen'); kinder=[...neu,...kinder.filter(k=>k.quelle!=='einf')]; }
+    else kinder=r.mitNr?[...neu,...getippt]:[...getippt,...neu];
+    eingefuegt={hinweise:r.hinweise,luecken:r.luecken,n:neu.length};   // n für den Lücken-Satz
+    const lb=neu.filter(k=>k.lb).length;
+    info.replaceChildren(...(neu.length?[el('b',{class:'u-gut'},neu.length+' Kinder erkannt'),(lb?' · '+lb+'× LB':'')+(r.mitNr?' · Reihenfolge aus der Nr-Spalte':'')+' — unten zum Prüfen eingetragen']:[ta.value.trim()?'Noch keine Zeilen erkannt.':'']),
       // alle Hinweise, nie gekürzt: „Nr 36 … übersprungen“ heißt, ein Kind fehlt (Plan v0.8–v1.0 §15, Prüfer 05.10. Y2)
-      ...geparst.warnungen.map(x=>el('div',{class:'u-warn13'},iconEl('warnung'),' '+x)));
-    felder.classList.toggle('hidden',!n); spaeter.classList.toggle('hidden',!!n); bereit();
+      ...hinweisListe(eingefuegt));
+    zeichne();
   });
-  ok.onclick=()=>{ if(!ok.disabled) legeKursAn(w,geparst.schueler,geparst.warnungen); };
-  dlgZeigenEl(el('h3',{},'Kurs anlegen'),
+  const einfBox=el('div',{class:'ke-einf-feld hidden'},el('p',{class:'u-hinweis'},'In Excel oder Untis die Spalten Nr · Name · Vorname (ggf. LB) markieren, kopieren und hier einfügen. Auch „Nachname, Vorname“ oder „Vorname Nachname“, eine Zeile je Kind.'),ta,info);
+  const einfAuf=el('button',{type:'button',class:'btn still ke-einfuegen',dataset:{knEinfuegen:''},onclick:()=>{ einfBox.classList.remove('hidden'); einfAuf.classList.add('hidden'); ta.focus(); }},'Aus Excel oder Untis einfügen …');
+  const frage=el('div',{class:'ke-verwerfen hidden',role:'alert'});
+  const abbrechen=()=>{ if(verwerfenOk||!kinder.length){ verwerfenOk=true; dlgZu(); return; }
+    frage.replaceChildren(el('span',{},kinder.length+(kinder.length===1?' Kind ist':' Kinder sind')+' noch nicht angelegt.'),el('span',{class:'btn-reihe'},
+      el('button',{type:'button',class:'btn',dataset:{knWeiterEingeben:''},onclick:()=>{ frage.classList.add('hidden'); eingabe.fokus(); }},'Weiter eingeben'),
+      el('button',{type:'button',class:'btn still gefahr',dataset:{knVerwerfen:''},onclick:()=>{ verwerfenOk=true; dlgZu(); }},'Verwerfen')));
+    frage.classList.remove('hidden'); frage.scrollIntoView({block:'nearest'}); frage.querySelector('[data-kn-weiter-eingeben]').focus(); };
+  const schutz=e=>{ if(!verwerfenOk&&kinder.length){ e.preventDefault(); abbrechen(); } };
+  $('dlg').addEventListener('cancel',schutz);
+  $('dlg').addEventListener('close',()=>$('dlg').removeEventListener('cancel',schutz),{once:true});
+  const s1=el('div',{class:'kn-schritt1'},
     el('button',{type:'button',class:'btn kn-mappe',dataset:{knMappe:''},onclick:()=>{ dlgZu(); const f=$('file-kurs'); if(f) f.click(); }},
       el('b',{},'Mappe laden'),el('small',{},'Eine oder mehrere Kursmappen (.xlsx). Name, Fach und Schüler kommen aus der Mappe.')),
-    el('div',{class:'kn-oder'},'oder eine Liste einfügen'),
-    el('p',{class:'u-hinweis'},'In Excel die Spalten Nr · Name · Vorname (ggf. LB) markieren, kopieren und hier einfügen — oder tippen, eine Zeile je Kind.'),
-    ta,info,spaeter,felder,
-    el('div',{class:'btn-reihe'},ok,el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
+    el('div',{class:'kn-oder'},'oder hier anlegen'),
+    felder,
+    el('div',{class:'btn-reihe'},weiter,el('button',{class:'btn still',onclick:abbrechen},'Abbrechen')));
+  const s2=el('div',{class:'kn-schritt2 hidden'},
+    kopfZeile,eingabe,
+    el('div',{class:'ke-kopf'},el('h4',{},'Kinder'),schalter),
+    einfBox,liste.el,grenze,dopp,einfAuf,
+    el('div',{class:'ke-fuss'},zaehler,el('span',{class:'btn-reihe'},ok,el('button',{class:'btn still',onclick:abbrechen},'Abbrechen'))));
+  weiter.onclick=()=>{ if(weiter.disabled) return;
+    kopfZeile.replaceChildren([w.name.trim(),w.fach.trim(),w.jahr.trim(),w.profil==='sek2'?'Oberstufe':'Sek I'].filter(Boolean).join(' · ')+' — ',
+      el('button',{type:'button',class:'ke-link',dataset:{knZurueck:''},onclick:()=>zeigeSchritt(1)},'ändern'));
+    zeigeSchritt(2); eingabe.fokus(); };
+  ok.onclick=()=>{ if(!ok.disabled){ verwerfenOk=true; legeKursAn(w,nummeriere(sichtbar()),eingefuegt.hinweise); } };
+  zeigeSchritt(1); zeichne();
+  dlgZeigenEl(el('h3',{},'Kurs anlegen'),schritte,s1,s2,frage);
+  setTimeout(()=>$('kn-name')?.focus(),60);
 }
 // P4.2 · Status-Badge einer Kurskarte („Klasse auf einen Blick") — nutzt die getestete kursStatus-Logik.
 // „läuft gerade" + offene Fehlzeiten sind zwei Fakten → zwei Badges statt Verdrängung (C4).
@@ -249,7 +315,8 @@ function kursSeite(k){
   const griffe=teilnehmerGriffe(k,()=>{ dlgZu(); nochmal(); });
   const alle=griffe.alle();
   const sortiert=arr=>arr.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','de')||(a.vorname||'').localeCompare(b.vorname||'','de'));
-  const aktive=sortiert(alle.filter(s=>!s.inaktiv)), inaktive=sortiert(alle.filter(s=>s.inaktiv));
+  // Aktive nach Listen-Nr (Scheibe E, 20.10.: vorher alphabetisch mit Nr daneben — eine eigene Reihenfolge war nicht zu sehen), inaktive alphabetisch
+  const aktive=nachListe(alle.filter(s=>!s.inaktiv)), inaktive=sortiert(alle.filter(s=>s.inaktiv));
   const panel=(titel,...inhalt)=>el('section',{class:'panel ks-panel'},el('h2',{},titel),...inhalt);
   // Gruppe: ein Tipp setzt und speichert; die Knöpfe der Zeile leuchten sofort um (kein Neuzeichnen, die Liste bleibt stehen)
   const gruppe=s=>{
@@ -264,29 +331,52 @@ function kursSeite(k){
     el('span',{class:'ks-name'},el('span',{},s.vorname+' '+s.name),s.lb?el('span',{class:'lb-badge'},'LB'):null,el('small',{class:'u-leise'},'Nr '+listenNr(s))),
     gruppe(s),
     el('button',{type:'button',class:'btn still ks-stift',dataset:{ksBearbeiten:String(s.nr)},title:'Bearbeiten','aria-label':'Bearbeiten · '+s.vorname+' '+s.name,onclick:()=>griffe.bearbeite(s)},iconEl('notiz')));
-  // Hinzufügen: hat der Kurs Halbgruppen, fragt der Dialog gleich nach der Gruppe (sonst fehlt das Kind in jeder Gruppenstunde)
+  // Kinder ergänzen (Scheibe E2, Zero 20.10. Wahl B): mehrere Kinder nacheinander, der Dialog bleibt offen. Jedes Kind kommt unten an die
+  // Liste (3A, Zero 05.10.: Lücken bleiben frei), bekommt eine neue Ausweis-Nr über der Höchstmarke und eine eigene sid; gespeichert wird
+  // je Kind. Hat der Kurs Halbgruppen, fragt die Zeile gleich nach der Gruppe (sonst fehlt das Kind in jeder Gruppenstunde).
   const hinzufuegen=()=>{
-    const naechsteListe=Math.max(0,...alle.map(lnr).filter(n=>n!=null))+1;   // 3A (Zero 05.10.): unten anhängen, Lücken bleiben frei
-    const vnIn=el('input',{type:'text',placeholder:'Vorname',class:'u-w130'}), nnIn=el('input',{type:'text',placeholder:'Nachname',class:'u-w130'});
-    const lbIn=el('input',{type:'checkbox',class:'u-check'});
-    const gruppen=[...new Set(alle.map(s=>s.gruppe).filter(Boolean))].sort();
-    const grIn=gruppen.length?el('select',{dataset:{ksGruppe:''}},el('option',{value:''},'ohne'),...gruppen.map(g=>el('option',{value:g},g))):null;
-    dlgZeigenEl(el('h3',{},'Schüler hinzufügen · '+k.name),
-      el('p',{class:'u-hinweis'},naechsteListe<=MAX_SCHUELER?'Das Kind kommt unten an die Liste (Nr '+naechsteListe+'). Trage es in der Mappe in dieselbe Zeile ein.':'Die Liste hat schon '+MAX_SCHUELER+' Zeilen wie die Mappe. Neu nummerieren geht nur über „Mappe laden“ (Kurse → Kurs anlegen).'),
-      el('div',{class:'zeile'},el('span',{},'Name'),el('span',{},vnIn,' ',nnIn)),
-      el('label',{class:'zeile'},el('span',{},'LB (zieldifferent)'),lbIn),
-      ...(grIn?[el('div',{class:'zeile'},el('span',{},'Halbgruppe'),grIn)]:[]),
-      el('div',{class:'btn-reihe'},
-        el('button',{class:'btn',dataset:{ksHinzu:''},onclick:()=>{
-          const vorname=vnIn.value.trim(), name=nnIn.value.trim();
-          if(!vorname&&!name){ toast('Name fehlt'); return; }
-          if(naechsteListe>MAX_SCHUELER){ toast('Keine Zeile mehr frei — die Mappe hat '+MAX_SCHUELER+' Zeilen'); return; }
-          const nr=neueAusweisNr(alle,vault.events.filter(e=>e.kursId===k.id),k.ausweisBis||0);   // Ausweis-Nr: nie wiederverwendet, ohne Grenze (WAHL U5, Prüfer R4)
-          const list=vault.stamm.schueler[k.id]=vault.stamm.schueler[k.id]||[];
-          list.push({nr,sid:neueSid(),...(naechsteListe!==nr?{liste:naechsteListe}:{}),name,vorname,lb:lbIn.checked,...(grIn&&grIn.value?{gruppe:grIn.value}:{})}); list.sort((a,b)=>a.nr-b.nr); k.ausweisBis=Math.max(k.ausweisBis||0,nr);
-          stammMutiert(); speichern(); dlgZu(); toast('Hinzugefügt: '+(vorname||name)+' · Nr '+naechsteListe); nochmal(); }},'＋ Hinzufügen'),
-        el('button',{class:'btn still',onclick:dlgZu},'Abbrechen')));
-    setTimeout(()=>vnIn.focus(),60);
+    const gruppen=[...new Set(griffe.alle().map(s=>s.gruppe).filter(Boolean))].sort();
+    const neuNr=new Set(), liste=kinderListe(), hinweis=el('p',{class:'u-hinweis'});
+    const zeichne=()=>{
+      const akt=nachListe(griffe.alle().filter(s=>!s.inaktiv)), naechste=Math.max(0,...griffe.alle().map(lnr).filter(n=>n!=null))+1;
+      liste.zeige(akt,{nummer:i=>lnr(akt[i]),neu:i=>neuNr.has(akt[i].nr)});
+      hinweis.textContent=naechste<=MAX_SCHUELER?'Neue Kinder kommen unten an die Liste (nächste Nr '+naechste+'). Trage sie in der Mappe in dieselbe Zeile ein.':'Die Liste hat schon '+MAX_SCHUELER+' Zeilen wie die Mappe. Neu nummerieren geht nur über „Mappe laden“ (Kurse → Kurs anlegen).';
+    };
+    const eingabe=eingabeZeile({gruppen,beiNeu:({vorname,name,lb,gruppe})=>{
+      const alle=griffe.alle(), naechsteListe=Math.max(0,...alle.map(lnr).filter(n=>n!=null))+1;   // 3A (Zero 05.10.): unten anhängen, Lücken bleiben frei
+      if(naechsteListe>MAX_SCHUELER){ toast('Keine Zeile mehr frei — die Mappe hat '+MAX_SCHUELER+' Zeilen'); return false; }
+      const nr=neueAusweisNr(alle,vault.events.filter(e=>e.kursId===k.id),k.ausweisBis||0);   // Ausweis-Nr: nie wiederverwendet, ohne Grenze (WAHL U5, Prüfer R4)
+      const list=vault.stamm.schueler[k.id]=vault.stamm.schueler[k.id]||[];
+      list.push({nr,sid:neueSid(),...(naechsteListe!==nr?{liste:naechsteListe}:{}),name,vorname,lb:!!lb,...(gruppe?{gruppe}:{})}); list.sort((a,b)=>a.nr-b.nr); k.ausweisBis=Math.max(k.ausweisBis||0,nr);
+      const gleich=alle.find(s=>!s.inaktiv&&schreibform(s.vorname)===schreibform(vorname)&&schreibform(s.name)===schreibform(name));   // vor dem push gesucht
+      stammMutiert(); speichern(); neuNr.add(nr); toast('Hinzugefügt: '+(vorname||name)+' · Nr '+naechsteListe+(gleich?' · gleicher Name wie Nr '+lnr(gleich):''),gleich?6000:undefined); zeichne(); return true; }});
+    zeichne();
+    dlgZeigenEl(el('h3',{},'Kinder ergänzen · '+k.name),hinweis,eingabe,liste.el,
+      el('div',{class:'ke-fuss'},el('span',{},'Jedes Kind ist sofort gespeichert.'),el('span',{class:'btn-reihe'},el('button',{class:'btn',dataset:{ksFertig:''},onclick:dlgZu},'Fertig'))));
+    $('dlg').addEventListener('close',nochmal,{once:true});   // auch × und Esc zeigen danach die neue Liste
+    setTimeout(()=>eingabe.fokus(),60);
+  };
+  // Reihenfolge ändern (Scheibe E3, Zero 20.10.): vertauscht nur die Listen-Nrn der aktiven Kinder (logic/klassenliste ordneNeu) —
+  // Einträge, Sitzplatz, Halbgruppe und sid hängen an der Ausweis-Nr und bleiben beim Kind. Die Mappe muss nachziehen: das sagt der
+  // Dialog, bevor gespeichert wird, nie still. Lücken und die Zeilen inaktiver Kinder bleiben, wo sie sind.
+  const reihenfolge=()=>{
+    let folge=nachListe(griffe.alle().filter(s=>!s.inaktiv)), modus=istAlphabetisch(folge)?'alpha':'eigen';
+    const vorher=folge.map(s=>s.nr).join(','), nummern=folge.map(lnr).sort((a,b)=>a-b), liste=kinderListe();
+    const sichtbar=()=>modus==='alpha'?sortiereAlpha(folge):folge;
+    const zeichne=()=>liste.zeige(sichtbar(),{ordnen:modus==='eigen',nummer:i=>nummern[i],beiVerschiebe:(von,nach)=>{ folge=verschiebe(folge,von,nach); zeichne(); }});
+    const schalter=reihenfolgeSchalter(modus,m=>{ if(m==='eigen') folge=sortiereAlpha(folge); modus=m; zeichne(); });
+    zeichne();
+    dlgZeigenEl(el('h3',{},'Reihenfolge ändern · '+k.name),
+      el('div',{class:'ke-satz'},'Die Nummern ändern sich. Einträge, Sitzplätze und Halbgruppen bleiben beim Kind. Trage die neue Reihenfolge danach auch in der Mappe ein.'),
+      el('div',{class:'ke-kopf'},el('h4',{},'Kinder'),schalter),liste.el,
+      el('div',{class:'ke-fuss'},el('span',{},folge.length+' Kinder · Nr = Zeile in der Mappe'),el('span',{class:'btn-reihe'},
+        el('button',{class:'btn',dataset:{ksReihenfolgeOk:''},onclick:()=>{
+          const neu=sichtbar().map(s=>s.nr);
+          if(neu.join(',')===vorher){ dlgZu(); toast('Reihenfolge unverändert'); return; }
+          const list=ordneNeu(griffe.alle(),neu);
+          if(!list){ toast('⚠ Reihenfolge nicht übernommen — bitte neu öffnen'); return; }   // nie halb umordnen
+          vault.stamm.schueler[k.id]=list; stammMutiert(); speichern(); dlgZu(); toast('Reihenfolge gespeichert · in der Mappe nachziehen',5000); nochmal(); }},'Speichern'),
+        el('button',{class:'btn still',onclick:dlgZu},'Abbrechen'))));
   };
   const inaktivBlock=inaktive.length?el('details',{class:'ks-inaktiv'},el('summary',{},'Inaktiv ('+inaktive.length+') · Einträge bleiben erhalten'),
     ...inaktive.map(s=>el('div',{class:'zeile'},el('span',{class:'u-leise'},s.vorname+' '+s.name+(lnr(s)!=null?' · Nr '+lnr(s):'')),
@@ -343,7 +433,8 @@ function kursSeite(k){
       el('p',{class:'u-hinweis'},'Halbgruppe direkt antippen · ✎ für Name, LB und „Aus dem Kurs nehmen“.'),
       el('div',{class:'ks-liste'},...(aktive.length?aktive.map(zeile):[el('p',{class:'u-leise'},'Noch keine Schüler.')])),
       inaktivBlock,
-      el('div',{class:'btn-reihe'},el('button',{type:'button',class:'btn still',dataset:{ksNeu:''},onclick:hinzufuegen},'＋ Schüler hinzufügen'))),
+      el('div',{class:'btn-reihe'},el('button',{type:'button',class:'btn still',dataset:{ksNeu:''},onclick:hinzufuegen},'＋ Schüler hinzufügen'),
+        aktive.length>1?el('button',{type:'button',class:'btn still',dataset:{ksReihenfolge:''},onclick:reihenfolge},'Reihenfolge ändern …'):null)),
     panel('Sitzplan',el('div',{class:'btn-reihe'},
       el('button',{type:'button',class:'btn still',dataset:{ksSitzplan:''},onclick:()=>sitzplanEditor(k.id)},'Sitzplan bearbeiten'),
       el('button',{type:'button',class:'btn still',dataset:{sitzplanPdf:''},'aria-label':'Sitzplan als PDF',onclick:()=>sitzplanPdf(k)},'Als PDF'))),
