@@ -5,26 +5,27 @@
 // Stand sofort; jedes Gerät führt den fremden Stand auf DEMSELBEN Weg zusammen wie den Datei-Import (Fragen zu Kindern → Vorschau →
 // tresorUebernehmen), nie still. Wer den fremden Stand ganz hat, quittiert; erst dann geht der Kanal zu. So darf eine Person die Geräte
 // nacheinander bedienen (Prüfer 20.10. 🔴 1). Schließen, Esc, ✕ und Sperren räumen auf: Kamera aus, Kanal zu.
-import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=2.4.0.1792533458';
-import { mergeContainerDaten } from '../../logic/merge.mjs?v=2.4.0.1792533458';
-import { schemaBekannt } from '../../logic/migration.mjs?v=2.4.0.1792533458';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.0.1792533458';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.0.1792533458';
-import { iconEl } from '../kern/icons.mjs?v=2.4.0.1792533458';
-import { qrCanvas, scanne } from '../kern/qr.mjs?v=2.4.0.1792533458';
-import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=2.4.0.1792533458';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.4.0.1792533458';
-import { neueVerbindung } from '../kern/verbindung.mjs?v=2.4.0.1792533458';
-import { vault } from '../kern/zustand.mjs?v=2.4.0.1792533458';
-import { kursAutowahl } from './kurswahl.mjs?v=2.4.0.1792533458';
-import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=2.4.0.1792533458';
-import { renderAlles } from './navigation.mjs?v=2.4.0.1792533458';
+import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=2.4.1.1792548369';
+import { mergeContainerDaten } from '../../logic/merge.mjs?v=2.4.1.1792548369';
+import { schemaBekannt } from '../../logic/migration.mjs?v=2.4.1.1792548369';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1.1792548369';
+import { $, el, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
+import { iconEl } from '../kern/icons.mjs?v=2.4.1.1792548369';
+import { qrCanvas, scanne } from '../kern/qr.mjs?v=2.4.1.1792548369';
+import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=2.4.1.1792548369';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.4.1.1792548369';
+import { neueVerbindung } from '../kern/verbindung.mjs?v=2.4.1.1792548369';
+import { vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
+import { kursAutowahl } from './kurswahl.mjs?v=2.4.1.1792548369';
+import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=2.4.1.1792548369';
+import { renderAlles } from './navigation.mjs?v=2.4.1.1792548369';
 
 const NAME = { ipad: 'iPad', iphone: 'iPhone', handy: 'Handy', pc: 'PC' };
-const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;   // GERAET zählt das iPhone zu „ipad“ (Prüfer 🟡 9)
+const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;
+const nameVon = g => (Object.hasOwn(NAME, g) ? NAME[g] : '');   // ein gebautes „hallo“ bringt sonst Fremdes in den Text (C2 🟢 6)   // GERAET zählt das iPhone zu „ipad“ (Prüfer 🟡 9)
 const ZEIT_EINLADEND = 20000, ZEIT_ANTWORTEND = 60000;   // das antwortende Gerät weiß nicht, wann das andere scannt
 const ZEIT_STILLE = 20000;   // Kanal offen, aber 20 s keine Nachricht vor dem Ende → abgebrochen (Prüfer 🟡 1)
-const NACHLAUF = 15000;      // so lange bleibt der Kanal nach dem Schließen offen, bis das andere Gerät den eigenen Stand quittiert
+const NACHLAUF = 15000;      // nach dem Schließen: so lange OHNE Fortschritt im Sendepuffer wartet der Kanal auf die Quittung
 const FEHLER = {
   fremd: 'Das ist kein Kladde-Code.',
   beschaedigt: 'Code beschädigt oder unvollständig – bitte neu scannen.',
@@ -32,8 +33,10 @@ const FEHLER = {
 };
 
 let sitzung = null;
-// räumt genau EINE Sitzung ab — ein verspäteter Aufruf einer alten Sitzung trifft nie die neue (P46 P4c). Kamera sofort aus; der Kanal
-// bleibt offen, bis das andere Gerät den eigenen Stand quittiert hat (höchstens NACHLAUF), beim Sperren sofort zu (P5b).
+// räumt genau EINE Sitzung ab — ein verspäteter Aufruf einer alten Sitzung trifft nie die neue (P46 P4c). Kamera sofort aus.
+// Nachlauf nur nach dem eigenen Zusammenführen: dann soll der eigene Stand noch drüben ankommen, also bleibt der Kanal bis zur Quittung offen,
+// solange sich im Sendepuffer etwas bewegt (Prüfer C2 🟡 1: eine feste Grenze schnitt eine langsame Übertragung ab). Wer abbricht, schließt
+// sofort — das andere Gerät meldet dann gleich „Abgebrochen“ (C2 🟡 2). Beim Sperren immer sofort zu (P5b, P5c).
 function schliesse(s) {
   if (!s || s.zu) return;
   s.zu = true; s.loesen?.();
@@ -41,9 +44,12 @@ function schliesse(s) {
   if (sitzung === s) sitzung = null;
   const v = s.v;
   if (!v) return;
-  if (!s.sendet || s.quittiert || !v.offen() || !nochOffen(s.gen)) { v.schliessen(); return; }
-  const t0 = Date.now();
-  const w = setInterval(() => { if (s.quittiert || !v.offen() || !nochOffen(s.gen) || Date.now() - t0 > NACHLAUF) { clearInterval(w); v.schliessen(); } }, 200);
+  if (!s.uebernommen || s.quittiert || !v.offen() || !nochOffen(s.gen)) { v.schliessen(); return; }
+  let puffer = v.puffer(), zuletzt = Date.now();
+  const w = setInterval(() => {
+    const p = v.puffer(); if (p !== puffer || s.sendetNoch) { puffer = p; zuletzt = Date.now(); }
+    if (s.quittiert || !v.offen() || !nochOffen(s.gen) || Date.now() - zuletzt > NACHLAUF) { clearInterval(w); v.schliessen(); }
+  }, 200);
 }
 const aufraeumen = () => schliesse(sitzung);
 
@@ -92,25 +98,27 @@ function abgleichBlatt() {
   };
   // Kanal war offen, der fremde Stand kam aber nicht ganz an (Prüfer 🟡 1): ehrlich sagen, nichts übernehmen
   const abgebrochen = (grund = 'Das andere Gerät hat den Abgleich beendet, bevor alles da war.') => {
-    if (!lebt() || s.empfangen) return;
+    if (s.empfangen || !lebt()) return;   // der fremde Stand ist hier: ein Abbruch drüben ändert nichts mehr
     s.scan?.stopp(); s.v?.schliessen();
     zeige('Abgleichen · Abgebrochen', status(grund + ' Nichts übernommen.'), nochmal(), rueckfall());
   };
-  const stille = () => { if (s.empfangen) return; clearTimeout(s.timer); s.timer = setTimeout(() => abgebrochen(), ZEIT_STILLE); };
+  const ankunft = () => s.quittiert ? 'Dein Stand ist auf dem anderen Gerät angekommen.' : 'Dein Stand wird noch zum anderen Gerät übertragen …';
+  const stille = () => { if (s.empfangen) return; clearTimeout(s.timer); s.timer = setTimeout(() => abgebrochen('Vom anderen Gerät kam 20 s lang nichts mehr.'), ZEIT_STILLE); };
 
   // ── Kanal: beide Seiten senden sofort, beide empfangen ──
   const senden = async () => {
-    s.sendet = true;
+    s.sendetNoch = true;
     const text = JSON.stringify({ schema: vault.schema || 'kladde/v3', stamm: vault.stamm, events: vault.events });
     s.v.sende(hallo({ app: document.querySelector('script[type=module]')?.src.split('?v=')[1] || '', schema: vault.schema || 'kladde/v3', geraet: ICH }));
     for (const t of zerlege(text)) { await s.v.platz(); s.v.sende(t); }   // Flusskontrolle: Chromium wirft ab ~16 MB im Puffer (Prüfer 🟡 3)
     s.v.sende(ende(await sha256(text)));
+    s.sendetNoch = false;
   };
   const beiOffen = () => {
     if (!lebt()) return;
     s.offen = true; s.scan?.stopp(); stille();
     zeige('Abgleichen · Verbunden', status('Verbunden · tausche Stände …', true), fortschritt(0, 1));
-    senden().catch(() => abgebrochen('Der eigene Stand ließ sich nicht senden.'));
+    senden().catch(() => { s.sendetNoch = false; if (s.empfangen) toast('Der eigene Stand ließ sich nicht senden – das andere Gerät bekommt ihn nicht.', 6000); else abgebrochen('Der eigene Stand ließ sich nicht senden.'); });
   };
   const verarbeite = async fremd => {
     if (!schemaBekannt(fremd.schema)) { zeige('Abgleichen · Bitte erst aktualisieren', satz('Das andere Gerät hat eine neuere Kladde (' + fremd.schema + '). Aktualisiere dieses Gerät (Mehr → Update) und gleiche dann ab.')); schliesse(s); return; }
@@ -118,10 +126,10 @@ function abgleichBlatt() {
     if (!antworten || !lebt()) return;   // Abbrechen/✕ in „Bitte klären“ hat die Sitzung schon beendet
     const dry = mergeContainerDaten(vault, fremd, { antworten });
     const eigene = new Set(vault.events.map(e => e.id)), neue = (fremd.events || []).filter(e => !eigene.has(e.id)).length;
-    const wer = NAME[s.fremdGeraet] || 'anderem Gerät';
+    const wer = nameVon(s.fremdGeraet) || 'anderem Gerät';
     zeige('Abgleichen · Verbunden',
       status('Verbunden mit ' + wer + ' · Stände getauscht', true), fortschritt(1, 1),
-      zeile('Vom ' + (NAME[s.fremdGeraet] || 'anderen Gerät'), String(fremd.stamm?.ts || '?').slice(0, 16).replace('T', ' ')),
+      zeile('Vom ' + (nameVon(s.fremdGeraet) || 'anderen Gerät'), String(fremd.stamm?.ts || '?').slice(0, 16).replace('T', ' ')),
       zeile('Kurse', String(fremd.stamm?.kurse?.length || 0)),
       zeile('Einträge', (fremd.events?.length || 0) + ' · davon ' + neue + ' neu'),
       ...(dry.konflikte.length ? dry.konflikte.slice(0, 5).map(t => el('p', { class: 'u-warn13' }, iconEl('warnung'), ' ' + t)) : [el('p', { class: 'u-hinweis' }, 'Keine Unterschiede in der Schülerliste.')]),
@@ -133,16 +141,18 @@ function abgleichBlatt() {
           tresorUebernehmen(dry); await speichern();
           if (!nochOffen(s.gen)) return;   // während des Speicherns gesperrt
           kursAutowahl(); renderAlles();
+          if (s.zu) return;   // während des Speicherns geschlossen (✕/Esc): zusammengeführt ist, das Blatt bleibt zu (C2 🟢 1)
           dlgZeigenEl(el('h3', {}, 'Abgleichen · Fertig'), status('Zusammengeführt: ' + vault.events.length + ' Einträge' + (dry.konflikte.length ? ' · ' + unterschiede(dry.konflikte.length) : ''), true),
+            el('p', { class: 'ab-satz', id: 'ab-ankunft' }, ankunft()),
             satz('Sobald das andere Gerät auch zusammengeführt hat, sind beide gleich.'), el('div', { class: 'btn-reihe' }, knopf('Fertig', dlgZu, { data: { abFertig: '' } })));
         }, { data: { abOk: '' } }),
         knopf('Abbrechen', dlgZu, { still: true })),
-      satz('Das andere Gerät zeigt dasselbe für die andere Richtung. Danach sind beide gleich.'));
+      satz('Führt das andere Gerät auch zusammen, sind danach beide gleich.'));   // versprach vorher zu viel (C2 🟡 2)
   };
   const beiNachricht = async roh => {
     const r = s.empf.nimm(roh);
     if (!r) return;
-    if (r.erhalten) { s.quittiert = true; return; }   // auch nach dem Schließen: der Nachlauf in schliesse() wartet darauf
+    if (r.erhalten) { s.quittiert = true; const a = $('ab-ankunft'); if (a && sitzung === s) a.textContent = ankunft(); return; }   // auch nach dem Schließen: der Nachlauf wartet darauf
     if (!lebt() || s.empfangen) return;
     stille();
     if (r.hallo) { s.fremdGeraet = r.hallo.geraet; return; }
@@ -230,7 +240,9 @@ function abgleichBlatt() {
       el('button', { type: 'button', class: 'btn', dataset: { ab: 'scannen' }, onclick: scannen }, iconEl('kamera'), 'Code scannen', el('small', {}, 'Code des anderen Geräts'))),
     rueckfall());
   // Schließen (✕, Esc, Abbrechen, Sperren — sperren() schließt den Dialog) räumt auf (Plan C, P3/P5). Ist der Dialog beim close-Ereignis
-  // schon wieder offen, war es nur ein Blattwechsel (fragenKlaeren schließt „Bitte klären“ und die Vorschau öffnet sofort) — Prüfer 🔴 1
+  // schon wieder offen, gilt es nicht: (1) Blattwechsel „Bitte klären“ → Vorschau (Prüfer 🔴 1); (2) das verspätete close des VORIGEN Blatts,
+  // wenn gleich danach ein neuer Abgleich öffnet — eine gezielte Marke statt dieser Prüfung (Vorschlag C2 🟢 1) beendete dabei die neue
+  // Sitzung (gemessen 21.10., P46 P11: verwaiste Verbindung, Blatt hing)
   const dlg = $('dlg'), beimZu = () => { if (!dlg.open) schliesse(s); };
   dlg.addEventListener('close', beimZu); s.loesen = () => dlg.removeEventListener('close', beimZu);
 }

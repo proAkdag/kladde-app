@@ -1,34 +1,34 @@
 // Kladde · js/ansichten/kurse.mjs — Abschnitt „KURSE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.4.0.1792533458';
-import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.4.0.1792533458';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.0.1792533458';
-import { kursStatus } from '../../logic/kursStatus.mjs?v=2.4.0.1792533458';
-import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.4.0.1792533458';
-import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.4.0.1792533458';
-import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.4.0.1792533458';
-import { standardZeitraeume } from '../../logic/migration.mjs?v=2.4.0.1792533458';
-import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=2.4.0.1792533458';
-import { MAX_SCHUELER } from '../../logic/parser.mjs?v=2.4.0.1792533458';
-import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.4.0.1792533458';
-import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.4.0.1792533458';
-import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=2.4.0.1792533458';
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.0.1792533458';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.0.1792533458';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.4.0.1792533458';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.4.0.1792533458';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.4.0.1792533458';
-import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.4.0.1792533458';
-import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.4.0.1792533458';
-import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.4.0.1792533458';
-import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.4.0.1792533458';
-import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.4.0.1792533458';
-import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.0.1792533458';
-import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.4.0.1792533458';
-import { aufloesenBeiClose } from './sperre.mjs?v=2.4.0.1792533458';
-import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=2.4.0.1792533458';
-import { stempelAus } from './stempel.mjs?v=2.4.0.1792533458';   // renderRail: eigene innere Funktion (Editor)
-import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.4.0.1792533458';
+import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.4.1.1792548369';
+import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=2.4.1.1792548369';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.1.1792548369';
+import { kursStatus } from '../../logic/kursStatus.mjs?v=2.4.1.1792548369';
+import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=2.4.1.1792548369';
+import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=2.4.1.1792548369';
+import { entferneKursReferenzen } from '../../logic/merge.mjs?v=2.4.1.1792548369';
+import { standardZeitraeume } from '../../logic/migration.mjs?v=2.4.1.1792548369';
+import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=2.4.1.1792548369';
+import { MAX_SCHUELER } from '../../logic/parser.mjs?v=2.4.1.1792548369';
+import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=2.4.1.1792548369';
+import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=2.4.1.1792548369';
+import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=2.4.1.1792548369';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.1.1792548369';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1.1792548369';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.4.1.1792548369';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.4.1.1792548369';
+import { aktiverKursId, aktView, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
+import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=2.4.1.1792548369';
+import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=2.4.1.1792548369';
+import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=2.4.1.1792548369';
+import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=2.4.1.1792548369';
+import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.1.1792548369';
+import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=2.4.1.1792548369';
+import { aufloesenBeiClose } from './sperre.mjs?v=2.4.1.1792548369';
+import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=2.4.1.1792548369';
+import { stempelAus } from './stempel.mjs?v=2.4.1.1792548369';   // renderRail: eigene innere Funktion (Editor)
+import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=2.4.1.1792548369';
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
 /* Kurs direkt in der App anlegen: Excel-Spalten kopieren → einfügen (Tab/Semikolon-tolerant) */

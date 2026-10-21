@@ -3,25 +3,25 @@
 // der früheren Abschnitte; das ist gleichgültig, weil keine Ansicht beim Laden etwas aus einer anderen braucht (test/kern.test.mjs)
 // und die Listener reihenfolge-unabhängig sind (gemessen 19.10.: auf document nur keydown von Deck und Aktivitätsmerker).
 // APP_VERSION bleibt hier: deploy_prod/deploy_pages, versionshub.py und die Tests lesen sie aus dieser Datei.
-import { iconEl } from './kern/icons.mjs?v=2.4.0.1792533458';
-import { $, werkzeug } from './kern/dom.mjs?v=2.4.0.1792533458';
-import { idbGet, idbPut, geraetIdLaden } from './kern/tresor.mjs?v=2.4.0.1792533458';
-import { beamerModus } from './kern/zustand.mjs?v=2.4.0.1792533458';
+import { iconEl } from './kern/icons.mjs?v=2.4.1.1792548369';
+import { $, werkzeug } from './kern/dom.mjs?v=2.4.1.1792548369';
+import { idbGet, idbPut, geraetIdLaden } from './kern/tresor.mjs?v=2.4.1.1792548369';
+import { beamerModus } from './kern/zustand.mjs?v=2.4.1.1792548369';
 // Ansichten (Zero 19.10.: „Direkt, Kern ringfrei“)
-import { lockInit } from './ansichten/sperre.mjs?v=2.4.0.1792533458';
-import { BTN_BEAMER } from './ansichten/eintraege.mjs?v=2.4.0.1792533458';
-import './ansichten/kurswahl.mjs?v=2.4.0.1792533458';
-import './ansichten/navigation.mjs?v=2.4.0.1792533458';
-import './ansichten/heute.mjs?v=2.4.0.1792533458';
-import './ansichten/stempel.mjs?v=2.4.0.1792533458';
-import './ansichten/deck.mjs?v=2.4.0.1792533458';
-import './ansichten/schueler.mjs?v=2.4.0.1792533458';
-import './ansichten/kurse.mjs?v=2.4.0.1792533458';
-import './ansichten/stundenplan.mjs?v=2.4.0.1792533458';
-import './ansichten/mehr.mjs?v=2.4.0.1792533458';
-import { zeigeBanner } from './ansichten/banner.mjs?v=2.4.0.1792533458';
-import { updateStarten } from './kern/update.mjs?v=2.4.0.1792533458';
-const APP_VERSION = '2.4.0';
+import { lockInit } from './ansichten/sperre.mjs?v=2.4.1.1792548369';
+import { BTN_BEAMER } from './ansichten/eintraege.mjs?v=2.4.1.1792548369';
+import './ansichten/kurswahl.mjs?v=2.4.1.1792548369';
+import './ansichten/navigation.mjs?v=2.4.1.1792548369';
+import './ansichten/heute.mjs?v=2.4.1.1792548369';
+import './ansichten/stempel.mjs?v=2.4.1.1792548369';
+import './ansichten/deck.mjs?v=2.4.1.1792548369';
+import './ansichten/schueler.mjs?v=2.4.1.1792548369';
+import './ansichten/kurse.mjs?v=2.4.1.1792548369';
+import './ansichten/stundenplan.mjs?v=2.4.1.1792548369';
+import './ansichten/mehr.mjs?v=2.4.1.1792548369';
+import { zeigeBanner } from './ansichten/banner.mjs?v=2.4.1.1792548369';
+import { updateStarten } from './kern/update.mjs?v=2.4.1.1792548369';
+const APP_VERSION = '2.4.1';
 
 /* ═══ INIT ═══ */
 // Update im Hintergrund, übernommen nur auf Klick (Zero 20.10.) — js/kern/update.mjs; Hinweis und Mehr-Eintrag in den Ansichten

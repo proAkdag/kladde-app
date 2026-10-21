@@ -1,11 +1,11 @@
 // Kladde · js/kern/tresor.mjs — IndexedDB, Schlüssel im RAM, seriell verschlüsselt speichern (A2 Schnitt 3: wörtlich aus js/app.mjs, verhaltensneutral; der Kern kennt keine Ansicht)
-import { encodeContainerV2 } from '../../logic/container.mjs?v=2.4.0.1792533458';
-import { hebeLoeschungAuf } from '../../logic/merge.mjs?v=2.4.0.1792533458';
-import { geraeteId, hebeKindLoeschungAuf, vergibSids } from '../../logic/identitaet.mjs?v=2.4.0.1792533458';
-import { kompaktiere as spKompaktiere } from '../../logic/sitzplan.mjs?v=2.4.0.1792533458';
-import { toast } from './dom.mjs?v=2.4.0.1792533458';
-import { GERAET, IST_DEV } from './umgebung.mjs?v=2.4.0.1792533458';
-import { vault, aktiverKursId, editorAktiv } from './zustand.mjs?v=2.4.0.1792533458';
+import { encodeContainerV2 } from '../../logic/container.mjs?v=2.4.1.1792548369';
+import { hebeLoeschungAuf } from '../../logic/merge.mjs?v=2.4.1.1792548369';
+import { geraeteId, hebeKindLoeschungAuf, vergibSids } from '../../logic/identitaet.mjs?v=2.4.1.1792548369';
+import { kompaktiere as spKompaktiere } from '../../logic/sitzplan.mjs?v=2.4.1.1792548369';
+import { toast } from './dom.mjs?v=2.4.1.1792548369';
+import { GERAET, IST_DEV } from './umgebung.mjs?v=2.4.1.1792548369';
+import { vault, aktiverKursId, editorAktiv } from './zustand.mjs?v=2.4.1.1792548369';
 
 /* ═══ STORAGE · Vault = KLD1-Container in IndexedDB ═══ */
 const DB_NAME=IST_DEV?'kladde_dev':'kladde_v1'; // getrennte Vaults für Dev- und Produktiv-Instanz

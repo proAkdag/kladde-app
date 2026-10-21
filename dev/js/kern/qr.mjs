@@ -2,13 +2,13 @@
 // Bibliotheken erst nachgeladen, wenn gebraucht: js/vendor/qrcode.js (Kazuhiko Arase, MIT), js/vendor/jsqr.js (Apache-2.0) — beide mit Kopf,
 // aus stundenverlauf/app/js/vendor. Gezeichnet wird auf ein Canvas (kein innerHTML, CSP-Wächter); gescannt mit BarcodeDetector, sonst jsQR.
 // Muster: Werft-Arena guest.js (QR auf Canvas) und Stundenverlauf verbindung.mjs (Scanner).
-import { el } from './dom.mjs?v=2.4.0.1792533458';
+import { el } from './dom.mjs?v=2.4.1.1792548369';
 
 const geladen = {};
 function laden(datei, name) {
   if (window[name]) return Promise.resolve(true);
   if (!geladen[datei]) geladen[datei] = new Promise(fertig => {
-    const s = document.createElement('script'); s.src = './js/vendor/' + datei + '?v=2.4.0.1792533458';
+    const s = document.createElement('script'); s.src = './js/vendor/' + datei + '?v=2.4.1.1792548369';
     s.onload = () => fertig(!!window[name]); s.onerror = () => { delete geladen[datei]; fertig(false); };
     document.head.append(s);
   });

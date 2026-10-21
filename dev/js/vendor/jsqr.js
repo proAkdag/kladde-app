@@ -1,5 +1,5 @@
-/* jsQR — Copyright 2017 Cosmo Wolfe (https://github.com/cozmo/jsQR) — lizenziert unter der Apache License, Version 2.0
-   (http://www.apache.org/licenses/LICENSE-2.0). Unverändert übernommen (aus stundenverlauf/app/js/vendor), nur dieser Kopf ergänzt. */
+/* jsQR 1.4.0 (https://github.com/cozmo/jsQR, Cosmo Wolfe, Jefff Nelson) — Apache License 2.0, voller Text in LICENSE-jsqr.txt daneben.
+   Unverändert übernommen, nur dieser Kopf ergänzt. */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();

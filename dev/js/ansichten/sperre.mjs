@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/sperre.mjs — Abschnitt „PIN / LOCK + FINGERABDRUCK / FACE ID“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.4.0.1792533458';
-import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.4.0.1792533458';
-import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.4.0.1792533458';
-import { sichereRoh } from '../../logic/identitaet.mjs?v=2.4.0.1792533458';
-import { migriereStamm } from '../../logic/migration.mjs?v=2.4.0.1792533458';
-import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.0.1792533458';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.0.1792533458';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.0.1792533458';
-import { iconEl } from '../kern/icons.mjs?v=2.4.0.1792533458';
-import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.4.0.1792533458';
-import { IST_DEV } from '../kern/umgebung.mjs?v=2.4.0.1792533458';
-import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.4.0.1792533458';
-import { zeigeStartHinweise } from './banner.mjs?v=2.4.0.1792533458';
-import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.4.0.1792533458';
-import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.4.0.1792533458';
-import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.4.0.1792533458';
-import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.4.0.1792533458';
-import { renderMehr } from './mehr.mjs?v=2.4.0.1792533458';
-import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.0.1792533458';
-import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.4.0.1792533458';
-import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.4.0.1792533458';
+import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.4.1.1792548369';
+import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.4.1.1792548369';
+import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.4.1.1792548369';
+import { sichereRoh } from '../../logic/identitaet.mjs?v=2.4.1.1792548369';
+import { migriereStamm } from '../../logic/migration.mjs?v=2.4.1.1792548369';
+import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.1.1792548369';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1.1792548369';
+import { $, el, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
+import { iconEl } from '../kern/icons.mjs?v=2.4.1.1792548369';
+import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.4.1.1792548369';
+import { IST_DEV } from '../kern/umgebung.mjs?v=2.4.1.1792548369';
+import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
+import { zeigeStartHinweise } from './banner.mjs?v=2.4.1.1792548369';
+import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.4.1.1792548369';
+import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.4.1.1792548369';
+import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.4.1.1792548369';
+import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.4.1.1792548369';
+import { renderMehr } from './mehr.mjs?v=2.4.1.1792548369';
+import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.1.1792548369';
+import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.4.1.1792548369';
+import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.4.1.1792548369';
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 
