@@ -37,7 +37,7 @@ function zipVerzeichnis(dv, bytes) {
   if (eocd < 0) throw new Error('Kein ZIP — ist das wirklich eine .xlsx-Datei?');
   const anzahl = dv.getUint16(eocd + 10, true);
   let p = dv.getUint32(eocd + 16, true);
-  if (p === 0xffffffff) throw new Error('Zip64-Mappe wird nicht unterstützt');
+  if (p === 0xffffffff) throw new Error('Zip64-Datei wird nicht unterstützt');
 
   const eintraege = new Map();
   const dec = new TextDecoder();
@@ -58,7 +58,7 @@ function zipVerzeichnis(dv, bytes) {
 
 /** Oeffnet eine XLSX-Datei (File/Blob/ArrayBuffer) und liefert einen Zugriff auf ihre Blaetter. */
 async function oeffneXlsx(quelle) {
-  if (!xlsxLesbar()) throw new Error('Dieser Browser kann keine Mappen entpacken (DecompressionStream fehlt)');
+  if (!xlsxLesbar()) throw new Error('Dieser Browser kann keine Excel-Mappen entpacken (DecompressionStream fehlt)');
   const puffer = quelle instanceof ArrayBuffer ? quelle : await quelle.arrayBuffer();
   const bytes = new Uint8Array(puffer);
   const dv = new DataView(puffer);
@@ -97,7 +97,7 @@ async function oeffneXlsx(quelle) {
   /** Blattpfad zu einem Blattnamen (workbook.xml → r:id → rels → Target). */
   const blattPfad = async (blattName) => {
     const wb = await xml('xl/workbook.xml');
-    if (!wb) throw new Error('xl/workbook.xml fehlt — keine Mappe');
+    if (!wb) throw new Error('xl/workbook.xml fehlt — keine Excel-Mappe');
     const blatt = [...wb.getElementsByTagName('sheet')].find(s => s.getAttribute('name') === blattName);
     if (!blatt) return null;
     // r:id — getAttribute mit Praefix ist zuverlaessiger als NS-Lookup ueber wechselnde Praefixe

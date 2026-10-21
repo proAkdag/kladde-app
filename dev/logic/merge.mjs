@@ -9,6 +9,8 @@ import { felderMitKurs } from './vertrag.mjs';
 import { istAltSid, kindGeloescht, sidVonEvent, namensSchluessel, namensHash, trennSid, vergibSids, vereinigeZuordnung, zuordnungVon, zielSidKind, wendeZuordnungAn } from './identitaet.mjs';
 import { einheitPasst, notenEinheit } from './skalen.mjs';
 import { wirksameEvents } from './verdichtung.mjs';
+import { SCHEMA_AKTUELL } from './migration.mjs';
+import { mappenKonflikte, mappenVerwaist } from './arbeiten.mjs';
 
 // Notenmodus nach dem Abgleich (v2.2, Prüfer v2.1 B2): die Sperre „kein Wechsel, solange Quartalsnoten existieren“ wirkt nur auf dem
 // Gerät; über den Abgleich kann ein Kurs trotzdem den Modus wechseln. Dann melden — die Noten bleiben in ihrer Einheit (skalen einheitVon).
@@ -20,6 +22,20 @@ function einheitenMeldungen(stamm, events) {
     if (fremd) out.push(kursName(k) + ': Notenmodus ist jetzt ' + (notenEinheit(k) === 'punkte' ? 'Punkte' : 'Drittelnoten') + ', '
       + fremd + (fremd === 1 ? ' Quartalsnote steht' : ' Quartalsnoten stehen') + ' noch in ' + (notenEinheit(k) === 'punkte' ? 'Drittelnoten' : 'Punkten') + ' — bitte prüfen.');
   }
+  return out;
+}
+
+// Mappe (Scheibe D1): dieselbe Zelle (Arbeit, Kind, Aufgabe) auf zwei Geräten verschieden belegt → zwei lebende Köpfe (logic/arbeiten).
+// Beide Werte bleiben erhalten, die Arbeit zeigt die Zelle mit ⚠ zur Wahl; der Abgleich meldet es, statt über die Uhr zu entscheiden.
+function mappenMeldungen(stamm, events) {
+  const namen = liste => { const kurse = [...new Set(liste.map(x => x.kursId))].map(id => ((stamm && stamm.kurse) || []).find(x => x.id === id)).filter(Boolean);
+    return kurse.length ? kurse.map(kursName).join(', ') + ': ' : ''; };
+  const k = mappenKonflikte(events), v = mappenVerwaist(events), out = [];
+  if (k.length) out.push(namen(k) + k.length + (k.length === 1 ? ' Eintrag der Mappe ist' : ' Einträge der Mappe sind')
+    + ' auf beiden Geräten verschieden — in der Arbeit mit ⚠ markiert, bitte dort wählen.');
+  // Prüfer 21.10.: ein Gerät löschte Arbeit oder Aufgabe, das andere trug danach noch Punkte ein — sie sind unsichtbar, nicht still verloren
+  if (v.length) out.push(namen(v) + v.length + (v.length === 1 ? ' Punkteintrag gehört' : ' Punkteinträge gehören')
+    + ' zu einer Arbeit oder Aufgabe, die auf dem anderen Gerät gelöscht wurde — sie sind nicht mehr sichtbar.');
   return out;
 }
 
@@ -228,7 +244,7 @@ function ergaenzeAusVerlierer(sieger, verlierer, loesch, ctx = {}) {
     // trägt — im Normalfall ist der übernommene der neuere, dann stimmt alles; sonst klärt „Mappe laden“ es
     if (abweichend.length) sammel.push(kursName(kurs) + ': ' + abweichend.length + (abweichend.length === 1 ? ' Kind steht' : ' Kinder stehen')
       + ' in den beiden Ständen verschieden (' + abweichend.slice(0, 3).join(' · ') + (abweichend.length > 3 ? ' · … und ' + (abweichend.length - 3) + ' weitere' : '')
-      + ') — übernommen: Stand ' + sieger.geraet + ', verworfen: Stand ' + verlierer.geraet + '. Passt das nicht zur Mappe, die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
+      + ') — übernommen: Stand ' + sieger.geraet + ', verworfen: Stand ' + verlierer.geraet + '. Passt das nicht zur Excel-Mappe, die Excel-Mappe neu laden (Kurse → Kurs anlegen → Excel-Mappe laden).');
     neu.sort((a, b) => a.nr - b.nr);
     s.schueler[kid] = neu;
   }
@@ -250,7 +266,7 @@ function doppelteListenNrn(kurse, schueler) {
       belegt.set(n, [...(belegt.get(n) || []), ((x.vorname || '') + ' ' + (x.name || '')).trim()]);
     }
     for (const [n, namen] of belegt) if (namen.length > 1)
-      out.push(kursName(k) + ': Listen-Nr ' + n + ' doppelt (' + namen.join(' und ') + ') — nichts geraten, bitte die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).');
+      out.push(kursName(k) + ': Listen-Nr ' + n + ' doppelt (' + namen.join(' und ') + ') — nichts geraten, bitte die Excel-Mappe neu laden (Kurse → Kurs anlegen → Excel-Mappe laden).');
   }
   return out;
 }
@@ -298,10 +314,11 @@ function mergeContainerDaten(a0, b0, opt = {}) {
   const events = mergeEvents(a.events || [], b.events || []);
   const rein = stamm.ergebnis ? wendeLoeschungenAn(stamm.ergebnis, events, loesch) : { stamm: stamm.ergebnis, events, hinweise: [] };
   const ident = wendeZuordnungAn(rein.stamm, rein.events, zuord);
+  konflikte.push(...mappenMeldungen(ident.stamm, ident.events));   // vor den Sammelmeldungen: die Vorschau zeigt die ersten (Prüfer 21.10.)
   konflikte.push(...einheitenMeldungen(ident.stamm, ident.events));
   return {
     daten: {
-      schema: 'kladde/v3',
+      schema: SCHEMA_AKTUELL,
       stamm: ident.stamm,
       events: ident.events,
     },

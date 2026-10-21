@@ -33,7 +33,9 @@ const STAMM_FELDER = Object.freeze({
 // bewertung = zählt als Bewertung des Termins (BEWERTUNGS_TYPEN in js/ansichten/heute.mjs; im Beamer „Bewertung“ statt Wert) ·
 // termin = macht den Tag zum Kurstermin (TERMIN_TYPEN in verdichtung.mjs) · somi = ＋/o/− der Sonstigen Mitarbeit (SOMI_TYPEN) ·
 // kachel = der Tages-Stand der Kachel zählt ihn (reduziereStand in js/ansichten/eintraege.mjs) · beamer = im Beamer verborgen.
-const T = (label, f = {}) => Object.freeze({ label, bewertung: false, termin: false, somi: false, kachel: false, beamer: false, ...f });
+// mappe = Eintrag der Mappe (Scheibe D, Plan 21.10.): nie im Unterricht sichtbar — wirksameEvents (verdichtung) lässt ihn weg, die Mappe liest ihn
+// selbst (logic/arbeiten mappenStand). Ohne Beschriftung, nie Bewertung, Termin, Kachel.
+const T = (label, f = {}) => Object.freeze({ label, bewertung: false, termin: false, somi: false, kachel: false, beamer: false, mappe: false, ...f });
 const BEW = { bewertung: true, termin: true, kachel: true, beamer: true };
 const TERMIN = { termin: true, kachel: true };
 const EINTRAGSTYPEN = Object.freeze({
@@ -54,6 +56,10 @@ const EINTRAGSTYPEN = Object.freeze({
   versp:        T('zu spät', TERMIN),
   quartalsnote: T('Quartalsnote', { beamer: true }),   // trägt einheit 'drittel' | 'punkte' (v2.1)
   storno:       T(null),                               // nimmt einen Eintrag zurück (stornoVon); nie angezeigt
+  // Mappe (Scheibe D1): Definition einer Arbeit/eines Tests, Punkte je Kind und Aufgabe, Lob — Änderung über `ersetzt`, nie über storno
+  arbeit:       T(null, { mappe: true }),
+  punkte:       T(null, { mappe: true }),
+  lob:          T(null, { mappe: true }),
 });
 
 // Werkzeuge der Stempel-Leiste, die selbst kein Eintragstyp sind: was sie buchen (null = nichts Eigenes).

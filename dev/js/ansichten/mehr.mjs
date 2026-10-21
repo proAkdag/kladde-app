@@ -1,23 +1,23 @@
 // Kladde · js/ansichten/mehr.mjs — Abschnitt „MEHR“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { decodeContainerAuto, wechslePassphrase } from '../../logic/container.mjs?v=2.4.2.1792566975';
-import { mergeContainerDaten, uebernehmeMerge } from '../../logic/merge.mjs?v=2.4.2.1792566975';
-import { migriereStamm, schemaBekannt } from '../../logic/migration.mjs?v=2.4.2.1792566975';
-import { regelText } from '../../logic/verdichtung.mjs?v=2.4.2.1792566975';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2.1792566975';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.4.2.1792566975';
-import { iconHtml } from '../kern/icons.mjs?v=2.4.2.1792566975';
-import { THEME_KEY, themeAnwenden, themePref } from '../kern/theme.mjs?v=2.4.2.1792566975';
-import { idbDel, idbGet, idbPut, nochOffen, setzeSchluessel, speicherFehler, speichern, sperrGen } from '../kern/tresor.mjs?v=2.4.2.1792566975';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.4.2.1792566975';
-import { heuteIso, setzeVault, vault } from '../kern/zustand.mjs?v=2.4.2.1792566975';
-import { bewertProfil, kurs, WOCHENTAG_KURZ } from './eintraege.mjs?v=2.4.2.1792566975';
-import { kursAutowahl } from './kurswahl.mjs?v=2.4.2.1792566975';
-import { renderAlles } from './navigation.mjs?v=2.4.2.1792566975';
-import { aufloesenBeiClose, bioEinrichten, bioEntfernen, bioVerfuegbar, lockMinuten, passphraseAbfragen } from './sperre.mjs?v=2.4.2.1792566975';
-import { APP_VERSION } from '../app.mjs?v=2.4.2.1792566975';
-import { aktualisieren, updateBereit } from '../kern/update.mjs?v=2.4.2.1792566975';
-import { abgleichBlatt } from './abgleich.mjs?v=2.4.2.1792566975';
+import { decodeContainerAuto, wechslePassphrase } from '../../logic/container.mjs?v=3.0.0.1792601998';
+import { mergeContainerDaten, uebernehmeMerge } from '../../logic/merge.mjs?v=3.0.0.1792601998';
+import { migriereStamm, schemaBekannt } from '../../logic/migration.mjs?v=3.0.0.1792601998';
+import { regelText } from '../../logic/verdichtung.mjs?v=3.0.0.1792601998';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0.1792601998';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.0.1792601998';
+import { iconHtml } from '../kern/icons.mjs?v=3.0.0.1792601998';
+import { THEME_KEY, themeAnwenden, themePref } from '../kern/theme.mjs?v=3.0.0.1792601998';
+import { idbDel, idbGet, idbPut, nochOffen, setzeSchluessel, speicherFehler, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.0.1792601998';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.0.1792601998';
+import { heuteIso, setzeVault, vault } from '../kern/zustand.mjs?v=3.0.0.1792601998';
+import { bewertProfil, kurs, WOCHENTAG_KURZ } from './eintraege.mjs?v=3.0.0.1792601998';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.0.1792601998';
+import { renderAlles } from './navigation.mjs?v=3.0.0.1792601998';
+import { aufloesenBeiClose, bioEinrichten, bioEntfernen, bioVerfuegbar, lockMinuten, passphraseAbfragen } from './sperre.mjs?v=3.0.0.1792601998';
+import { APP_VERSION } from '../app.mjs?v=3.0.0.1792601998';
+import { aktualisieren, updateBereit } from '../kern/update.mjs?v=3.0.0.1792601998';
+import { abgleichBlatt } from './abgleich.mjs?v=3.0.0.1792601998';
 
 /* ═══ MEHR · Sichern & Übertragen · Sicherheit · Darstellung · Technik (Scheibe 7, Zero 04.10.: 1 A · 2 B · 3 B · 4 A · 5 B) ═══ */
 // Kalendertage seit einem Zeitpunkt: Banner und „Sichern“ zählen gleich (Math.round fängt die 23-/25-h-Tage der Zeitumstellung)

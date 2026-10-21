@@ -18,13 +18,13 @@ function parseSchuelerListe(text){
     const inhalt=felder.filter(f=>!/^lb$/i.test(f));
     if(!inhalt.length){ warnungen.push('Zeile ohne Namen übersprungen: „'+zeile.slice(0,30)+'"'); continue; }
     if(nr===null){ ohneNr=true; nr=schueler.length+1; }
-    if(nr<1||nr>MAX_SCHUELER){ warnungen.push('Nr '+nr+' außerhalb 1–'+MAX_SCHUELER+' — übersprungen (Mappen-Grenze)'); continue; }
+    if(nr<1||nr>MAX_SCHUELER){ warnungen.push('Nr '+nr+' außerhalb 1–'+MAX_SCHUELER+' — übersprungen (Grenze der Excel-Mappe)'); continue; }
     if(nrGesehen.has(nr)){ warnungen.push('Nr '+nr+' doppelt — zweite Zeile übersprungen'); continue; }
     nrGesehen.add(nr);
     schueler.push({nr,name:inhalt[0]||'',vorname:inhalt[1]||'',lb});
     if(inhalt.length===1) warnungen.push('Nr '+nr+': nur ein Namensfeld — als Nachname übernommen');
   }
-  if(ohneNr&&schueler.length) warnungen.push('Keine Nr-Spalte erkannt — laufend nummeriert. Für den Excel-Export muss die Reihenfolge der Mappe entsprechen (Zeile 1 = Nr 1)!');
+  if(ohneNr&&schueler.length) warnungen.push('Keine Nr-Spalte erkannt — laufend nummeriert. Für den Excel-Export muss die Reihenfolge der Excel-Mappe entsprechen (Zeile 1 = Nr 1)!');
   schueler.sort((a,b)=>a.nr-b.nr);
   return {schueler,warnungen};
 }

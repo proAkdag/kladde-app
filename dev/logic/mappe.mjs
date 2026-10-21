@@ -33,7 +33,7 @@ async function lieseMappe(datei, dateiName = '') {
   const zellen = await mappe.blattZellen(BLATT_LISTE);
   if (!zellen) {
     const da = (await mappe.blattNamen()).slice(0, 6).join(', ');
-    throw new Error(`Blatt '${BLATT_LISTE}' fehlt — keine Mappen-Struktur (gefunden: ${da || 'nichts'})`);
+    throw new Error(`Blatt '${BLATT_LISTE}' fehlt — keine Struktur einer Excel-Mappe (gefunden: ${da || 'nichts'})`);
   }
   return deuteZellen(zellen, dateiName);
 }
@@ -130,17 +130,17 @@ function pruefeKursDatei(obj) {
     nrn.add(nr);
     let liste = nr;
     if (r.liste === null) {   // keine Zeile gibt es nur für Abgänge (MAPPING §2a, Prüfer 05.10. G3)
-      if (r.inaktiv !== true) throw new Error(`Nr ${nr}: aktives Kind ohne Listen-Nr — nur ein Abgang (inaktiv) hat keine Mappenzeile`);
+      if (r.inaktiv !== true) throw new Error(`Nr ${nr}: aktives Kind ohne Listen-Nr — nur ein Abgang (inaktiv) hat keine Zeile in der Excel-Mappe`);
       liste = null;
     }
     else if (r.liste !== undefined) {
       liste = Number(r.liste);
       if (!Number.isInteger(liste) || liste < 1 || liste > MAX_SCHUELER) throw new Error(`Listen-Nr '${r.liste}' bei Nr ${nr} ungültig (1–${MAX_SCHUELER})`);
-    } else if (nr > MAX_SCHUELER) throw new Error(`Nr ${nr} ohne Listen-Nr — hinter der letzten Mappenzeile (${MAX_SCHUELER})`);
+    } else if (nr > MAX_SCHUELER) throw new Error(`Nr ${nr} ohne Listen-Nr — hinter der letzten Zeile der Excel-Mappe (${MAX_SCHUELER})`);
     const s = { nr, name: txt(r.name), vorname: txt(r.vorname), lb: r.lb === true };
     const zeig = liste === null ? 'ohne Nr' : 'Nr ' + liste;   // gemeldet wird die Listen-Nr — sie steht in der Mappe
     if (!s.name && !s.vorname) { warnungen.push(`${zeig} ohne Namen — übersprungen`); continue; }
-    if (liste !== null && zeilen.has(liste)) throw new Error(`Listen-Nr ${liste} doppelt (${zeilen.get(liste)} und ${s.vorname} ${s.name}) — zwei Kinder in derselben Mappenzeile`);
+    if (liste !== null && zeilen.has(liste)) throw new Error(`Listen-Nr ${liste} doppelt (${zeilen.get(liste)} und ${s.vorname} ${s.name}) — zwei Kinder in derselben Zeile der Excel-Mappe`);
     if (liste !== null) zeilen.set(liste, `${s.vorname} ${s.name}`);
     if (liste !== nr) s.liste = liste;   // gleich der Ausweis-Nr → Feld weglassen (Bestand bleibt, wie er war)
     if (r.lb !== undefined && typeof r.lb !== 'boolean') warnungen.push(`${zeig}: LB-Wert '${r.lb}' ist kein ja/nein — nicht als LB übernommen, bitte prüfen`);

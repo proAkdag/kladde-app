@@ -100,7 +100,7 @@ function planeAbgleich(alt, neu, modus = 'anpassen', antworten = {}) {
   const fehler = [];
   const vergeben = new Map();
   for (const z of zeilenPlan) {
-    if (z.neu > MAX_LISTE) fehler.push('Nr ' + z.neu + ' liegt hinter der letzten Mappenzeile (' + MAX_LISTE + ')');
+    if (z.neu > MAX_LISTE) fehler.push('Nr ' + z.neu + ' liegt hinter der letzten Zeile der Excel-Mappe (' + MAX_LISTE + ')');
     if (vergeben.has(z.neu)) fehler.push('Nr ' + z.neu + ' doppelt');
     vergeben.set(z.neu, z);
   }

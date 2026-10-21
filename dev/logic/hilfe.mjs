@@ -49,7 +49,7 @@ export const HILFE = {
     { begriff: 'Zeitraum', text: 'Für welchen Zeitraum die Tabelle gilt.', ziel: '.ut-aktionen select', wort: null },
     { begriff: 'Drucken', text: 'Die Tabelle drucken oder als PDF sichern.', ziel: '.ut-aktionen', wort: 'Drucken$' },
     { begriff: 'Vorschlag', text: 'Note aus den Einträgen, mit der Rechnung.', ziel: '#view-schueler', wort: '^Wie entsteht der Vorschlag' },
-    { begriff: 'Für Excel kopieren', text: 'Eine Zeile je Listen-Nr für die Mappe.', ziel: '#view-schueler', wort: 'für Excel kopieren$' },
+    { begriff: 'Für Excel kopieren', text: 'Eine Zeile je Listen-Nr für die Excel-Mappe.', ziel: '#view-schueler', wort: 'für Excel kopieren$' },
     { begriff: 'Offene Fehlzeiten', text: 'Entschuldigt, unentschuldigt oder Irrtum.', ziel: '[data-klaer="u"], .s-klaer-leiste', wort: null },
     { begriff: 'Kind antippen', text: 'Klappt auf, „ganze Seite ›“ zeigt mehr.', ziel: '#view-schueler .s-item', wort: null },
     { begriff: 'LB', text: 'Förderschwerpunkt Lernen: ohne Vorschlag.', ziel: '#view-schueler .s-item:has(.lb-badge), #view-schueler .ut-name:has(.lb-badge)', wort: null },
@@ -66,9 +66,10 @@ export const HILFE = {
     { begriff: '⋯ an der Karte', text: 'Kurs-Seite: Schüler, Sitzplan, Farbe …', ziel: '#view-kurse [data-verwalten]', wort: null },
     { begriff: 'Stundenplan', text: 'Danach wählt die Kladde den Kurs selbst.', ziel: '#btn-stundenplan', wort: null },
     { begriff: 'Quartale…', text: 'Datumsgrenzen der Quartale.', ziel: '#btn-zeitraeume', wort: null },
-    { begriff: '＋ Kurs anlegen', text: 'Mappe laden oder Kinder eintippen, auch zum Abgleich.', ziel: '#btn-kurs-anlegen', wort: null },
+    { begriff: '＋ Kurs anlegen', text: 'Excel-Mappe laden oder Kinder eintippen, auch zum Abgleich.', ziel: '#btn-kurs-anlegen', wort: null },
     { begriff: 'Neues Schuljahr…', text: 'Altes Jahr ins Archiv, neues anlegen.', ziel: '#btn-schuljahr', wort: null },
-    { begriff: '‹ Kurse', text: 'Zurück zu allen Kursen.', ziel: '[data-ks-zurueck]', wort: null },
+    // „‹ Kurse“ erklärt sich selbst und machte Platz für „Mappe“ (Handy: kein Scrollen, P31 H5 · Zero 21.10. „‹ Kurse raus“)
+    { begriff: 'Mappe', text: 'Arbeiten und Tests mit Punkten. Nie im Beamer.', ziel: '[data-mp-tuer]', wort: null },   // Scheibe D1 (Zero 21.10.)
     { begriff: 'Halbgruppe', text: 'Ordnet das Kind einer Halbgruppe zu.', ziel: '#view-kurse .gr-b', wort: null },
     { begriff: '✎', text: 'Name, LB, „Aus dem Kurs nehmen“.', ziel: '[data-ks-bearbeiten]', wort: null },
     { begriff: '＋ Schüler', text: 'Kinder unten an die Liste anfügen.', ziel: '[data-ks-neu]', wort: null },

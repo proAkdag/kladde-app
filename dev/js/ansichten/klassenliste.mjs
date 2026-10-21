@@ -4,9 +4,9 @@
 // Fokus-Lehre (Stundenplan v1.3.0): die Eingabezeile wird einmal gebaut und nie neu gezeichnet — neu gezeichnet wird nur die Liste,
 // darum bleibt die Tastatur am iPad offen. Ränder der Pfeile tragen aria-disabled statt disabled (Safari 26: ein fokussierter Knopf,
 // der disabled wird, wirft den Fokus an den Seitenanfang).
-import { teileName } from '../../logic/klassenliste.mjs?v=2.4.2.1792566975';
-import { el, toast } from '../kern/dom.mjs?v=2.4.2.1792566975';
-import { iconEl } from '../kern/icons.mjs?v=2.4.2.1792566975';
+import { teileName } from '../../logic/klassenliste.mjs?v=3.0.0.1792601998';
+import { el, toast } from '../kern/dom.mjs?v=3.0.0.1792601998';
+import { iconEl } from '../kern/icons.mjs?v=3.0.0.1792601998';
 
 // Schalter Alphabetisch | Eigene Reihenfolge — dasselbe Segment wie „Stufe“ im Blatt (aktiv = btn, sonst btn still). Die Knöpfe werden
 // einmal gebaut, umgeschaltet werden nur Klasse und aria-pressed: sonst fiel der Fokus nach der Wahl auf <body> (Prüfer 20.10. 🟢 1)
@@ -34,7 +34,7 @@ function eingabeZeile({ beiNeu, beiListe, gruppen = [], ids = {} }) {
     const text = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
     if (!/[\n\t]/.test(text.trim())) return;
     e.preventDefault();
-    if (beiListe) beiListe(text); else toast('Das ist eine ganze Liste — bitte über „Kurs anlegen“ mit demselben Kurs oder „Mappe laden“ einfügen, dort wird abgeglichen', 7000);
+    if (beiListe) beiListe(text); else toast('Das ist eine ganze Liste — bitte über „Kurs anlegen“ mit demselben Kurs oder „Excel-Mappe laden“ einfügen, dort wird abgeglichen', 7000);
   });
   let lb = false;
   const lbB = el('button', { type: 'button', class: 'ke-lb', 'aria-pressed': 'false', title: 'LB (zieldifferent)', dataset: { keLb: '' },
