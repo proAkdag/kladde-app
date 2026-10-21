@@ -5,20 +5,20 @@
 // Stand sofort; jedes Gerät führt den fremden Stand auf DEMSELBEN Weg zusammen wie den Datei-Import (Fragen zu Kindern → Vorschau →
 // tresorUebernehmen), nie still. Wer den fremden Stand ganz hat, quittiert; erst dann geht der Kanal zu. So darf eine Person die Geräte
 // nacheinander bedienen (Prüfer 20.10. 🔴 1). Schließen, Esc, ✕ und Sperren räumen auf: Kamera aus, Kanal zu.
-import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=2.4.2';
-import { mergeContainerDaten } from '../../logic/merge.mjs?v=2.4.2';
-import { schemaBekannt } from '../../logic/migration.mjs?v=2.4.2';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.2';
-import { iconEl } from '../kern/icons.mjs?v=2.4.2';
-import { qrCanvas, scanne } from '../kern/qr.mjs?v=2.4.2';
-import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=2.4.2';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.4.2';
-import { neueVerbindung } from '../kern/verbindung.mjs?v=2.4.2';
-import { vault } from '../kern/zustand.mjs?v=2.4.2';
-import { kursAutowahl } from './kurswahl.mjs?v=2.4.2';
-import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=2.4.2';
-import { renderAlles } from './navigation.mjs?v=2.4.2';
+import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.0';
+import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.0';
+import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.0';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
+import { iconEl } from '../kern/icons.mjs?v=3.0.0';
+import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.0';
+import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.0';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.0';
+import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.0';
+import { vault } from '../kern/zustand.mjs?v=3.0.0';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.0';
+import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.0';
+import { renderAlles } from './navigation.mjs?v=3.0.0';
 
 const NAME = { ipad: 'iPad', iphone: 'iPhone', handy: 'Handy', pc: 'PC' };
 const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;
@@ -108,8 +108,8 @@ function abgleichBlatt() {
   // ── Kanal: beide Seiten senden sofort, beide empfangen ──
   const senden = async () => {
     s.sendetNoch = true;
-    const text = JSON.stringify({ schema: vault.schema || 'kladde/v3', stamm: vault.stamm, events: vault.events });
-    s.v.sende(hallo({ app: document.querySelector('script[type=module]')?.src.split('?v=')[1] || '', schema: vault.schema || 'kladde/v3', geraet: ICH }));
+    const text = JSON.stringify({ schema: vault.schema || SCHEMA_AKTUELL, stamm: vault.stamm, events: vault.events });
+    s.v.sende(hallo({ app: document.querySelector('script[type=module]')?.src.split('?v=')[1] || '', schema: vault.schema || SCHEMA_AKTUELL, geraet: ICH }));
     for (const t of zerlege(text)) { await s.v.platz(); s.v.sende(t); }   // Flusskontrolle: Chromium wirft ab ~16 MB im Puffer (Prüfer 🟡 3)
     s.v.sende(ende(await sha256(text)));
     s.sendetNoch = false;

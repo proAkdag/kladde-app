@@ -1535,3 +1535,65 @@
 }
 /* Das Feld dimmt nicht selbst: die Ebene mit den Nummern dimmt die Ansicht, damit Rahmen und Nummern hell bleiben */
 @layer anim { #dlg.hilfe[open]::backdrop { background-color: transparent; } }
+/* ── Mappe (Scheibe D1 „Arbeiten“, Zero 21.10.: oben auf der Kurs-Seite, nie im Beamer) — ruhig, tabellarisch, gleich breite Ziffern ── */
+@layer views {
+  .mp-tueren { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .mp-tuer { display: grid; gap: 4px; text-align: left; padding: 14px 16px; min-height: 76px; background: var(--karte2); border: 1px solid var(--kante); border-radius: 12px; color: var(--text); font: inherit; cursor: pointer; }
+  .mp-tuer b { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .mp-tuer b svg { width: 22px; height: 22px; color: var(--band-text); }
+  .mp-tuer small { color: var(--leise); font-size: 13px; }
+  .mp-arbeit { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 10px 0; border-top: 1px solid var(--kante); align-items: center; }
+  .mp-arbeit:first-of-type { border-top: none; }
+  .mp-arbeit b { font-size: 15.5px; }
+  .mp-arbeit .btn-reihe { grid-row: 1 / span 2; grid-column: 2; }
+  .mp-meta { color: var(--leise); font-size: 13.5px; margin: 0; }
+  .mp-warn { color: var(--warn-text); }
+  .mp-neu { margin-top: 10px; }
+  .ks.mp-weit { max-width: none; }
+  .mp-kopf { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .mp-kopf .spacer { flex: 1; }
+  .mp-scroll { overflow-x: auto; }
+  .mp-tab { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; font-size: 14.5px; }
+  .mp-tab th, .mp-tab td { padding: 0 6px; height: 40px; border-bottom: 1px solid var(--kante); text-align: right; white-space: nowrap; background: var(--karte); }
+  .mp-tab th { font-size: 12px; color: var(--leise); font-weight: 600; height: 28px; }
+  .mp-tab .max th { color: var(--text); font-size: 13px; }
+  .mp-tab .l { text-align: left; }
+  .mp-tab .nr { color: var(--leise); width: 28px; }
+  /* Name bleibt beim Wischen stehen (Handy: Gesamt, % und Note lagen sonst außerhalb, Bild d4_punkte_handy.png) */
+  .mp-tab .mp-kind { position: sticky; left: 0; z-index: 1; max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; }
+  .mp-tab td.ein { padding: 0; border-left: 1px solid var(--kante); }
+  .mp-tab td.ein { min-width: 4.4em; }
+  .mp-kind .lb-badge { margin-left: 6px; }
+  .mp-ein { width: 100%; min-width: 4.2em; box-sizing: border-box; height: 40px; border: none; background: var(--karte2); color: var(--text); text-align: right; padding: 0 8px; font: inherit; font-size: 16px; font-variant-numeric: tabular-nums; border-radius: 0; }
+  /* 16px: unter 16 zoomt Safari am iPhone beim Antippen hinein (Prüfer 21.10.) */
+  .mp-ein:focus { outline: 2px solid var(--band); outline-offset: -2px; }
+  .mp-ein.mp-fehler, .mp-ein.mp-ueber { outline: 2px solid var(--fehl); outline-offset: -2px; }
+  .mp-hinweise { border: 1px solid var(--warn); border-radius: var(--r, 8px); padding: 8px 12px; margin: 0 0 10px; color: var(--warn-text); font-size: 14px; }
+  .mp-hinweise[hidden] { display: none; }
+  .mp-hinweise b { display: block; margin-bottom: 2px; }
+  .mp-ein.mp-konflikt { outline: 2px dashed var(--warn); outline-offset: -2px; }
+  .mp-tab .ab { border-left: 2px solid var(--kante); }
+  .mp-tab td.note { font-weight: 700; }
+  .mp-tab td.note.w { background: color-mix(in oklab, var(--warn) 22%, var(--karte)); }
+  .mp-tab tr.lb td { color: var(--leise); }
+  .mp-tab tfoot td { color: var(--leise); font-size: 13px; }
+  .mp-lob { min-width: 40px; min-height: 36px; }
+  .mp-lob.an { color: var(--band-text); border-color: var(--band); }
+  .mp-fuss { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; align-items: end; font-size: 13.5px; }
+  .mp-spiegel { display: flex; gap: 4px; align-items: flex-end; min-height: 70px; }
+  .mp-saeule { display: grid; justify-items: center; gap: 2px; font-size: 12px; color: var(--leise); min-width: 22px; }
+  .mp-saeule i { display: block; width: 18px; height: calc(var(--h, 0) * 48px + 2px); background: color-mix(in oklab, var(--band) 55%, transparent); border-radius: 3px 3px 0 0; }
+  .mp-saeule em { font-style: normal; color: var(--text); }
+  .mp-aufgaben { display: grid; gap: 6px; margin: 4px 0 8px; }
+  .mp-aufgabe { display: grid; grid-template-columns: 1fr 5.5em 44px; gap: 6px; align-items: center; }
+  .mp-aufgabe input { min-height: 40px; }
+  .mp-schluessel { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 10px 0; }
+  .mp-schluessel small { flex-basis: 100%; }
+  .mp-sek1 { display: inline-flex; gap: 6px; align-items: center; }
+  .mp-ob-gitter { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; margin-top: 8px; }
+  .mp-ob-stufe { display: grid; gap: 2px; font-size: 12.5px; color: var(--leise); }
+  .mp-ob-stufe input { min-height: 36px; }
+  .kn-mappe-schalter { display: grid; gap: 6px; margin-top: 6px; }
+  .mp-titel { flex: 1; min-width: 0; min-height: 40px; }
+  @media (max-width: 599px) { .mp-fuss { grid-template-columns: 1fr; } .mp-arbeit { grid-template-columns: 1fr; } .mp-arbeit .btn-reihe { grid-row: auto; grid-column: 1; } }
+}

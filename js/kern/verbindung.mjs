@@ -3,7 +3,7 @@
 // eigene Netz, Datenschutz-Eisengesetz), ein Kanal. Der Kanal ist Ende-zu-Ende verschlüsselt (DTLS); sein Schlüssel-Fingerabdruck reist im
 // QR, den nur die beiden Geräte sehen (Zero (a): keine zusätzliche Passphrase). Muster: stundenverlauf/app/js/verbindung.mjs.
 // Ablauf: A einladen() → Code · B annehmen(Code) → Antwort-Code · A abschliessen(Antwort) → Kanal offen auf beiden Seiten.
-import { packe, entpacke } from '../../logic/handschlag.mjs?v=2.4.2';
+import { packe, entpacke } from '../../logic/handschlag.mjs?v=3.0.0';
 
 const ICE_SERVER = [];   // bewusst leer (Plan C, P3) — eine Probe liest diese Konfiguration
 const warteICE = pc => new Promise(fertig => {

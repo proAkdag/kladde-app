@@ -1,18 +1,18 @@
 // Kladde · js/ansichten/stundenplan.mjs — Abschnitt „STUNDENPLAN-ASSISTENT“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { kursZurZeit, setzeSlot, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.4.2';
-import { fachKuerzel } from '../../logic/fachfarben.mjs?v=2.4.2';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.2';
-import { KURZRASTER_45, RASTER_VORLAGEN } from '../../logic/rasterVorlagen.mjs?v=2.4.2';
-import { blockLabel, formatZeit, istAWoche, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.2';
-import { dlgBreit, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.2';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.4.2';
-import { heuteIso, vault } from '../kern/zustand.mjs?v=2.4.2';
-import { datumLabel } from './eintraege.mjs?v=2.4.2';
-import { faerbe, slotArtLabel, wochenplanZellArt, wochenplanZellKurs } from './kurse.mjs?v=2.4.2';
-import { kursAutowahl } from './kurswahl.mjs?v=2.4.2';
-import { renderAlles } from './navigation.mjs?v=2.4.2';
+import { kursZurZeit, setzeSlot, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.0';
+import { fachKuerzel } from '../../logic/fachfarben.mjs?v=3.0.0';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.0';
+import { KURZRASTER_45, RASTER_VORLAGEN } from '../../logic/rasterVorlagen.mjs?v=3.0.0';
+import { blockLabel, formatZeit, istAWoche, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.0';
+import { dlgBreit, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.0';
+import { heuteIso, vault } from '../kern/zustand.mjs?v=3.0.0';
+import { datumLabel } from './eintraege.mjs?v=3.0.0';
+import { faerbe, slotArtLabel, wochenplanZellArt, wochenplanZellKurs } from './kurse.mjs?v=3.0.0';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.0';
+import { renderAlles } from './navigation.mjs?v=3.0.0';
 
 /* ═══ STUNDENPLAN-ASSISTENT (P2.4 · 3 Schritte, mit el() gebaut — Migrationsregel) ═══ */
 const WT_KURZ=['','Mo','Di','Mi','Do','Fr'];

@@ -1,17 +1,18 @@
 // Kladde · js/ansichten/eintraege.mjs — Abschnitt „ZUSTAND-HELPERS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.4.2';
-import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.2';
-import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.4.2';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.2';
-import { iconEl } from '../kern/icons.mjs?v=2.4.2';
-import { altSid } from '../../logic/identitaet.mjs?v=2.4.2';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=2.4.2';
-import { GERAET } from '../kern/umgebung.mjs?v=2.4.2';
-import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.4.2';
-import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.4.2';
-import { renderAlles } from './navigation.mjs?v=2.4.2';
-import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.4.2';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.0';
+import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.0';
+import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=3.0.0';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
+import { iconEl } from '../kern/icons.mjs?v=3.0.0';
+import { altSid } from '../../logic/identitaet.mjs?v=3.0.0';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.0';
+import { GERAET } from '../kern/umgebung.mjs?v=3.0.0';
+import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.0';
+import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=3.0.0';
+import { renderAlles } from './navigation.mjs?v=3.0.0';
+import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=3.0.0';
+import { mappeLeeren } from './mappe.mjs?v=3.0.0';
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverSchueler=null, undoStack=[];
@@ -174,7 +175,7 @@ function setzeBeamer(an){
   document.body.classList.toggle('nurplan',an&&localStorage.getItem('kladde_beamer_nurplan')==='1');
   BTN_BEAMER.classList.toggle('aktiv',an); BTN_BEAMER.setAttribute('aria-pressed',String(an));
   $('beamer-hinweis').classList.toggle('hidden',!an);
-  if(an){ $('undo-chip').classList.add('hidden'); $('toast').classList.add('hidden'); }   // Chip/Meldung von VOR dem Einschalten nennen die Bewertung im Klartext (Prüfer 03.10. 🟢 10)
+  if(an){ $('undo-chip').classList.add('hidden'); $('toast').classList.add('hidden'); mappeLeeren(); }   // Mappe nie im Beamer, auch nicht im versteckten DOM (Prüfer 21.10. 🔴, B0)   // Chip/Meldung von VOR dem Einschalten nennen die Bewertung im Klartext (Prüfer 03.10. 🟢 10)
   renderAlles(); // kurz/nurplan wirken über alle Ansichten (Kachel, Deck, Aktionsbar)
 }
 // Beamer-Optionen-Sheet (§6): Namen abkürzen · Nur Sitzplan — Bewertungen/LB bleiben immer verborgen

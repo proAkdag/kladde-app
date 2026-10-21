@@ -167,7 +167,7 @@ test('Meldungen: Kurs ohne Fach nur mit Namen', () => {
   assert.deepEqual(m.konflikte, ['9a: Nr 1 „Dora D" (pc) ≠ „Dirk K" (ipad) — pc behalten.']);
   assert.deepEqual(m.hinweise, ['9a: Nr 2 Eva E ergänzt']);
   const offen = mergeStammdaten(a, b);   // offen = zwei Kinder
-  assert.deepEqual(offen.konflikte, ['9a: Listen-Nr 1 doppelt (Dora D und Dirk K) — nichts geraten, bitte die Mappe neu laden (Kurse → Kurs anlegen → Mappe laden).']);
+  assert.deepEqual(offen.konflikte, ['9a: Listen-Nr 1 doppelt (Dora D und Dirk K) — nichts geraten, bitte die Excel-Mappe neu laden (Kurse → Kurs anlegen → Excel-Mappe laden).']);
   assert.deepEqual(offen.hinweise, ['9a: Nr 1 Dirk K ergänzt (andere Person als Dora D)', '9a: Nr 2 Eva E ergänzt']);
 });
 

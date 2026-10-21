@@ -17,11 +17,11 @@ function v1Vault() {
   };
 }
 
-test('v1→v3: ergänzt zeitmodelle/wochenplan/ausnahmeSlots + Schema-String', () => {
+test('v1→v4: ergänzt zeitmodelle/wochenplan/ausnahmeSlots + Schema-String (v4 seit Scheibe D)', () => {
   const v = v1Vault();
   const geaendert = migriereStamm(v);
   assert.equal(geaendert, true);
-  assert.equal(v.schema, 'kladde/v3');
+  assert.equal(v.schema, 'kladde/v4');
   assert.deepEqual(v.stamm.zeitmodelle, []);
   assert.deepEqual(v.stamm.wochenplan, []);
   assert.deepEqual(v.stamm.ausnahmeSlots, []);
@@ -54,12 +54,22 @@ test('gefüllte v2-Felder werden nie überschrieben', () => {
   assert.equal(v.stamm.wochenplan.length, 1);
 });
 
-test('Schema-Guard: v1/v2/v3/fehlend bekannt, v4 abgelehnt', () => {
+test('Schema-Guard: v1/v2/v3/v4/fehlend bekannt, v5 abgelehnt', () => {
   assert.equal(schemaBekannt('kladde/v1'), true);
   assert.equal(schemaBekannt('kladde/v2'), true);
   assert.equal(schemaBekannt('kladde/v3'), true);
+  assert.equal(schemaBekannt('kladde/v4'), true);
   assert.equal(schemaBekannt(undefined), true);
-  assert.equal(schemaBekannt('kladde/v4'), false);
+  assert.equal(schemaBekannt('kladde/v5'), false);
+});
+
+// Scheibe D (M1, 21.10.): ein v3-Tresor wird beim Entsperren v4 — ein v3-Stand liest sich ein, ein v4-Stand ist für 2.4.x unbekannt
+test('v3 → v4 beim Entsperren; ein v3-Container bleibt lesbar', () => {
+  const v = { schema: 'kladde/v3', stamm: { rev: 1, ts: 'x', geraet: 'pc', kurse: [], schueler: {}, zeitmodelle: [], wochenplan: [], ausnahmeSlots: [],
+    schuljahre: [{ id: '2026-27', label: '2026/27', zeitraeume: [] }], aktivesSchuljahrId: '2026-27' }, events: [] };
+  assert.equal(migriereStamm(v), true);
+  assert.equal(v.schema, 'kladde/v4');
+  assert.equal(migriereStamm(v), false, 'idempotent');
 });
 
 // v2.2 Identität: Kinder und Einträge bekommen die deterministische Alt-sid; kursweite Einträge (ohne Schüler) keine

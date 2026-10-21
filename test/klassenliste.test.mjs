@@ -41,7 +41,7 @@ test('liesEinfuegen: Lücken in der Nr-Spalte werden gemeldet, echte Probleme bl
   const r = liesEinfuegen('1\tAdler\tBen\n4\tBecker\tJonas\n4\tDoppelt\tDora\n40\tWeit\tWeg\n5\tNurname');
   assert.equal(r.mitNr, true); assert.equal(r.luecken, true);
   assert.deepEqual(namen(r.kinder), ['Ben Adler', 'Jonas Becker', ' Nurname']);
-  assert.deepEqual(r.hinweise, ['Nr 4 doppelt — zweite Zeile übersprungen', 'Nr 40 außerhalb 1–35 — übersprungen (Mappen-Grenze)', 'Nr 5: nur ein Namensfeld — als Nachname übernommen']);
+  assert.deepEqual(r.hinweise, ['Nr 4 doppelt — zweite Zeile übersprungen', 'Nr 40 außerhalb 1–35 — übersprungen (Grenze der Excel-Mappe)', 'Nr 5: nur ein Namensfeld — als Nachname übernommen']);
 });
 
 test('verschiebe: ↑↓ und Ziehen, Ränder ohne Wirkung, Original unberührt', () => {

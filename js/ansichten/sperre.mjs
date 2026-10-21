@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/sperre.mjs — Abschnitt „PIN / LOCK + FINGERABDRUCK / FACE ID“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.4.2';
-import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.4.2';
-import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.4.2';
-import { sichereRoh } from '../../logic/identitaet.mjs?v=2.4.2';
-import { migriereStamm } from '../../logic/migration.mjs?v=2.4.2';
-import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.2';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.2';
-import { iconEl } from '../kern/icons.mjs?v=2.4.2';
-import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.4.2';
-import { IST_DEV } from '../kern/umgebung.mjs?v=2.4.2';
-import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.4.2';
-import { zeigeStartHinweise } from './banner.mjs?v=2.4.2';
-import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.4.2';
-import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.4.2';
-import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.4.2';
-import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.4.2';
-import { renderMehr } from './mehr.mjs?v=2.4.2';
-import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.2';
-import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.4.2';
-import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.4.2';
+import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=3.0.0';
+import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=3.0.0';
+import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=3.0.0';
+import { sichereRoh } from '../../logic/identitaet.mjs?v=3.0.0';
+import { migriereStamm, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.0';
+import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.0';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
+import { iconEl } from '../kern/icons.mjs?v=3.0.0';
+import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=3.0.0';
+import { IST_DEV } from '../kern/umgebung.mjs?v=3.0.0';
+import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=3.0.0';
+import { zeigeStartHinweise } from './banner.mjs?v=3.0.0';
+import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=3.0.0';
+import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=3.0.0';
+import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=3.0.0';
+import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=3.0.0';
+import { renderMehr } from './mehr.mjs?v=3.0.0';
+import { renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.0';
+import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=3.0.0';
+import { hilfeNeu, stempelAus } from './stempel.mjs?v=3.0.0';
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 
@@ -49,8 +49,10 @@ function augeSetzen(zeigt){
 // v2.2 (Schema kladde/v3, Identität): vor der ersten v3-Schreibung den gelesenen Container sichern, mit Rücklese-Prüfung — dasselbe
 // Muster wie v1→v2 (Auflage 1). Scheitert sie, wird nichts migriert gespeichert. Einmalig: ein v3-Tresor braucht keine Sicherung mehr.
 async function sichereVorV3(roh,daten){
-  if(daten&&daten.schema==='kladde/v3') return;
-  await sichereRoh(roh,v=>idbPut('vault_v2_backup',v),()=>idbGet('vault_v2_backup'));   // rein und getestet (logic/identitaet, Prüfer 20.10. G5)
+  if(daten&&daten.schema===SCHEMA_AKTUELL) return;
+  // v3.0 (Scheibe D, Schema v4): ein v3-Stand wird vor der ersten v4-Schreibung genauso gesichert, unter eigenem Namen (die v2-Sicherung bleibt)
+  const ziel=daten&&daten.schema==='kladde/v3'?'vault_v3_backup':'vault_v2_backup';
+  await sichereRoh(roh,v=>idbPut(ziel,v),()=>idbGet(ziel));   // rein und getestet (logic/identitaet, Prüfer 20.10. G5)
 }
 // lockInit-Rennen (gemessen 19.10. `rennen_lockinit.cjs`, behoben 21.10. auf Zeros Wort): früher leerte lockInit die Felder NACH dem Lesen
 // des Tresors und band Enter und „Öffnen“ erst nach dem Lesen der Bio-Hülle. Auf einem langsamen Gerät war eine früh getippte (oder vom

@@ -6,7 +6,10 @@ import { vergibSids } from './identitaet.mjs';
 // lokal beim eigenen Update; ein künstlicher rev-Konflikt würde nur Merge-Lärm erzeugen
 // (JSON-Roundtrip älterer Clients erhält unbekannte Felder).
 
-const BEKANNTE_SCHEMAS = ['kladde/v1', 'kladde/v2', 'kladde/v3'];
+// v4 (Scheibe D, 21.10.): Einträge der Mappe. Gemessen M1: 2.4.2 zeigte sie als „punkte 7.5“ im Verlauf und stornierte sie per ↩ —
+// ein älteres Gerät soll einen v4-Stand darum ablehnen (fail-closed wie v3), nicht falsch verarbeiten. Geräte zusammen aktualisieren.
+const SCHEMA_AKTUELL = 'kladde/v4';
+const BEKANNTE_SCHEMAS = ['kladde/v1', 'kladde/v2', 'kladde/v3', 'kladde/v4'];
 
 // Schuljahr-Label aus einem Datum (Aug–Jul → „2026/27"). Monate 0-basiert.
 function schuljahrLabelAusDatum(d) {
@@ -58,7 +61,7 @@ function migriereStamm(vault, jetzt = new Date()) {
   }
   // v3 (v2.2 Identität): jedes Kind und jeder Eintrag trägt seine sid (identitaet.mjs) — deterministisch, beide Geräte gleich
   if (vergibSids(vault)) geaendert = true;
-  if (vault.schema !== 'kladde/v3') { vault.schema = 'kladde/v3'; geaendert = true; }
+  if (vault.schema !== SCHEMA_AKTUELL) { vault.schema = SCHEMA_AKTUELL; geaendert = true; }
   return geaendert;
 }
 
@@ -68,5 +71,5 @@ function schemaBekannt(schema) {
   return !schema || BEKANNTE_SCHEMAS.includes(schema);
 }
 
-export { migriereStamm, schemaBekannt, BEKANNTE_SCHEMAS,
+export { migriereStamm, schemaBekannt, BEKANNTE_SCHEMAS, SCHEMA_AKTUELL,
   schuljahrLabelAusDatum, slugSchuljahr, findeOderSchaetzeSchuljahr, standardZeitraeume };

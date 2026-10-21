@@ -13,6 +13,7 @@
 //   LB-Schüler: Bilanz ja, Vorschlag null (kein m-Slot-Export).
 
 import { noteAlsWert, rundeAufDrittel, wertZuLabel, klemmePunkte } from './skalen.mjs';
+import { typenMit } from './vertrag.mjs';
 
 const SOMI_TYPEN = new Set(['+', 'o', '-']);
 // fehlt_o (Anwesenheits-Stempel, Phase 3) zählt als Kurstermin — die Erfassung IST Evidenz,
@@ -28,10 +29,14 @@ const istTerminEintrag = e => Boolean(e && e.datum && TERMIN_TYPEN.has(e.typ));
 // Wer eine Klärung (fehlt_e mit stornoVon → fehlt_o) rückgängig macht, bekommt die offene Fehlzeit zurück —
 // vorher war sie danach ganz verschwunden (Prüfer 2026-09-29). Klärungs-Ketten (u → e) bleiben, wie sie sind.
 // Gleiche Regel in export_mappe.py wirksame_events (Brücke) — beide ändern sich nur zusammen.
+// Scheibe D (21.10.): Einträge der Mappe (Vertrag mappe:true) gehören nicht zum Unterricht — sie fallen hier heraus, an EINER Stelle für
+// Verlauf, Heute, Deck, Kachel und Verdichtung (gemessen M1: 2.4.2 zeigte „punkte 7.5“ im Verlauf und bot ↩ darauf an).
+// Die Storno-Regel bleibt gleich wie in export_mappe.py; die Brücke braucht den Mappen-Ausschluss nicht, sie rechnet nur ihre eigenen Typen.
+const MAPPE = new Set(typenMit('mappe'));
 function wirksameEvents(events) {
   const zurueck = new Set(events.filter(e => e.typ === 'storno' && e.stornoVon).map(e => e.stornoVon));
   const storniert = new Set(events.filter(e => e.stornoVon && !zurueck.has(e.id)).map(e => e.stornoVon));
-  return events.filter(e => !storniert.has(e.id));
+  return events.filter(e => !storniert.has(e.id) && !MAPPE.has(e.typ));
 }
 
 // Ein Zeichen je Stunde (Zero 2026-09-29: „ich vergebe nicht 2 mal +“): ＋/o/−, direkte Note (📊, ⭐) und ⊘
