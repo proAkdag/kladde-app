@@ -1,12 +1,12 @@
 // Kladde · js/ansichten/banner.mjs — Abschnitt „HINWEIS-BANNER“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { $ } from '../kern/dom.mjs?v=2.4.1';
-import { anmeldung, idbGet, migrationsHinweis, passSchwach, setzeMigrationsHinweis } from '../kern/tresor.mjs?v=2.4.1';
-import { vault } from '../kern/zustand.mjs?v=2.4.1';
-import { exportiereContainer, renderMehr, tageSeit } from './mehr.mjs?v=2.4.1';
-import { aktualisieren, beiUpdate, updateBereit } from '../kern/update.mjs?v=2.4.1';
-import { aktView } from '../kern/zustand.mjs?v=2.4.1';
-import { bioEinrichten, bioVerfuegbar } from './sperre.mjs?v=2.4.1';
+import { $ } from '../kern/dom.mjs?v=2.4.2';
+import { anmeldung, idbGet, migrationsHinweis, passSchwach, setzeMigrationsHinweis } from '../kern/tresor.mjs?v=2.4.2';
+import { vault } from '../kern/zustand.mjs?v=2.4.2';
+import { exportiereContainer, renderMehr, tageSeit } from './mehr.mjs?v=2.4.2';
+import { aktualisieren, beiUpdate, updateBereit } from '../kern/update.mjs?v=2.4.2';
+import { aktView } from '../kern/zustand.mjs?v=2.4.2';
+import { bioEinrichten, bioVerfuegbar } from './sperre.mjs?v=2.4.2';
 
 /* ═══ HINWEIS-BANNER (Migration · Passphrase-Empfehlung · Backup · Update) ═══ */
 function zeigeBanner(html,setup){

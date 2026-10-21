@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/heute.mjs — Abschnitt „HEUTE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { gewichteteWahl, zufallsGewicht } from '../../logic/auswahl.mjs?v=2.4.1';
-import { ausnahmeEntfernen, entfallZurueck, geplanteBlockNrn, SLOT_ARTEN, slotFuerBlock, tagesAusfall } from '../../logic/autowahl.mjs?v=2.4.1';
-import { listenEintraege } from '../../logic/erfassListe.mjs?v=2.4.1';
-import { fachKuerzel } from '../../logic/fachfarben.mjs?v=2.4.1';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.1';
-import { setzeAufPlatz, belegteReihen as spBelegteReihen } from '../../logic/sitzplan.mjs?v=2.4.1';
-import { kalenderwoche, kursTag, naechsteStunde, stundeDesKurses, stundenAm, tagesStunden, tagPlus, wochentagVon } from '../../logic/stunden.mjs?v=2.4.1';
-import { lnr } from '../../logic/teilnehmer.mjs?v=2.4.1';
-import { istTerminEintrag, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.1';
-import { blockLabel, formatZeit, istAWoche, istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.1';
-import { dlgBreit, dlgInhalt, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=2.4.1';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.4.1';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.4.1';
-import { aktiverKursId, aktiveTeilgruppe, beamerModus, editorAktiv, heuteIso, setzeAnzeigeBlock, setzeTeilgruppe, setzeTermin, stempelTyp, terminDatum, terminNachtrag, vault } from '../kern/zustand.mjs?v=2.4.1';
-import { addEvent, aktiverSchueler, anzahlBewertungen, bewertProfil, BTN_BEAMER, datumLabel, eintragLabel, kurs, kursSchueler, leererStand, schuelerVonNr, setzeAktiverSchueler, sidVonNr, stammKind, standAmTermin, stornoVon, tagesStandIndex, wiederDa, WOCHENTAG_KURZ, zeigeRedo } from './eintraege.mjs?v=2.4.1';
-import { faerbe, sitzplanEditor } from './kurse.mjs?v=2.4.1';
-import { autowahlInfo, gruppeWaehlen, gueltigeGruppe, handwahlSetzen, kursAutowahl, nachAusnahme, wochenplanAktiv } from './kurswahl.mjs?v=2.4.1';
-import { mitUebergang, renderAlles } from './navigation.mjs?v=2.4.1';
-import { buchungsStunde, hilfeNeu, kursGewechselt, noteDialog, notizDialog, pulseKachel, renderRail, schuelerBlatt, tagFeld, verspStempel } from './stempel.mjs?v=2.4.1';
-import { ausnahmeFuer, schultagAb, setzeAusnahme, setzeAusnahmen, stundenplanAssistent, WT_KURZ } from './stundenplan.mjs?v=2.4.1';
+import { gewichteteWahl, zufallsGewicht } from '../../logic/auswahl.mjs?v=2.4.2';
+import { ausnahmeEntfernen, entfallZurueck, geplanteBlockNrn, SLOT_ARTEN, slotFuerBlock, tagesAusfall } from '../../logic/autowahl.mjs?v=2.4.2';
+import { listenEintraege } from '../../logic/erfassListe.mjs?v=2.4.2';
+import { fachKuerzel } from '../../logic/fachfarben.mjs?v=2.4.2';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.2';
+import { setzeAufPlatz, belegteReihen as spBelegteReihen } from '../../logic/sitzplan.mjs?v=2.4.2';
+import { kalenderwoche, kursTag, naechsteStunde, stundeDesKurses, stundenAm, tagesStunden, tagPlus, wochentagVon } from '../../logic/stunden.mjs?v=2.4.2';
+import { lnr } from '../../logic/teilnehmer.mjs?v=2.4.2';
+import { istTerminEintrag, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.2';
+import { blockLabel, formatZeit, istAWoche, istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.2';
+import { dlgBreit, dlgInhalt, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=2.4.2';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=2.4.2';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=2.4.2';
+import { aktiverKursId, aktiveTeilgruppe, beamerModus, editorAktiv, heuteIso, setzeAnzeigeBlock, setzeTeilgruppe, setzeTermin, stempelTyp, terminDatum, terminNachtrag, vault } from '../kern/zustand.mjs?v=2.4.2';
+import { addEvent, aktiverSchueler, anzahlBewertungen, bewertProfil, BTN_BEAMER, datumLabel, eintragLabel, kurs, kursSchueler, leererStand, schuelerVonNr, setzeAktiverSchueler, sidVonNr, stammKind, standAmTermin, stornoVon, tagesStandIndex, wiederDa, WOCHENTAG_KURZ, zeigeRedo } from './eintraege.mjs?v=2.4.2';
+import { faerbe, sitzplanEditor } from './kurse.mjs?v=2.4.2';
+import { autowahlInfo, gruppeWaehlen, gueltigeGruppe, handwahlSetzen, kursAutowahl, nachAusnahme, wochenplanAktiv } from './kurswahl.mjs?v=2.4.2';
+import { mitUebergang, renderAlles } from './navigation.mjs?v=2.4.2';
+import { buchungsStunde, hilfeNeu, kursGewechselt, noteDialog, notizDialog, pulseKachel, renderRail, schuelerBlatt, tagFeld, verspStempel } from './stempel.mjs?v=2.4.2';
+import { ausnahmeFuer, schultagAb, setzeAusnahme, setzeAusnahmen, stundenplanAssistent, WT_KURZ } from './stundenplan.mjs?v=2.4.2';
 
 /* ═══ HEUTE · Sitzplan 12×12 (Beamer-Regel: keine Werte sichtbar) ═══ */
 let busy=false; // Härtungs-Regel 6: Eingabe-Lock
