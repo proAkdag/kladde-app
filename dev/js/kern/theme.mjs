@@ -1,5 +1,5 @@
 // Kladde · js/kern/theme.mjs — Tag/Nacht/System, wirkt beim Laden (A2 Schnitt 2: wörtlich aus js/app.mjs, verhaltensneutral; der Kern kennt keine Ansicht)
-import { $, werkzeug } from './dom.mjs?v=2.4.1.1792548369';
+import { $, werkzeug } from './dom.mjs?v=2.4.2.1792566975';
 
 /* ═══ THEME · Tag/Nacht/System · Default Nacht (Zero-Entscheid E1) ═══ */
 const THEME_KEY='kladde_theme';

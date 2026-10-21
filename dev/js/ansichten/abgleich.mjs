@@ -5,20 +5,20 @@
 // Stand sofort; jedes Gerät führt den fremden Stand auf DEMSELBEN Weg zusammen wie den Datei-Import (Fragen zu Kindern → Vorschau →
 // tresorUebernehmen), nie still. Wer den fremden Stand ganz hat, quittiert; erst dann geht der Kanal zu. So darf eine Person die Geräte
 // nacheinander bedienen (Prüfer 20.10. 🔴 1). Schließen, Esc, ✕ und Sperren räumen auf: Kamera aus, Kanal zu.
-import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=2.4.1.1792548369';
-import { mergeContainerDaten } from '../../logic/merge.mjs?v=2.4.1.1792548369';
-import { schemaBekannt } from '../../logic/migration.mjs?v=2.4.1.1792548369';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1.1792548369';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
-import { iconEl } from '../kern/icons.mjs?v=2.4.1.1792548369';
-import { qrCanvas, scanne } from '../kern/qr.mjs?v=2.4.1.1792548369';
-import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=2.4.1.1792548369';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.4.1.1792548369';
-import { neueVerbindung } from '../kern/verbindung.mjs?v=2.4.1.1792548369';
-import { vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
-import { kursAutowahl } from './kurswahl.mjs?v=2.4.1.1792548369';
-import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=2.4.1.1792548369';
-import { renderAlles } from './navigation.mjs?v=2.4.1.1792548369';
+import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=2.4.2.1792566975';
+import { mergeContainerDaten } from '../../logic/merge.mjs?v=2.4.2.1792566975';
+import { schemaBekannt } from '../../logic/migration.mjs?v=2.4.2.1792566975';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2.1792566975';
+import { $, el, toast } from '../kern/dom.mjs?v=2.4.2.1792566975';
+import { iconEl } from '../kern/icons.mjs?v=2.4.2.1792566975';
+import { qrCanvas, scanne } from '../kern/qr.mjs?v=2.4.2.1792566975';
+import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=2.4.2.1792566975';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=2.4.2.1792566975';
+import { neueVerbindung } from '../kern/verbindung.mjs?v=2.4.2.1792566975';
+import { vault } from '../kern/zustand.mjs?v=2.4.2.1792566975';
+import { kursAutowahl } from './kurswahl.mjs?v=2.4.2.1792566975';
+import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=2.4.2.1792566975';
+import { renderAlles } from './navigation.mjs?v=2.4.2.1792566975';
 
 const NAME = { ipad: 'iPad', iphone: 'iPhone', handy: 'Handy', pc: 'PC' };
 const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;

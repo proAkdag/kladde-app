@@ -1,17 +1,17 @@
 // Kladde · js/ansichten/eintraege.mjs — Abschnitt „ZUSTAND-HELPERS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.4.1.1792548369';
-import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.1.1792548369';
-import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.4.1.1792548369';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
-import { iconEl } from '../kern/icons.mjs?v=2.4.1.1792548369';
-import { altSid } from '../../logic/identitaet.mjs?v=2.4.1.1792548369';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=2.4.1.1792548369';
-import { GERAET } from '../kern/umgebung.mjs?v=2.4.1.1792548369';
-import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
-import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.4.1.1792548369';
-import { renderAlles } from './navigation.mjs?v=2.4.1.1792548369';
-import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.4.1.1792548369';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=2.4.2.1792566975';
+import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=2.4.2.1792566975';
+import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=2.4.2.1792566975';
+import { $, el, toast } from '../kern/dom.mjs?v=2.4.2.1792566975';
+import { iconEl } from '../kern/icons.mjs?v=2.4.2.1792566975';
+import { altSid } from '../../logic/identitaet.mjs?v=2.4.2.1792566975';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=2.4.2.1792566975';
+import { GERAET } from '../kern/umgebung.mjs?v=2.4.2.1792566975';
+import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=2.4.2.1792566975';
+import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=2.4.2.1792566975';
+import { renderAlles } from './navigation.mjs?v=2.4.2.1792566975';
+import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=2.4.2.1792566975';
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverSchueler=null, undoStack=[];

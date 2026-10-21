@@ -1,19 +1,19 @@
 // Kladde · js/ansichten/kurswahl.mjs — Abschnitt „KURS-AUTOWAHL über Stundenplan-Slots“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { kursZurZeit, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.4.1.1792548369';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.1.1792548369';
-import { stundeFaelltAus } from '../../logic/stunden.mjs?v=2.4.1.1792548369';
-import { blockLabel, formatZeit, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.1.1792548369';
-import { dlgKursBinden, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1.1792548369';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
-import { iconEl } from '../kern/icons.mjs?v=2.4.1.1792548369';
-import { themeEff } from '../kern/theme.mjs?v=2.4.1.1792548369';
-import { aktiverKursId, aktiveTeilgruppe, aktView, anzeigeBlock, beamerModus, editorAktiv, heuteIso, setzeKursId, setzeTeilgruppe, setzeTermin, terminDatum, terminZuruecksetzen, vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
-import { beamerOptionenSheet, datumLabel, kurs, kursSchueler, setzeBeamer } from './eintraege.mjs?v=2.4.1.1792548369';
-import { angezeigteStunde, geheZuTag, planKontext, renderHeute, stundenplanAnsicht, stundeWaehlen } from './heute.mjs?v=2.4.1.1792548369';
-import { editorCleanup, sitzplanEditor } from './kurse.mjs?v=2.4.1.1792548369';
-import { mitUebergang, renderAlles } from './navigation.mjs?v=2.4.1.1792548369';
-import { zeigeHilfe } from './stempel.mjs?v=2.4.1.1792548369';
+import { kursZurZeit, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=2.4.2.1792566975';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=2.4.2.1792566975';
+import { stundeFaelltAus } from '../../logic/stunden.mjs?v=2.4.2.1792566975';
+import { blockLabel, formatZeit, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.2.1792566975';
+import { dlgKursBinden, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2.1792566975';
+import { $, el, toast } from '../kern/dom.mjs?v=2.4.2.1792566975';
+import { iconEl } from '../kern/icons.mjs?v=2.4.2.1792566975';
+import { themeEff } from '../kern/theme.mjs?v=2.4.2.1792566975';
+import { aktiverKursId, aktiveTeilgruppe, aktView, anzeigeBlock, beamerModus, editorAktiv, heuteIso, setzeKursId, setzeTeilgruppe, setzeTermin, terminDatum, terminZuruecksetzen, vault } from '../kern/zustand.mjs?v=2.4.2.1792566975';
+import { beamerOptionenSheet, datumLabel, kurs, kursSchueler, setzeBeamer } from './eintraege.mjs?v=2.4.2.1792566975';
+import { angezeigteStunde, geheZuTag, planKontext, renderHeute, stundenplanAnsicht, stundeWaehlen } from './heute.mjs?v=2.4.2.1792566975';
+import { editorCleanup, sitzplanEditor } from './kurse.mjs?v=2.4.2.1792566975';
+import { mitUebergang, renderAlles } from './navigation.mjs?v=2.4.2.1792566975';
+import { zeigeHilfe } from './stempel.mjs?v=2.4.2.1792566975';
 
 /* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
 let autowahlInfo=null;   // {kursId, blockNr, startSek, endeSek, quelle} — für Heute-Kopf (§28)

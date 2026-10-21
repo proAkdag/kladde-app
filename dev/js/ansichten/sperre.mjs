@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/sperre.mjs — Abschnitt „PIN / LOCK + FINGERABDRUCK / FACE ID“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.4.1.1792548369';
-import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.4.1.1792548369';
-import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.4.1.1792548369';
-import { sichereRoh } from '../../logic/identitaet.mjs?v=2.4.1.1792548369';
-import { migriereStamm } from '../../logic/migration.mjs?v=2.4.1.1792548369';
-import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.1.1792548369';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.1.1792548369';
-import { $, el, toast } from '../kern/dom.mjs?v=2.4.1.1792548369';
-import { iconEl } from '../kern/icons.mjs?v=2.4.1.1792548369';
-import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.4.1.1792548369';
-import { IST_DEV } from '../kern/umgebung.mjs?v=2.4.1.1792548369';
-import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.4.1.1792548369';
-import { zeigeStartHinweise } from './banner.mjs?v=2.4.1.1792548369';
-import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.4.1.1792548369';
-import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.4.1.1792548369';
-import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.4.1.1792548369';
-import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.4.1.1792548369';
-import { renderMehr } from './mehr.mjs?v=2.4.1.1792548369';
-import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.1.1792548369';
-import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.4.1.1792548369';
-import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.4.1.1792548369';
+import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=2.4.2.1792566975';
+import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=2.4.2.1792566975';
+import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=2.4.2.1792566975';
+import { sichereRoh } from '../../logic/identitaet.mjs?v=2.4.2.1792566975';
+import { migriereStamm } from '../../logic/migration.mjs?v=2.4.2.1792566975';
+import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=2.4.2.1792566975';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=2.4.2.1792566975';
+import { $, el, toast } from '../kern/dom.mjs?v=2.4.2.1792566975';
+import { iconEl } from '../kern/icons.mjs?v=2.4.2.1792566975';
+import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=2.4.2.1792566975';
+import { IST_DEV } from '../kern/umgebung.mjs?v=2.4.2.1792566975';
+import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=2.4.2.1792566975';
+import { zeigeStartHinweise } from './banner.mjs?v=2.4.2.1792566975';
+import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=2.4.2.1792566975';
+import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=2.4.2.1792566975';
+import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=2.4.2.1792566975';
+import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=2.4.2.1792566975';
+import { renderMehr } from './mehr.mjs?v=2.4.2.1792566975';
+import { renderAlles, setzeViewTitel } from './navigation.mjs?v=2.4.2.1792566975';
+import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=2.4.2.1792566975';
+import { hilfeNeu, stempelAus } from './stempel.mjs?v=2.4.2.1792566975';
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 
@@ -52,22 +52,29 @@ async function sichereVorV3(roh,daten){
   if(daten&&daten.schema==='kladde/v3') return;
   await sichereRoh(roh,v=>idbPut('vault_v2_backup',v),()=>idbGet('vault_v2_backup'));   // rein und getestet (logic/identitaet, Prüfer 20.10. G5)
 }
+// lockInit-Rennen (gemessen 19.10. `rennen_lockinit.cjs`, behoben 21.10. auf Zeros Wort): früher leerte lockInit die Felder NACH dem Lesen
+// des Tresors und band Enter und „Öffnen“ erst nach dem Lesen der Bio-Hülle. Auf einem langsamen Gerät war eine früh getippte (oder vom
+// Passwort-Manager eingesetzte) Passphrase weg, und das erste Enter tat nichts. Jetzt: die Felder leert das Entsperren (entsperrt()),
+// Enter und Knopf sind sofort gebunden und warten selbst auf den gelesenen Zustand.
 async function lockInit({auto=false}={}){
   document.querySelector('.shell').inert=true;   // hinter dem Login nichts bedienbar, auch nicht per Bildschirmleser (Prüfer S10 🟢 8)
-  const blob=await idbGet('vault');
-  const neu=!blob;
+  let zustand=null;
+  const bereit=(async()=>{ const blob=await idbGet('vault'); const neu=!blob; return zustand={ neu, bio:neu?null:await idbGet('bio') }; })();
+  $('lock-btn').onclick=()=>oeffnen(zustand||bereit);
+  const enter=e=>{ if(e.key==='Enter') $('lock-btn').click(); };
+  $('pin').onkeydown=enter; $('pin2').onkeydown=enter;
+  lockMeldung('');
+  augeSetzen(false);
+  const {neu,bio}=await bereit;
   $('lock-text').textContent=neu?'Neue Kladde anlegen':'';
   $('lock-erklaer').classList.toggle('hidden',!neu);
   $('pin2-feld').classList.toggle('hidden',!neu);
   $('pin').placeholder=neu?'12 Zeichen oder ein Satz':'Passphrase';
   $('lock-btn').textContent=neu?'Kladde anlegen':'Öffnen';
-  $('pin').value=''; $('pin2').value=''; lockMeldung('');
-  augeSetzen(false);
   $('pin-staerke').textContent='';
   $('lock').classList.remove('hidden');
   // Fingerabdruck (Zero 2026-09-02): nur wenn eine Bio-Hülle liegt UND der Browser WebAuthn kann. Dann nur sein Knopf und
   // „Passphrase eingeben“; das Feld erscheint erst auf Wunsch (Zero 05.10. „A · Ein Knopf“)
-  const bio=neu?null:await idbGet('bio');
   const mitBio=!!(bio&&bioVerfuegbar());
   const bioBtn=$('lock-bio');
   bioBtn.classList.toggle('hidden',!mitBio); bioBtn.classList.remove('zweit'); bioBtn.disabled=false;
@@ -86,55 +93,61 @@ async function lockInit({auto=false}={}){
     $('pin-staerke').className='pass-staerke '+(s||'');
   };
   $('pin-auge').onclick=$('pin2-auge').onclick=()=>augeSetzen($('pin').type!=='text');
-  $('lock-btn').onclick=async()=>{
-    const pin=$('pin').value;
-    if(neu){
-      if(pin.length<10){ lockMeldung('Mindestens 10 Zeichen — besser 12+ oder ein kurzer Satz.'); return; }
-      if(pin!==$('pin2').value){ lockMeldung('Passphrasen stimmen nicht überein.'); return; }
-      const id=await neueV2Identitaet(pin);
-      setzeSchluessel(id.dek,id.kopf);
-      setzeAnmeldung('pass',passStaerke(pin)==='schwach'); setzeVault(leererVault());
-      migriereStamm(vault);   // derselbe Stand wie nach dem Entsperren: Schuljahr mit Zeiträumen sofort da (Codex 07.10. B3: Q1 ging erst nach Sperren)
-      await speichern(); entsperrt();
-    } else {
-      $('lock-btn').disabled=true; lockMeldung('prüfe… (PBKDF2)',true);
-      const t0=performance.now();
-      try {
-        const roh=await idbGet('vault');
-        const r=await decodeContainerAuto(roh,pin);
-        if(r.version===1){
-          // ── Stille Migration v1→v2 · Auflage 1: v1-Backup mit READ-BACK, sonst KEIN v2-Write ──
-          await idbPut('vault_v1_backup',roh);
-          const rb=await idbGet('vault_v1_backup');
-          let identisch=Boolean(rb)&&rb.length===roh.length;
-          if(identisch){ for(let i=0;i<roh.length;i++){ if(rb[i]!==roh[i]){ identisch=false; break; } } }
-          if(!identisch) throw new Error('v1-Sicherung fehlgeschlagen — Migration abgebrochen, Daten unverändert.');
-          const id=await neueV2Identitaet(pin);
-          setzeSchluessel(id.dek,id.kopf);
-          setzeVault(r.daten); setzeAnmeldung('pass',passStaerke(pin)==='schwach');
-          migriereStamm(vault); // Schema kladde/v2 (P2.1) — idempotent
-          bereinigeAusnahmen(vault.stamm); // folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
-          await speichern(); // erste v2-Schreibung — erst NACH verifiziertem Backup
-          setzeMigrationsHinweis(true);
-          console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
-        } else {
-          await sichereVorV3(roh,r.daten);   // v2.2: erst gesichert, dann v3
-          setzeSchluessel(r.dek,r.kopf);
-          setzeVault(r.daten); setzeAnmeldung('pass',passStaerke(pin)==='schwach');
-          const migriert=migriereStamm(vault); // Schema-Nachzug (v0.8-Bestand → kladde/v2 → v3)
-          if(bereinigeAusnahmen(vault.stamm)||migriert) speichern(); // + folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
-          console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
-        }
-        entsperrt();
-      } catch(e){
-        lockMeldung(e.message);
-        const p=$('pin'); p.classList.remove('schuett'); void p.offsetWidth; p.classList.add('schuett'); // §31 Konflikt: Zurückweisung
+}
+// „Öffnen“ bzw. „Kladde anlegen“ (Knopf und Enter): wartet, falls der Tresor-Zustand noch gelesen wird (lockInit-Rennen).
+// Ein zweites Enter, während der erste Versuch läuft, startet nichts doppelt.
+let oeffnetGerade=false;
+async function oeffnen(zustandOderBereit){
+  if(oeffnetGerade) return;
+  oeffnetGerade=true;
+  try {
+  const {neu}=await zustandOderBereit;
+  const pin=$('pin').value;
+  if(neu){
+    if(pin.length<10){ lockMeldung('Mindestens 10 Zeichen — besser 12+ oder ein kurzer Satz.'); return; }
+    if(pin!==$('pin2').value){ lockMeldung('Passphrasen stimmen nicht überein.'); return; }
+    const id=await neueV2Identitaet(pin);
+    setzeSchluessel(id.dek,id.kopf);
+    setzeAnmeldung('pass',passStaerke(pin)==='schwach'); setzeVault(leererVault());
+    migriereStamm(vault);   // derselbe Stand wie nach dem Entsperren: Schuljahr mit Zeiträumen sofort da (Codex 07.10. B3: Q1 ging erst nach Sperren)
+    await speichern(); entsperrt();
+  } else {
+    $('lock-btn').disabled=true; lockMeldung('prüfe… (PBKDF2)',true);
+    const t0=performance.now();
+    try {
+      const roh=await idbGet('vault');
+      const r=await decodeContainerAuto(roh,pin);
+      if(r.version===1){
+        // ── Stille Migration v1→v2 · Auflage 1: v1-Backup mit READ-BACK, sonst KEIN v2-Write ──
+        await idbPut('vault_v1_backup',roh);
+        const rb=await idbGet('vault_v1_backup');
+        let identisch=Boolean(rb)&&rb.length===roh.length;
+        if(identisch){ for(let i=0;i<roh.length;i++){ if(rb[i]!==roh[i]){ identisch=false; break; } } }
+        if(!identisch) throw new Error('v1-Sicherung fehlgeschlagen — Migration abgebrochen, Daten unverändert.');
+        const id=await neueV2Identitaet(pin);
+        setzeSchluessel(id.dek,id.kopf);
+        setzeVault(r.daten); setzeAnmeldung('pass',passStaerke(pin)==='schwach');
+        migriereStamm(vault); // Schema kladde/v2 (P2.1) — idempotent
+        bereinigeAusnahmen(vault.stamm); // folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
+        await speichern(); // erste v2-Schreibung — erst NACH verifiziertem Backup
+        setzeMigrationsHinweis(true);
+        console.log('[kladde] v1→v2 migriert (Backup verifiziert) in',Math.round(performance.now()-t0),'ms');
+      } else {
+        await sichereVorV3(roh,r.daten);   // v2.2: erst gesichert, dann v3
+        setzeSchluessel(r.dek,r.kopf);
+        setzeVault(r.daten); setzeAnmeldung('pass',passStaerke(pin)==='schwach');
+        const migriert=migriereStamm(vault); // Schema-Nachzug (v0.8-Bestand → kladde/v2 → v3)
+        if(bereinigeAusnahmen(vault.stamm)||migriert) speichern(); // + folgenlose Entfälle auf freien Stunden räumen (2026-09-02)
+        console.log('[kladde] Unlock (v2) in',Math.round(performance.now()-t0),'ms');
       }
-      $('lock-btn').disabled=false;
+      entsperrt();
+    } catch(e){
+      lockMeldung(e.message);
+      const p=$('pin'); p.classList.remove('schuett'); void p.offsetWidth; p.classList.add('schuett'); // §31 Konflikt: Zurückweisung
     }
-  };
-  const enter=e=>{ if(e.key==='Enter') $('lock-btn').click(); };
-  $('pin').onkeydown=enter; $('pin2').onkeydown=enter;
+    $('lock-btn').disabled=false;
+  }
+  } finally { oeffnetGerade=false; }
 }
 /* ═══ FINGERABDRUCK / FACE ID · WebAuthn-Passkey mit PRF (Zero 2026-09-02) ═══
    Kryptografie in logic/biometrie.mjs (Node-getestet). Hier nur die WebAuthn-Geste und der Vault-Weg.
@@ -302,6 +315,7 @@ function tabSperreHolen(){
   }).catch(()=>ok(true)); });
 }
 async function entsperrt(){
+  $('pin').value=''; $('pin2').value='';   // die Passphrase steht nach dem Öffnen nicht mehr im DOM (vorher bis zum nächsten Sperren)
   if(!(await tabSperreHolen())){
     sperren(); toast('Die Kladde ist in einem anderen Tab schon offen — dort weiterarbeiten oder den anderen Tab schließen.',9000); return;
   }
