@@ -1,15 +1,15 @@
 // Kladde · js/ansichten/navigation.mjs — Abschnitt „DIALOG-HELFER + VIEWS / TABS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { $ } from '../kern/dom.mjs?v=3.0.0';
-import { aktView, setzeAktView, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { renderDeck } from './deck.mjs?v=3.0.0';
-import { setzeAktiverSchueler } from './eintraege.mjs?v=3.0.0';
-import { renderHeute } from './heute.mjs?v=3.0.0';
-import { editorCleanup, kursSeiteId, renderKurse, setzeKursSeiteId } from './kurse.mjs?v=3.0.0';
-import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=3.0.0';
-import { renderMehr } from './mehr.mjs?v=3.0.0';
-import { renderSchueler } from './schueler.mjs?v=3.0.0';
-import { stempelAus } from './stempel.mjs?v=3.0.0';
+import { $ } from '../kern/dom.mjs?v=3.0.1';
+import { aktView, setzeAktView, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { renderDeck } from './deck.mjs?v=3.0.1';
+import { setzeAktiverSchueler } from './eintraege.mjs?v=3.0.1';
+import { renderHeute } from './heute.mjs?v=3.0.1';
+import { editorCleanup, kursSeiteId, renderKurse, setzeKursSeiteId } from './kurse.mjs?v=3.0.1';
+import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=3.0.1';
+import { renderMehr } from './mehr.mjs?v=3.0.1';
+import { renderSchueler } from './schueler.mjs?v=3.0.1';
+import { stempelAus } from './stempel.mjs?v=3.0.1';
 
 /* ═══ DIALOG-HELFER ═══ */
 

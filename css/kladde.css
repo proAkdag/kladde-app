@@ -242,7 +242,9 @@
   .deck-hilfe { display: flex; justify-content: space-between; max-width: 420px; margin: 0 auto; color: var(--leise); font-size: 13px; padding: 0 8px; }
   .deck-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
   /* Deck-Layout: Karte mittig, daneben die mitlaufende Runden-Historie (Zero-Feldtest 2026-07-10) */
-  #view-deck { display: flex; gap: 18px; justify-content: center; align-items: flex-start; }
+  /* overflow: clip — die wegfliegende Karte (translateX 62 % + Drehung) ließ main bis 18 px seitlich und 17 px nach unten überlaufen, ein
+     Scrollbalken blitzte auf (gemessen 25.10., Zero: „fixen“). clip statt hidden: kein eigener Scrollbereich; der Rand gibt Fokusringen Luft */
+  #view-deck { display: flex; gap: 18px; justify-content: center; align-items: flex-start; overflow: clip; overflow-clip-margin: 4px; }
   .deck-mitte { flex: 0 1 520px; min-width: 0; }
   #deck-verlauf { flex: 0 0 190px; background: var(--karte); border: 1px solid var(--kante); border-radius: 14px;
     padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-height: 70vh; overflow-y: auto; }
@@ -547,10 +549,13 @@
   body.stempeln.st-minus #plan-wrap { outline-color: var(--fehl); }
 
   /* Projektions-Hinweis (P4.3 · §6) */
-  #beamer-hinweis { display: flex; align-items: center; gap: 10px; background: var(--karte2);
+  #beamer-hinweis { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; background: var(--karte2);
     border-bottom: 1px solid var(--band); color: var(--band-text); padding: 7px 12px; font-size: 13px; font-weight: 600; }
   #beamer-hinweis.hidden { display: none; }
-  #beamer-hinweis .btn { margin-left: auto; }
+  /* Am schmalen Handy (337 px) quetschte die Zeile die Knöpfe unter ihren Text, „Beenden“ ragte hinaus (Zero 25.10.): Text darf umbrechen,
+     die Knöpfe nie; passen sie nicht daneben, stehen sie gemeinsam rechtsbündig in der zweiten Zeile */
+  #beamer-hinweis > span:first-child { flex: 1 1 12em; min-width: 0; }
+  #beamer-hinweis .bh-knoepfe { display: flex; gap: 10px; flex: none; margin-left: auto; }
   /* „Nur Sitzplan": Datums-Extras ausblenden — reine Namenskarte an die Wand */
   body.beamer.nurplan .datum-streifen .rechts > :not(#btn-beamer),   /* der Augen-Knopf bleibt: er ist der Ausgang (Prüfer 2026-10-01) */
   body.beamer.nurplan .datum-streifen .nachtrag-hinweis { display: none; }

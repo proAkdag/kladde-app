@@ -1,18 +1,18 @@
 // Kladde · js/ansichten/eintraege.mjs — Abschnitt „ZUSTAND-HELPERS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.0';
-import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.0';
-import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl } from '../kern/icons.mjs?v=3.0.0';
-import { altSid } from '../../logic/identitaet.mjs?v=3.0.0';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.0';
-import { GERAET } from '../kern/umgebung.mjs?v=3.0.0';
-import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=3.0.0';
-import { renderAlles } from './navigation.mjs?v=3.0.0';
-import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=3.0.0';
-import { mappeLeeren } from './mappe.mjs?v=3.0.0';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.1';
+import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1';
+import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl } from '../kern/icons.mjs?v=3.0.1';
+import { altSid } from '../../logic/identitaet.mjs?v=3.0.1';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.1';
+import { GERAET } from '../kern/umgebung.mjs?v=3.0.1';
+import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=3.0.1';
+import { renderAlles } from './navigation.mjs?v=3.0.1';
+import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=3.0.1';
+import { mappeLeeren } from './mappe.mjs?v=3.0.1';
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverSchueler=null, undoStack=[];
@@ -98,7 +98,7 @@ function zeigeUndo(e,ersetzt){
   const s=kindVonEvent(e);
   // Ersetzen sichtbar machen (Mechanik erklärt sich selbst): „o → ＋“ — ein Tap bringt das alte Zeichen zurück
   chipZeig('rueck',(s?anzeigeVorname(s):'?')+': '+(ersetzt?sichtLabel(ersetzt)+' → ':'')+sichtLabel(e),
-    ()=>{ stornoVon(e); toast('Rückgängig: '+sichtLabel(e)+wiederDa(e)); renderAlles(); zeigeRedo(e); });   // alle Ansichten — Deck/Schüler blieben sonst veraltet
+    ()=>{ if(!stornoVon(e)) return; toast('Rückgängig: '+sichtLabel(e)+wiederDa(e)); renderAlles(); zeigeRedo(e); });   // nichts zurückgenommen: kein „Rückgängig“ (wie N6)   // alle Ansichten — Deck/Schüler blieben sonst veraltet
 }
 // Nach einer Rücknahme: was das zurückgenommene Event ersetzt oder geklärt hatte, gilt wieder („— wieder o“)
 function wiederDa(e){

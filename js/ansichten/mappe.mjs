@@ -3,18 +3,18 @@
 // Beamer an ist, und ihr DOM wird ersetzt (Hard-Lock-Lehre v1.3.1). Alles, was sie schreibt, ist ein Ereignis (arbeit · punkte · lob,
 // logic/arbeiten) — nie der Stamm. Gerechnet wird nur in logic/arbeiten (Soll aus Excel), hier wird nur gezeigt und gebucht.
 // Importregel (kern.test (3)(4)): Ansichten importieren einander direkt; beim Laden liest dieses Modul nichts aus einer anderen Ansicht.
-import { MAX_AUFGABEN, OB_LABEL, werteArbeitAus, mappenStand, lesePunkte, quartalVon, mappeSchalter, schluesselVorlage, schluesselFehler, sek1Gitter } from '../../logic/arbeiten.mjs?v=3.0.0';
-import { excelRunde, zahlText } from '../../logic/excelrechnen.mjs?v=3.0.0';
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.0';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl } from '../kern/icons.mjs?v=3.0.0';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.0';
-import { GERAET } from '../kern/umgebung.mjs?v=3.0.0';
-import { beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { mitUebergang } from './navigation.mjs?v=3.0.0';
-import { renderKurse } from './kurse.mjs?v=3.0.0';
-import { aktivesSchuljahr } from './schueler.mjs?v=3.0.0';
+import { MAX_AUFGABEN, OB_LABEL, werteArbeitAus, mappenStand, lesePunkte, quartalVon, mappeSchalter, schluesselVorlage, schluesselFehler, sek1Gitter } from '../../logic/arbeiten.mjs?v=3.0.1';
+import { excelRunde, zahlText } from '../../logic/excelrechnen.mjs?v=3.0.1';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.1';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl } from '../kern/icons.mjs?v=3.0.1';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.1';
+import { GERAET } from '../kern/umgebung.mjs?v=3.0.1';
+import { beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { mitUebergang } from './navigation.mjs?v=3.0.1';
+import { renderKurse } from './kurse.mjs?v=3.0.1';
+import { aktivesSchuljahr } from './schueler.mjs?v=3.0.1';
 
 // Offene Mappe: { kursId, arbeitId|null } — null = zu. Nur im Speicher (ein Kaltstart beginnt auf der Kurs-Seite).
 let mappeAuf = null;
@@ -214,7 +214,10 @@ function renderArbeit(wrap, k, a, st0) {
         'aria-label': s.vorname + ' ' + s.name + ' · ' + x.name + ' (max ' + zahlText(x.max) + ')' });
       inp.addEventListener('change', () => trageEin(inp, s, x));
       // Enter in einer Konflikt-Zelle bestätigt auch den gezeigten Wert (ohne Änderung feuert kein change — P48 K1c, 21.10.)
-      inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); if (inp.classList.contains('mp-konflikt')) trageEin(inp, s, x); naechstes(inp); } });
+      // Ungültige Zahl: in der Zelle bleiben und markieren — sonst tippte man in der nächsten weiter und übersah „nicht gespeichert“ (25.10.)
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault();
+        if (!lesePunkte(inp.value, x.max).ok) { trageEin(inp, s, x); inp.select(); return; }
+        if (inp.classList.contains('mp-konflikt')) trageEin(inp, s, x); naechstes(inp); } });
       return el('td', { class: 'ein' }, inp);
     });
     body.append(el('tr', { class: s.lb && !ob ? 'lb' : '', dataset: { mpZeile: s.sid } }, el('td', { class: 'nr' }, String(lnr(s) ?? '')),

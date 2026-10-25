@@ -5,20 +5,20 @@
 // Stand sofort; jedes Gerät führt den fremden Stand auf DEMSELBEN Weg zusammen wie den Datei-Import (Fragen zu Kindern → Vorschau →
 // tresorUebernehmen), nie still. Wer den fremden Stand ganz hat, quittiert; erst dann geht der Kanal zu. So darf eine Person die Geräte
 // nacheinander bedienen (Prüfer 20.10. 🔴 1). Schließen, Esc, ✕ und Sperren räumen auf: Kamera aus, Kanal zu.
-import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.0';
-import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.0';
-import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.0';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl } from '../kern/icons.mjs?v=3.0.0';
-import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.0';
-import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.0';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.0';
-import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.0';
-import { vault } from '../kern/zustand.mjs?v=3.0.0';
-import { kursAutowahl } from './kurswahl.mjs?v=3.0.0';
-import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.0';
-import { renderAlles } from './navigation.mjs?v=3.0.0';
+import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.1';
+import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.1';
+import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.1';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl } from '../kern/icons.mjs?v=3.0.1';
+import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.1';
+import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.1';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.1';
+import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.1';
+import { vault } from '../kern/zustand.mjs?v=3.0.1';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.1';
+import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.1';
+import { renderAlles } from './navigation.mjs?v=3.0.1';
 
 const NAME = { ipad: 'iPad', iphone: 'iPhone', handy: 'Handy', pc: 'PC' };
 const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;

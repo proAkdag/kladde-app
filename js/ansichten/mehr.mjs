@@ -1,23 +1,23 @@
 // Kladde · js/ansichten/mehr.mjs — Abschnitt „MEHR“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { decodeContainerAuto, wechslePassphrase } from '../../logic/container.mjs?v=3.0.0';
-import { mergeContainerDaten, uebernehmeMerge } from '../../logic/merge.mjs?v=3.0.0';
-import { migriereStamm, schemaBekannt } from '../../logic/migration.mjs?v=3.0.0';
-import { regelText } from '../../logic/verdichtung.mjs?v=3.0.0';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconHtml } from '../kern/icons.mjs?v=3.0.0';
-import { THEME_KEY, themeAnwenden, themePref } from '../kern/theme.mjs?v=3.0.0';
-import { idbDel, idbGet, idbPut, nochOffen, setzeSchluessel, speicherFehler, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.0';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.0';
-import { heuteIso, setzeVault, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { bewertProfil, kurs, WOCHENTAG_KURZ } from './eintraege.mjs?v=3.0.0';
-import { kursAutowahl } from './kurswahl.mjs?v=3.0.0';
-import { renderAlles } from './navigation.mjs?v=3.0.0';
-import { aufloesenBeiClose, bioEinrichten, bioEntfernen, bioVerfuegbar, lockMinuten, passphraseAbfragen } from './sperre.mjs?v=3.0.0';
-import { APP_VERSION } from '../app.mjs?v=3.0.0';
-import { aktualisieren, updateBereit } from '../kern/update.mjs?v=3.0.0';
-import { abgleichBlatt } from './abgleich.mjs?v=3.0.0';
+import { decodeContainerAuto, wechslePassphrase } from '../../logic/container.mjs?v=3.0.1';
+import { mergeContainerDaten, uebernehmeMerge } from '../../logic/merge.mjs?v=3.0.1';
+import { migriereStamm, schemaBekannt } from '../../logic/migration.mjs?v=3.0.1';
+import { regelText } from '../../logic/verdichtung.mjs?v=3.0.1';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconHtml } from '../kern/icons.mjs?v=3.0.1';
+import { THEME_KEY, themeAnwenden, themePref } from '../kern/theme.mjs?v=3.0.1';
+import { alteSicherungenLoeschen, idbGet, idbPut, inSpeicherKette, nochOffen, setzeSchluessel, speicherFehler, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.1';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.1';
+import { heuteIso, setzeVault, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { bewertProfil, kurs, WOCHENTAG_KURZ } from './eintraege.mjs?v=3.0.1';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.1';
+import { renderAlles } from './navigation.mjs?v=3.0.1';
+import { aufloesenBeiClose, bioEinrichten, bioEntfernen, bioVerfuegbar, lockMinuten, passphraseAbfragen } from './sperre.mjs?v=3.0.1';
+import { APP_VERSION } from '../app.mjs?v=3.0.1';
+import { aktualisieren, updateBereit } from '../kern/update.mjs?v=3.0.1';
+import { abgleichBlatt } from './abgleich.mjs?v=3.0.1';
 
 /* ═══ MEHR · Sichern & Übertragen · Sicherheit · Darstellung · Technik (Scheibe 7, Zero 04.10.: 1 A · 2 B · 3 B · 4 A · 5 B) ═══ */
 // Kalendertage seit einem Zeitpunkt: Banner und „Sichern“ zählen gleich (Math.round fängt die 23-/25-h-Tage der Zeitumstellung)
@@ -167,11 +167,11 @@ let exportInSitzung=false; // für Schuljahr-Assistent: „Weiter" erst nach ech
 let downloadGestartet=false;
 function merkeExport(art){
   if(art==='download'){ downloadGestartet=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length,art:'download'}).then(sicherungsKopf).catch(()=>{});
-    idbDel('vault_v1_backup').catch(()=>{}); return; }   // wie vor v2.1 (Prüfer 19.10. B1): die v1-Sicherung trägt längst gelöschte Kurse
+    alteSicherungenLoeschen(); return; }   // wie vor v2.1 (Prüfer 19.10. B1): die v1-Sicherung trägt längst gelöschte Kurse — seit 3.0.1 auch v2/v3 (M2)
   exportInSitzung=true; if(vault) idbPut('letzterExport',{ts:Date.now(),events:vault.events.length}).then(sicherungsKopf).catch(()=>{});   // „Mehr“ offen: Kopf gleich nachziehen
   // Die v1-Sicherung aus der Umstellung v1→v2 trägt den alten Stand (auch längst gelöschte Kurse) mit der alten Passphrase.
   // Mit einer v2-Sicherung hat sie ihren Zweck erfüllt (Prüfer 2026-09-29: „Endgültig löschen“ war nicht endgültig).
-  idbDel('vault_v1_backup').catch(()=>{});
+  alteSicherungenLoeschen();   // seit 3.0.1 auch die v2-/v3-Sicherung (Prüfer 25.10. M2)
 }
 async function exportiereContainerJetzt(){
   let bytes, name;
@@ -293,26 +293,33 @@ function passphraseWechselDialog(){
     // Ehrlich statt beruhigend (Prüfer 2026-09-29, gemessen): der innere Datenschlüssel bleibt gleich. Ihn zu erneuern hat Zero
     // abgelehnt („nicht nötig“) — dann muss der Text aber sagen, was der Wechsel NICHT leistet.
     '<p class="u-hinweis">Bereits gespeicherte Sicherungen öffnen sich weiter mit der alten Passphrase. Der innere Datenschlüssel bleibt derselbe: Wer die alte Passphrase und eine alte Sicherung hat, kann auch künftige Sicherungen öffnen. Der Wechsel schützt also vor dem Weitergeben der neuen, nicht vor einer schon bekannten alten Passphrase.</p>'+
-    '<div class="zeile"><span>Aktuelle</span><span><input type="password" id="pw-alt" autocomplete="off" class="u-w170"></span></div>'+
-    '<div class="zeile"><span>Neue (min. 10)</span><span><input type="password" id="pw-neu" autocomplete="off" class="u-w170"></span></div>'+
-    '<div class="zeile"><span>Wiederholen</span><span><input type="password" id="pw-neu2" autocomplete="off" class="u-w170"></span></div>'+
-    '<div id="pw-fehler" class="u-fehlerfeld"></div>'+
+    '<div class="zeile"><span>Aktuelle</span><span><input type="password" id="pw-alt" autocomplete="off" class="u-w170" aria-label="Aktuelle Passphrase"></span></div>'+
+    '<div class="zeile"><span>Neue (min. 10)</span><span><input type="password" id="pw-neu" autocomplete="off" class="u-w170" aria-label="Neue Passphrase, mindestens 10 Zeichen"></span></div>'+
+    '<div class="zeile"><span>Wiederholen</span><span><input type="password" id="pw-neu2" autocomplete="off" class="u-w170" aria-label="Neue Passphrase wiederholen"></span></div>'+
+    '<div id="pw-fehler" class="u-fehlerfeld" role="status"></div>'+
     '<div class="btn-reihe"><button class="btn" data-ok>Ändern</button><button class="btn still" data-schliessen>Abbrechen</button></div>',
-    el=>{ el.querySelector('[data-ok]').onclick=async()=>{
+    el=>{ const knopf=el.querySelector('[data-ok]'); knopf.onclick=async()=>{
       const alt=el.querySelector('#pw-alt').value, neu=el.querySelector('#pw-neu').value;
       const feh=el.querySelector('#pw-fehler');
       if(neu.length<10){ feh.textContent='Mindestens 10 Zeichen — besser 12+ oder ein kurzer Satz.'; return; }
       if(neu!==el.querySelector('#pw-neu2').value){ feh.textContent='Passphrasen stimmen nicht überein.'; return; }
       const gen=sperrGen;
+      // Zweimal PBKDF2 dauert am iPad Sekunden: Knopf aus, sonst lief ein zweiter Wechsel los und meldete danach „Alte Passphrase falsch“ (25.10.)
+      knopf.disabled=true; feh.textContent='prüfe…';
       try{
-        await speichern();
-        const blob=await idbGet('vault');
-        const g=await wechslePassphrase(blob,alt,neu);   // zweimal PBKDF2 + DEK-Rewrap
-        if(!nochOffen(gen)){ feh.textContent=''; return; }   // inzwischen gesperrt: nichts schreiben, Schlüssel nicht zurück in den RAM
-        await idbPut('vault',g.bytes);
-        setzeSchluessel(g.dek,g.kopf);
+        speichern();   // der RAM-Stand zuerst, dann der Wechsel in derselben Kette (N7)
+        const g=await inSpeicherKette(async()=>{
+          const blob=await idbGet('vault');
+          const g=await wechslePassphrase(blob,alt,neu);   // zweimal PBKDF2 + DEK-Rewrap
+          if(!nochOffen(gen)) return null;   // inzwischen gesperrt: nichts schreiben, Schlüssel nicht zurück in den RAM
+          await idbPut('vault',g.bytes);
+          setzeSchluessel(g.dek,g.kopf);
+          return g;
+        });
+        if(!g){ feh.textContent=''; return; }
         dlgZu(); toast('Passphrase geändert — denke an das zweite Gerät.',5000);
       }catch(err){ feh.textContent=err.message; }
+      finally{ knopf.disabled=false; }
     }; });
 }
 // Kopplung mit dem PC-Server (Codex 07.10. S1): der Code steht im Server-Fenster, die App schickt ihn bei Status, Senden und Holen mit.

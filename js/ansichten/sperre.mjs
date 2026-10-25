@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/sperre.mjs — Abschnitt „PIN / LOCK + FINGERABDRUCK / FACE ID“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=3.0.0';
-import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=3.0.0';
-import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=3.0.0';
-import { sichereRoh } from '../../logic/identitaet.mjs?v=3.0.0';
-import { migriereStamm, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.0';
-import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.0';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl } from '../kern/icons.mjs?v=3.0.0';
-import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=3.0.0';
-import { IST_DEV } from '../kern/umgebung.mjs?v=3.0.0';
-import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { zeigeStartHinweise } from './banner.mjs?v=3.0.0';
-import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=3.0.0';
-import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=3.0.0';
-import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=3.0.0';
-import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=3.0.0';
-import { renderMehr } from './mehr.mjs?v=3.0.0';
-import { renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.0';
-import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=3.0.0';
-import { hilfeNeu, stempelAus } from './stempel.mjs?v=3.0.0';
+import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=3.0.1';
+import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=3.0.1';
+import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=3.0.1';
+import { sichereRoh } from '../../logic/identitaet.mjs?v=3.0.1';
+import { migriereStamm, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.1';
+import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.1';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl } from '../kern/icons.mjs?v=3.0.1';
+import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=3.0.1';
+import { IST_DEV } from '../kern/umgebung.mjs?v=3.0.1';
+import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { zeigeStartHinweise } from './banner.mjs?v=3.0.1';
+import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=3.0.1';
+import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=3.0.1';
+import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=3.0.1';
+import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=3.0.1';
+import { renderMehr } from './mehr.mjs?v=3.0.1';
+import { renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.1';
+import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=3.0.1';
+import { hilfeNeu, stempelAus } from './stempel.mjs?v=3.0.1';
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 
@@ -261,6 +261,7 @@ function sperren({auto=false}={}){
   // wurde geschluckt und die Namen-Schiene blieb hinter dem Lock im DOM (Prüfer 2026-09-29). Netz: Leiste immer entfernen.
   if(editorCleanup){ try{ editorCleanup(); }catch(err){ console.error('[kladde] Editor beim Sperren',err); } }
   $('sp-editor-bar')?.remove(); document.querySelector('.sp-ohne')?.remove(); setzeEditorAktiv(false); setzeEditorCleanup(null); document.body.classList.remove('sp-edit','sp-dragging');
+  clearInterval(lockTimer); lockTimer=null;   // gesperrt läuft keine Zeitsperre: sie baute alle 30 s den Login neu und wischte seine Meldung weg (Prüfer 25.10. N2); entsperrt() startet sie neu
   sperrGenWeiter(); setzeVault(null); setzeSchluessel(null,null); setzeAnmeldung(null,false);
   if(tabSperreFrei){ tabSperreFrei(); tabSperreFrei=null; }   // anderer Tab darf jetzt entsperren
   setzeAktiverSchueler(null); setzeOffenerSchueler(null); setzeOffeneZeile(null); setzeDeckListe([]); setzeDeckVerlauf([]); undoStack.length=0;

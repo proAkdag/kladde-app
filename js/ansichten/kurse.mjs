@@ -1,36 +1,36 @@
 // Kladde · js/ansichten/kurse.mjs — Abschnitt „KURSE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.0';
-import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=3.0.0';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.0';
-import { kursStatus } from '../../logic/kursStatus.mjs?v=3.0.0';
-import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=3.0.0';
-import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=3.0.0';
-import { entferneKursReferenzen } from '../../logic/merge.mjs?v=3.0.0';
-import { standardZeitraeume } from '../../logic/migration.mjs?v=3.0.0';
-import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=3.0.0';
-import { MAX_SCHUELER } from '../../logic/parser.mjs?v=3.0.0';
-import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=3.0.0';
-import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=3.0.0';
-import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=3.0.0';
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.0';
-import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.0';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.0';
-import { aktiverKursId, aktView, beamerModus, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { mappeSchalter } from '../../logic/arbeiten.mjs?v=3.0.0';
-import { mappeAuf, mappePanel, renderMappe, schliesseMappe, setzeMappe } from './mappe.mjs?v=3.0.0';
-import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=3.0.0';
-import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=3.0.0';
-import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=3.0.0';
-import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=3.0.0';
-import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.0';
-import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=3.0.0';
-import { aufloesenBeiClose } from './sperre.mjs?v=3.0.0';
-import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=3.0.0';
-import { stempelAus } from './stempel.mjs?v=3.0.0';   // renderRail: eigene innere Funktion (Editor)
-import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=3.0.0';
+import { SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.1';
+import { FACH_LISTE, fachFarbe, WAEHLER_HUES } from '../../logic/fachfarben.mjs?v=3.0.1';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.1';
+import { kursStatus } from '../../logic/kursStatus.mjs?v=3.0.1';
+import { markiereEntfernt as markiereEntferntIn, neueSid, ohneSid } from '../../logic/identitaet.mjs?v=3.0.1';
+import { ergaenzeNeuenKurs, lieseMappe, neuerKurs, pruefeKursDatei, xlsxLesbar } from '../../logic/mappe.mjs?v=3.0.1';
+import { entferneKursReferenzen } from '../../logic/merge.mjs?v=3.0.1';
+import { standardZeitraeume } from '../../logic/migration.mjs?v=3.0.1';
+import { istAlphabetisch, liesEinfuegen, nummeriere, ordneNeu, sortiereAlpha, verschiebe, doppelte } from '../../logic/klassenliste.mjs?v=3.0.1';
+import { MAX_SCHUELER } from '../../logic/parser.mjs?v=3.0.1';
+import { jpegAusDataUrl, pdfAusJpeg } from '../../logic/pdfbild.mjs?v=3.0.1';
+import { druckAnordnung, raeumePlatz, setzeAufPlatz, belegteReihen as spBelegteReihen, kompaktiere as spKompaktiere, reiheEinfuegen as spReiheEinfuegen, tischStempel, vomPlatz, vorlauf } from '../../logic/sitzplan.mjs?v=3.0.1';
+import { lnr, nachListe, neueAusweisNr, planeAbgleich, wendePlanAn, schreibform } from '../../logic/teilnehmer.mjs?v=3.0.1';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1';
+import { dlgZeigen, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.1';
+import { alteSicherungenLoeschen, speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.1';
+import { aktiverKursId, aktView, beamerModus, heuteIso, setzeAktView, setzeEditorAktiv, setzeKursId, setzeTermin, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { mappeSchalter } from '../../logic/arbeiten.mjs?v=3.0.1';
+import { mappeAuf, mappePanel, renderMappe, schliesseMappe, setzeMappe } from './mappe.mjs?v=3.0.1';
+import { datumLabel, kurs, kursSchueler, listenNr, setzeAktiverSchueler, sidVonNr, stammKind } from './eintraege.mjs?v=3.0.1';
+import { renderHeute, stundenplanAnsicht } from './heute.mjs?v=3.0.1';
+import { autowahlInfo, handwahlSetzen, kursAutowahl, kursWechseln } from './kurswahl.mjs?v=3.0.1';
+import { downloadGestartet, exportiereContainer, exportiereContainerJetzt, exportInSitzung, setzeExportInSitzung } from './mehr.mjs?v=3.0.1';
+import { mitUebergang, renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.1';
+import { aktivesSchuljahr, renderSchueler, setzeZeitraumFilter } from './schueler.mjs?v=3.0.1';
+import { aufloesenBeiClose } from './sperre.mjs?v=3.0.1';
+import { eingabeZeile, kinderListe, reihenfolgeSchalter } from './klassenliste.mjs?v=3.0.1';
+import { stempelAus } from './stempel.mjs?v=3.0.1';   // renderRail: eigene innere Funktion (Editor)
+import { GRUPPEN_LABELS, stundenplanAssistent } from './stundenplan.mjs?v=3.0.1';
 
 /* ═══ KURSE · Import / Profil / Slots / Sitzplan-Editor ═══ */
 /* Kurs direkt in der App anlegen: Excel-Spalten kopieren → einfügen (Tab/Semikolon-tolerant) */
@@ -233,11 +233,11 @@ function renderKurse(){
   html+='<div class="kurs-grid">';
   for(const k of sichtbar){
     const anz=kursSchueler(k).length;
-    html+='<div class="kk-wrap"><button class="kurs-karte" data-kurs="'+k.id+'" title="Kurs öffnen"><span class="kurs-band"></span>'+
+    html+='<div class="kk-wrap"><button class="kurs-karte" data-kurs="'+esc(k.id)+'" title="Kurs öffnen"><span class="kurs-band"></span>'+
       '<span class="kk-txt"><span class="k-name">'+esc(k.name)+'</span>'+
       '<span class="k-meta">'+esc(k.fach)+' · '+profilLabel(k)+' · '+anz+' Schüler</span>'+
       '<span class="k-badge">'+kursBadgeHtml(k)+'</span></span></button>'+
-      '<button class="kk-mehr" data-verwalten="'+k.id+'" title="Verwalten">⋯</button></div>';
+      '<button class="kk-mehr" data-verwalten="'+esc(k.id)+'" title="Verwalten">⋯</button></div>';
   }
   html+='<button class="kurs-karte neu" id="btn-kurs-anlegen">＋ Kurs anlegen</button></div>';
   html+='<input type="file" id="file-kurs" accept=".xlsx,.json,application/json" multiple class="hidden">';
@@ -253,7 +253,7 @@ function renderKurse(){
       [...jahre.entries()].sort((a,b)=>b[0].localeCompare(a[0],'de')).map(([label,ks])=>
         '<div class="archiv-jahr"><div class="archiv-jahr-kopf">'+esc(label)+' · '+ks.length+'</div>'+
         sortiereKurse(ks).map(k=>'<div class="zeile"><span>'+esc(k.name)+' · '+esc(k.fach)+'</span>'+
-          '<span class="u-akt"><button class="btn still u-btn-klein" data-reaktivieren="'+k.id+'" title="Wieder aktiv setzen">'+iconHtml('erneut')+' aktivieren</button><button class="btn still u-btn-klein" data-oeffnen="'+k.id+'">öffnen</button><button class="btn gefahr u-btn-klein" data-loeschen="'+k.id+'">löschen</button></span></div>').join('')+'</div>').join('')+'</details>';
+          '<span class="u-akt"><button class="btn still u-btn-klein" data-reaktivieren="'+esc(k.id)+'" title="Wieder aktiv setzen">'+iconHtml('erneut')+' aktivieren</button><button class="btn still u-btn-klein" data-oeffnen="'+esc(k.id)+'">öffnen</button><button class="btn gefahr u-btn-klein" data-loeschen="'+esc(k.id)+'">löschen</button></span></div>').join('')+'</div>').join('')+'</details>';
   }
   // Jahresabschluss: selten + folgenreich → eigener Verwaltungsbereich unten statt Kopfzeile (C4)
   html+='<div class="kurse-fuss"><span class="u-leise">Jahresabschluss</span><button class="btn still u-btn-klein" id="btn-schuljahr">Neues Schuljahr…</button></div>';
@@ -300,6 +300,7 @@ function renderKurse(){
       } catch(err){ fehler.push(f.name+': '+err.message); }
     }
     for(const a of abgleiche){ if(!vault) break; if(await listenAbgleichDialog(a.k,a.neu,'mappe')) geladen.push(a.k); }   // nacheinander, jeder Kurs sein Blatt; gesperrt → Schluss (Prüfer 04.10. K4-b)
+    if(!vault){ e.target.value=''; return; }   // gesperrt: stammMutiert warf auf vault=null (Prüfer 25.10. N4) — die neuen Kurse hat der Auto-Lock vorher gespeichert
     if(geladen.length){
       stammMutiert(); speichern();
       kursWechseln(geladen[geladen.length-1].id);
@@ -763,6 +764,11 @@ function schuljahrAssistent(){
         el('button',{class:'btn',onclick:ausfuehren},'Schuljahr starten')));
   }
   function ausfuehren(){
+    // Ziel-Kennungen VOR jeder Änderung prüfen, wie „Kurs duplizieren“: eine vergebene id (Kurs schon im neuen Jahr angelegt, zwei Kurse
+    // unter demselben neuen Namen) überschrieb sonst dessen Schülerliste und stand zweimal im Stamm — kurs() fand den archivierten (Prüfer 25.10. M1)
+    const ziele=aktiveKurse.filter(k=>wahl.get(k.id).nehmen).map(k=>({k,id:slugId(wahl.get(k.id).name+'-'+k.fach+'-'+neuLabel)}));
+    const doppelt=ziele.find((z,i)=>vault.stamm.kurse.some(x=>x.id===z.id)||ziele.findIndex(y=>y.id===z.id)!==i);
+    if(doppelt){ toast('„'+wahl.get(doppelt.k.id).name+' · '+doppelt.k.fach+'“ gibt es im Schuljahr '+neuLabel+' schon — anderen Namen wählen',6000); schritt=3; s3(); return; }
     const neuId=slugId(neuLabel);
     // neues Schuljahr
     if(!vault.stamm.schuljahre.some(j=>j.id===neuId))
@@ -857,6 +863,7 @@ function loescheKursEndgueltig(id){
         for(const st of vault.verworfeneStaende||[]) Object.assign(st,entferneKursReferenzen(st,[id]));
         Object.assign(vault.stamm,entferneKursReferenzen(vault.stamm,[id]));
         vault.events=vault.events.filter(e=>e.kursId!==id);
+        alteSicherungenLoeschen();   // „Unwiderruflich“ gilt auch für die Umstellungs-Sicherungen in IndexedDB (Prüfer 25.10. M2)
         stammMutiert(); speichern(); dlgZu(); renderKurse(); toast('Endgültig gelöscht: '+k.name);
       };
     });
@@ -1120,7 +1127,7 @@ function sitzplanEditor(kursId){
     const frei=kursSchueler(k).filter(s=>!vergeben.has(s.nr));
     dlgZeigen('<h3>Wer sitzt hier?</h3><input type="text" id="s-such" placeholder="Name tippen…" list="s-liste"><datalist id="s-liste">'+
       frei.map(s=>'<option value="'+esc(s.vorname+' '+s.name+' ('+listenNr(s)+')')+'">').join('')+'</datalist>'+
-      '<div class="u-scroll30">'+frei.map(s=>'<button class="btn still u-btn-block u-eng" data-setz="'+s.nr+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
+      '<div class="u-scroll30">'+frei.map(s=>'<button class="btn still u-btn-block u-eng" data-setz="'+esc(s.nr)+'">'+esc(s.vorname)+' '+esc(s.name)+'</button>').join('')+'</div>'+
       '<div class="btn-reihe"><button class="btn still" data-schliessen>Abbrechen</button></div>',
       elx=>{
         const setze=nr=>{ vault.stamm.sitzplaene[k.id]=setzeAufPlatz(sp(),key,nr); stammMutiert(); speichern(); dlgZu(); renderHeute(); renderRail(); };   // auch auf einen leeren Tisch
@@ -1164,7 +1171,7 @@ function slotsEditor(kursId){
   const meine=slots.filter(s=>s.kursId===kursId);
   const wt=['','Mo','Di','Mi','Do','Fr'];
   dlgZeigen('<h3>Stundenplan · '+esc(k.name)+'</h3><p class="u-hinweis">Freie Zeitfenster (67,5-min-Raster deiner Schule) — steuert die Kurs-Autowahl.</p>'+
-    '<div id="slot-liste">'+meine.map((s,i)=>'<div class="zeile"><span>'+wt[s.wochentag]+' '+s.von+'–'+s.bis+(s.teilgruppe?' · Gr. '+s.teilgruppe:'')+'</span><button class="btn still" data-weg="'+slots.indexOf(s)+'">✕</button></div>').join('')+'</div>'+
+    '<div id="slot-liste">'+meine.map((s,i)=>'<div class="zeile"><span>'+wt[s.wochentag]+' '+esc(s.von)+'–'+esc(s.bis)+(s.teilgruppe?' · Gr. '+esc(s.teilgruppe):'')+'</span><button class="btn still" data-weg="'+slots.indexOf(s)+'">✕</button></div>').join('')+'</div>'+
     '<div class="zeile"><span>Neu</span><span><select id="sl-tag"><option value="1">Mo</option><option value="2">Di</option><option value="3">Mi</option><option value="4">Do</option><option value="5">Fr</option></select></span></div>'+
     '<div class="zeile"><span>von / bis</span><span><input type="time" id="sl-von" value="08:00" class="u-w108"> <input type="time" id="sl-bis" value="09:07" class="u-w108"></span></div>'+
     '<div class="zeile"><span>Teilgruppe</span><span><select id="sl-tg"><option value="">alle</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></span></div>'+

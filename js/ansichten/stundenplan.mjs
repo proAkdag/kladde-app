@@ -1,18 +1,18 @@
 // Kladde · js/ansichten/stundenplan.mjs — Abschnitt „STUNDENPLAN-ASSISTENT“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { kursZurZeit, setzeSlot, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.0';
-import { fachKuerzel } from '../../logic/fachfarben.mjs?v=3.0.0';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.0';
-import { KURZRASTER_45, RASTER_VORLAGEN } from '../../logic/rasterVorlagen.mjs?v=3.0.0';
-import { blockLabel, formatZeit, istAWoche, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.0';
-import { dlgBreit, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.0';
-import { heuteIso, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { datumLabel } from './eintraege.mjs?v=3.0.0';
-import { faerbe, slotArtLabel, wochenplanZellArt, wochenplanZellKurs } from './kurse.mjs?v=3.0.0';
-import { kursAutowahl } from './kurswahl.mjs?v=3.0.0';
-import { renderAlles } from './navigation.mjs?v=3.0.0';
+import { kursZurZeit, setzeSlot, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.1';
+import { fachKuerzel } from '../../logic/fachfarben.mjs?v=3.0.1';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.1';
+import { KURZRASTER_45, RASTER_VORLAGEN } from '../../logic/rasterVorlagen.mjs?v=3.0.1';
+import { blockLabel, formatZeit, istAWoche, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.1';
+import { dlgBreit, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.1';
+import { heuteIso, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { datumLabel } from './eintraege.mjs?v=3.0.1';
+import { faerbe, slotArtLabel, wochenplanZellArt, wochenplanZellKurs } from './kurse.mjs?v=3.0.1';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.1';
+import { renderAlles } from './navigation.mjs?v=3.0.1';
 
 /* ═══ STUNDENPLAN-ASSISTENT (P2.4 · 3 Schritte, mit el() gebaut — Migrationsregel) ═══ */
 const WT_KURZ=['','Mo','Di','Mi','Do','Fr'];
@@ -348,7 +348,7 @@ function stundenplanAssistent(){
       const regel=resolveBloecke(zm,1);
       for(let nr=1;nr<=zm.bloeckeProTag;nr++){
         const rb=regel[nr-1];
-        grid.append(el('div',{class:'sp-th sp-blockkopf'},blockLabel(zm,nr),el('small',{class:'sp-zeit'},rb?formatZeit(rb.startSek)+'–'+formatZeit(rb.endeSek):'')));
+        grid.append(el('div',{class:'sp-th sp-blockkopf'},blockLabel(zm,nr),el('small',{class:'sp-zeit'},rb?formatZeit(rb.startSek,false)+'–'+formatZeit(rb.endeSek,false):'')));   // genauer Wert wie im Zeitraster, nicht gerundet (Zero 25.10.)
         for(const wt of tage){
           const belegt=plan.some(p=>p.wochentag===wt&&p.blockNr===nr), gewaehlt=!!detail&&detail.wt===wt&&detail.nr===nr;
           const zelle=el('button',{class:'sp-zelle'+(belegt?' belegt':'')+(wochenplanZellArt(plan,wt,nr)?' sp-art':'')+(gewaehlt?' sp-gewaehlt':''),dataset:{wt:String(wt),nr:String(nr)},

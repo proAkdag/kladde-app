@@ -1,15 +1,15 @@
 // Kladde · js/ansichten/deck.mjs — Abschnitt „DECK“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.0';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.0';
-import { aktiverKursId, aktiveTeilgruppe, aktView, beamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { addEvent, anzahlBewertungen, kurs, nrNachSid, stammKind, stornoVon, tagesStandIndex, TYP_LABEL } from './eintraege.mjs?v=3.0.0';
-import { anzeigeNachname, anzeigeVorname, bewertGuard, busy, FEHLT_WORT, setzeBusy, sichtbareSchueler } from './heute.mjs?v=3.0.0';
-import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=3.0.0';
-import { mitUebergang } from './navigation.mjs?v=3.0.0';
-import { schuelerBlatt } from './stempel.mjs?v=3.0.0';
+import { wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.1';
+import { aktiverKursId, aktiveTeilgruppe, aktView, beamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { addEvent, anzahlBewertungen, kurs, nrNachSid, stammKind, stornoVon, tagesStandIndex, TYP_LABEL } from './eintraege.mjs?v=3.0.1';
+import { anzeigeNachname, anzeigeVorname, bewertGuard, busy, FEHLT_WORT, setzeBusy, sichtbareSchueler } from './heute.mjs?v=3.0.1';
+import { aktualisiereKursChip, nachtragLeisten } from './kurswahl.mjs?v=3.0.1';
+import { mitUebergang } from './navigation.mjs?v=3.0.1';
+import { schuelerBlatt } from './stempel.mjs?v=3.0.1';
 
 /* ═══ DECK · Stundenende-Ritual (Swipe: ←− →+ ↑Schülerblatt ↓weiter) ═══ */
 let deckListe=[], deckIdx=0, deckNurOhne=true;   // Zero 02.10.: „Deck soll standardmäßig mit nur offene Einträge starten“
@@ -128,7 +128,7 @@ function renderDeckVerlauf(){
 function deckKorrektur(v){
   const setze=typ=>{
     if(typ&&!bewertGuard(v.nr)){ dlgZu(); return; }   // Abwesende nicht bewerten — der Guard galt hier bisher nicht
-    if(v.evId){ const alt=vault.events.find(x=>x.id===v.evId); if(alt) stornoVon(alt); }
+    if(v.evId){ const alt=vault.events.find(x=>x.id===v.evId); if(alt&&!stornoVon(alt)){ dlgZu(); return; } }   // nichts zurückgenommen (Archiv, Kurswechsel): auch nichts melden (wie N6)
     if(typ){ const e=addEvent(typ,v.nr); v.evId=e?e.id:null; v.typ=e?typ:null; }
     else { v.evId=null; v.typ=null; }
     v.fremd=false;
@@ -178,6 +178,8 @@ function deckAktion(aktion){
   const karte=$('deck-karte');
   const reduziert=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const weiter=()=>{
+    // Während der Animation gesperrt: zeigeDeckKarte warf auf vault=null, busy blieb stehen und Deck und Sitzplan reagierten nicht mehr (Prüfer 25.10. N1)
+    if(!vault){ karte.classList.remove('weg-plus','weg-minus','weg-weiter'); setzeBusy(false); return; }
     karte.classList.remove('weg-plus','weg-minus','weg-weiter');
     deckIdx++; zeigeDeckKarte();
     if(!reduziert){ karte.classList.remove('rein'); void karte.offsetWidth; karte.classList.add('rein'); }

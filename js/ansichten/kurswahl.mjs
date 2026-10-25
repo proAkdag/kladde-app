@@ -1,19 +1,19 @@
 // Kladde · js/ansichten/kurswahl.mjs — Abschnitt „KURS-AUTOWAHL über Stundenplan-Slots“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { kursZurZeit, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.0';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.0';
-import { stundeFaelltAus } from '../../logic/stunden.mjs?v=3.0.0';
-import { blockLabel, formatZeit, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.0';
-import { dlgKursBinden, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0';
-import { iconEl } from '../kern/icons.mjs?v=3.0.0';
-import { themeEff } from '../kern/theme.mjs?v=3.0.0';
-import { aktiverKursId, aktiveTeilgruppe, aktView, anzeigeBlock, beamerModus, editorAktiv, heuteIso, setzeKursId, setzeTeilgruppe, setzeTermin, terminDatum, terminZuruecksetzen, vault } from '../kern/zustand.mjs?v=3.0.0';
-import { beamerOptionenSheet, datumLabel, kurs, kursSchueler, setzeBeamer } from './eintraege.mjs?v=3.0.0';
-import { angezeigteStunde, geheZuTag, planKontext, renderHeute, stundenplanAnsicht, stundeWaehlen } from './heute.mjs?v=3.0.0';
-import { editorCleanup, sitzplanEditor } from './kurse.mjs?v=3.0.0';
-import { mitUebergang, renderAlles } from './navigation.mjs?v=3.0.0';
-import { zeigeHilfe } from './stempel.mjs?v=3.0.0';
+import { kursZurZeit, SLOT_ARTEN } from '../../logic/autowahl.mjs?v=3.0.1';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.1';
+import { stundeFaelltAus } from '../../logic/stunden.mjs?v=3.0.1';
+import { blockLabel, formatZeit, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.1';
+import { dlgKursBinden, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
+import { iconEl } from '../kern/icons.mjs?v=3.0.1';
+import { themeEff } from '../kern/theme.mjs?v=3.0.1';
+import { aktiverKursId, aktiveTeilgruppe, aktView, anzeigeBlock, beamerModus, editorAktiv, heuteIso, setzeKursId, setzeTeilgruppe, setzeTermin, terminDatum, terminZuruecksetzen, vault } from '../kern/zustand.mjs?v=3.0.1';
+import { beamerOptionenSheet, datumLabel, kurs, kursSchueler, setzeBeamer } from './eintraege.mjs?v=3.0.1';
+import { angezeigteStunde, geheZuTag, planKontext, renderHeute, stundenplanAnsicht, stundeWaehlen } from './heute.mjs?v=3.0.1';
+import { editorCleanup, sitzplanEditor } from './kurse.mjs?v=3.0.1';
+import { mitUebergang, renderAlles } from './navigation.mjs?v=3.0.1';
+import { zeigeHilfe } from './stempel.mjs?v=3.0.1';
 
 /* ═══ KURS-AUTOWAHL über Stundenplan-Slots (freie Zeitfenster · 67,5-min-Schule) ═══ */
 let autowahlInfo=null;   // {kursId, blockNr, startSek, endeSek, quelle} — für Heute-Kopf (§28)
@@ -41,7 +41,7 @@ function kursAutowahlKern(){
   autowahlInfo=null;
   let hand=handwahlLesen();
   if(hand&&!vault.stamm.kurse.some(k=>k.id===hand.kursId&&k.status!=='archiviert')){ handwahlSetzen(null); hand=null; }   // Kurs weg/archiviert → Handwahl gegenstandslos
-  const handAnwenden=(bisSek)=>{ setzeKursId(hand.kursId); setzeTeilgruppe(hand.teilgruppe||null); $('kurs-slot').textContent=' · von Hand'+(bisSek!=null?' · bis '+formatZeit(bisSek):'')+(hand.teilgruppe?' · Gr. '+hand.teilgruppe:''); };
+  const handAnwenden=(bisSek)=>{ setzeKursId(hand.kursId); setzeTeilgruppe(hand.teilgruppe||null); $('kurs-slot').textContent=' · von Hand'+(bisSek!=null?' · bis '+formatZeit(bisSek,false):'')+(hand.teilgruppe?' · Gr. '+hand.teilgruppe:''); };
   if(zm){
     const t=kursZurZeit(jetzt,{zeitmodell:zm,wochenplan:wochenplanAktiv(),ausnahmen:vault.stamm.ausnahmeSlots||[]});
     if(t){
@@ -56,7 +56,7 @@ function kursAutowahlKern(){
         // Klassen-/Reservestunde (art, kein Kurs): der zuletzt aktive Kurs bleibt stehen, der Slot-Text sagt, was laut Plan läuft
         if(t.kursId){ setzeKursId(t.kursId); setzeTeilgruppe(gueltigeGruppe(t.kursId,t.teilgruppe)); }
         else if(!aktiverKursId||kursIstArchiviert(aktiverKursId)) setzeKursId(ersterKursId());
-        $('kurs-slot').textContent=' · Std. '+blockLabel(zm,t.blockNr,heuteIsoStr)+' · '+formatZeit(block.startSek)+'–'+formatZeit(block.endeSek)+(t.art?' · '+SLOT_ARTEN[t.art].label:'')+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'');
+        $('kurs-slot').textContent=' · Std. '+blockLabel(zm,t.blockNr,heuteIsoStr)+' · '+formatZeit(block.startSek,false)+'–'+formatZeit(block.endeSek,false)+(t.art?' · '+SLOT_ARTEN[t.art].label:'')+(t.teilgruppe?' · Gr. '+t.teilgruppe:'')+(t.quelle==='kommend'?' (gleich)':'');
       }
       aktualisiereKursChip(); return;
     }
@@ -104,7 +104,7 @@ function aktualisiereKursChip(){
   if(!k){ $('kurs-slot').textContent=''; return; }
   if(!zm){ if(nachtrag) $('kurs-slot').textContent=' · '+datumLabel(terminDatum)+' · Nachtrag'; return; }   // Alt-Slots: sonst stünde das Zeitfenster von heute da (B4)
   const st=angezeigteStunde(k), h=handwahlLesen(), vonHand=!!h&&h.kursId===k.id&&!h.nurStunde&&!nachtrag;
-  $('kurs-slot').textContent=(nachtrag?' · '+datumLabel(terminDatum):'')+(st?' · Std. '+blockLabel(zm,st.blockNr,terminDatum)+' · '+formatZeit(st.startSek)+(st.endeSek!=null?'–'+formatZeit(st.endeSek):''):'')
+  $('kurs-slot').textContent=(nachtrag?' · '+datumLabel(terminDatum):'')+(st?' · Std. '+blockLabel(zm,st.blockNr,terminDatum)+' · '+formatZeit(st.startSek,false)+(st.endeSek!=null?'–'+formatZeit(st.endeSek,false):''):'')
     +(aktiveTeilgruppe?' · Gr. '+aktiveTeilgruppe:'')+(vonHand?' · von Hand':'')+(nachtrag?' · Nachtrag':'');
 }
 // Nachtrag außerhalb von „Heute“ (Zero 06.10. „B · Chip und Leiste“): über der Deck-Karte und über der Schüler-Ansicht, wohin neue Einträge

@@ -1,11 +1,11 @@
 // Kladde · js/kern/tresor.mjs — IndexedDB, Schlüssel im RAM, seriell verschlüsselt speichern (A2 Schnitt 3: wörtlich aus js/app.mjs, verhaltensneutral; der Kern kennt keine Ansicht)
-import { encodeContainerV2 } from '../../logic/container.mjs?v=3.0.0';
-import { hebeLoeschungAuf } from '../../logic/merge.mjs?v=3.0.0';
-import { geraeteId, hebeKindLoeschungAuf, vergibSids } from '../../logic/identitaet.mjs?v=3.0.0';
-import { kompaktiere as spKompaktiere } from '../../logic/sitzplan.mjs?v=3.0.0';
-import { toast } from './dom.mjs?v=3.0.0';
-import { GERAET, IST_DEV } from './umgebung.mjs?v=3.0.0';
-import { vault, aktiverKursId, editorAktiv } from './zustand.mjs?v=3.0.0';
+import { encodeContainerV2 } from '../../logic/container.mjs?v=3.0.1';
+import { hebeLoeschungAuf } from '../../logic/merge.mjs?v=3.0.1';
+import { geraeteId, hebeKindLoeschungAuf, vergibSids } from '../../logic/identitaet.mjs?v=3.0.1';
+import { kompaktiere as spKompaktiere } from '../../logic/sitzplan.mjs?v=3.0.1';
+import { toast } from './dom.mjs?v=3.0.1';
+import { GERAET, IST_DEV } from './umgebung.mjs?v=3.0.1';
+import { vault, aktiverKursId, editorAktiv } from './zustand.mjs?v=3.0.1';
 
 /* ═══ STORAGE · Vault = KLD1-Container in IndexedDB ═══ */
 const DB_NAME=IST_DEV?'kladde_dev':'kladde_v1'; // getrennte Vaults für Dev- und Produktiv-Instanz
@@ -43,13 +43,23 @@ function speichern(){
   const snapshot=JSON.stringify(sp0?{...vault,stamm:{...vault.stamm,sitzplaene:{...vault.stamm.sitzplaene,[aktiverKursId]:spKompaktiere(sp0)}}}:vault);
   const key=dekKey, kopf=containerKopf;   // beim Aufruf festhalten — sperren() nullt die Variablen, bevor die Kette läuft
   // v2-Save: reines AES-GCM mit dem DEK — KEIN KDF (gemessen 0,79 ms/Save statt ~1 KDF/Tap)
+  // Beim Ausführen gilt der aktuelle Kopf, wenn es einen gibt: ein Speichern, das während eines Passphrase-Wechsels in die Kette kam,
+  // schrieb sonst danach den alten Kopf zurück, und nur die alte Passphrase öffnete (Prüfer 25.10. N7). Gesperrt: der festgehaltene.
   speicherKette=speicherKette
-    .then(()=>encodeContainerV2(JSON.parse(snapshot),key,kopf))
+    .then(()=>encodeContainerV2(JSON.parse(snapshot),dekKey||key,containerKopf||kopf))
     .then(blob=>idbPut('vault',blob))
     .then(()=>{ speicherFehler=null; })
     .catch(err=>{ speicherFehler=err; console.error('[kladde] speichern',err); toast('⚠ Speichern fehlgeschlagen: '+err.message+' — nicht sperren, erst Speicher freimachen',10000); });
   return speicherKette;
 }
+// Ein Schritt, der den Tresor selbst schreibt (Passphrase-Wechsel), läuft in DERSELBEN Kette wie speichern(): kein Speichern
+// überholt ihn oder schreibt mitten hinein (Prüfer 25.10. N7). Ein Fehler des Schritts geht an den Aufrufer, die Kette läuft weiter.
+function inSpeicherKette(fn){ const p=speicherKette.then(fn); speicherKette=p.catch(()=>{}); return p; }
+// Sicherungen aus den Schema-Umstellungen (v1→v2, v2→v3, v3→v4) tragen den alten Stand mit demselben Datenschlüssel bzw. der alten
+// Passphrase, auch längst endgültig gelöschte Kurse. Mit einer eigenen Sicherung oder einem endgültigen Löschen haben sie ihren Zweck
+// erfüllt — bis 3.0.0 wurde nur die v1-Sicherung geräumt, v2/v3 blieben für immer (Prüfer 25.10. M2).
+const ALTE_SICHERUNGEN=['vault_v1_backup','vault_v2_backup','vault_v3_backup'];
+function alteSicherungenLoeschen(){ return Promise.all(ALTE_SICHERUNGEN.map(k=>idbDel(k).catch(()=>{}))); }
 function leererVault(){
   return {schema:'kladde/v2',
     stamm:{rev:1,ts:new Date().toISOString(),geraet:GERAET,kurse:[],schueler:{},sitzplaene:{},kursprofile:{},stundenplanSlots:[],zeitmodelle:[],wochenplan:[],ausnahmeSlots:[],einstellungen:{slot:'m1'}},
@@ -63,4 +73,4 @@ function setzeAnmeldung(art,schwach){ anmeldung=art; passSchwach=schwach; }
 function sperrGenWeiter(){ sperrGen++; }
 function setzeMigrationsHinweis(an){ migrationsHinweis=an; }
 
-export { DB_NAME, dekKey, containerKopf, anmeldung, passSchwach, sperrGen, nochOffen, migrationsHinweis, mitDb, idbGet, idbPut, idbDel, geraetId, geraetIdLaden, speicherKette, speicherFehler, speichern, leererVault, stammMutiert, setzeSchluessel, setzeAnmeldung, sperrGenWeiter, setzeMigrationsHinweis };
+export { DB_NAME, dekKey, containerKopf, anmeldung, passSchwach, sperrGen, nochOffen, migrationsHinweis, mitDb, idbGet, idbPut, idbDel, geraetId, geraetIdLaden, speicherKette, speicherFehler, speichern, inSpeicherKette, alteSicherungenLoeschen, leererVault, stammMutiert, setzeSchluessel, setzeAnmeldung, sperrGenWeiter, setzeMigrationsHinweis };

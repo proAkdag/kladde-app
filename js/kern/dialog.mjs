@@ -1,7 +1,7 @@
 // Kladde · js/kern/dialog.mjs — Dialog-Rahmen (Schließen-Knopf, Inhalt, Breite) (A2 Schnitt 2: wörtlich aus js/app.mjs, verhaltensneutral; der Kern kennt keine Ansicht)
-import { $, el } from './dom.mjs?v=3.0.0';
-import { iconEl } from './icons.mjs?v=3.0.0';
-import { aktiverKursId } from './zustand.mjs?v=3.0.0';
+import { $, el } from './dom.mjs?v=3.0.1';
+import { iconEl } from './icons.mjs?v=3.0.1';
+import { aktiverKursId } from './zustand.mjs?v=3.0.1';
 
 // Dialog-Rahmen (Zero 2026-09-02): ein Schließen-Knopf oben rechts, der beim Scrollen stehen bleibt.
 // Der Dialog trägt zwei Kinder: .dlg-x (absolut, außerhalb des Scrollbereichs) + .dlg-inhalt (scrollt).
@@ -32,7 +32,8 @@ function dlgZeigen(html,setup){
 }
 // el()-Variante: Dialog aus DOM-Knoten (CSP-sicher, kein innerHTML) — für neue Views (P2.4+)
 function dlgZeigenEl(...knoten){
-  const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().replaceChildren(...knoten);
+  // Leere Teile (null/undefined/false) überspringen wie el(): replaceChildren(null) schrieb sonst „null“ in den Dialog (Schuljahr-Assistent, 25.10.)
+  const d=$('dlg'); d.classList.remove('breit'); dlgInhalt().replaceChildren(...knoten.filter(k=>k!=null&&k!==false));
   dlgOeffnen(d);
 }
 // Von Hand gewählter Kurs: ein offener Dialog gilt jetzt dem neuen Kurs (kursWechseln)

@@ -1,5 +1,5 @@
 // Kladde · js/kern/dom.mjs — sichere DOM-Erzeugung, Escape, Toast, Werkzeug-Knopf (A2 Schnitt 2: wörtlich aus js/app.mjs, verhaltensneutral; der Kern kennt keine Ansicht)
-import { iconEl } from './icons.mjs?v=3.0.0';
+import { iconEl } from './icons.mjs?v=3.0.1';
 
 const $=id=>document.getElementById(id);
 
