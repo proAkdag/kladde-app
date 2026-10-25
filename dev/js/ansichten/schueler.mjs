@@ -1,20 +1,20 @@
 // Kladde · js/ansichten/schueler.mjs — Abschnitt „SCHÜLER + Übersichts-Tabellen“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { schuelerBericht } from '../../logic/bericht.mjs?v=3.0.0.1792601998';
-import { drittelnoteLabel, einheitPasst, einheitVon, noteAlsWert, wertZuLabel } from '../../logic/skalen.mjs?v=3.0.0.1792601998';
-import { sidVonKind } from '../../logic/identitaet.mjs?v=3.0.0.1792601998';
-import { lnr } from '../../logic/teilnehmer.mjs?v=3.0.0.1792601998';
-import { istTerminEintrag, kursEinordnung, notenAbstand, quartalsVerlauf, regelText, verdichte, vorschlagsZeilen, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.0.1792601998';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0.1792601998';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.0.1792601998';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.0.1792601998';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.0.1792601998';
-import { aktiverKursId, aktView, beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.0.1792601998';
-import { addEvent, bewertProfil, datumLabel, kindVonEvent, kurs, kursSchueler, listenNr, nrVonEvent, reduziereStand, schuelerVonNr, sidVonNr, stammKind, stornoVon, TYP_LABEL, wiederDa, zeigeRedo } from './eintraege.mjs?v=3.0.0.1792601998';
-import { FEHLT_WORT, markenEl, markenHtml } from './heute.mjs?v=3.0.0.1792601998';
-import { nachtragLeisten } from './kurswahl.mjs?v=3.0.0.1792601998';
-import { mitUebergang } from './navigation.mjs?v=3.0.0.1792601998';
-import { kursGewechselt, NOTEN_DRITTEL, notizDialog, oeffneTag, tagBewerten, tagBewertenHtml } from './stempel.mjs?v=3.0.0.1792601998';
+import { schuelerBericht } from '../../logic/bericht.mjs?v=3.0.1.1792941037';
+import { drittelnoteLabel, einheitPasst, einheitVon, noteAlsWert, wertZuLabel } from '../../logic/skalen.mjs?v=3.0.1.1792941037';
+import { sidVonKind } from '../../logic/identitaet.mjs?v=3.0.1.1792941037';
+import { lnr } from '../../logic/teilnehmer.mjs?v=3.0.1.1792941037';
+import { istTerminEintrag, kursEinordnung, notenAbstand, quartalsVerlauf, regelText, verdichte, vorschlagsZeilen, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1.1792941037';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1.1792941037';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.1.1792941037';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.1.1792941037';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.1.1792941037';
+import { aktiverKursId, aktView, beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.1.1792941037';
+import { addEvent, bewertProfil, datumLabel, kindVonEvent, kurs, kursSchueler, listenNr, nrVonEvent, reduziereStand, schuelerVonNr, sidVonNr, stammKind, stornoVon, TYP_LABEL, wiederDa, zeigeRedo } from './eintraege.mjs?v=3.0.1.1792941037';
+import { FEHLT_WORT, markenEl, markenHtml } from './heute.mjs?v=3.0.1.1792941037';
+import { nachtragLeisten } from './kurswahl.mjs?v=3.0.1.1792941037';
+import { mitUebergang } from './navigation.mjs?v=3.0.1.1792941037';
+import { kursGewechselt, NOTEN_DRITTEL, notizDialog, oeffneTag, tagBewerten, tagBewertenHtml } from './stempel.mjs?v=3.0.1.1792941037';
 
 /* ═══ SCHÜLER · Verdichtung + Inline-Detail-Akkordeon (kein Popup) ═══ */
 let offenerSchueler=null, offeneZeile=null, zeitraumFilter=null, schuelerSuche='', schuelerFilter=null, sListeScroll=0;
@@ -53,9 +53,9 @@ function renderSchueler(){
     const tageOffen=Math.floor((new Date(heute)-new Date(e.datum))/86400000);
     const alt=tageOffen>7;
     return '<div class="klaer-zeile'+(alt?' alt':'')+'"><span class="klaer-wer"><b>'+esc(s?s.vorname+' '+s.name:'?')+'</b><small>'+datumLabel(e.datum)+(alt?' · '+tageOffen+' Tage offen':'')+'</small></span>'+
-      '<span class="klaer-btns"><button class="btn still u-btn-klein" data-klaer="e" data-o="'+e.id+'">Entsch.</button>'+
-      '<button class="btn still u-btn-klein" data-klaer="u" data-o="'+e.id+'">Unentsch.</button>'+
-      '<button class="btn still u-btn-klein" data-klaer="irrtum" data-o="'+e.id+'">Irrtum</button></span></div>'; }).join('');
+      '<span class="klaer-btns"><button class="btn still u-btn-klein" data-klaer="e" data-o="'+esc(e.id)+'">Entsch.</button>'+
+      '<button class="btn still u-btn-klein" data-klaer="u" data-o="'+esc(e.id)+'">Unentsch.</button>'+
+      '<button class="btn still u-btn-klein" data-klaer="irrtum" data-o="'+esc(e.id)+'">Irrtum</button></span></div>'; }).join('');
   // Keine offenen Fehlzeiten: eine Zeile über der Liste statt einer leeren Karte (Zero 2026-09-30, Codex-Prüfbericht)
   const seite=offeneO.length?'<aside class="s-seite" aria-label="Offene Fehlzeiten"><div class="rail-karte"><div class="rail-titel">Offene Fehlzeiten ('+offeneO.length+')</div>'+
     klaerZeilen+'</div></aside>':'';
@@ -92,7 +92,7 @@ function renderSchueler(){
     const entscheidung=qnEv?'<span class="qn-fest" title="gesetzte Quartalsnote">'+esc(qnText(qnEv,k))+' <small>gesetzt</small></span>'+
         (abw!=null&&abw>=1?'<small class="s-abw" title="weicht mindestens eine Stufe vom Vorschlag ab">'+iconHtml('warnung')+' V '+esc(v.vorschlag.label)+'</small>':'')
       :(v.vorschlag?'<span class="s-vorschlag"><small>Vorschlag</small> '+esc(v.vorschlag.label)+'</span>':'—');
-    html+='<div class="s-block" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'" data-flags="'+flags.join(' ')+'"><button type="button" class="s-item" data-nr="'+s.nr+'" aria-expanded="false">'+
+    html+='<div class="s-block" data-name="'+esc((s.vorname+' '+s.name).toLowerCase())+'" data-flags="'+flags.join(' ')+'"><button type="button" class="s-item" data-nr="'+esc(s.nr)+'" aria-expanded="false">'+
       '<span class="u-minw104"><b>'+esc(s.vorname)+'</b> <small class="u-leise">'+esc(s.name)+'</small>'+(s.lb?' <span class="lb-badge">LB</span>':'')+'</span>'+
       '<span class="u-flex1">'+(anlass?'<small class="s-anlass'+(anlassWarn?' warn':'')+'">'+anlass+'</small>':'')+'</span>'+
       '<span class="u-wert-rechts">'+entscheidung+'</span>'+
@@ -481,7 +481,7 @@ function schuelerDetailHtml(s,k,v){
   // Horizontaler Zeitstrahl: je Tag eine kompakte Karte mit den mk-Marken (gleiche Sprache wie die Sitzplan-Kachel);
   // Tap expandiert die Einträge des Tages darunter (mit ↶-Storno). Kein Runterscrollen mehr.
   const evZeile=e=>'<div class="ev-zeile"><span>'+(e.best?iconHtml('best')+' ':'')+esc(TYP_LABEL[e.typ]||e.typ)+(e.minuten?' '+e.minuten+' min':'')+(e.wert?' '+esc(String(e.wert)):'')+(e.notiz?' · '+esc(e.notiz):'')+'</span>'+
-    '<button class="btn still ev-storno u-btn-klein" data-storno="'+e.id+'">'+iconHtml('rueck')+'</button></div>';
+    '<button class="btn still ev-storno u-btn-klein" data-storno="'+esc(e.id)+'">'+iconHtml('rueck')+'</button></div>';
   // Tag bewerten nur an echten Unterrichtstagen des Kurses, nicht in der Zukunft, nicht im Archiv, nicht bei Abwesenheit
   // (Prüfer 2026-09-30: ein Tag mit nur einer Quartalsnote wurde durch ein ＋ zum neuen Kurstermin und senkte die Beteiligung aller)
   const terminTage=new Set(wirksameEvents(vault.events.filter(e=>e.kursId===k.id)).filter(istTerminEintrag).map(e=>e.datum));
@@ -518,7 +518,7 @@ function schuelerDetailHtml(s,k,v){
     '<div class="zeile"><span>Beteiligung</span><span class="wert">'+v.beteiligtTermine+' / '+v.kursTermine+' Termine · Verlauf '+v.pfeil+'</span></div>'+
     (fehltE||fehltU||verspSum?'<div class="zeile"><span>Fehl / Verspätung</span><span class="wert">'+(fehltE?fehltE+'× e ':'')+(fehltU?fehltU+'× u ':'')+(verspSum?'· '+verspSum+' min':'')+'</span></div>':'')+
     '<div class="zeile"><span>Vorschlag</span><span class="wert">'+(v.vorschlag?esc(v.vorschlag.label):(s.lb?'— (LB)':'—'))+'</span></div>'+
-    (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal="'+s.nr+'">Als Quartalsnote setzen…</button></div>':'')+
+    (v.vorschlag&&!s.lb?'<div class="btn-reihe"><button class="btn" data-quartal="'+esc(s.nr)+'">Als Quartalsnote setzen…</button></div>':'')+
     '<div class="tag-kopf u-kopf-leise">Verlauf ('+evs.length+')</div>'+verlauf+
     (notizListe?'<div class="tag-kopf u-kopf-leise">Notizen ('+notizen.length+')</div><div class="notiz-liste">'+notizListe+'</div>':'')+
     '</div>';

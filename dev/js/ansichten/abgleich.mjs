@@ -5,20 +5,20 @@
 // Stand sofort; jedes Gerät führt den fremden Stand auf DEMSELBEN Weg zusammen wie den Datei-Import (Fragen zu Kindern → Vorschau →
 // tresorUebernehmen), nie still. Wer den fremden Stand ganz hat, quittiert; erst dann geht der Kanal zu. So darf eine Person die Geräte
 // nacheinander bedienen (Prüfer 20.10. 🔴 1). Schließen, Esc, ✕ und Sperren räumen auf: Kamera aus, Kanal zu.
-import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.0.1792601998';
-import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.0.1792601998';
-import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.0.1792601998';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0.1792601998';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.0.1792601998';
-import { iconEl } from '../kern/icons.mjs?v=3.0.0.1792601998';
-import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.0.1792601998';
-import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.0.1792601998';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.0.1792601998';
-import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.0.1792601998';
-import { vault } from '../kern/zustand.mjs?v=3.0.0.1792601998';
-import { kursAutowahl } from './kurswahl.mjs?v=3.0.0.1792601998';
-import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.0.1792601998';
-import { renderAlles } from './navigation.mjs?v=3.0.0.1792601998';
+import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.1.1792941037';
+import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.1.1792941037';
+import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.1.1792941037';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1.1792941037';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.1.1792941037';
+import { iconEl } from '../kern/icons.mjs?v=3.0.1.1792941037';
+import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.1.1792941037';
+import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.1.1792941037';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.1.1792941037';
+import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.1.1792941037';
+import { vault } from '../kern/zustand.mjs?v=3.0.1.1792941037';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.1.1792941037';
+import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.1.1792941037';
+import { renderAlles } from './navigation.mjs?v=3.0.1.1792941037';
 
 const NAME = { ipad: 'iPad', iphone: 'iPhone', handy: 'Handy', pc: 'PC' };
 const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;

@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/heute.mjs — Abschnitt „HEUTE“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { gewichteteWahl, zufallsGewicht } from '../../logic/auswahl.mjs?v=3.0.0.1792601998';
-import { ausnahmeEntfernen, entfallZurueck, geplanteBlockNrn, SLOT_ARTEN, slotFuerBlock, tagesAusfall } from '../../logic/autowahl.mjs?v=3.0.0.1792601998';
-import { listenEintraege } from '../../logic/erfassListe.mjs?v=3.0.0.1792601998';
-import { fachKuerzel } from '../../logic/fachfarben.mjs?v=3.0.0.1792601998';
-import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.0.1792601998';
-import { setzeAufPlatz, belegteReihen as spBelegteReihen } from '../../logic/sitzplan.mjs?v=3.0.0.1792601998';
-import { kalenderwoche, kursTag, naechsteStunde, stundeDesKurses, stundenAm, tagesStunden, tagPlus, wochentagVon } from '../../logic/stunden.mjs?v=3.0.0.1792601998';
-import { lnr } from '../../logic/teilnehmer.mjs?v=3.0.0.1792601998';
-import { istTerminEintrag, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.0.1792601998';
-import { blockLabel, formatZeit, istAWoche, istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.0.1792601998';
-import { dlgBreit, dlgInhalt, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.0.1792601998';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.0.1792601998';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.0.1792601998';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.0.1792601998';
-import { aktiverKursId, aktiveTeilgruppe, beamerModus, editorAktiv, heuteIso, setzeAnzeigeBlock, setzeTeilgruppe, setzeTermin, stempelTyp, terminDatum, terminNachtrag, vault } from '../kern/zustand.mjs?v=3.0.0.1792601998';
-import { addEvent, aktiverSchueler, anzahlBewertungen, bewertProfil, BTN_BEAMER, datumLabel, eintragLabel, kurs, kursSchueler, leererStand, schuelerVonNr, setzeAktiverSchueler, sidVonNr, stammKind, standAmTermin, stornoVon, tagesStandIndex, wiederDa, WOCHENTAG_KURZ, zeigeRedo } from './eintraege.mjs?v=3.0.0.1792601998';
-import { faerbe, sitzplanEditor } from './kurse.mjs?v=3.0.0.1792601998';
-import { autowahlInfo, gruppeWaehlen, gueltigeGruppe, handwahlSetzen, kursAutowahl, nachAusnahme, wochenplanAktiv } from './kurswahl.mjs?v=3.0.0.1792601998';
-import { mitUebergang, renderAlles } from './navigation.mjs?v=3.0.0.1792601998';
-import { buchungsStunde, hilfeNeu, kursGewechselt, noteDialog, notizDialog, pulseKachel, renderRail, schuelerBlatt, tagFeld, verspStempel } from './stempel.mjs?v=3.0.0.1792601998';
-import { ausnahmeFuer, schultagAb, setzeAusnahme, setzeAusnahmen, stundenplanAssistent, WT_KURZ } from './stundenplan.mjs?v=3.0.0.1792601998';
+import { gewichteteWahl, zufallsGewicht } from '../../logic/auswahl.mjs?v=3.0.1.1792941037';
+import { ausnahmeEntfernen, entfallZurueck, geplanteBlockNrn, SLOT_ARTEN, slotFuerBlock, tagesAusfall } from '../../logic/autowahl.mjs?v=3.0.1.1792941037';
+import { listenEintraege } from '../../logic/erfassListe.mjs?v=3.0.1.1792941037';
+import { fachKuerzel } from '../../logic/fachfarben.mjs?v=3.0.1.1792941037';
+import { sortiereKurse } from '../../logic/kursSort.mjs?v=3.0.1.1792941037';
+import { setzeAufPlatz, belegteReihen as spBelegteReihen } from '../../logic/sitzplan.mjs?v=3.0.1.1792941037';
+import { kalenderwoche, kursTag, naechsteStunde, stundeDesKurses, stundenAm, tagesStunden, tagPlus, wochentagVon } from '../../logic/stunden.mjs?v=3.0.1.1792941037';
+import { lnr } from '../../logic/teilnehmer.mjs?v=3.0.1.1792941037';
+import { istTerminEintrag, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1.1792941037';
+import { blockLabel, formatZeit, istAWoche, istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.1.1792941037';
+import { dlgBreit, dlgInhalt, dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1.1792941037';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.1.1792941037';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.1.1792941037';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.1.1792941037';
+import { aktiverKursId, aktiveTeilgruppe, beamerModus, editorAktiv, heuteIso, setzeAnzeigeBlock, setzeTeilgruppe, setzeTermin, stempelTyp, terminDatum, terminNachtrag, vault } from '../kern/zustand.mjs?v=3.0.1.1792941037';
+import { addEvent, aktiverSchueler, anzahlBewertungen, bewertProfil, BTN_BEAMER, datumLabel, eintragLabel, kurs, kursSchueler, leererStand, schuelerVonNr, setzeAktiverSchueler, sidVonNr, stammKind, standAmTermin, stornoVon, tagesStandIndex, wiederDa, WOCHENTAG_KURZ, zeigeRedo } from './eintraege.mjs?v=3.0.1.1792941037';
+import { faerbe, sitzplanEditor } from './kurse.mjs?v=3.0.1.1792941037';
+import { autowahlInfo, gruppeWaehlen, gueltigeGruppe, handwahlSetzen, kursAutowahl, nachAusnahme, wochenplanAktiv } from './kurswahl.mjs?v=3.0.1.1792941037';
+import { mitUebergang, renderAlles } from './navigation.mjs?v=3.0.1.1792941037';
+import { buchungsStunde, hilfeNeu, kursGewechselt, noteDialog, notizDialog, pulseKachel, renderRail, schuelerBlatt, tagFeld, verspStempel } from './stempel.mjs?v=3.0.1.1792941037';
+import { ausnahmeFuer, schultagAb, setzeAusnahme, setzeAusnahmen, stundenplanAssistent, WT_KURZ } from './stundenplan.mjs?v=3.0.1.1792941037';
 
 /* ═══ HEUTE · Sitzplan 12×12 (Beamer-Regel: keine Werte sichtbar) ═══ */
 let busy=false; // Härtungs-Regel 6: Eingabe-Lock
@@ -94,7 +94,7 @@ function angezeigteStunde(k){
 }
 function stundeUntertitel(k){
   const zm=planKontext().zeitmodell, st=angezeigteStunde(k);
-  return datumLabel(terminDatum)+(st?' · Std. '+blockLabel(zm,st.blockNr,terminDatum)+' · '+formatZeit(st.startSek):'')+
+  return datumLabel(terminDatum)+(st?' · Std. '+blockLabel(zm,st.blockNr,terminDatum)+' · '+formatZeit(st.startSek,false):'')+
     (aktiveTeilgruppe?' · Gr. '+aktiveTeilgruppe:'')+(terminNachtrag?' · Nachtrag':'');
 }
 // mitHeute=false am Handy: dort steht „↩ Heute“ im Streifen unter dem Kopf (die Kopfzeile ist voll, Prüfer 2026-10-01)
@@ -211,7 +211,7 @@ function stundeWaehlen(start,reiter='tag'){
       const z=el('button',{type:'button',class:'sw-stunde'+(ist?' an':'')+(entf?' entf':'')+(kx?.status==='archiviert'?' archiv':''),dataset:{kurs:x.kursId||''},...(ist?{'aria-current':'true'}:{}),
         ...(kx&&kx.status!=='archiviert'&&!entf&&!nurLesen?{}:{disabled:''}),onclick:()=>oeffneStunde(kx.id,t,x.teilgruppe,x.blockNr)},   // archiviert (alte Vertretung): nicht wählbar (N5)
         el('span',{class:'sw-nr'},lbl),el('span',{class:'kurs-band'}),el('b',{},titel(x)),
-        zusatz?el('span',{class:'sw-badge'+(entf?' fehl':'')},zusatz):el('span',{class:'sw-zeit'},formatZeit(x.startSek)));
+        zusatz?el('span',{class:'sw-badge'+(entf?' fehl':'')},zusatz):el('span',{class:'sw-zeit'},formatZeit(x.startSek,false)));
       faerbe(z,kx);
       const name='Aktionen · '+lbl+' · '+titel(x);
       const mehr=el('button',{type:'button',class:'sw-mehr',dataset:{mehr:String(x.blockNr)},title:name,'aria-label':name,'aria-expanded':String(auf),
@@ -279,7 +279,7 @@ function stundeWaehlen(start,reiter='tag'){
         el('b',{},WT_KURZ[s.wt]+(abw&&!kurz?' *':'')),el('small',{},tm(s.d)),kurz?el('small',{class:'sp-c-kurz'},'Kurzstd.'):null)); }
     for(let nr=1;nr<=reihen;nr++){
       const zk=zeilenKopf(nr);
-      grid.append(el('div',{class:'sp-th sp-blockkopf'},zk.label,el('small',{class:'sp-zeit'},zk.zeit!=null?formatZeit(zk.zeit):'')));
+      grid.append(el('div',{class:'sp-th sp-blockkopf'},zk.label,el('small',{class:'sp-zeit'},zk.zeit!=null?formatZeit(zk.zeit,false):'')));
       for(const s of spalten){
         const x=s.st.find(y=>y.blockNr===nr), ab=s.fe||!s.bl.some(y=>y.blockNr===nr)?null:andere(s.d,s.wt,nr);
         if(!x){ grid.append(el('div',{class:'sp-zelle sp-c-leer'+(s.fe?' ferien':'')+(ab?' mit-ab':'')},s.fe&&nr===1?s.fe.name:ab?el('small',{class:'sp-c-ab'},
@@ -298,7 +298,7 @@ function stundeWaehlen(start,reiter='tag'){
       const d=wahl.datum, b=resolveBloecke(zm,wochentagVon(d),d).find(y=>y.blockNr===x.blockNr), kx=kursVon(x.kursId), entf=x.quelle==='entfall';
       const kannOeffnen=!!kx&&kx.status!=='archiviert'&&!entf&&d<=heute&&!nurLesen;
       feld.append(
-        el('b',{class:'sp-c-feldkopf'},datumLabel(d)+' · Std. '+blockLabel(zm,x.blockNr,d)+(b?' · '+formatZeit(b.startSek)+'–'+formatZeit(b.endeSek):'')),
+        el('b',{class:'sp-c-feldkopf'},datumLabel(d)+' · Std. '+blockLabel(zm,x.blockNr,d)+(b?' · '+formatZeit(b.startSek,false)+'–'+formatZeit(b.endeSek,false):'')),
         el('p',{class:'u-hinweis'},(entf?'Fällt aus':x.quelle==='ausnahme'?zusatzText(d,x)+' (alter Eintrag)':'Laut Plan')+' · '+titel(x),laeuftJetzt(d,b,x)?el('span',{class:'u-gut'},' · läuft gerade'):null),
         ...(kx?[el('button',{type:'button',class:'btn',dataset:{spOeffnen:''},...(kannOeffnen?{}:{disabled:''}),...(d>heute?{title:'Nachtrag geht nur in die Vergangenheit'}:{}),
           onclick:()=>oeffneStunde(kx.id,d,x.teilgruppe,x.blockNr)},kx.name+' · '+kx.fach+' öffnen')]:[]),
@@ -393,6 +393,7 @@ function zufallsSchueler(){
   zufallLaeuft=true; let vorher=null, i=0;
   const schritt=()=>{
     $('plan').querySelectorAll('.kachel.zufall-lauf').forEach(x=>x.classList.remove('zufall-lauf'));
+    if(kurs()?.id!==k.id){ zufallLaeuft=false; return; }   // gesperrt oder Kurs gewechselt: kein Name mehr in den Toast (aria-live, Prüfer 25.10. N3)
     if(i>=takte.length){ zufallLaeuft=false; landen(); return; }
     const wahl=andere.length>1?andere.filter(x=>x.nr!==vorher):andere;
     vorher=wahl[Math.floor(Math.random()*wahl.length)].nr;
@@ -435,7 +436,7 @@ function kachelKlassen(s,st){
 function kachelHtml(s,st,r,c,bedienbar=true){
   const cls=kachelKlassen(s,st);
   const marken=markenHtml(st);
-  return '<div class="'+cls+'" data-nr="'+s.nr+'" data-r="'+r+'" data-c="'+c+'"'+(bedienbar?' role="button" tabindex="0"':'')+'>'+
+  return '<div class="'+cls+'" data-nr="'+esc(s.nr)+'" data-r="'+r+'" data-c="'+c+'"'+(bedienbar?' role="button" tabindex="0"':'')+'>'+
     '<div class="kopf"><span class="vn">'+esc(anzeigeVorname(s))+'</span>'+(s.lb?'<span class="lb-badge">LB</span>':'')+'</div>'+
     '<span class="nn">'+esc(anzeigeNachname(s))+'</span>'+
     '<div class="marken">'+marken+'</div></div>';
@@ -545,7 +546,7 @@ function ohnePlatzPanel(ohnePlatz){
   if(ohnePlatz.length&&!editorAktiv){  // im Editor zeigt die Namen-Schiene dieselben Schüler — Panel wäre doppelt (Tag-Simulation L5)
     let liste=$('ohne-platz'); if(!liste){ liste=document.createElement('div'); liste.id='ohne-platz'; liste.className='panel'; $('plan-wrap').after(liste); }
     // Beamer: wie die Kacheln — abgekürzte Namen, kein LB an der Wand (Prüfer 2026-09-29)
-    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+s.nr+'">'+esc(anzeigeVorname(s))+' '+esc(anzeigeNachname(s))+(s.lb&&!beamerModus?' · LB':'')+(aktiveTeilgruppe&&!s.gruppe?' · ohne Gruppe':'')+'</button>').join('');
+    liste.innerHTML='<h2>Ohne Sitzplatz</h2>'+ohnePlatz.map(s=>'<button class="btn still u-m3" data-nr="'+esc(s.nr)+'">'+esc(anzeigeVorname(s))+' '+esc(anzeigeNachname(s))+(s.lb&&!beamerModus?' · LB':'')+(aktiveTeilgruppe&&!s.gruppe?' · ohne Gruppe':'')+'</button>').join('');
     liste.querySelectorAll('[data-nr]').forEach(b=>b.onclick=()=>{ const nr=Number(b.dataset.nr); if(stempelTyp) stempleKachel(nr); else schuelerBlatt(nr); });  // Stempel gilt auch ohne Sitzplatz (Tag-Simulation L1)
   } else { const l=$('ohne-platz'); if(l) l.remove(); }
 }
@@ -629,7 +630,8 @@ function entferneLetzten(nr){
   const evs=wirksameEvents(vault.events).filter(e=>e.kursId===aktiverKursId&&e.sid===sid&&e.datum===terminDatum&&e.typ!=='storno'&&e.typ!=='quartalsnote');
   if(!evs.length){ toast('nichts zu entfernen'); return; }
   const letzte=evs.reduce((a,e)=>String(e.ts)>String(a.ts)?e:a);
-  stornoVon(letzte); toast('entfernt: '+eintragLabel(letzte)+wiederDa(letzte)); renderHeute(); zeigeRedo(letzte);
+  if(!stornoVon(letzte)) return;   // Archiv/Kurswechsel: stornoVon hat gemeldet und nichts gebucht — kein „entfernt“, kein Wiederherstellen (Prüfer 25.10. N6)
+  toast('entfernt: '+eintragLabel(letzte)+wiederDa(letzte)); renderHeute(); zeigeRedo(letzte);
 }
 // v1.1.0 · Verweigerung: anwesend, aber keine/verweigerte Leistung → zählt als 6 (Sek II 0 P),
 // termingewichtet (logic/verdichtung). Kurznotiz gekoppelt — dokumentiert den Grund (bei einer 6 ratsam).
