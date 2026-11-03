@@ -1,7 +1,7 @@
 // Scheibe C (Zero 20.10. Weg 1): Handschlag-Code packen/entpacken, Stand in Stücken mit Prüfsumme. Erwartungen fest im Test, Adressen erfunden.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { packe, entpacke, pruefsumme, imEigenenNetz, hallo, zerlege, ende, erhalten, sha256, sammler, STUECK } from '../logic/handschlag.mjs';
+import { packe, entpacke, pruefsumme, imEigenenNetz, hallo, zerlege, ende, erhalten, sha256, sammler, STUECK, MAX_STUECKE } from '../logic/handschlag.mjs';
 
 const FP = 'A1:B2:C3:D4:E5:F6:07:18:29:3A:4B:5C:6D:7E:8F:90:01:12:23:34:45:56:67:78:89:9A:AB:BC:CD:DE:EF:F0';
 const SDP = 'v=0\r\no=- 4611731400430051336 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0\r\n'
@@ -81,4 +81,20 @@ test('zerlege/sammler: Stand über mehrere Stücke, Prüfsumme über das Ganze',
   assert.notEqual(teile[1].replace('plus', 'plux'), teile[1]);
   assert.deepEqual(await s3.fertig(soll), { fehler: 'pruefsumme' });
   assert.equal(sammler().nimm('kein json'), null);
+});
+
+// Codex-Kryptoprüfung 30.10.: ein gekoppeltes Gerät kündigte n = 100 000 an, der Sammler legte das Array ungeprüft an
+test('sammler: Grenzen für Stückzahl, Stückgröße und gleiches n; danach nimmt er nichts mehr an', async () => {
+  const stueck = (i, n, d = 'x') => JSON.stringify({ t: 'stand', i, n, d });
+  assert.deepEqual(sammler().nimm(stueck(0, MAX_STUECKE + 1)), { fehler: 'ungueltig' });
+  assert.deepEqual(sammler().nimm(stueck(0, 1, 'x'.repeat(STUECK + 1))), { fehler: 'ungueltig' });
+  const s = sammler();
+  assert.deepEqual(s.nimm(stueck(0, 2)), { stueck: 1, von: 2 });
+  assert.deepEqual(s.nimm(stueck(1, 3)), { fehler: 'ungueltig' });                     // anderes n als das erste
+  assert.deepEqual(s.nimm(stueck(1, 2)), { fehler: 'ungueltig' });                     // danach auch ein passendes Stück nicht mehr
+  assert.deepEqual(await s.fertig(await sha256('xx')), { fehler: 'unvollstaendig' });
+  // Gegenrichtung: genau an den Grenzen geht es durch
+  const g = sammler();
+  assert.deepEqual(g.nimm(stueck(0, MAX_STUECKE, 'y'.repeat(STUECK))), { stueck: 1, von: MAX_STUECKE });
+  assert.ok(MAX_STUECKE * STUECK >= 50_000_000 && (MAX_STUECKE - 1) * STUECK < 50_000_000);
 });

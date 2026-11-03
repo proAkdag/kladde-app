@@ -39,6 +39,19 @@ test('falsche Passphrase v2 → Fehler', async () => {
   await assert.rejects(() => decodeContainerAuto(blob, 'falsch-123456'));
 });
 
+// Codex-Kryptoprüfung 30.10.: die Meldung verriet, ob die Hülle (falsche Passphrase) oder der Datenblock scheiterte
+test('Öffnen: falsche Passphrase, kaputte Hülle, kaputte Daten und v1 melden denselben Text', async () => {
+  const { dek, kopf } = await neueV2Identitaet('richtig-123456');
+  const blob = await encodeContainerV2(daten, dek, kopf);
+  const meldung = async (b, pw) => { try { await decodeContainerAuto(b, pw); return 'geöffnet'; } catch (e) { return e.message; } };
+  const huelle = Uint8Array.from(blob); huelle[40] ^= 1;
+  const datenKaputt = Uint8Array.from(blob); datenKaputt[datenKaputt.length - 1] ^= 1;
+  const v1 = await encodeContainer(daten, 'richtig-123456');
+  const texte = new Set([await meldung(blob, 'falsch-123456'), await meldung(huelle, 'richtig-123456'),
+    await meldung(datenKaputt, 'richtig-123456'), await meldung(v1, 'falsch-123456')]);
+  assert.deepEqual([...texte], ['Entschlüsselung fehlgeschlagen — falsche Passphrase oder Container beschädigt']);
+});
+
 test('manipulierter wrapped_DEK → Fehler', async () => {
   const { dek, kopf } = await neueV2Identitaet('pw-1234567890');
   const blob = await encodeContainerV2(daten, dek, kopf);

@@ -5,20 +5,20 @@
 // Stand sofort; jedes Gerät führt den fremden Stand auf DEMSELBEN Weg zusammen wie den Datei-Import (Fragen zu Kindern → Vorschau →
 // tresorUebernehmen), nie still. Wer den fremden Stand ganz hat, quittiert; erst dann geht der Kanal zu. So darf eine Person die Geräte
 // nacheinander bedienen (Prüfer 20.10. 🔴 1). Schließen, Esc, ✕ und Sperren räumen auf: Kamera aus, Kanal zu.
-import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.1';
-import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.1';
-import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.1';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.1';
-import { iconEl } from '../kern/icons.mjs?v=3.0.1';
-import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.1';
-import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.1';
-import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.1';
-import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.1';
-import { vault } from '../kern/zustand.mjs?v=3.0.1';
-import { kursAutowahl } from './kurswahl.mjs?v=3.0.1';
-import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.1';
-import { renderAlles } from './navigation.mjs?v=3.0.1';
+import { hallo, zerlege, ende, erhalten, sha256, sammler } from '../../logic/handschlag.mjs?v=3.0.2';
+import { mergeContainerDaten } from '../../logic/merge.mjs?v=3.0.2';
+import { schemaBekannt, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.2';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.2';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.2';
+import { iconEl } from '../kern/icons.mjs?v=3.0.2';
+import { qrCanvas, scanne } from '../kern/qr.mjs?v=3.0.2';
+import { nochOffen, speichern, sperrGen } from '../kern/tresor.mjs?v=3.0.2';
+import { GERAET, PAGES_KONTEXT } from '../kern/umgebung.mjs?v=3.0.2';
+import { neueVerbindung } from '../kern/verbindung.mjs?v=3.0.2';
+import { vault } from '../kern/zustand.mjs?v=3.0.2';
+import { kursAutowahl } from './kurswahl.mjs?v=3.0.2';
+import { exportiereContainer, fragenKlaeren, syncPull, tresorUebernehmen, unterschiede } from './mehr.mjs?v=3.0.2';
+import { renderAlles } from './navigation.mjs?v=3.0.2';
 
 const NAME = { ipad: 'iPad', iphone: 'iPhone', handy: 'Handy', pc: 'PC' };
 const ICH = /iPhone|iPod/.test(navigator.userAgent) ? 'iphone' : GERAET;
@@ -154,6 +154,7 @@ function abgleichBlatt() {
     if (!r) return;
     if (r.erhalten) { s.quittiert = true; const a = $('ab-ankunft'); if (a && sitzung === s) a.textContent = ankunft(); return; }   // auch nach dem Schließen: der Nachlauf wartet darauf
     if (!lebt() || s.empfangen) return;
+    if (r.fehler) { clearTimeout(s.timer); abgebrochen('Der Stand vom anderen Gerät war zu groß oder fehlerhaft.'); return; }   // Grenzen im Sammler (Codex 30.10.)
     stille();
     if (r.hallo) { s.fremdGeraet = r.hallo.geraet; return; }
     if (r.stueck) { const b = $('ab-fortschritt'); if (b) { b.max = r.von; b.value = r.stueck; } setzeStatus('Verbunden · empfange ' + r.stueck + ' von ' + r.von + ' …', true); return; }

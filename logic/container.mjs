@@ -36,6 +36,9 @@ const KDF_ITER_MIN = 100000, KDF_ITER_MAX = 2000000;   // Lesegrenzen für fremd
 const HEADER_V1 = 38;
 const V2_OFF_SALT = 10, V2_OFF_IVWRAP = 26, V2_OFF_WDEK = 38, V2_OFF_IVDATA = 86, V2_OFF_CT = 98;
 const WDEK_LAENGE = 48; // 32 B DEK + 16 B GCM-Tag
+// Eine Meldung für jedes Scheitern beim Öffnen mit der Passphrase: ob die Hülle oder der Datenblock nicht passte, verrät sie nicht
+// (Codex-Kryptoprüfung 30.10.: falsche Passphrase und beschädigte Daten waren unterscheidbar)
+const OEFFNEN_FEHLER = 'Entschlüsselung fehlgeschlagen — falsche Passphrase oder Container beschädigt';
 
 async function ableiteSchluessel(passwort, salt, iterationen) {
   const material = await crypto.subtle.importKey(
@@ -144,7 +147,7 @@ async function decodeContainerAuto(bytes, passwort) {
     try {
       klartext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kopf.iv }, schluessel, kopf.ciphertext);
     } catch {
-      throw new Error('Entschlüsselung fehlgeschlagen — falsche PIN/Passphrase oder Container beschädigt');
+      throw new Error(OEFFNEN_FEHLER);
     }
     return { daten: JSON.parse(new TextDecoder().decode(klartext)), version: 1, dek: null, kopf: null };
   }
@@ -154,15 +157,16 @@ async function decodeContainerAuto(bytes, passwort) {
   try {
     dekRoh = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kopf.ivWrap }, kek, kopf.wrappedDek));
   } catch {
-    throw new Error('Entschlüsselung fehlgeschlagen — falsche Passphrase oder Container beschädigt');
+    throw new Error(OEFFNEN_FEHLER);
   }
-  const dek = await importDekKey(dekRoh);
-  dekRoh.fill(0); // Rohbytes sofort nullen — im RAM lebt nur der non-extractable Key
+  let dek;
+  try { dek = await importDekKey(dekRoh); }
+  finally { dekRoh.fill(0); }   // Rohbytes nullen, auch wenn der Import scheitert — im RAM lebt nur der non-extractable Key
   let klartext;
   try {
     klartext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kopf.ivData }, dek, kopf.ciphertext);
   } catch {
-    throw new Error('Daten-Entschlüsselung fehlgeschlagen — Container beschädigt');
+    throw new Error(OEFFNEN_FEHLER);
   }
   return {
     daten: JSON.parse(new TextDecoder().decode(klartext)),
@@ -181,7 +185,7 @@ async function dekRohMitPassphrase(bytes, passwort) {
   try {
     return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kopf.ivWrap }, kek, kopf.wrappedDek));
   } catch {
-    throw new Error('Entschlüsselung fehlgeschlagen — falsche Passphrase oder Container beschädigt');
+    throw new Error(OEFFNEN_FEHLER);
   }
 }
 
@@ -217,9 +221,9 @@ async function wechslePassphrase(bytes, passwortAlt, passwortNeu, iterationen = 
   if (kopf.version === FORMAT_V1) {
     const alt = await decodeContainerAuto(bytes, passwortAlt);
     const dekRoh = crypto.getRandomValues(new Uint8Array(32));
-    const neuKopf = await wrapDek(dekRoh, passwortNeu, iterationen);
-    const dek = await importDekKey(dekRoh);
-    dekRoh.fill(0);
+    let neuKopf, dek;
+    try { neuKopf = await wrapDek(dekRoh, passwortNeu, iterationen); dek = await importDekKey(dekRoh); }
+    finally { dekRoh.fill(0); }
     const neu = await encodeContainerV2(alt.daten, dek, neuKopf);
     return { bytes: neu, dek, kopf: neuKopf };
   }
@@ -230,9 +234,9 @@ async function wechslePassphrase(bytes, passwortAlt, passwortNeu, iterationen = 
   } catch {
     throw new Error('Alte Passphrase falsch');
   }
-  const neuKopf = await wrapDek(dekRoh, passwortNeu, iterationen);
-  const dek = await importDekKey(dekRoh);
-  dekRoh.fill(0);
+  let neuKopf, dek;
+  try { neuKopf = await wrapDek(dekRoh, passwortNeu, iterationen); dek = await importDekKey(dekRoh); }
+  finally { dekRoh.fill(0); }
   const out = Uint8Array.from(bytes); // Daten-Segment unangetastet
   new DataView(out.buffer).setUint32(6, neuKopf.iterationen, true);
   out.set(neuKopf.salt, V2_OFF_SALT);
@@ -244,9 +248,9 @@ async function wechslePassphrase(bytes, passwortAlt, passwortNeu, iterationen = 
 // Frische v2-Identität für eine NEUE Kladde (Neuanlage)
 async function neueV2Identitaet(passwort, iterationen = DEFAULT_ITERATIONEN) {
   const dekRoh = crypto.getRandomValues(new Uint8Array(32));
-  const kopf = await wrapDek(dekRoh, passwort, iterationen);
-  const dek = await importDekKey(dekRoh);
-  dekRoh.fill(0);
+  let kopf, dek;
+  try { kopf = await wrapDek(dekRoh, passwort, iterationen); dek = await importDekKey(dekRoh); }
+  finally { dekRoh.fill(0); }
   return { dek, kopf };
 }
 
