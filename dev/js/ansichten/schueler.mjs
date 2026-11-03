@@ -1,20 +1,20 @@
 // Kladde · js/ansichten/schueler.mjs — Abschnitt „SCHÜLER + Übersichts-Tabellen“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { schuelerBericht } from '../../logic/bericht.mjs?v=3.0.1.1792941037';
-import { drittelnoteLabel, einheitPasst, einheitVon, noteAlsWert, wertZuLabel } from '../../logic/skalen.mjs?v=3.0.1.1792941037';
-import { sidVonKind } from '../../logic/identitaet.mjs?v=3.0.1.1792941037';
-import { lnr } from '../../logic/teilnehmer.mjs?v=3.0.1.1792941037';
-import { istTerminEintrag, kursEinordnung, notenAbstand, quartalsVerlauf, regelText, verdichte, vorschlagsZeilen, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1.1792941037';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1.1792941037';
-import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.1.1792941037';
-import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.1.1792941037';
-import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.1.1792941037';
-import { aktiverKursId, aktView, beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.1.1792941037';
-import { addEvent, bewertProfil, datumLabel, kindVonEvent, kurs, kursSchueler, listenNr, nrVonEvent, reduziereStand, schuelerVonNr, sidVonNr, stammKind, stornoVon, TYP_LABEL, wiederDa, zeigeRedo } from './eintraege.mjs?v=3.0.1.1792941037';
-import { FEHLT_WORT, markenEl, markenHtml } from './heute.mjs?v=3.0.1.1792941037';
-import { nachtragLeisten } from './kurswahl.mjs?v=3.0.1.1792941037';
-import { mitUebergang } from './navigation.mjs?v=3.0.1.1792941037';
-import { kursGewechselt, NOTEN_DRITTEL, notizDialog, oeffneTag, tagBewerten, tagBewertenHtml } from './stempel.mjs?v=3.0.1.1792941037';
+import { schuelerBericht } from '../../logic/bericht.mjs?v=3.0.2.1793737752';
+import { drittelnoteLabel, einheitPasst, einheitVon, noteAlsWert, wertZuLabel } from '../../logic/skalen.mjs?v=3.0.2.1793737752';
+import { sidVonKind } from '../../logic/identitaet.mjs?v=3.0.2.1793737752';
+import { lnr } from '../../logic/teilnehmer.mjs?v=3.0.2.1793737752';
+import { istTerminEintrag, kursEinordnung, notenAbstand, quartalsVerlauf, regelText, verdichte, vorschlagsZeilen, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.2.1793737752';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.2.1793737752';
+import { $, el, esc, toast } from '../kern/dom.mjs?v=3.0.2.1793737752';
+import { iconEl, iconHtml } from '../kern/icons.mjs?v=3.0.2.1793737752';
+import { speichern, stammMutiert } from '../kern/tresor.mjs?v=3.0.2.1793737752';
+import { aktiverKursId, aktView, beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.2.1793737752';
+import { addEvent, bewertProfil, datumLabel, kindVonEvent, kurs, kursSchueler, listenNr, nrVonEvent, reduziereStand, schuelerVonNr, sidVonNr, stammKind, stornoVon, TYP_LABEL, wiederDa, zeigeRedo } from './eintraege.mjs?v=3.0.2.1793737752';
+import { FEHLT_WORT, markenEl, markenHtml } from './heute.mjs?v=3.0.2.1793737752';
+import { nachtragLeisten } from './kurswahl.mjs?v=3.0.2.1793737752';
+import { mitUebergang } from './navigation.mjs?v=3.0.2.1793737752';
+import { kursGewechselt, NOTEN_DRITTEL, notizDialog, oeffneTag, tagBewerten, tagBewertenHtml } from './stempel.mjs?v=3.0.2.1793737752';
 
 /* ═══ SCHÜLER · Verdichtung + Inline-Detail-Akkordeon (kein Popup) ═══ */
 let offenerSchueler=null, offeneZeile=null, zeitraumFilter=null, schuelerSuche='', schuelerFilter=null, sListeScroll=0;

@@ -1,18 +1,18 @@
 // Kladde · js/ansichten/eintraege.mjs — Abschnitt „ZUSTAND-HELPERS“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.1.1792941037';
-import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.1.1792941037';
-import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=3.0.1.1792941037';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.1.1792941037';
-import { iconEl } from '../kern/icons.mjs?v=3.0.1.1792941037';
-import { altSid } from '../../logic/identitaet.mjs?v=3.0.1.1792941037';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.1.1792941037';
-import { GERAET } from '../kern/umgebung.mjs?v=3.0.1.1792941037';
-import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.1.1792941037';
-import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=3.0.1.1792941037';
-import { renderAlles } from './navigation.mjs?v=3.0.1.1792941037';
-import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=3.0.1.1792941037';
-import { mappeLeeren } from './mappe.mjs?v=3.0.1.1792941037';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.2.1793737752';
+import { ersetzungFuer, wirksameEvents } from '../../logic/verdichtung.mjs?v=3.0.2.1793737752';
+import { dlgKurs, dlgZeigenEl } from '../kern/dialog.mjs?v=3.0.2.1793737752';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.2.1793737752';
+import { iconEl } from '../kern/icons.mjs?v=3.0.2.1793737752';
+import { altSid } from '../../logic/identitaet.mjs?v=3.0.2.1793737752';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.2.1793737752';
+import { GERAET } from '../kern/umgebung.mjs?v=3.0.2.1793737752';
+import { aktiverKursId, beamerModus, setzeBeamerModus, terminDatum, vault } from '../kern/zustand.mjs?v=3.0.2.1793737752';
+import { anzeigeVorname, BEWERTUNGS_TYPEN } from './heute.mjs?v=3.0.2.1793737752';
+import { renderAlles } from './navigation.mjs?v=3.0.2.1793737752';
+import { buchungsStunde, kursGewechselt } from './stempel.mjs?v=3.0.2.1793737752';
+import { mappeLeeren } from './mappe.mjs?v=3.0.2.1793737752';
 
 /* ═══ ZUSTAND-HELPERS ═══ */
 let aktiverSchueler=null, undoStack=[];

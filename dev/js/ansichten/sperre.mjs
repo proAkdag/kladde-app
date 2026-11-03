@@ -1,26 +1,26 @@
 // Kladde · js/ansichten/sperre.mjs — Abschnitt „PIN / LOCK + FINGERABDRUCK / FACE ID“ (A2 Schnitt 4: wörtlich aus js/app.mjs, verhaltensneutral).
 // Ansichten dürfen einander direkt importieren, der Kern (js/kern/) nie eine Ansicht (Zero 19.10.: „Direkt, Kern ringfrei“).
-import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=3.0.1.1792941037';
-import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=3.0.1.1792941037';
-import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=3.0.1.1792941037';
-import { sichereRoh } from '../../logic/identitaet.mjs?v=3.0.1.1792941037';
-import { migriereStamm, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.1.1792941037';
-import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.1.1792941037';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.1.1792941037';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.1.1792941037';
-import { iconEl } from '../kern/icons.mjs?v=3.0.1.1792941037';
-import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=3.0.1.1792941037';
-import { IST_DEV } from '../kern/umgebung.mjs?v=3.0.1.1792941037';
-import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=3.0.1.1792941037';
-import { zeigeStartHinweise } from './banner.mjs?v=3.0.1.1792941037';
-import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=3.0.1.1792941037';
-import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=3.0.1.1792941037';
-import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=3.0.1.1792941037';
-import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=3.0.1.1792941037';
-import { renderMehr } from './mehr.mjs?v=3.0.1.1792941037';
-import { renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.1.1792941037';
-import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=3.0.1.1792941037';
-import { hilfeNeu, stempelAus } from './stempel.mjs?v=3.0.1.1792941037';
+import { bereinigeAusnahmen, slotFuerBlock } from '../../logic/autowahl.mjs?v=3.0.2.1793737752';
+import { bioUnwrap, bioWrap } from '../../logic/biometrie.mjs?v=3.0.2.1793737752';
+import { decodeContainerAuto, decodeContainerMitDek, dekRohMitPassphrase, importDekKey, neueV2Identitaet } from '../../logic/container.mjs?v=3.0.2.1793737752';
+import { sichereRoh } from '../../logic/identitaet.mjs?v=3.0.2.1793737752';
+import { migriereStamm, SCHEMA_AKTUELL } from '../../logic/migration.mjs?v=3.0.2.1793737752';
+import { istFerien, resolveBloecke } from '../../logic/zeitmodell.mjs?v=3.0.2.1793737752';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.2.1793737752';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.2.1793737752';
+import { iconEl } from '../kern/icons.mjs?v=3.0.2.1793737752';
+import { idbDel, idbGet, idbPut, leererVault, setzeAnmeldung, setzeMigrationsHinweis, setzeSchluessel, speicherFehler, speicherKette, speichern, sperrGenWeiter } from '../kern/tresor.mjs?v=3.0.2.1793737752';
+import { IST_DEV } from '../kern/umgebung.mjs?v=3.0.2.1793737752';
+import { aktView, editorAktiv, heuteIso, setzeEditorAktiv, setzeVault, terminAufHeute, vault } from '../kern/zustand.mjs?v=3.0.2.1793737752';
+import { zeigeStartHinweise } from './banner.mjs?v=3.0.2.1793737752';
+import { setzeDeckListe, setzeDeckVerlauf } from './deck.mjs?v=3.0.2.1793737752';
+import { kurs, setzeAktiverSchueler, undoStack } from './eintraege.mjs?v=3.0.2.1793737752';
+import { editorCleanup, setzeEditorCleanup } from './kurse.mjs?v=3.0.2.1793737752';
+import { kursAutowahl, starteAutowahlTick, wochenplanAktiv } from './kurswahl.mjs?v=3.0.2.1793737752';
+import { renderMehr } from './mehr.mjs?v=3.0.2.1793737752';
+import { renderAlles, setzeViewTitel } from './navigation.mjs?v=3.0.2.1793737752';
+import { setzeOffenerSchueler, setzeOffeneZeile } from './schueler.mjs?v=3.0.2.1793737752';
+import { hilfeNeu, stempelAus } from './stempel.mjs?v=3.0.2.1793737752';
 
 /* ═══ PIN / LOCK (Auto-Lock 15 min · visibilitychange-Flush) ═══ */
 
@@ -180,8 +180,9 @@ async function bioEntsperren(bio,{auto=false}={}){
   const t0=performance.now();
   try{
     const secret=await bioSecret(bio,lauf.signal);
-    const dekRoh=await bioUnwrap(bio,secret); secret.fill(0);
-    const key=await importDekKey(dekRoh); dekRoh.fill(0);
+    let key;
+    try{ const dekRoh=await bioUnwrap(bio,secret); try{ key=await importDekKey(dekRoh); }finally{ dekRoh.fill(0); } }
+    finally{ secret.fill(0); }   // Rohbytes auch im Fehlerpfad nullen (Codex 30.10.)
     const roh=await idbGet('vault');
     const r=await decodeContainerMitDek(roh,key);
     if(lauf.signal.aborted) return;   // abgelöst (neuer Tipp, Passphrase), der Browser kam trotzdem zurück — nichts übernehmen
@@ -205,9 +206,10 @@ async function bioEinrichten(){
   if(!bioVerfuegbar()){ toast('Dieser Browser kann kein WebAuthn — Fingerabdruck hier nicht möglich',4500); return; }
   const pin=await passphraseAbfragen('Zum Einrichten einmal die Passphrase');
   if(!pin) return;
+  let dekRoh=null, secret=null;   // im finally genullt, auch wenn ein Schritt dazwischen scheitert (Codex 30.10.)
   try{
     const roh=await idbGet('vault');
-    const dekRoh=await dekRohMitPassphrase(roh,pin);
+    dekRoh=await dekRohMitPassphrase(roh,pin);
     const userId=crypto.getRandomValues(new Uint8Array(16));
     const cred=await navigator.credentials.create({publicKey:{
       rp:BIO_RP(), user:{id:userId,name:'kladde'+(IST_DEV?'-dev':''),displayName:'Kladde'+(IST_DEV?' DEV':'')},
@@ -216,17 +218,17 @@ async function bioEinrichten(){
       authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'required',userVerification:'required'},
       extensions:{prf:{}}}});
     const ext=cred.getClientExtensionResults();
-    if(!ext.prf||!ext.prf.enabled){ dekRoh.fill(0); toast('Passkey angelegt, aber ohne PRF-Erweiterung — dieses Gerät/System kann die Hülle nicht bilden (iPadOS 18+ nötig). Nichts gespeichert.',7000); return; }
+    if(!ext.prf||!ext.prf.enabled){ toast('Passkey angelegt, aber ohne PRF-Erweiterung — dieses Gerät/System kann die Hülle nicht bilden (iPadOS 18+ nötig). Nichts gespeichert.',7000); return; }
     const prfSalt=crypto.getRandomValues(new Uint8Array(32));
     const bioTeil={credId:new Uint8Array(cred.rawId),prfSalt};
-    const secret=await bioSecret(bioTeil);                 // zweite Geste: PRF-Wert dieses Passkeys
-    const paket=await bioWrap(dekRoh,secret); dekRoh.fill(0); secret.fill(0);
+    secret=await bioSecret(bioTeil);                       // zweite Geste: PRF-Wert dieses Passkeys
+    const paket=await bioWrap(dekRoh,secret);
     await idbPut('bio',{...bioTeil,...paket,angelegt:new Date().toISOString()});
     toast('Fingerabdruck eingerichtet — beim nächsten Öffnen erscheint der Knopf',4500);
     renderMehr();
   }catch(e){
     toast((e.name==='NotAllowedError'||e.name==='AbortError')?'Abgebrochen — nichts gespeichert':'⚠ Einrichtung: '+e.message,5000);
-  }
+  }finally{ dekRoh?.fill(0); secret?.fill(0); }
 }
 async function bioEntfernen(){ await idbDel('bio'); toast('Fingerabdruck entfernt — es gilt wieder nur die Passphrase'); renderMehr(); }
 // Passphrase nachfragen (nach Fingerabdruck-Unlock für Import/Pull/Einrichtung) → Promise<string|null>

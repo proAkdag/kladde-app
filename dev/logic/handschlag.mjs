@@ -81,17 +81,24 @@ async function sha256(text) {
   return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Obergrenze eines empfangenen Stands: 50 Mio. Zeichen wie MAX_BLOB des Heimnetz-Servers. Ein gekoppeltes Gerät darf mit einem
+// angekündigten n nicht beliebig Speicher belegen (Codex-Kryptoprüfung 30.10.: n = 100 000 wurde angenommen).
+const MAX_ZEICHEN = 50_000_000;
+const MAX_STUECKE = Math.ceil(MAX_ZEICHEN / STUECK);
+
 // Empfänger: sammelt Stücke; liefert beim „ende“ { text } oder { fehler: 'unvollstaendig'|'pruefsumme' }. Unbekanntes wird ignoriert.
+// Ein Stück über den Grenzen oder mit einem anderen n als das erste liefert { fehler: 'ungueltig' }, danach nimmt der Sammler nichts mehr an.
 function sammler() {
-  let stuecke = [], n = 0;
+  let stuecke = [], n = 0, kaputt = false;
   return {
     nimm(roh) {
       let m; try { m = JSON.parse(roh); } catch { return null; }
       if (!m || typeof m !== 'object') return null;
       if (m.t === 'hallo') return { hallo: { app: String(m.app || ''), schema: String(m.schema || ''), geraet: String(m.geraet || '') } };
       if (m.t === 'stand' && Number.isInteger(m.i) && Number.isInteger(m.n) && m.n > 0 && m.i >= 0 && m.i < m.n && typeof m.d === 'string') {
+        if (kaputt || m.n > MAX_STUECKE || m.d.length > STUECK || (n && m.n !== n)) { kaputt = true; stuecke = []; return { fehler: 'ungueltig' }; }
         if (!n) { n = m.n; stuecke = Array(n).fill(null); }   // gefüllt: Array.some überspringt Löcher, ein fehlendes Stück fiele nicht auf
-        if (m.n === n) stuecke[m.i] = m.d;
+        stuecke[m.i] = m.d;
         return { stueck: m.i + 1, von: n };
       }
       if (m.t === 'ende') return { ende: String(m.sha || '') };
@@ -99,11 +106,11 @@ function sammler() {
       return null;
     },
     async fertig(shaSoll) {
-      if (!n || stuecke.length !== n || stuecke.some(s => typeof s !== 'string')) return { fehler: 'unvollstaendig' };
+      if (kaputt || !n || stuecke.length !== n || stuecke.some(s => typeof s !== 'string')) return { fehler: 'unvollstaendig' };
       const text = stuecke.join('');
       return (await sha256(text)) === shaSoll ? { text } : { fehler: 'pruefsumme' };
     },
   };
 }
 
-export { PRAEFIX, pruefsumme, imEigenenNetz, packe, entpacke, hallo, zerlege, ende, erhalten, sha256, sammler, STUECK };
+export { PRAEFIX, pruefsumme, imEigenenNetz, packe, entpacke, hallo, zerlege, ende, erhalten, sha256, sammler, STUECK, MAX_STUECKE };
