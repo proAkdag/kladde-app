@@ -30,6 +30,22 @@ test('Einordnung Sek I: Median + Anteil dahinter (kleiner = besser)', () => {
   assert.equal(kursEinordnung([1, 2], null, 'sek1'), null);
 });
 
+// ── Randtests aus dem Mutationstest 05.11. (Seed 20261105, _proben/typpruefung_2026-11-05/BEFUND_MUTATION.md „Was keiner fängt“) ──
+// Zero 07.11.: „jetzt durchführen lassen“. Nachweis am Mutanten: _proben/randtests_2026-11-07/mutanten_nachweis.mjs
+test('Randtest VL17 · Quartals-Verlauf: n zählt alle Zeichen, auch −; ＋ und − heben sich im Score auf, nicht in n', () => {
+  const evs = [ev('+', '2026-09-01'), ev('-', '2026-09-02'), ev('-', '2027-02-10'), ev('-', '2027-02-11'), ev('o', '2027-02-12')];
+  const v = quartalsVerlauf(evs, 1, ZR, { profil: 'sek1' });
+  assert.equal(v[0].n, 2); assert.equal(v[0].score, 0);
+  assert.equal(v[2].n, 3); assert.ok(Math.abs(v[2].score - -2 / 3) < 1e-9);
+});
+
+test('Randtest VL01 · Einordnung mit unsortierter Eingabe: Median wie sortiert', () => {
+  const e = kursEinordnung([5, 1, 4, 2, 3], 2, 'sek1');
+  assert.equal(e.median, 3); assert.equal(e.anteilDahinter, 0.6);
+  assert.equal(kursEinordnung([14, 5, 11, 8], 11, 'sek2').median, 9.5);
+  assert.equal(kursEinordnung([3, 1, 2], 2, 'sek1').median, 2);
+});
+
 test('Notenabstand: Sek I in Noten, Sek II in 3-Punkte-Stufen, Tippfehler → null', () => {
   assert.equal(notenAbstand('2', 3, 'sek1'), 1);
   assert.ok(Math.abs(notenAbstand('2-', 2 + 1 / 3, 'sek1')) < 1e-9);

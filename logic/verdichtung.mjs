@@ -15,6 +15,12 @@
 import { noteAlsWert, rundeAufDrittel, wertZuLabel, klemmePunkte } from './skalen.mjs';
 import { typenMit } from './vertrag.mjs';
 
+/** @typedef {import('./skalen.mjs').Profil} Profil */
+/** @typedef {{ id?: string, typ: string, datum?: string, ts?: string | number, sid?: string, kursId?: string, stornoVon?: string, wert?: string | number, notiz?: string, blockNr?: number | null, hj?: string | number, quartal?: string | number }} Ereignis */
+/** @typedef {{ profil?: Profil, lb?: boolean, von?: string, bis?: string, uAls6?: boolean }} VerdichtOpt */
+/** @typedef {{ wert: number, label: string | null }} Vorschlag */
+/** @typedef {{ nr?: number | null, vorschlag?: string | number | null, fSummen?: string | number | null }} KopierZeile */
+
 const SOMI_TYPEN = new Set(['+', 'o', '-']);
 // fehlt_o (Anwesenheits-Stempel, Phase 3) zählt als Kurstermin — die Erfassung IST Evidenz,
 // dass Unterricht war (Auflage 7). Aktiv-Quote korrigiert das über den e-Nenner.
@@ -23,6 +29,7 @@ const TERMIN_TYPEN = new Set(['+', 'o', '-', 'note', 'mat', 'ipad_fehlt', 'ipad_
 // EINE Antwort auf „macht dieser Eintrag den Tag zum Termin?“ — für Verdichtung, Termin-Matrix und den Anlass
 // „seit N Terminen kein Eintrag“. Vorher zählte der Anlass Rücknahmen mit: ein versehentliches ∅, wieder entfernt,
 // machte den Tag zum Kurstermin und das Kind zu einem „mit Eintrag“ (Prüfer 2026-09-29). Quartalsnoten sind kein Termin.
+/** @param {Ereignis | null | undefined} e @returns {boolean} */
 const istTerminEintrag = e => Boolean(e && e.datum && TERMIN_TYPEN.has(e.typ));
 
 // Eine Rücknahme (typ 'storno') hebt auch die Wirkung auf, die das zurückgenommene Event selbst hatte:
@@ -33,6 +40,7 @@ const istTerminEintrag = e => Boolean(e && e.datum && TERMIN_TYPEN.has(e.typ));
 // Verlauf, Heute, Deck, Kachel und Verdichtung (gemessen M1: 2.4.2 zeigte „punkte 7.5“ im Verlauf und bot ↩ darauf an).
 // Die Storno-Regel bleibt gleich wie in export_mappe.py; die Brücke braucht den Mappen-Ausschluss nicht, sie rechnet nur ihre eigenen Typen.
 const MAPPE = new Set(typenMit('mappe'));
+/** @param {Ereignis[]} events @returns {Ereignis[]} */
 function wirksameEvents(events) {
   const zurueck = new Set(events.filter(e => e.typ === 'storno' && e.stornoVon).map(e => e.stornoVon));
   const storniert = new Set(events.filter(e => e.stornoVon && !zurueck.has(e.id)).map(e => e.stornoVon));
@@ -61,15 +69,20 @@ const ANWESEND_TYPEN = new Set(['versp', 'fehlt_o']);
 // (hj + quartal, nicht der Termin) — so gewinnt sie auch, wenn die Uhr eines Geräts nachgeht; vorher entschied allein der Zeitstempel. ↶ bringt
 // die alte zurück. Die Brücke braucht nichts Eigenes (export_mappe.py quartalsnoten liest wirksame_events).
 const QN_TYPEN = new Set(['quartalsnote']);
+/** @param {Ereignis} a @param {Ereignis} b @returns {boolean} */
 const gleicherBlock = (a, b) => a.blockNr == null || b.blockNr == null || a.blockNr === b.blockNr;
+/** @param {Ereignis[]} events @param {Ereignis} neu @returns {{ ersetzt: Ereignis, still: Ereignis[], notiz: string } | null} */
 function ersetzungFuer(events, neu) {
   const art = BEWERTUNG_TYPEN.has(neu.typ) ? BEWERTUNG_TYPEN : ANWESEND_TYPEN.has(neu.typ) ? ANWESEND_TYPEN : QN_TYPEN.has(neu.typ) ? QN_TYPEN : null;
   if (!art || neu.stornoVon) return null;
+  /** @param {Ereignis} e */
   const gleich = e => art.has(e.typ) && e.kursId === neu.kursId && e.sid === neu.sid &&   // v2.2: dasselbe Kind = dieselbe sid
     (art === QN_TYPEN ? e.hj === neu.hj && e.quartal === neu.quartal : terminVon(e) === terminVon(neu) && (art !== ANWESEND_TYPEN || gleicherBlock(e, neu)));
   // Ältere Doppelte so lange stornieren, bis nur das Ersetzte bleibt: ein Storno hebt auch die Wirkung des Stornierten auf und brächte
   // sonst dessen eigenes Ersetztes zurück (zwei Geräte: 5 → 7 neben ∅, ⏰ 8 ergab 13). Ein Wiederkehrer ist immer älter als das Ersetzte.
-  let evs = events, alt = [], ersetzt = null;
+  /** @type {Ereignis[]} */ let evs = events;
+  /** @type {Ereignis[]} */ let alt = [];
+  /** @type {Ereignis | null} */ let ersetzt = null;
   for (;;) {
     const jetzt = wirksameEvents(evs).filter(gleich).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
     if (jetzt.length <= 1) { ersetzt = jetzt[0] || null; break; }
@@ -85,10 +98,12 @@ function ersetzungFuer(events, neu) {
   return { ersetzt, still: alt, notiz };
 }
 
+/** @param {Ereignis} e @returns {string} */
 function terminVon(e) {
   return e.datum || String(e.ts).slice(0, 10);
 }
 
+/** @param {Ereignis[]} somi @returns {{ nPlus: number, nNull: number, nMinus: number, score: number }} */
 function scoreVon(somi) {
   let p = 0, o = 0, m = 0;
   for (const e of somi) {
@@ -100,6 +115,7 @@ function scoreVon(somi) {
 }
 
 // sid: das Kind (v2.2 Identität, logic/identitaet.mjs) — nicht mehr die Ausweis-Nr
+/** @param {Ereignis[]} kursEvents @param {string | undefined} sid @param {VerdichtOpt} [opt] */
 function verdichte(kursEvents, sid, opt) {
   const profil = opt?.profil || 'sek1';
   const lb = Boolean(opt?.lb);
@@ -116,7 +132,8 @@ function verdichte(kursEvents, sid, opt) {
   const somi = meine.filter(e => SOMI_TYPEN.has(e.typ));
   // Direkte Noten, die im Notenmodus des Kurses nicht lesbar sind (Punkte ↔ Drittel nach einem Wechsel, Importe),
   // werden übersprungen statt die ganze Auswertung abzubrechen (Prüfer 2026-09-29: Liste und Vollseite warfen).
-  const lesbar = e => { try { noteAlsWert(e.wert, profil); return true; } catch { return false; } };
+  /** @param {Ereignis} e */
+  const lesbar = e => { try { noteAlsWert(/** @type {string | number} */ (e.wert), profil); return true; } catch { return false; } };
   const direkte = meine.filter(e => e.typ === 'note' && lesbar(e));
   const beteiligt = new Set(
     meine.filter(e => SOMI_TYPEN.has(e.typ) || e.typ === 'note').map(terminVon));
@@ -125,6 +142,7 @@ function verdichte(kursEvents, sid, opt) {
   // fehlt_o (offen) zählt NIE in die Note — erst die Klärung wirkt.
   // Pro Termin gewinnt die JÜNGSTE Klärung: 2-Geräte-Widerspruch (e vs. u) wird
   // deterministisch aufgelöst, e und u bleiben disjunkt (Systemmanager-Auflage).
+  /** @type {Map<string, { typ: string, ts: string | number | undefined }>} */
   const klaerung = new Map(); // termin → {typ, ts}
   for (const e of meine) {
     if (e.typ === 'fehlt_e' || e.typ === 'fehlt_u') {
@@ -169,6 +187,7 @@ function verdichte(kursEvents, sid, opt) {
   // nSechs Termine · direkte Noten über ihre Termine (jede Note = EIN Termin-Gewicht — kein
   // 50:50-Kollektivgewicht mehr; Referate & Co. gewichtet die Excel-Mappe · Zero 2026-07-10).
   const nDirekt = new Set(direkte.map(terminVon)).size;
+  /** @param {number | null} ereignis @param {number} sechsWert @param {number | null} mittelDirekt @returns {number | null} */
   const misch = (ereignis, sechsWert, mittelDirekt) => {
     let summe = 0, gewicht = 0;
     if (ereignis !== null) { summe += ereignis * nSomi; gewicht += nSomi; }
@@ -176,17 +195,18 @@ function verdichte(kursEvents, sid, opt) {
     if (mittelDirekt !== null) { summe += mittelDirekt * nDirekt; gewicht += nDirekt; }
     return gewicht ? summe / gewicht : null;
   };
+  /** @type {Vorschlag | null} */
   let vorschlag = null;
   if (!lb && (somi.length > 0 || direkte.length > 0 || sechsWirkt)) {
     if (profil === 'sek2') {
       const ereignis = somi.length ? 8 + 5 * bilanz.score : null;
-      const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek2'), 0) / direkte.length : null;
-      const p = klemmePunkte(misch(ereignis, 0, mittel));
+      const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(/** @type {string | number} */ (e.wert), 'sek2'), 0) / direkte.length : null;
+      const p = klemmePunkte(/** @type {number} Wächter oben: gewicht > 0 */ (misch(ereignis, 0, mittel)));
       vorschlag = { wert: p, label: String(p) + ' P' };
     } else {
       const ereignis = somi.length ? 3 - 5 / 3 * bilanz.score : null;
-      const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(e.wert, 'sek1'), 0) / direkte.length : null;
-      const w = rundeAufDrittel(misch(ereignis, 6, mittel));
+      const mittel = direkte.length ? direkte.reduce((s, e) => s + noteAlsWert(/** @type {string | number} */ (e.wert), 'sek1'), 0) / direkte.length : null;
+      const w = rundeAufDrittel(/** @type {number} Wächter oben: gewicht > 0 */ (misch(ereignis, 6, mittel)));
       vorschlag = { wert: w, label: wertZuLabel(w) };
     }
   }
@@ -204,6 +224,7 @@ function verdichte(kursEvents, sid, opt) {
   };
 }
 
+/** @param {Profil} profil @param {number} [nSechs] @returns {string} */
 function regelText(profil, nSechs = 0) {
   const basis = 'score = (n⁺ − n⁻) / (n⁺ + n° + n⁻) · Verlauf = 2. Hälfte − 1. Hälfte · direkte Noten zählen wie ein Termin';
   const kopf = profil === 'sek2'
@@ -220,10 +241,13 @@ function regelText(profil, nSechs = 0) {
 // höchsten, nach Nr sortiert; eine Lücke (gegangen, inaktiv) trägt nur ihre Nr — so passt der Block Zeile für Zeile auf die
 // Mappe (zwei Nummern, WAHL U2). Ohne Listen-Nr steht ein Kind nicht im Block.
 // KEIN Datei-Export, kein Schreiben in die Mappe — nur Zwischenablage, der Mensch fügt ein (User-Entscheid „Beides").
+/** @param {KopierZeile[]} rows @returns {string} */
 function vorschlagsZeilen(rows) {
-  const nachNr = new Map(rows.filter(r => r.nr != null).map(r => [r.nr, r]));
+  /** @type {Map<number, KopierZeile>} */
+  const nachNr = new Map(rows.filter(r => r.nr != null).map(r => [/** @type {number} */ (r.nr), r]));
   const zeilen = [];
   for (let nr = 1; nr <= Math.max(0, ...nachNr.keys()); nr++) {
+    /** @type {KopierZeile} */
     const r = nachNr.get(nr) || { nr };
     const felder = [nr, r.vorschlag ?? ''];
     if (r.fSummen != null && r.fSummen !== '') felder.push(r.fSummen);
@@ -235,11 +259,17 @@ function vorschlagsZeilen(rows) {
 // ── Quartals-Verlauf (Zero 2026-09-02, Punkt 7): Bilanz-Score je Zeitraum + Pfeil zum vorigen
 // Zeitraum MIT Daten (leere Quartale werden übersprungen, nicht als Absturz gewertet).
 // Dieselbe Schwelle wie der Verlaufspfeil innerhalb eines Zeitraums (|Δ| > 0.15).
+/** @typedef {{ id: string, label: string, score: number | null, n: number, vorschlag: Vorschlag | null, pfeil: string | null }} QuartalsZeile */
+/** @param {Ereignis[]} kursEvents @param {string | undefined} sid @param {{ id: string, label: string, von: string, bis: string }[] | null | undefined} zeitraeume @param {VerdichtOpt} [opt] @returns {QuartalsZeile[]} */
 function quartalsVerlauf(kursEvents, sid, zeitraeume, opt) {
-  const out = []; let vorher = null;
+  /** @type {QuartalsZeile[]} */
+  const out = [];
+  /** @type {number | null} */
+  let vorher = null;
   for (const z of zeitraeume || []) {
     const v = verdichte(kursEvents, sid, { ...opt, von: z.von, bis: z.bis });
     const n = v.nPlus + v.nNull + v.nMinus;
+    /** @type {QuartalsZeile} */
     const e = { id: z.id, label: z.label, score: n ? v.score : null, n, vorschlag: v.vorschlag, pfeil: null };
     if (e.score !== null && vorher !== null) { const d = e.score - vorher; e.pfeil = d > 0.15 ? '↑' : d < -0.15 ? '↓' : '→'; }
     if (e.score !== null) vorher = e.score;
@@ -251,8 +281,9 @@ function quartalsVerlauf(kursEvents, sid, zeitraeume, opt) {
 // ── Einordnung im Kurs (Punkt 10): Median der Vorschlagswerte + Anteil des Kurses, der
 // SCHLECHTER steht. Sek I: kleiner = besser · Sek II: größer = besser. Zahl gehört der App,
 // Deutung dem Lehrer (Entscheid E3) — darum Prozent, kein Rang und kein Wort.
+/** @param {(number | null | undefined)[] | null | undefined} werte @param {number | null | undefined} wert @param {Profil} profil @returns {{ median: number, n: number, anteilDahinter: number } | null} */
 function kursEinordnung(werte, wert, profil) {
-  const w = (werte || []).filter(x => x !== null && x !== undefined && Number.isFinite(x)).sort((a, b) => a - b);
+  const w = (werte || []).filter(/** @returns {x is number} */ x => x !== null && x !== undefined && Number.isFinite(x)).sort((a, b) => a - b);
   if (!w.length || wert === null || wert === undefined) return null;
   const m = w.length % 2 ? w[(w.length - 1) / 2] : (w[w.length / 2 - 1] + w[w.length / 2]) / 2;
   const schlechter = w.filter(x => profil === 'sek2' ? x < wert : x > wert).length;
@@ -261,6 +292,7 @@ function kursEinordnung(werte, wert, profil) {
 
 // ── Abstand gesetzte Note ↔ Vorschlag in NOTENSTUFEN (Punkt 4): Sek I direkt (1 = eine ganze
 // Note), Sek II 3 Punkte = eine Note. Unbekannte Eingaben (Tippfehler) → null, kein Wurf.
+/** @param {string | number} gesetzt @param {number | null | undefined} vorschlagWert @param {Profil} profil @returns {number | null} */
 function notenAbstand(gesetzt, vorschlagWert, profil) {
   if (vorschlagWert === null || vorschlagWert === undefined) return null;
   let g;

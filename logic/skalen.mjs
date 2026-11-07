@@ -1,7 +1,15 @@
 // kladde/logic/skalen · Noten-Skalen (JS-Port von kladde_lib.py — Parität via fixtures/skalen_vektoren.json)
 // Pure Funktionen, kein DOM/Storage. Beim App-Bau wird die export-Zeile gestrippt und inline eingebettet.
+// Typen per JSDoc, strikt geprüft (Probelauf 05.11.): node _proben/typpruefung_2026-11-05/typecheck.mjs
+
+/** @typedef {'sek1' | 'sek2'} Profil */
+/** @typedef {'drittel' | 'punkte'} Einheit */
+/** @typedef {[zaehler: number, nenner: number, label: string]} Schwelle */
+/** @typedef {{ profil?: Profil, notenmodus?: Einheit }} KursNotenart */
+/** @typedef {{ einheit?: Einheit }} NotenEinheitFeld */
 
 // LOOKUP-Schwellen der Mappe (Notentabelle!M12:N27) als exakte Brüche [zaehler, nenner, label]
+/** @type {Schwelle[]} */
 const DRITTELNOTEN_SCHWELLEN = [
   [0, 1, '1+'], [1, 1, '1'], [4, 3, '1-'],
   [5, 3, '2+'], [2, 1, '2'], [7, 3, '2-'],
@@ -13,6 +21,7 @@ const DRITTELNOTEN_SCHWELLEN = [
 
 // Eingabe-Palette: Label → [zaehler, nenner] (n+ = n−1/3 · n− = n+1/3)
 const DRITTELNOTEN = (() => {
+  /** @type {Record<string, [zaehler: number, nenner: number]>} */
   const m = {};
   for (let n = 1; n <= 5; n++) {
     m[n + '+'] = [3 * n - 1, 3];
@@ -27,6 +36,7 @@ const EPS = 1e-7; // Mappen-LOOKUP nutzt wert − 0.0000001
 
 // Anzeige-Label für KONTINUIERLICHE Werte (Durchschnitte) — repliziert das Mappen-LOOKUP
 // inkl. Grenzfall-Wohlwollen (exakt 2.0 → '2+', wie die Mappe).
+/** @param {number} wert @returns {string} */
 function drittelnoteLabel(wert) {
   const x = wert - EPS;
   let label = '1+';
@@ -39,6 +49,7 @@ function drittelnoteLabel(wert) {
 
 // Label für einen DISKRETEN kanonischen Drittelwert (Vorschlag) — exakter Bruch-Match,
 // KEIN LOOKUP-Wohlwollen (der Vorschlag '2-' soll '2-' heißen, nicht '2').
+/** @param {number} wert @returns {string | null} */
 function wertZuLabel(wert) {
   for (const [label, [z, n]] of Object.entries(DRITTELNOTEN)) {
     if (Math.abs(wert - z / n) < 1e-6) return label;
@@ -50,6 +61,7 @@ function wertZuLabel(wert) {
 // Die Palette kennt zwischen 5- (16/3) und 6 keinen Wert: 17/3 hätte kein Label, und „Sammeln" setzte dann
 // still eine 3 (Prüfer 2026-09-29). Darum dort auf den nächsten Palettenwert — Gleichstand genau bei 17/3
 // wie das Mappen-LOOKUP (wert − ε) zugunsten von 5-.
+/** @param {number} wert @returns {number} */
 function rundeAufDrittel(wert) {
   const r = Math.round(wert * 3);
   const w = r === 17 ? (wert > 17 / 3 ? 6 : 16 / 3) : r / 3;
@@ -58,15 +70,18 @@ function rundeAufDrittel(wert) {
 
 const PUNKTE_MIN = 0, PUNKTE_MAX = 15; // Oberstufe
 
+/** @param {number} p @returns {boolean} */
 function punkteValid(p) {
   return Number.isInteger(p) && p >= PUNKTE_MIN && p <= PUNKTE_MAX;
 }
 
+/** @param {number} p @returns {number} */
 function klemmePunkte(p) {
   return Math.min(PUNKTE_MAX, Math.max(PUNKTE_MIN, Math.round(p)));
 }
 
 // Eingabewert (Label oder Zahl) → kanonischer Zellwert je Profil (Spiegel von export_mappe.note_als_zellwert)
+/** @param {string | number} eingabe @param {Profil} profil @returns {number} */
 function noteAlsWert(eingabe, profil) {
   if (profil === 'sek2') {
     const p = Math.round(Number(eingabe));
@@ -86,9 +101,12 @@ function noteAlsWert(eingabe, profil) {
 
 // Einheit der Noten eines Kurses (v2.2, Prüfer v2.1 B2): dieselben drei Fälle wie bewertProfil — Sek II in Punkten = 'punkte',
 // Sek I und Sek II in Drittelnoten = 'drittel'. Eine Quartalsnote trägt ihre Einheit (`einheit`); fehlt sie (vor v2.1), gilt die des Kurses.
+/** @param {KursNotenart | null | undefined} kurs @returns {Einheit} */
 const notenEinheit = kurs => (kurs && kurs.profil === 'sek2' && (kurs.notenmodus || 'punkte') !== 'drittel' ? 'punkte' : 'drittel');
+/** @param {NotenEinheitFeld | null | undefined} e @param {KursNotenart | null | undefined} kurs @returns {Einheit} */
 const einheitVon = (e, kurs) => (e && e.einheit) || notenEinheit(kurs);
 // Passt eine Quartalsnote zur jetzigen Einheit ihres Kurses? Nein → nicht deuten (kein Abstand, keine Sortierung), Einheit dazuschreiben.
+/** @param {NotenEinheitFeld | null | undefined} e @param {KursNotenart | null | undefined} kurs @returns {boolean} */
 const einheitPasst = (e, kurs) => einheitVon(e, kurs) === notenEinheit(kurs);
 
 export { DRITTELNOTEN_SCHWELLEN, DRITTELNOTEN, EPS, drittelnoteLabel, wertZuLabel, rundeAufDrittel, PUNKTE_MIN, PUNKTE_MAX, punkteValid, klemmePunkte, noteAlsWert,

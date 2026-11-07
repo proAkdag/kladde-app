@@ -3,7 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DRITTELNOTEN, DRITTELNOTEN_SCHWELLEN, drittelnoteLabel, noteAlsWert, rundeAufDrittel, wertZuLabel } from '../logic/skalen.mjs';
+import { DRITTELNOTEN, DRITTELNOTEN_SCHWELLEN, drittelnoteLabel, noteAlsWert, rundeAufDrittel, wertZuLabel,
+  klemmePunkte, punkteValid, einheitVon } from '../logic/skalen.mjs';
 
 const vekt = JSON.parse(readFileSync(new URL('../fixtures/skalen_vektoren.json', import.meta.url), 'utf-8'));
 
@@ -50,4 +51,31 @@ test('rundeAufDrittel liefert nie einen Wert ohne Label (5,5 … 5,9)', () => {
   assert.equal(wertZuLabel(rundeAufDrittel(5.55)), '5-');
   assert.equal(wertZuLabel(rundeAufDrittel(5.75)), '6');
   assert.equal(wertZuLabel(rundeAufDrittel(5.4)), '5-');      // Nachbar unverändert
+});
+
+// ── Randtests aus dem Mutationstest 05.11. (Seed 20261105, _proben/typpruefung_2026-11-05/BEFUND_MUTATION.md „Was keiner fängt“) ──
+// Zero 07.11.: „jetzt durchführen lassen“. Je Lücke ein Test; Nachweis am Mutanten: _proben/randtests_2026-11-07/mutanten_nachweis.mjs
+
+test('Randtest SF03 · Note ohne einheit in einem Sek-II-Punkte-Kurs hat die Einheit des Kurses: punkte', () => {
+  assert.equal(einheitVon({ wert: 13 }, { profil: 'sek2' }), 'punkte');
+  assert.equal(einheitVon({ wert: 13 }, { profil: 'sek2', notenmodus: 'punkte' }), 'punkte');
+  assert.equal(einheitVon({ wert: '2-' }, { profil: 'sek1' }), 'drittel');              // Gegenrichtung
+});
+
+test('Randtest SL06 · noteAlsWert als Zahl in Sek I: 1 und 2/3 (1+) liegen im Bereich, darunter wirft', () => {
+  assert.equal(noteAlsWert(1, 'sek1'), 1);
+  assert.equal(noteAlsWert(2 / 3, 'sek1'), 2 / 3);
+  assert.throws(() => noteAlsWert(0.5, 'sek1'), /außerhalb/);
+});
+
+test('Randtest SL18 · noteAlsWert als Zahl in Sek I: 6 liegt im Bereich, darüber wirft', () => {
+  assert.equal(noteAlsWert(6, 'sek1'), 6);
+  assert.throws(() => noteAlsWert(6.5, 'sek1'), /außerhalb/);
+});
+
+test('Randtest SL11 · Punkte enden bei 15: 16 wirft, Klemmen und Gültigkeit hören bei 15 auf', () => {
+  assert.equal(noteAlsWert(15, 'sek2'), 15);
+  assert.throws(() => noteAlsWert(16, 'sek2'), /außerhalb 0–15/);
+  assert.equal(punkteValid(16), false);
+  assert.equal(klemmePunkte(99), 15);
 });

@@ -1,3 +1,4 @@
+// @ts-nocheck — nicht im Umfang der Typprüfung (kladde/tsconfig.json, 07.11.); verdichtung.mjs importiert von hier nur typenMit
 // kladde/logic/vertrag · Kladde-Vertrag (A2 Modul-Umbau, Zero 19.10.: „bau die Kladde auch Modular auf … wie im Rohwerk“)
 // EINE Liste dessen, was im Tresor steht: Stammfelder und Eintragstypen. Der Code liest daraus (merge: Kursbezug),
 // test/vertrag.test.mjs prüft den Rest des Codes dagegen (jedes stamm.<feld>, jeder gebuchte Typ, Beschriftung,

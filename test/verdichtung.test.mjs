@@ -315,3 +315,29 @@ test('Bewertungs-Doppelte (zwei Geräte): der Storno auf ein älteres Zeichen l�
   assert.equal(ers.ersetzt.typ, '-');
   assert.deepEqual(typen(log), ['note']);                      // vorher: ['note', 'o']
 });
+
+// ── Randtests aus dem Mutationstest 05.11. (Seed 20261105, _proben/typpruefung_2026-11-05/BEFUND_MUTATION.md „Was keiner fängt“) ──
+// Zero 07.11.: „jetzt durchführen lassen“. Je Lücke ein Test; Nachweis am Mutanten: _proben/randtests_2026-11-07/mutanten_nachweis.mjs
+const ohneDatum = e => ({ ...e, datum: undefined });            // Altbestand/Import: nur ts, der Termin kommt aus ts
+
+test('Randtest VL08 · Verlaufspfeil ab genau 4 Terminen: − − ＋ ＋ → ↑, mit 3 Terminen noch →', () => {
+  const T4 = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08'];
+  const vier = [ev('-', 8, T4[0]), ev('-', 8, T4[1]), ev('+', 8, T4[2]), ev('+', 8, T4[3])];
+  assert.equal(verdichte(vier, 8, { profil: 'sek1' }).pfeil, '↑');
+  assert.equal(verdichte(vier.slice(1), 8, { profil: 'sek1' }).pfeil, '→');   // Gegenrichtung: 3 Termine
+});
+
+test('Randtest VL06 · Ereignis ohne datum: Termin aus ts, zählt im Zeitraum von = bis = sein Tag', () => {
+  const evs = [ohneDatum(ev('+', 9, '2026-10-12'))];
+  const v = verdichte(evs, 9, { profil: 'sek1', von: '2026-10-12', bis: '2026-10-12' });
+  assert.equal(v.nPlus, 1);
+  assert.equal(verdichte(evs, 9, { profil: 'sek1', von: '2026-10-13', bis: '2026-10-31' }).nPlus, 0);   // Gegenrichtung: anderer Zeitraum
+});
+
+test('Randtest VL12 · Ereignis ohne datum ist derselbe Termin wie ein Ereignis mit datum am selben Tag', () => {
+  const evs = [ev('o', 99, '2026-10-14'), ohneDatum(ev('+', 10, '2026-10-14'))];
+  const v = verdichte(evs, 10, { profil: 'sek1' });
+  assert.equal(v.kursTermine, 1);
+  assert.equal(v.beteiligtTermine, 1);
+  assert.equal(v.aktivQuote, 1);
+});

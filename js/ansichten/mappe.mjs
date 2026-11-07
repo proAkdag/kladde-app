@@ -3,18 +3,18 @@
 // Beamer an ist, und ihr DOM wird ersetzt (Hard-Lock-Lehre v1.3.1). Alles, was sie schreibt, ist ein Ereignis (arbeit · punkte · lob,
 // logic/arbeiten) — nie der Stamm. Gerechnet wird nur in logic/arbeiten (Soll aus Excel), hier wird nur gezeigt und gebucht.
 // Importregel (kern.test (3)(4)): Ansichten importieren einander direkt; beim Laden liest dieses Modul nichts aus einer anderen Ansicht.
-import { MAX_AUFGABEN, OB_LABEL, werteArbeitAus, mappenStand, lesePunkte, quartalVon, mappeSchalter, schluesselVorlage, schluesselFehler, sek1Gitter } from '../../logic/arbeiten.mjs?v=3.0.2';
-import { excelRunde, zahlText } from '../../logic/excelrechnen.mjs?v=3.0.2';
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.2';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.2';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.2';
-import { iconEl } from '../kern/icons.mjs?v=3.0.2';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.2';
-import { GERAET } from '../kern/umgebung.mjs?v=3.0.2';
-import { beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.2';
-import { mitUebergang } from './navigation.mjs?v=3.0.2';
-import { renderKurse } from './kurse.mjs?v=3.0.2';
-import { aktivesSchuljahr } from './schueler.mjs?v=3.0.2';
+import { MAX_AUFGABEN, OB_LABEL, werteArbeitAus, mappenStand, lesePunkte, quartalVon, mappeSchalter, schluesselVorlage, schluesselFehler, sek1Gitter } from '../../logic/arbeiten.mjs?v=3.0.3';
+import { excelRunde, zahlText } from '../../logic/excelrechnen.mjs?v=3.0.3';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.3';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.3';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.3';
+import { iconEl } from '../kern/icons.mjs?v=3.0.3';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.3';
+import { GERAET } from '../kern/umgebung.mjs?v=3.0.3';
+import { beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.3';
+import { mitUebergang } from './navigation.mjs?v=3.0.3';
+import { renderKurse } from './kurse.mjs?v=3.0.3';
+import { aktivesSchuljahr } from './schueler.mjs?v=3.0.3';
 
 // Offene Mappe: { kursId, arbeitId|null } — null = zu. Nur im Speicher (ein Kaltstart beginnt auf der Kurs-Seite).
 let mappeAuf = null;
