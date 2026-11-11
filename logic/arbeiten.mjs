@@ -1,6 +1,7 @@
 // kladde/logic/arbeiten · Scheibe D1 „Arbeiten“ (Plan kladde/PLAN_2026-10-21_scheibe_D.md). Rein, Node-geprüft gegen das Excel-Soll
-// (test/soll_mappe_fest.json, test/soll_mappe_zufall.json). Jede Rechnung bildet eine Formel der Vorlage v15.2 nach; der Zeiger nennt die
-// Zeile in _build/build_klassenmappe_v15_2.py (G:…). Rundung nur über excelRunde (logic/excelrechnen).
+// (test/soll_mappe_fest.json, test/soll_mappe_zufall.json). Jede Rechnung bildet eine Formel der Vorlage v15.3 nach; der Zeiger nennt die
+// Zeile in _build/build_klassenmappe_v15_2.py (G:…) — die KA-Formeln sind in v15.3 unverändert, neu sind nur die Oberstufen-Grenzen
+// (G3: = build_klassenmappe_v15_3.py). Rundung nur über excelRunde (logic/excelrechnen).
 // Zero 21.10.: Schlüssel je Arbeit (vorbelegt aus dem Kurs) · LB „—“ · leer ≠ 0 · eine Arbeit gehört einem Quartal (aus dem Datum) ·
 // Test statt Arbeit möglich (zählt in D2 als Zusatznote der Mitarbeit).
 // Alles in der Mappe ist ein Ereignis (Vor-Bedingung 3): Definition (arbeit), Punkte (punkte), Lob (lob). Eine Änderung nennt in
@@ -8,7 +9,9 @@
 import { excelRunde, excelObergrenze, nachschlagen, mittelwert, summe, zahlText } from './excelrechnen.mjs';
 import { typenMit } from './vertrag.mjs';
 
-const OB_AB = Object.freeze([0, .20, .27, .33, .39, .45, .50, .55, .60, .65, .70, .75, .80, .85, .90, .95]);   // G:244–247 (Zentralabitur NRW)
+// Zero 11.11.: 5-%-Schritte ab 45 %, darunter 4 P ab 40 %, 3 P ab 33,33 %, 2 P ab 26,67 %, 1 P ab 20 % (statt 39/33/27 der
+// Zentralabitur-Tabelle). Auf 6 Stellen wie die Vorlage: ROUND(Q;6) von genau 1/3 ist 0,333333 und muss 3 P geben.
+const OB_AB = Object.freeze([0, .20, .266667, .333333, .40, .45, .50, .55, .60, .65, .70, .75, .80, .85, .90, .95]);   // G3:254–256
 const OB_LABEL = Object.freeze(['6', '5-', '5', '5+', '4-', '4', '4+', '3-', '3', '3+', '2-', '2', '2+', '1-', '1', '1+']);
 const MAX_AUFGABEN = 12;   // wie die Vorlage (G:436) — der Rückmeldebogen ist dafür gebaut
 

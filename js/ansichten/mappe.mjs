@@ -3,18 +3,18 @@
 // Beamer an ist, und ihr DOM wird ersetzt (Hard-Lock-Lehre v1.3.1). Alles, was sie schreibt, ist ein Ereignis (arbeit · punkte · lob,
 // logic/arbeiten) — nie der Stamm. Gerechnet wird nur in logic/arbeiten (Soll aus Excel), hier wird nur gezeigt und gebucht.
 // Importregel (kern.test (3)(4)): Ansichten importieren einander direkt; beim Laden liest dieses Modul nichts aus einer anderen Ansicht.
-import { MAX_AUFGABEN, OB_LABEL, werteArbeitAus, mappenStand, lesePunkte, quartalVon, mappeSchalter, schluesselVorlage, schluesselFehler, sek1Gitter } from '../../logic/arbeiten.mjs?v=3.0.3';
-import { excelRunde, zahlText } from '../../logic/excelrechnen.mjs?v=3.0.3';
-import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.3';
-import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.3';
-import { $, el, toast } from '../kern/dom.mjs?v=3.0.3';
-import { iconEl } from '../kern/icons.mjs?v=3.0.3';
-import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.3';
-import { GERAET } from '../kern/umgebung.mjs?v=3.0.3';
-import { beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.3';
-import { mitUebergang } from './navigation.mjs?v=3.0.3';
-import { renderKurse } from './kurse.mjs?v=3.0.3';
-import { aktivesSchuljahr } from './schueler.mjs?v=3.0.3';
+import { MAX_AUFGABEN, OB_LABEL, werteArbeitAus, mappenStand, lesePunkte, quartalVon, mappeSchalter, schluesselVorlage, schluesselFehler, sek1Gitter } from '../../logic/arbeiten.mjs?v=3.0.4';
+import { excelRunde, zahlText } from '../../logic/excelrechnen.mjs?v=3.0.4';
+import { lnr, nachListe } from '../../logic/teilnehmer.mjs?v=3.0.4';
+import { dlgZeigenEl, dlgZu } from '../kern/dialog.mjs?v=3.0.4';
+import { $, el, toast } from '../kern/dom.mjs?v=3.0.4';
+import { iconEl } from '../kern/icons.mjs?v=3.0.4';
+import { geraetId, speichern } from '../kern/tresor.mjs?v=3.0.4';
+import { GERAET } from '../kern/umgebung.mjs?v=3.0.4';
+import { beamerModus, heuteIso, vault } from '../kern/zustand.mjs?v=3.0.4';
+import { mitUebergang } from './navigation.mjs?v=3.0.4';
+import { renderKurse } from './kurse.mjs?v=3.0.4';
+import { aktivesSchuljahr } from './schueler.mjs?v=3.0.4';
 
 // Offene Mappe: { kursId, arbeitId|null } — null = zu. Nur im Speicher (ein Kaltstart beginnt auf der Kurs-Seite).
 let mappeAuf = null;
@@ -94,7 +94,7 @@ function renderArbeiten(wrap, k) {
     el('section', { class: 'panel ks-panel' },
       ...(st.arbeiten.length ? st.arbeiten.map(zeile) : [el('p', { class: 'u-leise' }, 'Noch keine Arbeit. Klassenarbeit, Klausur oder Test anlegen — das Quartal folgt aus dem Datum.')]),
       el('div', { class: 'btn-reihe mp-neu' }, el('button', { type: 'button', class: 'btn', dataset: { mpNeu: '' }, onclick: () => arbeitDialog(k, null) }, iconEl('plus'), ' Arbeit oder Test anlegen'))),
-    el('p', { class: 'u-hinweis' }, 'Gerechnet wird wie in der Excel-Mappe v15.2: ' + (istOb(k) ? 'Punkte 0–15 nach der NRW-Tabelle.' : 'ganze Noten, Grenzen aus „4 ab“ und „5 ab“.') + ' Nie im Beamer.')));
+    el('p', { class: 'u-hinweis' }, 'Gerechnet wird wie in der Excel-Mappe v15.3: ' + (istOb(k) ? 'Punkte 0–15, Grenzen in 5-%-Schritten ab 45 %, darunter 40 / 33,33 / 26,67 / 20 %.' : 'ganze Noten, Grenzen aus „4 ab“ und „5 ab“.') + ' Nie im Beamer.')));
 }
 
 // ── Arbeit anlegen / bearbeiten ──
@@ -128,14 +128,14 @@ function arbeitDialog(k, a) {
   };
   const plus = el('button', { type: 'button', class: 'btn still', dataset: { mpAufgabePlus: '' }, onclick: () => { w.aufgaben.push({ id: neueId(), name: 'A' + (w.aufgaben.length + 1), max: '' }); zeichneAufgaben(); liste.querySelector('.mp-aufgabe:last-child .mp-amax')?.focus(); } }, iconEl('plus'), ' Aufgabe');
   zeichneAufgaben();
-  // Schlüssel: Sek I zwei Felder („4 ab“, „5 ab“ in %), Oberstufe die Tabelle (aufklappbar, Vorbelegung NRW)
+  // Schlüssel: Sek I zwei Felder („4 ab“, „5 ab“ in %), Oberstufe die Tabelle (aufklappbar, Vorbelegung OB_AB)
   const pf = v => zahlText(excelRunde(v * 100, 4));
   let schluesselEl;
   if (w.schluessel.art === 'ob') {
     const zellen = w.schluessel.ab.map((v, i) => el('label', { class: 'mp-ob-stufe' }, el('span', {}, i + ' P (' + OB_LABEL[i] + ')'),
       el('input', { type: 'text', inputmode: 'decimal', value: pf(v), disabled: i === 0 ? '' : null, dataset: { mpOb: String(i) }, 'aria-label': i + ' Punkte ab Prozent',
         oninput: e => { w.schluessel.ab[i] = prozentWert(e.target.value); } })));
-    schluesselEl = el('details', { class: 'mp-schluessel' }, el('summary', {}, 'Notenschlüssel: NRW-Tabelle (5 P ab ' + pf(w.schluessel.ab[5]) + ' %) — ändern'), el('div', { class: 'mp-ob-gitter' }, ...zellen));
+    schluesselEl = el('details', { class: 'mp-schluessel' }, el('summary', {}, 'Notenschlüssel: Punkte-Tabelle (5 P ab ' + pf(w.schluessel.ab[5]) + ' %) — ändern'), el('div', { class: 'mp-ob-gitter' }, ...zellen));
   } else {
     const feld = (schl, label) => el('label', { class: 'mp-sek1' }, el('span', {}, label),
       el('input', { type: 'text', inputmode: 'decimal', value: pf(w.schluessel[schl]), class: 'u-w72', dataset: { mpSchluessel: schl }, 'aria-label': label + ' Prozent',

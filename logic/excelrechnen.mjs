@@ -1,5 +1,5 @@
 // kladde/logic/excelrechnen · Rechnen wie Excel (Scheibe D „Mappe“, Plan 21.10.). Die Mappe rechnet auf die Stelle wie die
-// Excel-Vorlage v15.2. Das Soll kommt aus Excel selbst (tools/soll_mappe_zufall_com.py, test/soll_mappe_*.json), nie aus diesem Code.
+// Excel-Vorlage v15.3. Das Soll kommt aus Excel selbst (tools/soll_mappe_zufall_com.py, test/soll_mappe_*.json), nie aus diesem Code.
 // Gemessen 21.10. (Soll-Befund S2): ROUND(2,5−2⁻⁴⁸;0) = 3 und ROUND(1,005;2) = 1,01 in Excel — Math.round gibt 2 bzw. 1,00.
 // Excel rechnet hier mit 15 gültigen Stellen. Darum ist excelRunde die EINZIGE Rundung der Mappen-Logik (Wächter: test/mappe_soll.test.mjs).
 

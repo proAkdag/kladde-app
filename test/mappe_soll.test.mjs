@@ -1,7 +1,8 @@
-// kladde/test/mappe_soll · Scheibe D1: die Mappe rechnet auf die Stelle wie die Excel-Vorlage v15.2.
+// kladde/test/mappe_soll · Scheibe D1: die Mappe rechnet auf die Stelle wie die Excel-Vorlage v15.3.
 // Das Soll hat EXCEL berechnet (per COM auf Kopien der Vorlagen, erfundene Kinder), nie dieser Code:
-//   soll_mappe_fest.json   ← design/d_mappe_2026-10-21/soll_v152_com.py (feste Grenzfälle, Befunde S1–S9)
-//   soll_mappe_zufall.json ← tools/soll_mappe_zufall_com.py (Zufallssatz, Seed je Fall aus seiner Kennung)
+//   soll_mappe_fest.json    ← tools/soll_mappe_fest_com.py (feste Grenzfälle, Befunde S1–S9)
+//   soll_mappe_zufall.json  ← tools/soll_mappe_zufall_com.py (Zufallssatz, Seed je Fall aus seiner Kennung)
+//   soll_mappe_grenzen.json ← tools/soll_mappe_grenzen_com.py (Oberstufe auf der Schwelle, seit 11.11. mit den v15.3-Grenzen)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -97,7 +98,20 @@ test('Oberstufe an der Schwelle (9,45/21 = 0,44999… → 5 P) = Excel', () => {
       assert.ok(nahe(P, z.summe) && nahe(Q, z.quote, 1e-15), `KA${k} ${f.punkte[i]}/${f.gesamt}`);
       assert.equal(z.note, R, `KA${k} ${f.punkte[i]}/${f.gesamt} Punkte`); assert.equal(z.label, S); });
   }
-  assert.ok(n >= 13, n + ' Fälle');
+  assert.ok(n >= 25, n + ' Fälle');
+});
+
+// v15.3 (Zero 11.11.): 4 P ab 40 %, 3 P ab 33,33 %, 2 P ab 26,67 %. Das Soll muss aus v15.3 stammen — ein altes Soll wäre grün,
+// obwohl es die Zentralabitur-Grenzen 39/33/27 % misst.
+test('Oberstufe v15.3: neue Grenzen 40 / 33,33 / 26,67 % = Excel', () => {
+  const G = JSON.parse(readFileSync(new URL('./soll_mappe_grenzen.json', import.meta.url), 'utf-8'));
+  for (const f of [G, FEST, ZUFALL]) assert.match(JSON.stringify(f.quelle), /Oberstufe_Vorlage_v15\.3/, 'Soll nicht aus v15.3');
+  const punkteVon = (k, p) => { const f = G.ka[k]; return f.aus[f.punkte.indexOf(p)][2]; };
+  const fall = (k, p) => noteAusQuote(p / G.ka[k].gesamt, standardSchluessel('sek2'));
+  for (const [k, p, wo] of [[4, 10, 'genau 1/3'], [4, 9.9, '33 %'], [4, 12, '40 %'], [4, 11.7, '39 %'], [4, 8, '26,67 %'],
+    [4, 8.1, '27 %'], [4, 7.9, '26,33 %'], [5, 7, '7/21 = 1/3'], [5, 5.6, '5,6/21'], [5, 8.4, '8,4/21']]) {
+    assert.equal(fall(k, p), punkteVon(k, p), wo);
+  }
 });
 
 test('Zufallssatz: 18 Arbeiten (3 Mappen × 6) Zeile für Zeile = Excel', () => {
